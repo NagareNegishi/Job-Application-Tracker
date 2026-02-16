@@ -17,8 +17,8 @@ POST http://localhost:5092/api/TodoItems
 Content-Type: application/json
 
 {
-  "id": 11,
+  "id": 13,
   "name": "Updated Item",
   "isComplete": true,
-  "secret": "This is a secret"
+  "secret": "This is a secret!!"
 }
