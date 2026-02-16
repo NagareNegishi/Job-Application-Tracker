@@ -6,3 +6,19 @@ Content-Type: application/json
   "name": "Updated Item",
   "isComplete": true
 }
+
+###
+
+DELETE http://localhost:5092/api/TodoItems/1
+
+###
+
+POST http://localhost:5092/api/TodoItems
+Content-Type: application/json
+
+{
+  "id": 11,
+  "name": "Updated Item",
+  "isComplete": true,
+  "secret": "This is a secret"
+}
