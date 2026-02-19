@@ -13,7 +13,7 @@ namespace JobTrackerApi.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "TodoItems",
+                name: "Jobs",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -31,7 +31,7 @@ namespace JobTrackerApi.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TodoItems", x => x.Id);
+                    table.PrimaryKey("PK_Jobs", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -50,9 +50,9 @@ namespace JobTrackerApi.Migrations
                 {
                     table.PrimaryKey("PK_Documents", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Documents_TodoItems_JobId",
+                        name: "FK_Documents_Jobs_JobId",
                         column: x => x.JobId,
-                        principalTable: "TodoItems",
+                        principalTable: "Jobs",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -70,7 +70,7 @@ namespace JobTrackerApi.Migrations
                 name: "Documents");
 
             migrationBuilder.DropTable(
-                name: "TodoItems");
+                name: "Jobs");
         }
     }
 }

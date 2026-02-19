@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JobTrackerApi.Migrations
 {
     [DbContext(typeof(JobTrackerContext))]
-    [Migration("20260219131834_InitialCreate")]
+    [Migration("20260219134702_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -93,7 +93,7 @@ namespace JobTrackerApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TodoItems");
+                    b.ToTable("Jobs");
                 });
 
             modelBuilder.Entity("JobTrackerApi.Models.Document", b =>
@@ -127,7 +127,7 @@ namespace JobTrackerApi.Migrations
 
                             b1.HasKey("JobId", "__synthesizedOrdinal");
 
-                            b1.ToTable("TodoItems");
+                            b1.ToTable("Jobs");
 
                             b1
                                 .ToJson("Contacts")
@@ -151,7 +151,7 @@ namespace JobTrackerApi.Migrations
 
                             b1.HasKey("JobId", "__synthesizedOrdinal");
 
-                            b1.ToTable("TodoItems");
+                            b1.ToTable("Jobs");
 
                             b1
                                 .ToJson("Correspondences")
