@@ -38,3 +38,6 @@ docker-compose.override.yml
 
 # Development note
 notes/
+
+# Local configuration files from Backend
+appsettings.Development.json
