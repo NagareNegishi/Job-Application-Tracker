@@ -21,6 +21,6 @@ public class JobTrackerContext : DbContext
             .OwnsMany(j => j.Correspondences, correspondence => correspondence.ToJson());
     }
 
-    public DbSet<Job> TodoItems { get; set; } = null!;
+    public DbSet<Job> Jobs { get; set; } = null!;
     public DbSet<Document> Documents { get; set; } = null!;
 }
