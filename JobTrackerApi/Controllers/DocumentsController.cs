@@ -35,8 +35,6 @@ public class DocumentsController : ControllerBase
     }
 
 
-
-
     // Get a specific document by ID
     [HttpGet("{id}")]
     public async Task<ActionResult<Document>> GetDocument(int id)
@@ -48,21 +46,17 @@ public class DocumentsController : ControllerBase
 
     // Update a document with a specific ID
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutDocument(int id, Document update)
+    public async Task<IActionResult> PutDocument(int jobId, int id, Document update)
     {
         if (id != update.Id) return BadRequest();
 
         var existingDocument = await _context.Documents.FindAsync(id);
         if (existingDocument == null) return NotFound();
+        if (existingDocument.JobId != jobId) return BadRequest(); // Ensure the document belongs to the specified job
 
         // Update the existing document
         existingDocument.Type = update.Type;
         existingDocument.Name = update.Name;
-        existingDocument.CreatedAt = update.CreatedAt;
-
-        // there 2 probably should not be updated, but for now, we can update them together
-        // existingDocument.FilePath = update.FilePath;
-        // existingDocument.JobId = update.JobId;
 
         try
         {
