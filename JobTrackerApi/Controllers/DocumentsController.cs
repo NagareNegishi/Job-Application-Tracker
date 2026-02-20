@@ -19,25 +19,20 @@ public class DocumentsController : ControllerBase
         _context = context;
     }
 
-    // Get all documents
+    // Get all documents under a specific job
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Document>>> GetDocuments()
+    public async Task<ActionResult<IEnumerable<Document>>> GetDocuments(int jobId)
     {
-        return await _context.Documents.ToListAsync();
+        return await _context.Documents
+            .Where(doc => doc.JobId == jobId)
+            .ToListAsync();
     }
 
     // Get a specific document by ID
     [HttpGet("{id}")]
     public async Task<ActionResult<Document>> GetDocument(int id)
     {
-        // it should not include doc
         var document = await _context.Documents.FindAsync(id);
-
-        // this version should include doc
-        // var document = await _context.Documents
-        //     .Include(j => j.Documents)
-        //     .FirstOrDefaultAsync(j => j.Id == id);
-
         if (document == null) return NotFound();
         return document;
     }
@@ -52,7 +47,13 @@ public class DocumentsController : ControllerBase
         if (existingDocument == null) return NotFound();
 
         // Update the existing document
+        existingDocument.Type = update.Type;
+        existingDocument.Name = update.Name;
+        existingDocument.CreatedAt = update.CreatedAt;
 
+        // there 2 probably should not be updated, but for now, we can update them together
+        // existingDocument.FilePath = update.FilePath;
+        // existingDocument.JobId = update.JobId;
 
         try
         {
