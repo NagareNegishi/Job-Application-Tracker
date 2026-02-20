@@ -104,16 +104,8 @@ public class JobsController : ControllerBase
     }
 
 
-
-
-
-
-
-
-
-
-
-
+// Consider Patch if required:
+// https://learn.microsoft.com/en-us/aspnet/core/web-api/jsonpatch?view=aspnetcore-10.0
 
     private bool JobsExists(int id)
     {
