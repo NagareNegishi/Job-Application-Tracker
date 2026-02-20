@@ -90,10 +90,11 @@ public class DocumentsController : ControllerBase
 
     // Delete a document by ID
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteDocument(int id)
+    public async Task<IActionResult> DeleteDocument(int jobId, int id)
     {
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
+        if (document.JobId != jobId) return BadRequest();
         _context.Documents.Remove(document);
         await _context.SaveChangesAsync();
         return NoContent();
