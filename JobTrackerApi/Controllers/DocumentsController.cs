@@ -20,13 +20,22 @@ public class DocumentsController : ControllerBase
     }
 
     // Get all documents under a specific job
+    // Allow filtering by type
+    // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding?view=aspnetcore-10.0
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Document>>> GetDocuments(int jobId)
+    public async Task<ActionResult<IEnumerable<Document>>> GetDocuments(int jobId, [FromQuery] DocumentType? type)
     {
-        return await _context.Documents
-            .Where(doc => doc.JobId == jobId)
-            .ToListAsync();
+        // All documents under a specific job
+        var query = _context.Documents.Where(doc => doc.JobId == jobId);
+        if (type.HasValue)
+        {
+            query = query.Where(doc => doc.Type == type.Value); // Filter by type if provided
+        }
+        return await query.ToListAsync();
     }
+
+
+
 
     // Get a specific document by ID
     [HttpGet("{id}")]
