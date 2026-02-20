@@ -7,7 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace JobTrackerApi.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("jobs/{jobId}/documents")]
+// Route should be nested under jobs
+// https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-10.0
 public class DocumentsController : ControllerBase
 {
     private readonly JobTrackerContext _context; // Assigned once, never changes
