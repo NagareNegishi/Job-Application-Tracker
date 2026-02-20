@@ -40,8 +40,9 @@ public class JobsController : ControllerBase
         return job;
     }
 
+    // Update a job with a specific ID
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutJobs(int id, Job update)
+    public async Task<IActionResult> PutJob(int id, Job update)
     {
         if (id != update.Id) return BadRequest();
 
@@ -70,17 +71,43 @@ public class JobsController : ControllerBase
             if (!JobsExists(id)) return NotFound(); // someone else deleted
             return Conflict(); // someone else updated
         }
-
         return NoContent();
     }
+
+
+    // TODO: Wrap it with DTO
+    // Create a new job
+    [HttpPost]
+    public async Task<ActionResult<Job>> PostJob(Job newJob)
+    {
+        _context.Jobs.Add(newJob);
+        await _context.SaveChangesAsync();
+
+        // CreatedAtAction returns a 201 response with a Location header,
+        // pointing to where the new resource can be found.
+        return CreatedAtAction(
+            nameof(GetJob), // the action method to generate the URL from, it should point where the new resource can be found
+            new { id = newJob.Id }, // the route parameters to fill in
+            newJob); // the created object to include in the response body
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     private bool JobsExists(int id)
     {
         return _context.Jobs.Any(e => e.Id == id);
     }
-
-
-
 
 }
