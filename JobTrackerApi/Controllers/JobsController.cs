@@ -39,4 +39,48 @@ public class JobsController : ControllerBase
         if (job == null) return NotFound();
         return job;
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutJobs(int id, Job update)
+    {
+        if (id != update.Id) return BadRequest();
+
+        var existingJob = await _context.Jobs.FindAsync(id);
+        if (existingJob == null) return NotFound();
+
+        // Update the existing job
+        existingJob.Company = update.Company;
+        existingJob.Role = update.Role;
+        existingJob.Status = update.Status;
+        existingJob.Priority = update.Priority;
+        existingJob.AppliedAt = update.AppliedAt;
+        existingJob.ClosedAt = update.ClosedAt;
+        existingJob.Documents = update.Documents;
+        existingJob.Description = update.Description;
+        existingJob.Notes = update.Notes;
+        existingJob.Contacts = update.Contacts;
+        existingJob.Correspondences = update.Correspondences;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!JobsExists(id)) return NotFound(); // someone else deleted
+            return Conflict(); // someone else updated
+        }
+
+        return NoContent();
+    }
+
+
+    private bool JobsExists(int id)
+    {
+        return _context.Jobs.Any(e => e.Id == id);
+    }
+
+
+
+
 }
