@@ -12,11 +12,20 @@ namespace JobTrackerApi.Controllers;
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-10.0
 public class DocumentsController : ControllerBase
 {
-    private readonly JobTrackerContext _context; // Assigned once, never changes
+    // Assigned once, never changes
+    private readonly JobTrackerContext _context;
+    private readonly string _uploadsPath;
 
-    public DocumentsController(JobTrackerContext context)
+    // TODO: Document how user supposed to configure the file storage path in appsettings.json, and how to read it here
+    public DocumentsController(JobTrackerContext context, IConfiguration configuration)
     {
         _context = context;
+        // ASP.NET Core automatically read appsettings.json and registers IConfiguration
+        var pathCheck = configuration["Storage:UploadsPath"];
+        if (string.IsNullOrEmpty(pathCheck)) {
+            throw new InvalidOperationException("Storage:UploadsPath is not configured in appsettings.");
+        }
+        _uploadsPath = pathCheck;
     }
 
     // Get all documents under a specific job
@@ -72,14 +81,17 @@ public class DocumentsController : ControllerBase
 
 
     // Create a new document
+    // [FromForm] tells ASP.NET Core to look for the data in the form data
+    // and bind it to the DocumentDTO
+    // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding?view=aspnetcore-10.0
     [HttpPost]
     public async Task<ActionResult<Document>> PostDocument(int jobId, [FromForm] DocumentDTO dto)
     {
-        // define the directly here as current for now
-        var tempPath = Path.GetTempPath();
+        // Validate the uploaded file
+        if (!dto.HasValidExtension()) return BadRequest("File type not allowed.");
 
         // Convert DTO to entity
-        Document newDocument = dto.ToDocument(jobId, tempPath);
+        Document newDocument = dto.ToDocument(jobId, _uploadsPath);
 
         // Save the file to disk
         var filePath = newDocument.FilePath;
