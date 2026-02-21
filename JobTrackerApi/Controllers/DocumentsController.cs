@@ -71,11 +71,22 @@ public class DocumentsController : ControllerBase
     }
 
 
-    // TODO: Wrap it with DTO
     // Create a new document
     [HttpPost]
-    public async Task<ActionResult<Document>> PostDocument(Document newDocument)
+    public async Task<ActionResult<Document>> PostDocument(int jobId, [FromForm] DocumentDTO dto)
     {
+        // define the directly here as current for now
+        var tempPath = Path.GetTempPath();
+
+        // Convert DTO to entity
+        Document newDocument = dto.ToDocument(jobId, tempPath);
+
+        // Save the file to disk
+        var filePath = newDocument.FilePath;
+        using var stream = System.IO.File.Create(filePath);
+        await dto.File.CopyToAsync(stream);
+
+        // Save to database
         _context.Documents.Add(newDocument);
         await _context.SaveChangesAsync();
 
@@ -83,10 +94,9 @@ public class DocumentsController : ControllerBase
         // pointing to where the new resource can be found.
         return CreatedAtAction(
             nameof(GetDocument), // the action method to generate the URL from, it should point where the new resource can be found
-            new { id = newDocument.Id }, // the route parameters to fill in
+            new { jobId, id = newDocument.Id }, // the route parameters to fill in
             newDocument); // the created object to include in the response body
     }
-
 
     // Delete a document by ID
     [HttpDelete("{id}")]
