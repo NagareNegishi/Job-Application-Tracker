@@ -26,4 +26,18 @@ public class DocumentDTO {
             JobId = jobId
         };
     }
+
+    // Allowed file extensions for upload
+    public static readonly string[] AllowedExtensions = [".pdf", ".doc", ".docx"];
+
+    /// <summary>
+    /// Checks if the uploaded file has a valid extension.
+    /// </summary>
+    /// <returns>>true if the file has an allowed extension; otherwise, false.</returns>
+    public bool HasValidExtension() {
+        // file extension need to be consistent, regardless of the culture
+        var extension = Path.GetExtension(File.FileName).ToLowerInvariant();
+        return AllowedExtensions.Contains(extension);
+    }
+
 }
