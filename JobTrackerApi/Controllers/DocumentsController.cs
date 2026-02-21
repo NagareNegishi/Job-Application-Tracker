@@ -93,14 +93,14 @@ public class DocumentsController : ControllerBase
         // Convert DTO to entity
         Document newDocument = dto.ToDocument(jobId, _uploadsPath);
 
+        // Save to database
+        _context.Documents.Add(newDocument);
+        await _context.SaveChangesAsync();
+
         // Save the file to disk
         var filePath = newDocument.FilePath;
         using var stream = System.IO.File.Create(filePath);
         await dto.File.CopyToAsync(stream);
-
-        // Save to database
-        _context.Documents.Add(newDocument);
-        await _context.SaveChangesAsync();
 
         // CreatedAtAction returns a 201 response with a Location header,
         // pointing to where the new resource can be found.
