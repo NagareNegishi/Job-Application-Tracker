@@ -14,7 +14,9 @@ public class DocumentDTO {
     /// <param name="path">Absolute path to the directory where files are stored.</param>
     /// <returns>A <see cref="Document"/> ready to be saved to the database.</returns>
     public Document ToDocument(int jobId, string path) {
-        var fileName = Name ?? File.FileName;
+        // Do not use the FileName property of IFormFile, removes the path from the file name
+        // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-10.0#validation
+        string fileName = Path.GetFileName(Name ?? File.FileName);
         var filePath = Path.Combine(path, fileName);
         return new Document {
             Type = Type,
