@@ -10,6 +10,9 @@ namespace JobTrackerApi.Controllers;
 [Route("jobs/{jobId}/documents")]
 // Route should be nested under jobs
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-10.0
+
+// Controller for managing documents (CV, cover letter, etc.) associated with job applications
+// No PUT endpoint, it should be achieved by DELETE + POST
 public class DocumentsController : ControllerBase
 {
     // Assigned once, never changes

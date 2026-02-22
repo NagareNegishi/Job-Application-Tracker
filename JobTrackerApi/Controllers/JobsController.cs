@@ -75,11 +75,11 @@ public class JobsController : ControllerBase
     }
 
 
-    // TODO: Wrap it with DTO
     // Create a new job
     [HttpPost]
-    public async Task<ActionResult<Job>> PostJob(Job newJob)
+    public async Task<ActionResult<Job>> PostJob(JobDTO dto)
     {
+        var newJob = dto.ToJob();
         _context.Jobs.Add(newJob);
         await _context.SaveChangesAsync();
 
