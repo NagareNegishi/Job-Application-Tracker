@@ -1,8 +1,10 @@
 namespace JobTrackerApi.Models;
+using System.ComponentModel.DataAnnotations;
 /// <summary>
 /// DTO for creating a new document associated with a job application
 /// </summary>
 public class DocumentDTO {
+    [Required]
     public required IFormFile File { get; set; }
     public DocumentType Type { get; set; } = DocumentType.Other;
     public string? Name { get; set; } // optional override
