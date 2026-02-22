@@ -28,7 +28,9 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    // Enable the Swagger UI for API testing
+
+    // Enable the Swagger UI for API testing, run with:
+    // dotnet run --launch-profile https
     app.UseSwaggerUi(options =>
     {
         options.DocumentPath = "/openapi/v1.json";
