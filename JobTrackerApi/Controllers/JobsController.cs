@@ -2,6 +2,7 @@ using JobTrackerApi.Models;
 using JobTrackerApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 // https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-10.0
 
 namespace JobTrackerApi.Controllers;
@@ -101,9 +102,68 @@ public class JobsController : ControllerBase
     }
 
 
-// Consider Patch if required:
-// https://learn.microsoft.com/en-us/aspnet/core/web-api/jsonpatch?view=aspnetcore-10.0
+    // Partial update of a job using JSON Patch
+    // https://learn.microsoft.com/en-us/aspnet/core/web-api/jsonpatch?view=aspnetcore-10.0
+    // https://www.nuget.org/packages/Microsoft.AspNetCore.JsonPatch.SystemTextJson
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> PatchJob(int id, [FromBody] JsonPatchDocument<UpdateJobDTO> patchDoc)
+    {
+        // most invalid patch document will be rejected by the framework
+        var job = await _context.Jobs.FindAsync(id);
+        if (job == null) return NotFound();
 
+        // Copy the existing job data into a DTO for patching.
+        var jobToPatch = new UpdateJobDTO
+        {
+            Company = job.Company,
+            Role = job.Role,
+            Status = job.Status,
+            Priority = job.Priority,
+            AppliedAt = job.AppliedAt,
+            ClosedAt = job.ClosedAt,
+            Description = job.Description,
+            Notes = job.Notes,
+            Contacts = job.Contacts,
+            Correspondences = job.Correspondences
+        };
+
+        patchDoc.ApplyTo(jobToPatch, jsonPatchError =>
+            {
+                ModelState.AddModelError(
+                    jsonPatchError.AffectedObject.GetType().Name,
+                    jsonPatchError.ErrorMessage
+                );
+            }
+        );
+
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (!TryValidateModel(jobToPatch)) return BadRequest(ModelState);
+
+        // Map back to the original job entity
+        job.Company = jobToPatch.Company;
+        job.Role = jobToPatch.Role;
+        job.Status = jobToPatch.Status;
+        job.Priority = jobToPatch.Priority;
+        job.AppliedAt = jobToPatch.AppliedAt;
+        job.ClosedAt = jobToPatch.ClosedAt;
+        job.Description = jobToPatch.Description;
+        job.Notes = jobToPatch.Notes;
+        job.Contacts = jobToPatch.Contacts;
+        job.Correspondences = jobToPatch.Correspondences;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!JobsExists(id)) return NotFound(); // someone else deleted
+            return Conflict(); // someone else updated
+        }
+        return NoContent();
+    }
+
+    // Helper method to check if a job exists by ID
     private bool JobsExists(int id)
     {
         return _context.Jobs.Any(e => e.Id == id);
