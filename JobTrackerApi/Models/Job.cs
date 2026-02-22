@@ -5,11 +5,8 @@ public class Job
 {
     // EF Core automatically recognizes Id as the primary key
     public int Id { get; set; }
-    [Required]
     public string Company { get; set; } = string.Empty;
-    [Required]
     public string Role { get; set; } = string.Empty;
-    [Required]
     public JobStatus Status { get; set; } = JobStatus.Wishlist;
     public Priority? Priority { get; set; }
     public DateTime? AppliedAt { get; set; }

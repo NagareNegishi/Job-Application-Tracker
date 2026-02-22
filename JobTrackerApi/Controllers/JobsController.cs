@@ -42,10 +42,8 @@ public class JobsController : ControllerBase
 
     // Update a job with a specific ID
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutJob(int id, Job update)
+    public async Task<IActionResult> PutJob(int id, UpdateJobDTO update)
     {
-        if (id != update.Id) return BadRequest();
-
         var existingJob = await _context.Jobs.FindAsync(id);
         if (existingJob == null) return NotFound();
 
@@ -56,7 +54,6 @@ public class JobsController : ControllerBase
         existingJob.Priority = update.Priority;
         existingJob.AppliedAt = update.AppliedAt;
         existingJob.ClosedAt = update.ClosedAt;
-        existingJob.Documents = update.Documents;
         existingJob.Description = update.Description;
         existingJob.Notes = update.Notes;
         existingJob.Contacts = update.Contacts;
