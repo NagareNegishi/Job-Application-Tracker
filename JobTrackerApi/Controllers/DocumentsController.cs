@@ -28,6 +28,7 @@ public class DocumentsController : ControllerBase
         _uploadsPath = pathCheck;
     }
 
+
     // Get all documents under a specific job
     // Allow filtering by type
     // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding?view=aspnetcore-10.0
@@ -51,32 +52,6 @@ public class DocumentsController : ControllerBase
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
         return document;
-    }
-
-    // Update a document with a specific ID
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutDocument(int jobId, int id, Document update)
-    {
-        if (id != update.Id) return BadRequest();
-
-        var existingDocument = await _context.Documents.FindAsync(id);
-        if (existingDocument == null) return NotFound();
-        if (existingDocument.JobId != jobId) return BadRequest(); // Ensure the document belongs to the specified job
-
-        // Update the existing document
-        existingDocument.Type = update.Type;
-        existingDocument.Name = update.Name;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!DocumentsExists(id)) return NotFound(); // someone else deleted
-            return Conflict(); // someone else updated
-        }
-        return NoContent();
     }
 
 
@@ -110,6 +85,7 @@ public class DocumentsController : ControllerBase
             newDocument); // the created object to include in the response body
     }
 
+
     // Delete a document by ID
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteDocument(int jobId, int id)
@@ -123,8 +99,36 @@ public class DocumentsController : ControllerBase
     }
 
 
-// Consider Patch if required:
-// https://learn.microsoft.com/en-us/aspnet/core/web-api/jsonpatch?view=aspnetcore-10.0
+    // Partial update a document by ID
+    // Standard way is below:
+    // https://learn.microsoft.com/en-us/aspnet/core/web-api/jsonpatch?view=aspnetcore-10.0
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> PatchDocument(int jobId, int id, UpdateDocumentDTO update)
+    {
+        var existingDocument = await _context.Documents.FindAsync(id);
+        if (existingDocument == null) return NotFound();
+        if (existingDocument.JobId != jobId) return BadRequest(); // Ensure the document belongs to the specified job
+
+        // Update the existing document
+        if (update.Name != null) {
+            existingDocument.Name = update.Name;
+        }
+        if (update.Type.HasValue) {
+            existingDocument.Type = update.Type.Value;
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!DocumentsExists(id)) return NotFound(); // someone else deleted
+            return Conflict(); // someone else updated
+        }
+        return NoContent();
+    }
+
 
     private bool DocumentsExists(int id)
     {
