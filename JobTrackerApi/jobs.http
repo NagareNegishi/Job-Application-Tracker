@@ -1,0 +1,61 @@
+@base = http://localhost:5286
+
+### Get all jobs
+GET {{base}}/jobs
+Accept: application/json
+
+### Get a job by ID
+GET {{base}}/jobs/1
+Accept: application/json
+
+### Create a minimal job
+POST {{base}}/jobs
+Content-Type: application/json
+
+{
+  "company": "A_Company",
+  "role": "Backend Developer",
+  "status": 0
+}
+
+### Create a job with all fields
+POST {{base}}/jobs
+Content-Type: application/json
+
+{
+  "company": "B_Company",
+  "role": "Backend Developer",
+  "status": 1,
+  "priority": 2,
+  "appliedAt": "2026-02-22T02:43:10.925Z",
+  "closedAt": "2026-02-22T02:43:10.925Z",
+  "description": "Some description about the job application.",
+  "notes": "Some notes about the job application.",
+  "contacts": [
+    {
+      "name": "John Doe",
+      "email": "Some email",
+      "phone": "Some phone number"
+    }
+  ]
+}
+
+### Partially update a job
+PATCH {{base}}/jobs/1
+Content-Type: application/json-patch+json
+
+[
+  {
+    "op": "replace",
+    "path": "/status",
+    "value": 2
+  },
+  {
+    "op": "replace",
+    "path": "/notes",
+    "value": "Updated notes about the job application."
+  }
+]
+
+### Delete a job
+DELETE {{base}}/jobs/1
