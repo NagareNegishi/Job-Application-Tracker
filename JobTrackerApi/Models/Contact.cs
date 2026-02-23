@@ -1,6 +1,5 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace JobTrackerApi.Models;
+using System.ComponentModel.DataAnnotations;
 /// <summary>
 /// Represents a contact person associated with a job application
 /// </summary>
