@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 /// </summary>
 public class JobDTO
 {
-    [Required]
+    [Required(AllowEmptyStrings = false)]
     [MaxLength(ValidationConstants.MaxCompanyLength)]
     public string Company { get; set; } = string.Empty;
 
