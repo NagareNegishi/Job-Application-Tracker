@@ -12,10 +12,11 @@ public static class ValidationConstants
     public const int MaxContactSize = 10;
     public const int MaxCorrespondenceSize = 10;
     public const int MaxDocumentSize = 10;
-    public const int MaxFileSize = 10 * 1024 * 1024; // 10 MB
 
     // Document entity constraints
     public const int MaxDocumentNameLength = 255;
+    public const int MaxFileSize = 10 * 1024 * 1024; // 10 MB
+    public static readonly string[] AllowedExtensions = [".pdf", ".doc", ".docx"];
 
 
 }

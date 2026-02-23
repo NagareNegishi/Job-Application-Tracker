@@ -32,9 +32,6 @@ public class DocumentDTO {
         };
     }
 
-    // Allowed file extensions for upload
-    public static readonly string[] AllowedExtensions = [".pdf", ".doc", ".docx"];
-
     /// <summary>
     /// Checks if the uploaded file has a valid extension.
     /// </summary>
@@ -42,7 +39,15 @@ public class DocumentDTO {
     public bool HasValidExtension() {
         // file extension need to be consistent, regardless of the culture
         var extension = Path.GetExtension(File.FileName).ToLowerInvariant();
-        return AllowedExtensions.Contains(extension);
+        return ValidationConstants.AllowedExtensions.Contains(extension);
+    }
+
+    /// <summary>
+    /// Checks if the uploaded file does not exceed the maximum allowed size.
+    /// </summary>
+    /// <returns>true if the file size is within the limit; otherwise, false.</returns
+    public bool HasValidSize() {
+        return File.Length <= ValidationConstants.MaxFileSize;
     }
 
 }
