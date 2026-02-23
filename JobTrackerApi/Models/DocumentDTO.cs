@@ -6,7 +6,10 @@ using System.ComponentModel.DataAnnotations;
 public class DocumentDTO {
     [Required]
     public required IFormFile File { get; set; }
+
     public DocumentType Type { get; set; } = DocumentType.Other;
+
+    [MaxLength(ValidationConstants.MaxDocumentNameLength)]
     public string? Name { get; set; } // optional override
 
     /// <summary>
