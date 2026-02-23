@@ -1,0 +1,10 @@
+@base = http://localhost:5286
+@jobId = 3
+
+### Get all documents for a job
+GET {{base}}/jobs/{{jobId}}/documents
+Accept: application/json
+
+### Get a document by ID
+GET {{base}}/jobs/{{jobId}}/documents/1
+Accept: application/json
