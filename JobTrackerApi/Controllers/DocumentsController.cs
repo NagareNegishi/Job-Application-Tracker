@@ -71,14 +71,29 @@ public class DocumentsController : ControllerBase
         // Convert DTO to entity
         Document newDocument = dto.ToDocument(jobId, _uploadsPath);
 
-        // Save to database
-        _context.Documents.Add(newDocument);
-        await _context.SaveChangesAsync();
-
         // Save the file to disk
         var filePath = newDocument.FilePath;
-        using var stream = System.IO.File.Create(filePath);
-        await dto.File.CopyToAsync(stream);
+        using (var stream = System.IO.File.Create(filePath)) {
+            await dto.File.CopyToAsync(stream);
+        }
+
+        // Save to database
+        // TODO: Replace with logger if required
+        try {
+            _context.Documents.Add(newDocument);
+            await _context.SaveChangesAsync();
+        } catch (Exception e) {
+            // Delete the uploaded file to avoid orphaned files
+            try
+            {
+                System.IO.File.Delete(filePath);
+                Console.Error.WriteLine($"Deleted uploaded file due to database error: {e.Message}");
+            } catch (Exception deleteException)
+            {
+                Console.Error.WriteLine($"Failed to delete file after database error: {deleteException.Message}");
+            }
+            throw;
+        }
 
         // CreatedAtAction returns a 201 response with a Location header,
         // pointing to where the new resource can be found.
