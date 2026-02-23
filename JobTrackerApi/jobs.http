@@ -1,4 +1,5 @@
 @base = http://localhost:5286
+@jobId = 4
 
 ### Get all jobs
 GET {{base}}/jobs
@@ -15,7 +16,7 @@ Content-Type: application/json
 {
   "company": "A_Company",
   "role": "Backend Developer",
-  "status": 0
+  "status": "Offered"
 }
 
 ### Create a job with all fields
@@ -25,8 +26,8 @@ Content-Type: application/json
 {
   "company": "B_Company",
   "role": "Backend Developer",
-  "status": 1,
-  "priority": 2,
+  "status": "Applied",
+  "priority": "High",
   "appliedAt": "2026-02-22T02:43:10.925Z",
   "closedAt": "2026-02-22T02:43:10.925Z",
   "description": "Some description about the job application.",
@@ -41,14 +42,14 @@ Content-Type: application/json
 }
 
 ### Partially update a job
-PATCH {{base}}/jobs/1
+PATCH {{base}}/jobs/{{jobId}}
 Content-Type: application/json-patch+json
 
 [
   {
     "op": "replace",
     "path": "/status",
-    "value": 2
+    "value": "Wishlist"
   },
   {
     "op": "replace",
@@ -59,14 +60,14 @@ Content-Type: application/json-patch+json
 
 
 ### Fully update a job
-PUT {{base}}/jobs/5
+PUT {{base}}/jobs/{{jobId}}
 Content-Type: application/json
 
 {
   "company": "A_Company_Updated",
   "role": "Senior Backend Developer",
-  "status": 2,
-  "priority": 1
+  "status": "Offered",
+  "priority": "Medium"
 }
 
 
