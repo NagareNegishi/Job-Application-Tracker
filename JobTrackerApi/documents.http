@@ -18,7 +18,7 @@ PATCH {{base}}/jobs/{{jobId}}/documents/{{documentId}}
 Content-Type: application/json
 
 {
-  "type": 1,
+  "type": "CV",
   "name": "My CV3"
 }
 
