@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using JobTrackerApi.Data;
+using System.Text.Json.Serialization;
+// using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +19,31 @@ builder.WebHost.ConfigureKestrel(options =>
 
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers().
+    AddJsonOptions(options =>
+    {
+        // Input formatters:
+        // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding?view=aspnetcore-10.0
+
+        // Add enum converter to serialize enums as strings
+        options.JsonSerializerOptions.Converters.Add(
+            // Enums as strings:
+            // https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/customize-properties
+            new JsonStringEnumConverter(
+                allowIntegerValues: false // Not allowing integer values for enums
+            )
+        );
+
+        // JSON returned by API will be pretty-printed
+        options.JsonSerializerOptions.WriteIndented = true;
+        // Allow case-insensitive property names
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+
+        // Configure property naming policy, but be strict for consistency
+        // options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
+
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
