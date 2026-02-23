@@ -65,8 +65,17 @@ public class DocumentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Document>> PostDocument(int jobId, [FromForm] DocumentDTO dto)
     {
-        // Validate the uploaded file
-        if (!dto.HasValidExtension()) return BadRequest("File type not allowed.");
+        // Validate the uploaded file and max document per job
+        if (!dto.HasValidExtension()) {
+            return BadRequest("File type not allowed.");
+        }
+        if (!dto.HasValidSize()) {
+            return BadRequest("File size exceeds the limit.");
+        }
+        int documentCount = await _context.Documents.CountAsync(doc => doc.JobId == jobId);
+        if (documentCount >= ValidationConstants.MaxDocumentPerJob) {
+            return BadRequest("Maximum number of documents reached.");
+        }
 
         // Convert DTO to entity
         Document newDocument = dto.ToDocument(jobId, _uploadsPath);
