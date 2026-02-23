@@ -36,8 +36,9 @@ coverage/
 # Docker
 docker-compose.override.yml
 
-# Development note
+# Development notes and sample files
 notes/
+SampleFile/
 
 # Local configuration files from Backend
 appsettings.Development.json
