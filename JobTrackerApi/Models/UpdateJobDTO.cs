@@ -29,7 +29,9 @@ public class UpdateJobDTO
     [MaxLength(ValidationConstants.MaxNotesLength)]
     public string? Notes { get; set; }
 
+    [MaxLength(ValidationConstants.MaxContactSize)]
     public List<Contact>? Contacts { get; set; }
     
+    [MaxLength(ValidationConstants.MaxCorrespondenceSize)]
     public List<Correspondence>? Correspondences { get; set; }
 }

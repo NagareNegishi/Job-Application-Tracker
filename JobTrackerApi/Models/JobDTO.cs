@@ -29,6 +29,7 @@ public class JobDTO
     [MaxLength(ValidationConstants.MaxNotesLength)]
     public string? Notes { get; set; }
     
+    [MaxLength(ValidationConstants.MaxContactSize)]
     public List<Contact>? Contacts { get; set; }
 
     public Job ToJob()
