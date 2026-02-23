@@ -1,10 +1,26 @@
 @base = http://localhost:5286
 @jobId = 3
+@documentId = 2
+
+// VS Code REST Client CAN NOT handle file uploads
+// Manually POST before running tests below
 
 ### Get all documents for a job
 GET {{base}}/jobs/{{jobId}}/documents
 Accept: application/json
 
 ### Get a document by ID
-GET {{base}}/jobs/{{jobId}}/documents/1
+GET {{base}}/jobs/{{jobId}}/documents/{{documentId}}
 Accept: application/json
+
+### Path to uploaded file
+PATCH {{base}}/jobs/{{jobId}}/documents/{{documentId}}
+Content-Type: application/json
+
+{
+  "type": 1,
+  "name": "My CV3"
+}
+
+### Delete a document
+DELETE {{base}}/jobs/{{jobId}}/documents/{{documentId}}
