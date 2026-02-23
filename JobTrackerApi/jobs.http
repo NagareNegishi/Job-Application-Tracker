@@ -57,5 +57,19 @@ Content-Type: application/json-patch+json
   }
 ]
 
+
+### Fully update a job
+PUT {{base}}/jobs/5
+Content-Type: application/json
+
+{
+  "company": "A_Company_Updated",
+  "role": "Senior Backend Developer",
+  "status": 2,
+  "priority": 1
+}
+
+
+
 ### Delete a job
 DELETE {{base}}/jobs/1
