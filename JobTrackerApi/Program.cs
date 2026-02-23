@@ -1,10 +1,22 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using JobTrackerApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Control Kestrel's minimum request body data rate
+builder.WebHost.ConfigureKestrel(options =>
+    {
+    // options.Limits.MinRequestBodyDataRate = null; // disable rate limit entirely for dev
+    options.Limits.MinRequestBodyDataRate =
+        new MinDataRate(
+            bytesPerSecond: 100,
+            gracePeriod: TimeSpan.FromSeconds(10)
+        );
+    });
 
+
+// Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
