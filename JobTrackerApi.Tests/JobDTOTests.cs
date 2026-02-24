@@ -1,6 +1,7 @@
 
 namespace JobTrackerApi.Tests;
 using JobTrackerApi.Models;
+using System.ComponentModel.DataAnnotations;
 
 
 public class JobDTOTests
@@ -75,5 +76,24 @@ public class JobDTOTests
         Assert.Empty(job.Contacts!);
         Assert.Null(job.Documents);
         Assert.Null(job.Correspondences);
+    }
+
+    // Missing required fields
+    [Fact]
+    public void Test_MissingRequiredFields()
+    {
+        // Arrange
+        var dto = new JobDTO
+        {
+            Role = "Software Engineer",
+            Status = JobStatus.Applied
+        };
+
+        // Act & Assert
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(JobDTO.Company)));
     }
 }
