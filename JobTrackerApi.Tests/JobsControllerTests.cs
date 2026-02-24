@@ -222,4 +222,26 @@ public class JobsControllerTests
         Assert.Null(createdJob.Correspondences);
         Assert.Null(createdJob.Documents);
     }
+
+    // Test for PostJob with missing required fields
+    [Theory]
+    [InlineData("", "Valid Role")] // Missing company
+    [InlineData("Valid Company", "")] // Missing role
+    public async Task PostJob_RequiredFieldsAreMissing(string company, string role)
+    {
+        // Arrange
+        var jobDto = new JobDTO {
+            Company = company,
+            Role = role,
+        };
+        var context = new ValidationContext(jobDto);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(jobDto, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
+
 }
