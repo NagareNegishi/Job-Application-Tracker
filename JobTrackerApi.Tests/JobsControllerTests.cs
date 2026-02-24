@@ -101,13 +101,16 @@ public class JobsControllerTests
     }
 
     // Test for GetJob with an invalid ID
-    [Fact]
-    public async Task GetJob_ReturnsNotFound_WhenIdIsInvalid()
+    [Theory]
+    [InlineData(999)] // ID that does not exist
+    [InlineData(-1)]  // Negative ID
+    public async Task GetJob_ReturnsNotFound_WhenIdIsInvalid(int invalidId)
     {
         // Act
-        var result = await _controller.GetJob(999);
+        var result = await _controller.GetJob(invalidId);
 
         // Assert: Check that the result is a NotFound result
         Assert.IsType<NotFoundResult>(result.Result);
     }
+
 }
