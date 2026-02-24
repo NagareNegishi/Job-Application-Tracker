@@ -4,6 +4,7 @@ using JobTrackerApi.Data;
 using JobTrackerApi.Models;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 public class JobsControllerTests
 {
@@ -80,5 +81,33 @@ public class JobsControllerTests
         // Assert: Check that the result is an empty list
         var jobs = Assert.IsType<List<Job>>(result.Value);
         Assert.Empty(jobs);
+    }
+
+    // Test for GetJob with a valid ID
+    [Fact]
+    public async Task GetJob_ReturnsJob_WhenIdIsValid()
+    {
+        // Arrange
+        var seededJob = await SeedJobAsync(company: "Company A", role: "Developer");
+
+        // Act
+        var result = await _controller.GetJob(seededJob.Id);
+
+        // Assert: Check that the result contains the correct job details
+        var job = Assert.IsType<Job>(result.Value);
+        Assert.Equal(seededJob.Id, job.Id);
+        Assert.Equal("Company A", job.Company);
+        Assert.Equal("Developer", job.Role);
+    }
+
+    // Test for GetJob with an invalid ID
+    [Fact]
+    public async Task GetJob_ReturnsNotFound_WhenIdIsInvalid()
+    {
+        // Act
+        var result = await _controller.GetJob(999);
+
+        // Assert: Check that the result is a NotFound result
+        Assert.IsType<NotFoundResult>(result.Result);
     }
 }
