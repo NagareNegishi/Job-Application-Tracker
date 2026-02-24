@@ -266,4 +266,33 @@ public class JobsControllerTests
         // Assert: Check that validation fails
         Assert.False(isValid);
     }
+
+    // Test for DeleteJob with a valid ID
+    [Fact]
+    public async Task DeleteJob_DeletesJob_WhenIdIsValid()
+    {
+        // Arrange
+        var seededJob = await SeedJobAsync(company: "Company A", role: "Developer");
+
+        // Act
+        var result = await _controller.DeleteJob(seededJob.Id);
+
+        // Assert: Check that the result is NoContent and the job was deleted
+        Assert.IsType<NoContentResult>(result);
+        var deletedJob = await _context.Jobs.FindAsync(seededJob.Id);
+        Assert.Null(deletedJob);
+    }
+
+    // Test for DeleteJob with an invalid ID
+    [Theory]
+    [InlineData(999)]
+    [InlineData(-1)]
+    public async Task DeleteJob_ReturnsNotFound_WhenIdIsInvalid(int invalidId)
+    {
+        // Act
+        var result = await _controller.DeleteJob(invalidId);
+
+        // Assert: Check that the result is a NotFound result
+        Assert.IsType<NotFoundResult>(result);
+    }
 }
