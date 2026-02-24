@@ -1,9 +1,19 @@
 
 namespace JobTrackerApi.Tests;
 using JobTrackerApi.Models;
+using Moq;
+using Microsoft.AspNetCore.Http;
 
 public class DocumentDTOTests
 {
+    private static IFormFile CreateFakeFile(string fileName, long sizeInBytes = 1024)
+    {
+        var mockFile = new Mock<IFormFile>();
+        mockFile.Setup(f => f.FileName).Returns(fileName);
+        mockFile.Setup(f => f.Length).Returns(sizeInBytes);
+        return mockFile.Object;
+    }
+
     // Test acceptable file extensions
     [Theory]
     [InlineData(".pdf", true)]
@@ -19,9 +29,8 @@ public class DocumentDTOTests
     public void Test_HasValidExtension(string extension, bool expected)
     {
         // Arrange
-        var fileMock = new Mock<IFormFile>();
-        fileMock.Setup(f => f.FileName).Returns("test" + extension);
-        var dto = new DocumentDTO { File = fileMock.Object };
+        var mockFile = CreateFakeFile("testfile" + extension);
+        var dto = new DocumentDTO { File = mockFile };
 
         // Act
         var result = dto.HasValidExtension();
@@ -30,5 +39,5 @@ public class DocumentDTOTests
         Assert.Equal(expected, result);
     }
 
-    // HasValidSize() — accepts files under 10MB, rejects over
+    // Test file size constraints
 }
