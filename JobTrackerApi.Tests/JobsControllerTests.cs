@@ -180,4 +180,46 @@ public class JobsControllerTests
         // Assert: Check that the result is a NotFound result
         Assert.IsType<NotFoundResult>(result);
     }
+
+    // Test for PostJob to create a new job
+    [Fact]
+    public async Task PostJob_CreatesNewJob()
+    {
+        // Arrange
+        var jobDto = new JobDTO {
+            Company = "New Company",
+            Role = "New Role",
+            Status = JobStatus.Applied,
+            Priority = Priority.Medium,
+            AppliedAt = new DateTime(2024, 3, 1),
+            ClosedAt = null,
+            Description = "New job description",
+            Notes = "New job notes",
+            Contacts = [ new Contact {
+                Name = "Jane Smith",
+                Email = "Jane@Email"
+            } ]
+        };
+
+        // Act
+        var result = await _controller.PostJob(jobDto);
+
+        // Assert: Check that the result is CreatedAtAction and the job was created
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var createdJob = Assert.IsType<Job>(createdResult.Value);
+        Assert.Equal("New Company", createdJob.Company);
+        Assert.Equal("New Role", createdJob.Role);
+        Assert.Equal(JobStatus.Applied, createdJob.Status);
+        Assert.Equal(Priority.Medium, createdJob.Priority);
+        Assert.Equal(new DateTime(2024, 3, 1), createdJob.AppliedAt);
+        Assert.Null(createdJob.ClosedAt);
+        Assert.Equal("New job description", createdJob.Description);
+        Assert.Equal("New job notes", createdJob.Notes);
+        Assert.NotNull(createdJob.Contacts);
+        Assert.Single(createdJob.Contacts);
+        Assert.Equal("Jane Smith", createdJob.Contacts[0].Name);
+        Assert.Equal("Jane@Email", createdJob.Contacts[0].Email);
+        Assert.Null(createdJob.Correspondences);
+        Assert.Null(createdJob.Documents);
+    }
 }
