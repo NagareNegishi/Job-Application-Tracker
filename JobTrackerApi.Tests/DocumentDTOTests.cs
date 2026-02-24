@@ -40,4 +40,22 @@ public class DocumentDTOTests
     }
 
     // Test file size constraints
+    [Fact]
+    public void Test_HasValidSize()
+    {
+        // Arrange
+        var validFile = CreateFakeFile("validfile.pdf", ValidationConstants.MaxFileSize);
+        var invalidFile = CreateFakeFile("invalidfile.pdf", ValidationConstants.MaxFileSize + 1);
+
+        var validDto = new DocumentDTO { File = validFile };
+        var invalidDto = new DocumentDTO { File = invalidFile };
+
+        // Act
+        var validResult = validDto.HasValidSize();
+        var invalidResult = invalidDto.HasValidSize();
+
+        // Assert
+        Assert.True(validResult);
+        Assert.False(invalidResult);
+    }
 }
