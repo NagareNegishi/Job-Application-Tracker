@@ -58,4 +58,30 @@ public class DocumentDTOTests
         Assert.True(validResult);
         Assert.False(invalidResult);
     }
+
+    // Mapping test
+    [Fact]
+    public void Test_ToDocumentEntity()
+    {
+        // Arrange
+        var mockFile = CreateFakeFile("testfile.pdf", 2048);
+        var dto = new DocumentDTO
+        {
+            
+            File = mockFile,
+            Type = DocumentType.CV,
+            Name = "Test Document"
+        };
+
+        // Act
+        Document doc = dto.ToDocument(1, "/fake/path");
+
+        // Assert
+        Assert.Equal(DocumentType.CV, doc.Type);
+        Assert.Equal("Test Document", doc.Name);
+        Assert.StartsWith("/fake/path", doc.FilePath);
+        Assert.EndsWith("Test Document", doc.FilePath);
+        Assert.Equal(1, doc.JobId);
+        Assert.True((DateTime.UtcNow - doc.CreatedAt).TotalSeconds < 5); // CreatedAt should be recent
+    }
 }
