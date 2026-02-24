@@ -1,4 +1,3 @@
-
 namespace JobTrackerApi.Tests;
 using JobTrackerApi.Models;
 using System.ComponentModel.DataAnnotations;
