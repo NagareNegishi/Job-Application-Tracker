@@ -244,4 +244,26 @@ public class JobsControllerTests
         Assert.False(isValid);
     }
 
+    // Test for PostJob with fields exceeding max length
+    [Theory]
+    [InlineData(0)] // Test company field
+    [InlineData(1)] // Test role field
+    public async Task PostJob_FieldsExceedMaxLength(int choice)
+    {
+        // Arrange
+        var longCompany = new string('C', ValidationConstants.MaxCompanyLength + 1);
+        var longRole = new string('R', ValidationConstants.MaxRoleLength + 1);
+        var jobDto = new JobDTO {
+            Company = choice == 0 ? longCompany : "Valid Company",
+            Role = choice == 1 ? longRole : "Valid Role",
+        };
+        var context = new ValidationContext(jobDto);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(jobDto, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
 }
