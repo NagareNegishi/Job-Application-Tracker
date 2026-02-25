@@ -358,4 +358,24 @@ public class DocumentsControllerTests: IDisposable
         Assert.Equal(updateDto.Name, updatedDocument.Name);
         Assert.Equal(updateDto.Type, updatedDocument.Type);
     }
+
+    // Test PatchDocument with non-existent document
+    [Theory]
+    [InlineData(999)]
+    [InlineData(-1)]
+    public async Task PatchDocument_NonExistent_ReturnsNotFound(int id)
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var updateDto = new UpdateDocumentDTO {
+            Name = "Updated Name",
+            Type = DocumentType.CoverLetter
+        };
+
+        // Act
+        var result = await _controller.PatchDocument(job.Id, id, updateDto);
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
 }
