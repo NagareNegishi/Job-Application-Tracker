@@ -229,5 +229,25 @@ public class DocumentsControllerTests: IDisposable
         Assert.Equal("File type not allowed.", badRequestResult.Value);
     }
 
+    // Test PostDocument with file size exceeding limit
+    [Fact]
+    public async Task PostDocument_FileSizeExceedsLimit_ReturnsBadRequest()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var largeContent = new string('A', ValidationConstants.MaxFileSize + 1);
+        var dto = new DocumentDTO {
+            Type = DocumentType.CV,
+            Name = "Large File",
+            File = CreateDummyFile("large.pdf", largeContent, "application/pdf")
+        };
 
+        // Act
+        var result = await _controller.PostDocument(job.Id, dto);
+
+        // Assert
+        Assert.IsType<ActionResult<Document>>(result);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("File size exceeds the limit.", badRequestResult.Value);
+    }
 }
