@@ -150,4 +150,35 @@ public class DocumentsControllerTests: IDisposable
         Assert.Equal(2, result.Value.Count());
         Assert.All(result.Value, d => Assert.Equal(DocumentType.CV, d.Type));
     }
+
+    // Test GetDocument returns a specific document
+    [Fact]
+    public async Task GetDocument_ReturnsSpecificDocument()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var document = await SeedDocumentAsync(job.Id);
+
+        // Act
+        var result = await _controller.GetDocument(document.Id);
+
+        // Assert
+        Assert.IsType<ActionResult<Document>>(result);
+        Assert.NotNull(result.Value);
+        Assert.Equal(document.Id, result.Value.Id);
+    }
+
+    // Test GetDocument returns NotFound for non-existent document
+    [Theory]
+    [InlineData(999)]
+    [InlineData(-1)]
+    public async Task GetDocument_NonExistent_ReturnsNotFound(int id)
+    {
+        // Act
+        var result = await _controller.GetDocument(id);
+
+        // Assert
+        Assert.IsType<ActionResult<Document>>(result);
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
 }
