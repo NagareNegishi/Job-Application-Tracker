@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
 
 public class DocumentsControllerTests: IDisposable
 {
@@ -72,5 +73,19 @@ public class DocumentsControllerTests: IDisposable
         _context.Jobs.Add(job);
         await _context.SaveChangesAsync();
         return job;
+    }
+
+    // Helper method to create a dummy file for testing
+    private static FormFile CreateDummyFile(
+        string fileName,
+        string content = "Test content",
+        string contentType = "application/octet-stream")
+    {
+        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+
+        return new FormFile(stream, 0, stream.Length, "file", fileName) {
+            Headers = new HeaderDictionary(),
+            ContentType = contentType
+        };
     }
 }
