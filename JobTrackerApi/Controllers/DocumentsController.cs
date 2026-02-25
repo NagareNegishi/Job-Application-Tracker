@@ -120,8 +120,21 @@ public class DocumentsController : ControllerBase
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
         if (document.JobId != jobId) return BadRequest();
+
+        // Delete from DB
         _context.Documents.Remove(document);
         await _context.SaveChangesAsync();
+
+        // Delete the actual file
+        try
+        {
+            System.IO.File.Delete(document.FilePath);
+        }
+        catch (Exception e)
+        {
+            // Log the error but don't fail the request
+            Console.Error.WriteLine($"Failed to delete file: {e.Message}");
+        }
         return NoContent();
     }
 
