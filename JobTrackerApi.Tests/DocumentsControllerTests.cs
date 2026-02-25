@@ -181,4 +181,30 @@ public class DocumentsControllerTests: IDisposable
         Assert.IsType<ActionResult<Document>>(result);
         Assert.IsType<NotFoundResult>(result.Result);
     }
+
+    // Test PostDocument creates a new document
+    [Fact]
+    public async Task PostDocument_CreatesNewDocument()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var dto = new DocumentDTO {
+            Type = DocumentType.CV,
+            Name = "New CV",
+            File = CreateDummyFile("new_cv.pdf", "Dummy CV content", "application/pdf")
+        };
+
+        // Act
+        var result = await _controller.PostDocument(job.Id, dto);
+
+        // Assert: Unwrap the CreatedAtActionResult
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var document = Assert.IsType<Document>(createdResult.Value);
+        Assert.IsType<ActionResult<Document>>(result);
+        Assert.NotNull(document);
+        Assert.Equal(dto.Name, document.Name);
+        Assert.Equal(dto.Type, document.Type);
+        Assert.Equal(job.Id, document.JobId);
+        Assert.True(File.Exists(document.FilePath));
+    }
 }
