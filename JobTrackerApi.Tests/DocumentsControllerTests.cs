@@ -124,10 +124,30 @@ public class DocumentsControllerTests: IDisposable
         var result = await _controller.GetDocuments(job.Id, null);
 
         // Assert
-        var okResult = Assert.IsType<ActionResult<IEnumerable<Document>>>(result);
+        Assert.IsType<ActionResult<IEnumerable<Document>>>(result);
         Assert.NotNull(result.Value);
         Assert.Contains(result.Value, d => d.Id == doc1.Id);
         Assert.Contains(result.Value, d => d.Id == doc2.Id);
     }
 
+    // Test GetDocuments with type filter
+    [Fact]
+    public async Task GetDocuments_WithTypeFilter_ReturnsFilteredDocuments()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var doc1 = await SeedDocumentAsync(job.Id, DocumentType.CV, "CV.pdf", "/tmp/cv.pdf");
+        var doc2 = await SeedDocumentAsync(job.Id, DocumentType.CV, "CV2.pdf", "/tmp/cv2.pdf");
+        await SeedDocumentAsync(job.Id, DocumentType.CoverLetter, "CL.doc", "/tmp/cl.doc");
+        await SeedDocumentAsync(job.Id, DocumentType.Description, "Portfolio.docx", "/tmp/portfolio.docx");
+
+        // Act
+        var result = await _controller.GetDocuments(job.Id, DocumentType.CV);
+
+        // Assert
+        Assert.IsType<ActionResult<IEnumerable<Document>>>(result);
+        Assert.NotNull(result.Value);
+        Assert.Equal(2, result.Value.Count());
+        Assert.All(result.Value, d => Assert.Equal(DocumentType.CV, d.Type));
+    }
 }
