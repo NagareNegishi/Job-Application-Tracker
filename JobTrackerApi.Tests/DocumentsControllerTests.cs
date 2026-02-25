@@ -335,4 +335,27 @@ public class DocumentsControllerTests: IDisposable
         var existingDocument = await _context.Documents.FindAsync(document.Id);
         Assert.NotNull(existingDocument);
     }
+
+    // Test PatchDocument updates a document
+    [Fact]
+    public async Task PatchDocument_UpdatesDocument()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var document = await SeedDocumentAsync(job.Id, DocumentType.CV, "Old Name", "/tmp/old.pdf");
+        var updateDto = new UpdateDocumentDTO {
+            Name = "Updated Name",
+            Type = DocumentType.CoverLetter
+        };
+
+        // Act
+        var result = await _controller.PatchDocument(job.Id, document.Id, updateDto);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+        var updatedDocument = await _context.Documents.FindAsync(document.Id);
+        Assert.NotNull(updatedDocument);
+        Assert.Equal(updateDto.Name, updatedDocument.Name);
+        Assert.Equal(updateDto.Type, updatedDocument.Type);
+    }
 }
