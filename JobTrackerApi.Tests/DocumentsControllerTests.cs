@@ -301,4 +301,20 @@ public class DocumentsControllerTests: IDisposable
         Assert.Null(deletedDocument);
         Assert.False(File.Exists(document.FilePath));
     }
+
+    // Test DeleteDocument with non-existent document
+    [Theory]
+    [InlineData(999)]
+    [InlineData(-1)]
+    public async Task DeleteDocument_NonExistent_ReturnsNotFound(int id)
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+
+        // Act
+        var result = await _controller.DeleteDocument(job.Id, id);
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
 }
