@@ -274,4 +274,31 @@ public class DocumentsControllerTests: IDisposable
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("Maximum number of documents reached.", badRequestResult.Value);
     }
+
+    // Test DeleteDocument deletes a document
+    [Fact]
+    public async Task DeleteDocument_DeletesDocument()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var dto = new DocumentDTO {
+            Type = DocumentType.CV,
+            Name = "New CV",
+            File = CreateDummyFile("new_cv.pdf", "Dummy CV content", "application/pdf")
+        };
+        var postResult = await _controller.PostDocument(job.Id, dto);
+        Assert.IsType<ActionResult<Document>>(postResult);
+        var createdResult = Assert.IsType<CreatedAtActionResult>(postResult.Result);
+        var document = Assert.IsType<Document>(createdResult.Value);
+        Assert.True(File.Exists(document.FilePath));
+        
+        // Act
+        var result = await _controller.DeleteDocument(job.Id, document.Id);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+        var deletedDocument = await _context.Documents.FindAsync(document.Id);
+        Assert.Null(deletedDocument);
+        Assert.False(File.Exists(document.FilePath));
+    }
 }
