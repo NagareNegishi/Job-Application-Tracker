@@ -87,6 +87,7 @@ public class DocumentsControllerTests: IDisposable
             JobId = jobId,
             Type = type,
             Name = name,
+            StoredName = $"{Guid.NewGuid()}{Path.GetExtension(filePath)}", // unique stored name
             FilePath = filePath,
             CreatedAt = new DateTime(2024, 1, 1)
         };

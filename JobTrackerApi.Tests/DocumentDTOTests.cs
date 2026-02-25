@@ -79,7 +79,7 @@ public class DocumentDTOTests
         Assert.Equal(DocumentType.CV, doc.Type);
         Assert.Equal("Test Document", doc.Name);
         Assert.StartsWith("/fake/path", doc.FilePath);
-        Assert.EndsWith("Test Document", doc.FilePath);
+        Assert.EndsWith(".pdf", doc.FilePath);
         Assert.Equal(1, doc.JobId);
         Assert.True((DateTime.UtcNow - doc.CreatedAt).TotalSeconds < 5); // CreatedAt should be recent
     }
