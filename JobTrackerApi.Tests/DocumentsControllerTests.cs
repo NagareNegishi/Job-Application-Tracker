@@ -75,6 +75,28 @@ public class DocumentsControllerTests: IDisposable
         return job;
     }
 
+    // Helper method to seed a document into the in-memory database
+    private async Task<Document> SeedDocumentAsync(
+        int jobId,
+        DocumentType type = DocumentType.CV,
+        string name = "Test CV",
+        string filePath = "/tmp/cv.pdf")
+    {
+        var document = new Document
+        {
+            JobId = jobId,
+            Type = type,
+            Name = name,
+            FilePath = filePath,
+            CreatedAt = new DateTime(2024, 1, 1)
+        };
+        _context.Documents.Add(document);
+        await _context.SaveChangesAsync();
+        return document;
+    }
+
+
+
     // Helper method to create a dummy file for testing
     private static FormFile CreateDummyFile(
         string fileName,
@@ -88,4 +110,24 @@ public class DocumentsControllerTests: IDisposable
             ContentType = contentType
         };
     }
+
+    // Test GetDocuments returns documents for a job
+    [Fact]
+    public async Task GetDocuments_ReturnsDocumentsForJob()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var doc1 = await SeedDocumentAsync(job.Id, DocumentType.CV, "CV.pdf", "/tmp/cv.pdf");
+        var doc2 = await SeedDocumentAsync(job.Id, DocumentType.CoverLetter, "CL.doc", "/tmp/cl.doc");
+
+        // Act
+        var result = await _controller.GetDocuments(job.Id, null);
+
+        // Assert
+        var okResult = Assert.IsType<ActionResult<IEnumerable<Document>>>(result);
+        Assert.NotNull(result.Value);
+        Assert.Contains(result.Value, d => d.Id == doc1.Id);
+        Assert.Contains(result.Value, d => d.Id == doc2.Id);
+    }
+
 }
