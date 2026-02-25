@@ -250,4 +250,28 @@ public class DocumentsControllerTests: IDisposable
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("File size exceeds the limit.", badRequestResult.Value);
     }
+
+    // Test PostDocument when max documents per job is reached
+    [Fact]
+    public async Task PostDocument_MaxDocumentsReached_ReturnsBadRequest()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        for (int i = 0; i < ValidationConstants.MaxDocumentPerJob; i++) {
+            await SeedDocumentAsync(job.Id, DocumentType.CV, $"CV_{i}.pdf", $"/tmp/cv_{i}.pdf");
+        }
+        var dto = new DocumentDTO {
+            Type = DocumentType.CV,
+            Name = "Excess Document",
+            File = CreateDummyFile("excess.pdf", "Excess content", "application/pdf")
+        };
+
+        // Act
+        var result = await _controller.PostDocument(job.Id, dto);
+
+        // Assert
+        Assert.IsType<ActionResult<Document>>(result);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("Maximum number of documents reached.", badRequestResult.Value);
+    }
 }
