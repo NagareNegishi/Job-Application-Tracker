@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
-public class JobsControllerTests
+public class JobsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;
     private readonly JobsController _controller;
@@ -21,6 +21,12 @@ public class JobsControllerTests
         // create context and controller directly
         _context = new JobTrackerContext(options);
         _controller = new JobsController(_context);
+    }
+
+    public void Dispose()
+    {
+        _context.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     // Helper method to seed a job into the in-memory database

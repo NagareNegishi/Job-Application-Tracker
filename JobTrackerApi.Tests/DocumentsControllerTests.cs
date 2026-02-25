@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
-public class DocumentsControllerTests
+public class DocumentsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;
     private readonly DocumentsController _controller;
@@ -40,6 +40,7 @@ public class DocumentsControllerTests
     {
         Directory.Delete(_testUploadsPath, true);
         _context.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     // Helper method to seed a job into the in-memory database
