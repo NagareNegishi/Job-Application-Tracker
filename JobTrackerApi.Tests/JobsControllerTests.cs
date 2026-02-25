@@ -295,4 +295,6 @@ public class JobsControllerTests
         // Assert: Check that the result is a NotFound result
         Assert.IsType<NotFoundResult>(result);
     }
+
+    // Skip Patch tests, it will be covered in integration tests
 }
