@@ -378,4 +378,28 @@ public class DocumentsControllerTests: IDisposable
         // Assert
         Assert.IsType<NotFoundResult>(result);
     }
+
+    // Test PatchDocument with document that belongs to another job
+    [Fact]
+    public async Task PatchDocument_WrongJob_ReturnsBadRequest()
+    {
+        // Arrange
+        var job1 = await SeedJobAsync(company: "Company1");
+        var job2 = await SeedJobAsync(company: "Company2");
+        var document = await SeedDocumentAsync(job1.Id, DocumentType.CV, "Old Name", "/tmp/old.pdf");
+        var updateDto = new UpdateDocumentDTO {
+            Name = "Updated Name",
+            Type = DocumentType.CoverLetter
+        };
+
+        // Act
+        var result = await _controller.PatchDocument(job2.Id, document.Id, updateDto);
+
+        // Assert
+        Assert.IsType<BadRequestResult>(result);
+        var existingDocument = await _context.Documents.FindAsync(document.Id);
+        Assert.NotNull(existingDocument);
+        Assert.Equal("Old Name", existingDocument.Name);
+        Assert.Equal(DocumentType.CV, existingDocument.Type);
+    }
 }
