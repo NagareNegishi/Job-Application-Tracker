@@ -207,4 +207,27 @@ public class DocumentsControllerTests: IDisposable
         Assert.Equal(job.Id, document.JobId);
         Assert.True(File.Exists(document.FilePath));
     }
+
+    // Test PostDocument with invalid file type
+    [Fact]
+    public async Task PostDocument_InvalidFileType_ReturnsBadRequest()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var dto = new DocumentDTO {
+            Type = DocumentType.CV,
+            Name = "Invalid File",
+            File = CreateDummyFile("invalid.exe", "Executable content", "application/octet-stream")
+        };
+
+        // Act
+        var result = await _controller.PostDocument(job.Id, dto);
+
+        // Assert
+        Assert.IsType<ActionResult<Document>>(result);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("File type not allowed.", badRequestResult.Value);
+    }
+
+
 }
