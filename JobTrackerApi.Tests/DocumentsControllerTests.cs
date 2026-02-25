@@ -317,4 +317,22 @@ public class DocumentsControllerTests: IDisposable
         // Assert
         Assert.IsType<NotFoundResult>(result);
     }
+
+    // Test DeleteDocument with document that belongs to another job
+    [Fact]
+    public async Task DeleteDocument_WrongJob_ReturnsBadRequest()
+    {
+        // Arrange
+        var job1 = await SeedJobAsync(company: "Company1");
+        var job2 = await SeedJobAsync(company: "Company2");
+        var document = await SeedDocumentAsync(job1.Id);
+
+        // Act
+        var result = await _controller.DeleteDocument(job2.Id, document.Id);
+
+        // Assert
+        Assert.IsType<BadRequestResult>(result);
+        var existingDocument = await _context.Documents.FindAsync(document.Id);
+        Assert.NotNull(existingDocument);
+    }
 }
