@@ -10,7 +10,8 @@ public class Document
 {
     public int Id { get; set; }
     public DocumentType Type { get; set; }
-    public required string Name { get; set; }
+    public required string Name { get; set; } // Original, display name
+    public required string StoredName { get; set; } // Randomly generated name for storage
     public required string FilePath { get; set; }
     public DateTime CreatedAt { get; set; }
     public int JobId { get; set; }

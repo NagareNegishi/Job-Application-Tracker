@@ -21,11 +21,15 @@ public class DocumentDTO {
     public Document ToDocument(int jobId, string path) {
         // Do not use the FileName property of IFormFile, removes the path from the file name
         // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-10.0#validation
-        string fileName = Path.GetFileName(Name ?? File.FileName);
-        var filePath = Path.Combine(path, fileName);
+        string displayName = Path.GetFileName(Name ?? File.FileName);
+        string extension = Path.GetExtension(File.FileName).ToLowerInvariant();
+        string storedFileName = $"{Guid.NewGuid()}{extension}"; // globally unique file name
+        string filePath = Path.Combine(path, storedFileName);
+
         return new Document {
             Type = Type,
-            Name = fileName,
+            Name = displayName,
+            StoredName = storedFileName,
             FilePath = filePath,
             CreatedAt = DateTime.UtcNow, // use UTC for consistency
             JobId = jobId
