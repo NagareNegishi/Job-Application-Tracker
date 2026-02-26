@@ -1,6 +1,8 @@
+import { handleEmptyResponse, handleResponse } from "@/lib/api"
 import type { CreateJobRequest, Job, JobPatchOperation, UpdateJobRequest } from "../types/job"
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
+
 
 /**
  * Fetches all jobs from the API.
@@ -9,8 +11,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL
  */
 export async function getJobs(): Promise<Job[]> {
   const response = await fetch(`${BASE_URL}/jobs`)
-  if (!response.ok) throw new Error("Failed to fetch jobs")
-  return response.json()
+  return handleResponse<Job[]>(response)
 }
 
 
@@ -22,8 +23,7 @@ export async function getJobs(): Promise<Job[]> {
  */
 export async function getJob(id: number): Promise<Job> {
   const response = await fetch(`${BASE_URL}/jobs/${id}`)
-  if (!response.ok) throw new Error("Failed to fetch job")
-  return response.json()
+  return handleResponse<Job>(response)
 }
 
 
@@ -39,8 +39,7 @@ export async function createJob(data: CreateJobRequest): Promise<Job> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   })
-  if (!response.ok) throw new Error("Failed to create job")
-  return response.json()
+  return handleResponse<Job>(response)
 }
 
 
@@ -57,8 +56,7 @@ export async function replaceJob(id: number, data: UpdateJobRequest): Promise<vo
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   })
-  if (!response.ok) throw new Error("Failed to update job")
-  // No content expected
+  return handleEmptyResponse(response)
 }
 
 
@@ -70,8 +68,7 @@ export async function replaceJob(id: number, data: UpdateJobRequest): Promise<vo
  */
 export async function deleteJob(id: number): Promise<void> {
   const response = await fetch(`${BASE_URL}/jobs/${id}`, { method: "DELETE" })
-  if (!response.ok) throw new Error("Failed to delete job")
-  // No content expected
+  return handleEmptyResponse(response)
 }
 
 
@@ -88,6 +85,5 @@ export async function patchJob(id: number, patch: JobPatchOperation[]): Promise<
     headers: { "Content-Type": "application/json-patch+json" },
     body: JSON.stringify(patch)
   })
-  if (!response.ok) throw new Error("Failed to patch job")
-  // No content expected
+  return handleEmptyResponse(response)
 }
