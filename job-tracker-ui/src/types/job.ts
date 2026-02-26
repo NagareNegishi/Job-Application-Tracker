@@ -46,3 +46,23 @@ export interface UpdateJobRequest {
     contacts?: Contact[];
     correspondences?: Correspondence[];
 }
+
+
+// Set of allowed JSON Patch operations for a Job, used in the patchJob service function
+export type JobPatchOperation =
+    // Scalar fields — replace only
+    | { op: "replace"; path: "/company"; value: string }
+    | { op: "replace"; path: "/role"; value: string }
+    | { op: "replace"; path: "/status"; value: JobStatus }
+    | { op: "replace"; path: "/priority"; value: Priority | null }
+    | { op: "replace"; path: "/appliedAt"; value: string | null }
+    | { op: "replace"; path: "/closedAt"; value: string | null }
+    | { op: "replace" | "remove"; path: "/description"; value?: string | null }
+    | { op: "replace" | "remove"; path: "/notes"; value?: string | null }
+    // Array fields — add, remove, replace
+    | { op: "add"; path: "/contacts/-"; value: Contact }        // append
+    | { op: "remove"; path: `/contacts/${number}`; value?: never }  // remove by index
+    | { op: "replace"; path: `/contacts/${number}`; value: Contact }
+    | { op: "add"; path: "/correspondences/-"; value: Correspondence }
+    | { op: "remove"; path: `/correspondences/${number}`; value?: never }
+    | { op: "replace"; path: `/correspondences/${number}`; value: Correspondence }
