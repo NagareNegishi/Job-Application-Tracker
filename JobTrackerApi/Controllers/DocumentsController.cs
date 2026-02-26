@@ -36,7 +36,7 @@ public class DocumentsController : ControllerBase
     // Allow filtering by type
     // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding?view=aspnetcore-10.0
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Document>>> GetDocuments(int jobId, [FromQuery] DocumentType? type)
+    public async Task<ActionResult<IEnumerable<DocumentResponseDto>>> GetDocuments(int jobId, [FromQuery] DocumentType? type)
     {
         // All documents under a specific job
         var query = _context.Documents.Where(doc => doc.JobId == jobId);
@@ -44,17 +44,18 @@ public class DocumentsController : ControllerBase
         {
             query = query.Where(doc => doc.Type == type.Value); // Filter by type if provided
         }
-        return await query.ToListAsync();
+        var documents = await query.ToListAsync();
+        return documents.Select(doc => doc.ToResponseDto()).ToList();
     }
 
 
     // Get a specific document by ID
     [HttpGet("{id}")]
-    public async Task<ActionResult<Document>> GetDocument(int id)
+    public async Task<ActionResult<DocumentResponseDto>> GetDocument(int id)
     {
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
-        return document;
+        return document.ToResponseDto();
     }
 
 
@@ -63,7 +64,7 @@ public class DocumentsController : ControllerBase
     // and bind it to the DocumentDTO
     // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding?view=aspnetcore-10.0
     [HttpPost]
-    public async Task<ActionResult<Document>> PostDocument(int jobId, [FromForm] DocumentDTO dto)
+    public async Task<ActionResult<DocumentResponseDto>> PostDocument(int jobId, [FromForm] DocumentDTO dto)
     {
         // Validate the uploaded file and max document per job
         if (!dto.HasValidExtension()) {
@@ -109,7 +110,7 @@ public class DocumentsController : ControllerBase
         return CreatedAtAction(
             nameof(GetDocument), // the action method to generate the URL from, it should point where the new resource can be found
             new { jobId, id = newDocument.Id }, // the route parameters to fill in
-            newDocument); // the created object to include in the response body
+            newDocument.ToResponseDto()); // the created object to include in the response body
     }
 
 

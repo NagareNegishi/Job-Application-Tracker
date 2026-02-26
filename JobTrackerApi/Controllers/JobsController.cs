@@ -20,14 +20,16 @@ public class JobsController : ControllerBase
 
     // Get all jobs
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Job>>> GetJobs()
+    public async Task<ActionResult<IEnumerable<JobResponseDto>>> GetJobs()
     {
-        return await _context.Jobs.ToListAsync();
+        return (await _context.Jobs.ToListAsync())
+            .Select(job => job.ToResponseDto())
+            .ToList();
     }
 
     // Get a specific job by ID
     [HttpGet("{id}")]
-    public async Task<ActionResult<Job>> GetJob(int id)
+    public async Task<ActionResult<JobResponseDto>> GetJob(int id)
     {
         // it should not include doc
         var job = await _context.Jobs.FindAsync(id);
@@ -38,7 +40,7 @@ public class JobsController : ControllerBase
         //     .FirstOrDefaultAsync(j => j.Id == id);
 
         if (job == null) return NotFound();
-        return job;
+        return job.ToResponseDto();
     }
 
     // Update a job with a specific ID
@@ -75,7 +77,7 @@ public class JobsController : ControllerBase
 
     // Create a new job
     [HttpPost]
-    public async Task<ActionResult<Job>> PostJob(JobDTO dto)
+    public async Task<ActionResult<JobResponseDto>> PostJob(JobDTO dto)
     {
         var newJob = dto.ToJob();
         _context.Jobs.Add(newJob);
@@ -86,7 +88,7 @@ public class JobsController : ControllerBase
         return CreatedAtAction(
             nameof(GetJob), // the action method to generate the URL from, it should point where the new resource can be found
             new { id = newJob.Id }, // the route parameters to fill in
-            newJob); // the created object to include in the response body
+            newJob.ToResponseDto()); // the created object to include in the response body
     }
 
 
