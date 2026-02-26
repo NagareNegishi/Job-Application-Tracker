@@ -1,4 +1,14 @@
 {
+  "compilerOptions": {
+
+    // For shadcn/ui
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+
+  },
+
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
