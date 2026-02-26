@@ -72,7 +72,7 @@ public class JobsControllerTests: IDisposable
         var result = await _controller.GetJobs();
 
         // Assert: Check that the result contains both seeded jobs
-        var jobs = Assert.IsType<List<Job>>(result.Value);
+        var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
         Assert.Contains(jobs, j => j.Id == job1.Id && j.Company == "Company A" && j.Role == "Developer");
         Assert.Contains(jobs, j => j.Id == job2.Id && j.Company == "Company B" && j.Role == "Designer");
     }
@@ -85,7 +85,7 @@ public class JobsControllerTests: IDisposable
         var result = await _controller.GetJobs();
 
         // Assert: Check that the result is an empty list
-        var jobs = Assert.IsType<List<Job>>(result.Value);
+        var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
         Assert.Empty(jobs);
     }
 
@@ -100,7 +100,7 @@ public class JobsControllerTests: IDisposable
         var result = await _controller.GetJob(seededJob.Id);
 
         // Assert: Check that the result contains the correct job details
-        var job = Assert.IsType<Job>(result.Value);
+        var job = Assert.IsType<JobResponseDto>(result.Value);
         Assert.Equal(seededJob.Id, job.Id);
         Assert.Equal("Company A", job.Company);
         Assert.Equal("Developer", job.Role);
@@ -212,7 +212,7 @@ public class JobsControllerTests: IDisposable
 
         // Assert: Check that the result is CreatedAtAction and the job was created
         var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-        var createdJob = Assert.IsType<Job>(createdResult.Value);
+        var createdJob = Assert.IsType<JobResponseDto>(createdResult.Value);
         Assert.Equal("New Company", createdJob.Company);
         Assert.Equal("New Role", createdJob.Role);
         Assert.Equal(JobStatus.Applied, createdJob.Status);
