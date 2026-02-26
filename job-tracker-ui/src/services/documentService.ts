@@ -38,10 +38,18 @@ export async function getDocument(jobId: number, id: number): Promise<JobDocumen
  * @throws An error if the fetch operation fails.
  */
 export async function createDocument(jobId: number, data: CreateJobDocumentRequest): Promise<JobDocument> {
+  // Backend expects [FromForm]
+  const formData = new FormData()
+  formData.append("file", data.file)
+  formData.append("type", data.type)
+  if (data.name) {
+    formData.append("name", data.name)
+  }
+
+  // Let browser set the correct Content-Type
   const response = await fetch(`${BASE_URL}/jobs/${jobId}/documents`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: formData
   })
   return handleResponse<JobDocument>(response)
 }
