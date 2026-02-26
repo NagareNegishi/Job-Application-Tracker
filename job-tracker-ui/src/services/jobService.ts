@@ -3,7 +3,6 @@ import type { CreateJobRequest, Job, JobPatchOperation, UpdateJobRequest } from 
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
-
 /**
  * Fetches all jobs from the API.
  * @returns A promise that resolves to an array of Job objects.
