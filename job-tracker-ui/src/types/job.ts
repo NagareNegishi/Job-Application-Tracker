@@ -1,4 +1,5 @@
 // Job interface, mirrors JobResponseDto from the backend
+import type { Contact, Correspondence } from "./contact";
 import { JobStatus, Priority } from "./enums";
 import type { JobDocument } from "./jobDocument";
 
@@ -13,8 +14,8 @@ export interface Job {
     documents?: JobDocument[]; // Don't expose internal Document
     description?: string;
     notes?: string;
-    // contacts?: Contact[]; // Define Contact interface later
-    // correspondences?: Correspondence[]; // Define Correspondence interface later
+    contacts?: Contact[];
+    correspondences?: Correspondence[];
 }
 
 
