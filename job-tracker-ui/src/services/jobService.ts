@@ -1,4 +1,4 @@
-import type { CreateJobRequest, Job, UpdateJobRequest } from "../types/job"
+import type { CreateJobRequest, Job, JobPatchOperation, UpdateJobRequest } from "../types/job"
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -71,77 +71,23 @@ export async function replaceJob(id: number, data: UpdateJobRequest): Promise<vo
 export async function deleteJob(id: number): Promise<void> {
   const response = await fetch(`${BASE_URL}/jobs/${id}`, { method: "DELETE" })
   if (!response.ok) throw new Error("Failed to delete job")
+  // No content expected
 }
 
 
-//patch
 /**
  * Partially updates a job by sending a PATCH request to the API.
+ * @param id - The ID of the job to update.
+ * @param patch - An array of JSON Patch operations to apply to the job, conforming to the JobPatchOperation type.
+ * @returns A promise that resolves when the job is successfully updated.
+ * @throws An error if the fetch operation fails or if the job is not found.
  */
-
-    // // Partial update of a job using JSON Patch
-    // // https://learn.microsoft.com/en-us/aspnet/core/web-api/jsonpatch?view=aspnetcore-10.0
-    // // https://www.nuget.org/packages/Microsoft.AspNetCore.JsonPatch.SystemTextJson
-    // [HttpPatch("{id}")]
-    // public async Task<IActionResult> PatchJob(int id, [FromBody] JsonPatchDocument<UpdateJobDTO> patchDoc)
-    // {
-    //     // most invalid patch document will be rejected by the framework
-    //     var job = await _context.Jobs.FindAsync(id);
-    //     if (job == null) return NotFound();
-
-    //     // Copy the existing job data into a DTO for patching.
-    //     var jobToPatch = new UpdateJobDTO
-    //     {
-    //         Company = job.Company,
-    //         Role = job.Role,
-    //         Status = job.Status,
-    //         Priority = job.Priority,
-    //         AppliedAt = job.AppliedAt,
-    //         ClosedAt = job.ClosedAt,
-    //         Description = job.Description,
-    //         Notes = job.Notes,
-    //         Contacts = job.Contacts,
-    //         Correspondences = job.Correspondences
-    //     };
-
-    //     patchDoc.ApplyTo(jobToPatch, jsonPatchError =>
-    //         {
-    //             ModelState.AddModelError(
-    //                 jsonPatchError.AffectedObject.GetType().Name,
-    //                 jsonPatchError.ErrorMessage
-    //             );
-    //         }
-    //     );
-
-    //     if (!ModelState.IsValid) return BadRequest(ModelState);
-    //     if (!TryValidateModel(jobToPatch)) return BadRequest(ModelState);
-
-    //     // Map back to the original job entity
-    //     job.Company = jobToPatch.Company;
-    //     job.Role = jobToPatch.Role;
-    //     job.Status = jobToPatch.Status;
-    //     job.Priority = jobToPatch.Priority;
-    //     job.AppliedAt = jobToPatch.AppliedAt;
-    //     job.ClosedAt = jobToPatch.ClosedAt;
-    //     job.Description = jobToPatch.Description;
-    //     job.Notes = jobToPatch.Notes;
-    //     job.Contacts = jobToPatch.Contacts;
-    //     job.Correspondences = jobToPatch.Correspondences;
-
-    //     try
-    //     {
-    //         await _context.SaveChangesAsync();
-    //     }
-    //     catch (DbUpdateConcurrencyException)
-    //     {
-    //         if (!JobsExists(id)) return NotFound(); // someone else deleted
-    //         return Conflict(); // someone else updated
-    //     }
-    //     return NoContent();
-    // }
-
-    // // Helper method to check if a job exists by ID
-    // private bool JobsExists(int id)
-    // {
-    //     return _context.Jobs.Any(e => e.Id == id);
-    // }
+export async function patchJob(id: number, patch: JobPatchOperation[]): Promise<void> {
+  const response = await fetch(`${BASE_URL}/jobs/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json-patch+json" },
+    body: JSON.stringify(patch)
+  })
+  if (!response.ok) throw new Error("Failed to patch job")
+  // No content expected
+}
