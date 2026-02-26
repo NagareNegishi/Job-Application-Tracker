@@ -1,6 +1,6 @@
 namespace JobTrackerApi.Models;
 
-public class Job
+public class JobResponseDto
 {
     // EF Core automatically recognizes Id as the primary key
     public int Id { get; set; }
@@ -11,7 +11,7 @@ public class Job
     public DateTime? AppliedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
     // Navigation property for related documents (CV, cover letter, etc.)
-    public List<Document>? Documents { get; set; }
+    public List<DocumentResponseDto>? Documents { get; set; } // Don't expose internal Document
     public string? Description { get; set; }
     public string? Notes { get; set; }
     public List<Contact>? Contacts { get; set; }
