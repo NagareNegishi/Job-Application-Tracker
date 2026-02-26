@@ -16,4 +16,25 @@ public class Job
     public string? Notes { get; set; }
     public List<Contact>? Contacts { get; set; }
     public List<Correspondence>? Correspondences { get; set; }
+
+
+    // Method to convert Job to JobResponseDto
+    public JobResponseDto ToResponseDto()
+    {
+        return new JobResponseDto
+        {
+            Id = this.Id,
+            Company = this.Company,
+            Role = this.Role,
+            Status = this.Status,
+            Priority = this.Priority,
+            AppliedAt = this.AppliedAt,
+            ClosedAt = this.ClosedAt,
+            Documents = this.Documents?.Select(d => d.ToResponseDto()).ToList(),
+            Description = this.Description,
+            Notes = this.Notes,
+            Contacts = this.Contacts,
+            Correspondences = this.Correspondences
+        };
+    }
 }

@@ -15,4 +15,17 @@ public class Document
     public required string FilePath { get; set; }
     public DateTime CreatedAt { get; set; }
     public int JobId { get; set; }
+
+
+    // Method to convert Document to DocumentResponseDto
+    public DocumentResponseDto ToResponseDto()
+    {
+        return new DocumentResponseDto
+        {
+            JobId = this.JobId,
+            DocId = this.Id,
+            Type = this.Type,
+            Name = this.Name
+        };
+    }
 }
