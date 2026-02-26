@@ -125,10 +125,10 @@ public class DocumentsControllerTests: IDisposable
         var result = await _controller.GetDocuments(job.Id, null);
 
         // Assert
-        Assert.IsType<ActionResult<IEnumerable<Document>>>(result);
+        Assert.IsType<ActionResult<IEnumerable<DocumentResponseDto>>>(result);
         Assert.NotNull(result.Value);
-        Assert.Contains(result.Value, d => d.Id == doc1.Id);
-        Assert.Contains(result.Value, d => d.Id == doc2.Id);
+        Assert.Contains(result.Value, d => d.DocId == doc1.Id);
+        Assert.Contains(result.Value, d => d.DocId == doc2.Id);
     }
 
     // Test GetDocuments with type filter
@@ -146,7 +146,7 @@ public class DocumentsControllerTests: IDisposable
         var result = await _controller.GetDocuments(job.Id, DocumentType.CV);
 
         // Assert
-        Assert.IsType<ActionResult<IEnumerable<Document>>>(result);
+        Assert.IsType<ActionResult<IEnumerable<DocumentResponseDto>>>(result);
         Assert.NotNull(result.Value);
         Assert.Equal(2, result.Value.Count());
         Assert.All(result.Value, d => Assert.Equal(DocumentType.CV, d.Type));
@@ -164,9 +164,9 @@ public class DocumentsControllerTests: IDisposable
         var result = await _controller.GetDocument(document.Id);
 
         // Assert
-        Assert.IsType<ActionResult<Document>>(result);
+        Assert.IsType<ActionResult<DocumentResponseDto>>(result);
         Assert.NotNull(result.Value);
-        Assert.Equal(document.Id, result.Value.Id);
+        Assert.Equal(document.Id, result.Value.DocId);
     }
 
     // Test GetDocument returns NotFound for non-existent document
@@ -179,7 +179,7 @@ public class DocumentsControllerTests: IDisposable
         var result = await _controller.GetDocument(id);
 
         // Assert
-        Assert.IsType<ActionResult<Document>>(result);
+        Assert.IsType<ActionResult<DocumentResponseDto>>(result);
         Assert.IsType<NotFoundResult>(result.Result);
     }
 
@@ -200,13 +200,16 @@ public class DocumentsControllerTests: IDisposable
 
         // Assert: Unwrap the CreatedAtActionResult
         var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-        var document = Assert.IsType<Document>(createdResult.Value);
-        Assert.IsType<ActionResult<Document>>(result);
+        var document = Assert.IsType<DocumentResponseDto>(createdResult.Value);
+        Assert.IsType<ActionResult<DocumentResponseDto>>(result);
         Assert.NotNull(document);
         Assert.Equal(dto.Name, document.Name);
         Assert.Equal(dto.Type, document.Type);
         Assert.Equal(job.Id, document.JobId);
-        Assert.True(File.Exists(document.FilePath));
+        // Also check the file was saved to disk
+        var savedDocument = await _context.Documents.FindAsync(document.DocId);
+        Assert.NotNull(savedDocument);
+        Assert.True(File.Exists(savedDocument.FilePath));
     }
 
     // Test PostDocument with invalid file type
@@ -225,7 +228,7 @@ public class DocumentsControllerTests: IDisposable
         var result = await _controller.PostDocument(job.Id, dto);
 
         // Assert
-        Assert.IsType<ActionResult<Document>>(result);
+        Assert.IsType<ActionResult<DocumentResponseDto>>(result);
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("File type not allowed.", badRequestResult.Value);
     }
@@ -247,7 +250,7 @@ public class DocumentsControllerTests: IDisposable
         var result = await _controller.PostDocument(job.Id, dto);
 
         // Assert
-        Assert.IsType<ActionResult<Document>>(result);
+        Assert.IsType<ActionResult<DocumentResponseDto>>(result);
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("File size exceeds the limit.", badRequestResult.Value);
     }
@@ -271,7 +274,7 @@ public class DocumentsControllerTests: IDisposable
         var result = await _controller.PostDocument(job.Id, dto);
 
         // Assert
-        Assert.IsType<ActionResult<Document>>(result);
+        Assert.IsType<ActionResult<DocumentResponseDto>>(result);
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("Maximum number of documents reached.", badRequestResult.Value);
     }
@@ -288,19 +291,22 @@ public class DocumentsControllerTests: IDisposable
             File = CreateDummyFile("new_cv.pdf", "Dummy CV content", "application/pdf")
         };
         var postResult = await _controller.PostDocument(job.Id, dto);
-        Assert.IsType<ActionResult<Document>>(postResult);
+        Assert.IsType<ActionResult<DocumentResponseDto>>(postResult);
         var createdResult = Assert.IsType<CreatedAtActionResult>(postResult.Result);
-        var document = Assert.IsType<Document>(createdResult.Value);
-        Assert.True(File.Exists(document.FilePath));
+        var document = Assert.IsType<DocumentResponseDto>(createdResult.Value);
+        // Ensure the document file exists before deletion
+        var savedDocument = await _context.Documents.FindAsync(document.DocId);
+        Assert.NotNull(savedDocument);
+        Assert.True(File.Exists(savedDocument.FilePath));
         
         // Act
-        var result = await _controller.DeleteDocument(job.Id, document.Id);
+        var result = await _controller.DeleteDocument(job.Id, document.DocId);
 
         // Assert
         Assert.IsType<NoContentResult>(result);
-        var deletedDocument = await _context.Documents.FindAsync(document.Id);
+        var deletedDocument = await _context.Documents.FindAsync(document.DocId);
         Assert.Null(deletedDocument);
-        Assert.False(File.Exists(document.FilePath));
+        Assert.False(File.Exists(savedDocument.FilePath));
     }
 
     // Test DeleteDocument with non-existent document
