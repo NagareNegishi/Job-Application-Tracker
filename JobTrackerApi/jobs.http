@@ -35,8 +35,8 @@ Content-Type: application/json
   "contacts": [
     {
       "name": "John Doe",
-      "email": "Some email",
-      "phone": "Some phone number"
+      "email": "Some@email",
+      "phone": "111-111-1111"
     }
   ]
 }
