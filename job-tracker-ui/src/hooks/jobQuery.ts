@@ -14,7 +14,7 @@ import {
   patchJob,
   replaceJob
 } from '../services/jobService'
-import type { CreateJobRequest, JobPatchOperation, UpdateJobRequest } from "../types/job"
+import type { JobPatchOperation, UpdateJobRequest } from "../types/job"
 
 // Custom hook to fetch jobs
 export function useJobs() {
@@ -23,24 +23,25 @@ export function useJobs() {
 
 // Custom hook to fetch a single job by ID
 export function useJob(id: number) {
-  return useQuery({ queryKey: ["job", id], queryFn: () => getJob(id) })
+  return useQuery({ queryKey: ["jobs", id], queryFn: () => getJob(id) })
 }
 
 // Custom hook to create a new job
-export function useCreateJob(data: CreateJobRequest) {
+export function useCreateJob() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => createJob(data),
+    mutationFn: createJob, // if the service function takes one argument, you can pass it directly
     // Invalidate and refetch
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] })
   })
 }
 
 // Custom hook to replace an existing job
-export function useReplaceJob(id: number, data: UpdateJobRequest) {
+export function useReplaceJob() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => replaceJob(id, data),
+    // When the mutation function takes multiple arguments, wrap them in an object
+    mutationFn: ({ id, data }: { id: number, data: UpdateJobRequest }) => replaceJob(id, data),
     // Invalidate and refetch
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] })
   })
@@ -57,10 +58,10 @@ export function useDeleteJob() {
 }
 
 // Custom hook to patch an existing job
-export function usePatchJob(id: number, operations: JobPatchOperation[]) {
+export function usePatchJob() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => patchJob(id, operations),
+    mutationFn: ({ id, operations }: { id: number, operations: JobPatchOperation[] }) => patchJob(id, operations),
     // Invalidate and refetch
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] })
   })
