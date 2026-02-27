@@ -1,19 +1,17 @@
+import {
+  useQuery
+} from '@tanstack/react-query'
 import { JobTable } from './components/jobTable'
-// import {
-//   useQuery,
-//   useMutation,
-//   useQueryClient,
-//   QueryClient,
-//   QueryClientProvider,
-// } from '@tanstack/react-query'
-// import { getJobs } from './services/jobService'
+import { getJobs } from './services/jobService'
 
 function App() {
-  
+  // jobs list
+  const { data: jobs } = useQuery({ queryKey: ["jobs"], queryFn: getJobs })
 
   return (
     <div className="App">
-      <JobTable jobs={[]} />
+      <p className="text-2xl font-bold mb-4">Job Tracker</p>
+      <JobTable jobs={jobs ?? []} />
     </div>
   )
 }
