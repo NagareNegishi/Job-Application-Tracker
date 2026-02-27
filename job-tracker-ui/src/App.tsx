@@ -1,12 +1,13 @@
-import { JobTable } from './components/jobTable'
+import { Route, Routes } from "react-router"
+import JobPage from "./pages/JobPage"
 
 function App() {
 
   return (
-    <div className="App">
-      {/* <p className="text-2xl font-bold mb-4">Job Tracker</p> */}
-      <JobTable />
-    </div>
+    <Routes>
+      {/* change to /jobs */}
+      <Route path="/" element={<JobPage />} />
+    </Routes>
   )
 }
 
