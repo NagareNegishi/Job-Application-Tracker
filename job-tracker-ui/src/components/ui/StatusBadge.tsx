@@ -1,3 +1,6 @@
+/**
+ * StatusBadge component to display job status with appropriate styling
+ */
 import { Badge } from "@/components/ui/badge"
 import type { JobStatus } from "@/types/enums"
 
