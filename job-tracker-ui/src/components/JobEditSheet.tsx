@@ -1,0 +1,253 @@
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import type { Job } from "@/types/job"
+
+interface JobEditSheetProps {
+  job: Job
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="overflow-y-auto sm:max-w-lg">
+        <SheetHeader>
+          <SheetTitle>Edit Job</SheetTitle>
+        </SheetHeader>
+
+        {/* form fields go here */}
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+
+// import { DatePicker } from "@/components/ui/DatePicker"
+// import { Button } from "@/components/ui/button"
+// import { Input } from "@/components/ui/input"
+// import { Label } from "@/components/ui/label"
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select"
+// import {
+//   Sheet,
+//   SheetContent,
+//   SheetHeader,
+//   SheetTitle,
+// } from "@/components/ui/sheet"
+// import { Textarea } from "@/components/ui/textarea"
+// import { usePatchJob } from "@/hooks/jobQuery"
+// import { JobStatus, Priority } from "@/types/enums"
+// import type { Job, JobPatchOperation } from "@/types/job"
+// import { useEffect, useState } from "react"
+
+// interface JobEditSheetProps {
+//   job: Job
+//   open: boolean
+//   onOpenChange: (open: boolean) => void
+// }
+
+// interface FormState {
+//   company: string
+//   role: string
+//   status: JobStatus
+//   priority: Priority | ""
+//   appliedAt: Date | undefined
+//   closedAt: Date | undefined
+//   description: string
+//   notes: string
+// }
+
+// function toFormState(job: Job): FormState {
+//   return {
+//     company: job.company ?? "",
+//     role: job.role ?? "",
+//     status: job.status,
+//     priority: job.priority ?? "",
+//     appliedAt: job.appliedAt ? new Date(job.appliedAt) : undefined,
+//     closedAt: job.closedAt ? new Date(job.closedAt) : undefined,
+//     description: job.description ?? "",
+//     notes: job.notes ?? "",
+//   }
+// }
+
+// export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
+//   const [form, setForm] = useState<FormState>(() => toFormState(job))
+//   const { mutate: patchJob, isPending } = usePatchJob()
+
+//   // Reset form when sheet opens with fresh job data
+//   useEffect(() => {
+//     if (open) setForm(toFormState(job))
+//   }, [job, open])
+
+//   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
+//     setForm(prev => ({ ...prev, [key]: value }))
+//   }
+
+//   function handleSubmit() {
+//     const operations: JobPatchOperation[] = []
+
+//     if (form.company !== (job.company ?? ""))
+//       operations.push({ op: "replace", path: "/company", value: form.company })
+
+//     if (form.role !== (job.role ?? ""))
+//       operations.push({ op: "replace", path: "/role", value: form.role })
+
+//     if (form.status !== job.status)
+//       operations.push({ op: "replace", path: "/status", value: form.status })
+
+//     if (form.priority !== (job.priority ?? ""))
+//       operations.push({ op: "replace", path: "/priority", value: form.priority === "" ? null : form.priority })
+
+//     const appliedAtISO = form.appliedAt?.toISOString() ?? null
+//     const existingAppliedAt = job.appliedAt ? new Date(job.appliedAt).toISOString() : null
+//     if (appliedAtISO !== existingAppliedAt)
+//       operations.push({ op: "replace", path: "/appliedAt", value: appliedAtISO })
+
+//     const closedAtISO = form.closedAt?.toISOString() ?? null
+//     const existingClosedAt = job.closedAt ? new Date(job.closedAt).toISOString() : null
+//     if (closedAtISO !== existingClosedAt)
+//       operations.push({ op: "replace", path: "/closedAt", value: closedAtISO })
+
+//     if (form.description !== (job.description ?? ""))
+//       operations.push({ op: "replace", path: "/description", value: form.description })
+
+//     if (form.notes !== (job.notes ?? ""))
+//       operations.push({ op: "replace", path: "/notes", value: form.notes })
+
+//     // Nothing changed — just close
+//     if (operations.length === 0) {
+//       onOpenChange(false)
+//       return
+//     }
+
+//     patchJob(
+//       { id: job.id, operations },
+//       { onSuccess: () => onOpenChange(false) }
+//     )
+//   }
+
+//   return (
+//     <Sheet open={open} onOpenChange={onOpenChange}>
+//       <SheetContent className="overflow-y-auto sm:max-w-lg">
+//         <SheetHeader>
+//           <SheetTitle>Edit Job</SheetTitle>
+//         </SheetHeader>
+
+//         <div className="space-y-4 mt-6">
+//           <div className="space-y-1.5">
+//             <Label htmlFor="company">Company</Label>
+//             <Input
+//               id="company"
+//               value={form.company}
+//               onChange={e => setField("company", e.target.value)}
+//             />
+//           </div>
+
+//           <div className="space-y-1.5">
+//             <Label htmlFor="role">Role</Label>
+//             <Input
+//               id="role"
+//               value={form.role}
+//               onChange={e => setField("role", e.target.value)}
+//             />
+//           </div>
+
+//           <div className="space-y-1.5">
+//             <Label>Status</Label>
+//             <Select value={form.status} onValueChange={v => setField("status", v as JobStatus)}>
+//               <SelectTrigger>
+//                 <SelectValue />
+//               </SelectTrigger>
+//               <SelectContent>
+//                 {Object.values(JobStatus).map(s => (
+//                   <SelectItem key={s} value={s}>{s}</SelectItem>
+//                 ))}
+//               </SelectContent>
+//             </Select>
+//           </div>
+
+//           <div className="space-y-1.5">
+//             <Label>Priority</Label>
+//             <Select value={form.priority} onValueChange={v => setField("priority", v as Priority | "")}>
+//               <SelectTrigger>
+//                 <SelectValue placeholder="None" />
+//               </SelectTrigger>
+//               <SelectContent>
+//                 <SelectItem value="">None</SelectItem>
+//                 {Object.values(Priority).map(p => (
+//                   <SelectItem key={p} value={p}>{p}</SelectItem>
+//                 ))}
+//               </SelectContent>
+//             </Select>
+//           </div>
+
+//           <div className="space-y-1.5">
+//             <Label>Applied At</Label>
+//             <DatePicker
+//               value={form.appliedAt}
+//               onChange={d => setField("appliedAt", d)}
+//               placeholder="Select date"
+//             />
+//           </div>
+
+//           <div className="space-y-1.5">
+//             <Label>Closed At</Label>
+//             <DatePicker
+//               value={form.closedAt}
+//               onChange={d => setField("closedAt", d)}
+//               placeholder="Select date"
+//             />
+//           </div>
+
+//           <div className="space-y-1.5">
+//             <Label htmlFor="description">Description</Label>
+//             <Textarea
+//               id="description"
+//               value={form.description}
+//               onChange={e => setField("description", e.target.value)}
+//               rows={3}
+//             />
+//           </div>
+
+//           <div className="space-y-1.5">
+//             <Label htmlFor="notes">Notes</Label>
+//             <Textarea
+//               id="notes"
+//               value={form.notes}
+//               onChange={e => setField("notes", e.target.value)}
+//               rows={3}
+//             />
+//           </div>
+
+//           <div className="flex gap-2 pt-2">
+//             <Button
+//               variant="outline"
+//               className="flex-1"
+//               onClick={() => onOpenChange(false)}
+//               disabled={isPending}
+//             >
+//               Cancel
+//             </Button>
+//             <Button
+//               className="flex-1"
+//               onClick={handleSubmit}
+//               disabled={isPending}
+//             >
+//               {isPending ? "Saving..." : "Save"}
+//             </Button>
+//           </div>
+//         </div>
+//       </SheetContent>
+//     </Sheet>
+//   )
+// }

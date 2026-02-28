@@ -7,7 +7,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
-export function JobHeader({ job }: { job: Job }) {
+
+interface JobHeaderProps {
+  job: Job
+  onEdit: () => void
+}
+
+export function JobHeader({ job, onEdit }: JobHeaderProps) {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
@@ -43,7 +49,12 @@ export function JobHeader({ job }: { job: Job }) {
         />
 
         {/* <StatusBadge status={job.status} /> */}
-        <Button>Edit</Button>
+        <Button
+          variant="outline"
+          onClick={onEdit}
+        >
+          Edit
+        </Button>
 
         {/* Document type selector for uploads */}
         <select
@@ -55,7 +66,10 @@ export function JobHeader({ job }: { job: Job }) {
           <option value="Other">Other</option>
         </select>
         {/* "Add Document" button triggers hidden file input */}
-        <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
+        <Button
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()} disabled={isPending}
+        >
           {isPending ? "Uploading..." : "Add Document"}
         </Button>
 
