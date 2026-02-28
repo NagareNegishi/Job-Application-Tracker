@@ -17,7 +17,8 @@ public class UpdateJobDTO
     [Required]
     public JobStatus Status { get; set; } = JobStatus.Wishlist;
 
-    public Priority? Priority { get; set; }
+    [Required]
+    public Priority Priority { get; set; } = Priority.Low;
 
     public DateTime? AppliedAt { get; set; }
 
