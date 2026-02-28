@@ -1,3 +1,5 @@
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Sheet,
   SheetContent,
@@ -6,9 +8,9 @@ import {
 } from "@/components/ui/sheet"
 import { JobStatus, Priority } from "@/types/enums"
 import type { Job } from "@/types/job"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
-
+// FormState represents the internal state of the job edit form
 interface FormState {
   company: string
   role: string
@@ -20,6 +22,7 @@ interface FormState {
   notes: string
 }
 
+// Converts a Job object to the FormState shape
 function toFormState(job: Job): FormState {
   return {
     company: job.company,
@@ -32,8 +35,6 @@ function toFormState(job: Job): FormState {
     notes: job.notes ?? "",
   }
 }
-
-
 
 
 
@@ -54,6 +55,17 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
   const [form, setForm] = useState<FormState>(() => toFormState(job))
 
+  // Reset form when sheet opens with fresh job data
+  useEffect(() => {
+    if (open) setForm(toFormState(job))
+  }, [job, open])
+
+
+  // Helper function to update form state for a specific field
+  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm(prev => ({ ...prev, [key]: value }))
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto sm:max-w-lg">
@@ -62,6 +74,16 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
         </SheetHeader>
 
         {/* form fields go here */}
+
+        {/* Edit Company */}
+        <div className="space-y-1.5">
+          <Label htmlFor="company">Company</Label>
+          <Input
+            id="company"
+            value={form.company}
+            onChange={e => setField("company", e.target.value)}
+          />
+        </div>
       </SheetContent>
     </Sheet>
   )
