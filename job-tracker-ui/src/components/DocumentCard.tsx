@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useDeleteDocument, useDownloadDocument } from "@/hooks/documentQuery";
 import type { JobDocument } from "@/types/jobDocument";
+// import { Download, Trash2, Pencil, Check, X } from "lucide-react"
+import { Download, Trash2 } from "lucide-react";
 
 interface DocumentCardProps {
   document: JobDocument
@@ -18,19 +20,21 @@ export function DocumentCard({ document }: DocumentCardProps) {
       </div>
 
       <Button
-        variant="outline"
+        variant="ghost"
+        size="icon"
         onClick={() => download({ jobId: document.jobId, docId: document.docId, fileName: document.name })}
         disabled={isPending}
       >
-        {isPending ? "Downloading..." : "Download"}
+        <Download className="h-4 w-4" />
       </Button>
 
       <Button
-        variant="destructive"
+        variant="ghost"
+        size="icon"
         onClick={() => deleteDocument({ jobId: document.jobId, docId: document.docId })}
         disabled={isDeleting}
       >
-        {isDeleting ? "Deleting..." : "Delete"}
+        <Trash2 className="h-4 w-4" />
       </Button>
     </div>
   )
