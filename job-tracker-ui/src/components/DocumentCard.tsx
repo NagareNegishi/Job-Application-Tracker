@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useDownloadDocument } from "@/hooks/documentQuery";
+import { useDeleteDocument, useDownloadDocument } from "@/hooks/documentQuery";
 import type { JobDocument } from "@/types/jobDocument";
 
 interface DocumentCardProps {
@@ -8,6 +8,7 @@ interface DocumentCardProps {
 
 export function DocumentCard({ document }: DocumentCardProps) {
   const { mutate: download, isPending } = useDownloadDocument()
+  const { mutate: deleteDocument, isPending: isDeleting } = useDeleteDocument()
 
   return (
     <div className="border rounded p-3 flex items-center justify-between">
@@ -24,6 +25,13 @@ export function DocumentCard({ document }: DocumentCardProps) {
         {isPending ? "Downloading..." : "Download"}
       </Button>
 
+      <Button
+        variant="destructive"
+        onClick={() => deleteDocument({ jobId: document.jobId, docId: document.docId })}
+        disabled={isDeleting}
+      >
+        {isDeleting ? "Deleting..." : "Delete"}
+      </Button>
     </div>
   )
 }
