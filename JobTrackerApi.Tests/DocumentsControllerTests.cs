@@ -48,8 +48,8 @@ public class DocumentsControllerTests: IDisposable
     private async Task<Job> SeedJobAsync(
         string company = "A_Company",
         string role = "Dev",
-        JobStatus? status = null,
-        Priority? priority = null,
+        JobStatus status = JobStatus.Wishlist,
+        Priority priority = Priority.Low,
         DateTime? appliedAt = null,
         DateTime? closedAt = null,
         string? description = null,
@@ -61,7 +61,7 @@ public class DocumentsControllerTests: IDisposable
         var job = new Job {
             Company = company,
             Role = role,
-            Status = status ?? JobStatus.Wishlist,
+            Status = status,
             Priority = priority,
             AppliedAt = appliedAt,
             ClosedAt = closedAt,
@@ -203,7 +203,7 @@ public class DocumentsControllerTests: IDisposable
         var document = Assert.IsType<DocumentResponseDto>(createdResult.Value);
         Assert.IsType<ActionResult<DocumentResponseDto>>(result);
         Assert.NotNull(document);
-        Assert.Equal(dto.Name, document.Name);
+        Assert.Equal(dto.Name + ".pdf", document.Name);
         Assert.Equal(dto.Type, document.Type);
         Assert.Equal(job.Id, document.JobId);
         // Also check the file was saved to disk
