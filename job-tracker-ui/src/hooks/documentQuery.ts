@@ -21,7 +21,8 @@ import {
 export function useDocuments(jobId: number, type?: DocumentType) {
   return useQuery({
     queryKey: ["jobs", jobId, "documents", "list", type],
-    queryFn: () => getDocuments(jobId, type)
+    queryFn: () => getDocuments(jobId, type),
+    enabled: !isNaN(jobId)
   })
 }
 
@@ -30,6 +31,7 @@ export function useDocument(jobId: number, id: number) {
   return useQuery({
     queryKey: ["jobs", jobId, "documents", "detail", id],
     queryFn: () => getDocument(jobId, id),
+    enabled: !isNaN(jobId) && !isNaN(id)
   })
 }
 
@@ -47,17 +49,13 @@ export function useCreateDocument() {
   return useMutation({
     mutationFn: ({ jobId, data }: { jobId: number, data: CreateJobDocumentRequest }) =>
       createDocument(jobId, data),
-    // Invalidate and refetch
 
     // We don't care return from mutationFn, so we can use _ to ignore it.
     // variables is the same object we pass to mutationFn, so we can destructure it to get jobId for invalidation.
-    onSuccess: (_, variables) =>
-      queryClient.invalidateQueries(
-        { queryKey: ["jobs", variables.jobId, "documents"] }
-      )
+    onSuccess: (_, variables) => queryClient.invalidateQueries({
+      queryKey: ["jobs", variables.jobId, "documents"] })
   })
 }
-
 
 // Custom hook to delete a document
 export function useDeleteDocument() {
@@ -65,7 +63,8 @@ export function useDeleteDocument() {
   return useMutation({
     mutationFn: ({ jobId, docId }: { jobId: number, docId: number }) => deleteDocument(jobId, docId),
     // Invalidate and refetch
-    onSuccess: (_, variables) => queryClient.invalidateQueries({ queryKey: ["jobs", variables.jobId, "documents"] })
+    onSuccess: (_, variables) => queryClient.invalidateQueries({
+      queryKey: ["jobs", variables.jobId, "documents"] })
   })
 }
 
@@ -76,7 +75,8 @@ export function usePatchDocument() {
     mutationFn: ({ jobId, docId, data }: { jobId: number, docId: number, data: UpdateJobDocumentRequest }) =>
       patchDocument(jobId, docId, data),
     // Invalidate and refetch
-    onSuccess: (_, variables) => queryClient.invalidateQueries({ queryKey: ["jobs", variables.jobId, "documents"] })
+    onSuccess: (_, variables) => queryClient.invalidateQueries({
+      queryKey: ["jobs", variables.jobId, "documents"] })
   })
 
 }
