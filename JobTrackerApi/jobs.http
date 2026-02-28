@@ -59,6 +59,32 @@ Content-Type: application/json-patch+json
 ]
 
 
+### Partially update a job, add correspondence
+PATCH {{base}}/jobs/{{jobId}}
+Content-Type: application/json-patch+json
+
+[
+  {
+    "op": "replace",
+    "path": "/correspondences",
+    "value": [
+      {
+        "date": "2026-02-22T02:43:10.925Z",
+        "note": "Had a phone interview with the recruiter."
+      },
+      {
+        "date": "2026-02-23T02:43:10.925Z",
+        "note": "Had an onsite interview with the team."
+      },
+      {
+        "date": "2026-02-24T02:43:10.925Z",
+        "note": "Received an offer from the company."
+      }
+    ]
+  }
+]
+
+
 ### Fully update a job
 PUT {{base}}/jobs/{{jobId}}
 Content-Type: application/json

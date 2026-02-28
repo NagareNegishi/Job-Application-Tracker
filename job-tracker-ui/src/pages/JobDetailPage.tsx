@@ -7,6 +7,8 @@
 // │   └── CorrespondenceEntry
 // └── DocumentList       # uploaded files
 //     └── DocumentCard   # filename, type, upload date, download/delete
+import { ContactList } from "@/components/ContactList";
+import { CorrespondenceList } from "@/components/CorrespondenceList";
 import { JobHeader } from "@/components/JobHeader";
 import { JobInfoCard } from "@/components/JobInfoCard";
 import { useJob } from "@/hooks/jobQuery";
@@ -27,6 +29,9 @@ function JobDetailPage() {
       {/* <p className="text-2xl font-bold mb-4">Job Tracker</p> */}
       <JobHeader job={job} />
       <JobInfoCard job={job} />
+      <ContactList contacts={job.contacts ?? []} />
+      <CorrespondenceList entries={job.correspondences ?? []} />
+      {/* DocumentList would go here */}
 
     </div>
   )
