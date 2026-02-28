@@ -1,3 +1,5 @@
+// JobDetailPage.tsx
+// This page displays detailed information about a specific job application, including:
 // JobDetailPage
 // ├── JobHeader          # company, role, back button, edit/delete actions
 // ├── JobInfoCard        # status, priority, appliedAt, closedAt, notes/description
