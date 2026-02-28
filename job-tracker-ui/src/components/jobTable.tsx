@@ -8,9 +8,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useJobs } from "@/hooks/jobQuery";
+import { useNavigate } from "react-router";
 
 export function JobTable() {
   const { data: jobs, isPending, isError } = useJobs()
+  const navigate = useNavigate()
   if (isPending) return <p>Loading...</p>
   if (isError) return <p>Something went wrong.</p>
   return (
@@ -28,7 +30,11 @@ export function JobTable() {
       </TableHeader>
       <TableBody>
         {jobs.map((job) => (
-          <TableRow key={job.id}>
+          <TableRow
+            key={job.id}
+            onClick={() => navigate(`/jobs/${job.id}`)}
+            className="cursor-pointer hover:bg-gray-100"
+          >
             <TableCell className="font-medium">{job.company}</TableCell>
             <TableCell>{job.role}</TableCell>
             <TableCell>{job.status}</TableCell>
