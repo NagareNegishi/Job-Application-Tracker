@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { useJobs } from "@/hooks/jobQuery";
 import { useNavigate } from "react-router";
+import { StatusBadge } from "./ui/StatusBadge";
 
 export function JobTable() {
   const { data: jobs, isPending, isError } = useJobs()
@@ -37,7 +38,7 @@ export function JobTable() {
           >
             <TableCell className="font-medium">{job.company}</TableCell>
             <TableCell>{job.role}</TableCell>
-            <TableCell>{job.status}</TableCell>
+            <TableCell><StatusBadge status={job.status} /></TableCell>
             <TableCell>{job.priority ?? "N/A"}</TableCell>
             <TableCell>{job.appliedAt ? new Date(job.appliedAt).toLocaleDateString() : "N/A"}</TableCell>
             <TableCell>{job.closedAt ? new Date(job.closedAt).toLocaleDateString() : "N/A"}</TableCell>
