@@ -18,24 +18,32 @@ interface DocumentCardProps {
 }
 
 export function DocumentCard({ document }: DocumentCardProps) {
+
+  const extension = document.name.includes('.') ? document.name.slice(document.name.lastIndexOf('.')) : ''
+  const baseName = document.name.slice(0, document.name.length - extension.length)
+
   const { mutate: download, isPending: isDownloading } = useDownloadDocument()
   const { mutate: deleteDocument, isPending: isDeleting } = useDeleteDocument()
   const { mutate: patchDocument, isPending: isPatching } = usePatchDocument()
+  const [editName, setEditName] = useState(baseName)
   const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState(document.name)
   const [editType, setEditType] = useState(document.type)
 
   // Confirm edits and send PATCH request to update document metadata
   function handleConfirm() {
     patchDocument(
-      { jobId: document.jobId, docId: document.docId, data: { name: editName, type: editType } },
+      {
+        jobId: document.jobId,
+        docId: document.docId,
+        data: { name: editName + extension, type: editType }
+      },
       { onSuccess: () => setIsEditing(false) }
     )
   }
 
   // Revert to original values if user cancels edit
   function handleCancel() {
-    setEditName(document.name)
+    setEditName(baseName)
     setEditType(document.type)
     setIsEditing(false)
   }
@@ -51,6 +59,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
               onChange={e => setEditName(e.target.value)}
               className="h-8"
             />
+            <span className="text-sm text-muted-foreground">{extension}</span>
             <Select value={editType} onValueChange={val => setEditType(val as DocumentType)}>
               <SelectTrigger className="h-8 w-36">
                 <SelectValue />
