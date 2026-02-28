@@ -47,6 +47,7 @@ builder.Services.AddControllers().
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+
 // GetConnectionString method looks for a configuration value
 // https://learn.microsoft.com/en-us/ef/core/miscellaneous/connection-strings?tabs=dotnet-core-cli
 // appsettings.json is not appropriate for secret values, keep them in .env
@@ -59,8 +60,23 @@ var connectionString = builder.Configuration.GetConnectionString("JobTrackerCont
 builder.Services.AddDbContext<JobTrackerContext>(options =>
     options.UseNpgsql(connectionString));
 
+
+// CORS policy for development, allowing the React app to make API calls to this backend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCors", policy =>
+    {
+        policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()!)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+
 // <snippet_UseSwagger>
 var app = builder.Build();
+
+app.UseCors("DevCors"); // Apply CORS policy
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

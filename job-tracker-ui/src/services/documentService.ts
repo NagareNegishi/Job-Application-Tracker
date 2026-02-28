@@ -1,6 +1,6 @@
 import { handleEmptyResponse, handleResponse } from "@/lib/api"
-import { DocumentType } from "../types/enums"
-import type { CreateJobDocumentRequest, JobDocument, UpdateJobDocumentRequest } from "../types/jobDocument"
+import { DocumentType } from "@/types/enums"
+import type { CreateJobDocumentRequest, JobDocument, UpdateJobDocumentRequest } from "@/types/jobDocument"
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -28,6 +28,31 @@ export async function getDocuments(jobId: number, type?: DocumentType): Promise<
 export async function getDocument(jobId: number, id: number): Promise<JobDocument> {
   const response = await fetch(`${BASE_URL}/jobs/${jobId}/documents/${id}`)
   return handleResponse<JobDocument>(response)
+}
+
+
+/**
+ * Downloads a document by sending a GET request to the API and triggering a file download in the browser.
+ * @param jobId - The ID of the job to which the document belongs.
+ * @param docId - The ID of the document to download.
+ * @param fileName - The name to use for the downloaded file, typically obtained from the DocumentResponseDto.
+ * @returns A promise that resolves when the download is triggered.
+ * @throws An error if the fetch operation fails or if the document is not found.
+ */
+export async function downloadDocument(jobId: number, docId: number, fileName: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}/jobs/${jobId}/documents/${docId}/download`)
+  await handleEmptyResponse(response)
+  
+  // Response is Binary Large Object, raw bites in memory (Blob is superclass of File)
+  const blob = await response.blob()
+  // Create a temporary URL for the blob and trigger a download
+  const url = URL.createObjectURL(blob)
+  // Create a temporary anchor element to trigger the download
+  const a = document.createElement('a') // create invisible <a> element
+  a.href = url
+  a.download = fileName  // uses the display name from your DocumentResponseDto
+  a.click() // trigger the download by simulating a click
+  URL.revokeObjectURL(url) // Clean up the temporary URL to free memory
 }
 
 

@@ -59,6 +59,20 @@ public class DocumentsController : ControllerBase
     }
 
 
+    // Download a specific document by ID
+    [HttpGet("{id}/download")]
+    public async Task<IActionResult> DownloadDocument(int jobId, int id)
+    {
+        var document = await _context.Documents.FindAsync(id);
+        if (document == null) return NotFound();
+        if (document.JobId != jobId) return BadRequest();
+        if (!System.IO.File.Exists(document.FilePath)) return NotFound();
+
+        var stream = System.IO.File.OpenRead(document.FilePath);
+        return File(stream, "application/octet-stream", document.Name);
+    }
+
+
     // Create a new document
     // [FromForm] tells ASP.NET Core to look for the data in the form data
     // and bind it to the DocumentDTO
