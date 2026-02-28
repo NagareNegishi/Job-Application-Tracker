@@ -18,13 +18,15 @@ interface DocumentCardProps {
 }
 
 export function DocumentCard({ document }: DocumentCardProps) {
-
+  // Extract file extension for display and editing purposes
   const extension = document.name.includes('.') ? document.name.slice(document.name.lastIndexOf('.')) : ''
   const baseName = document.name.slice(0, document.name.length - extension.length)
-
+  // Mutations for document actions
   const { mutate: download, isPending: isDownloading } = useDownloadDocument()
   const { mutate: deleteDocument, isPending: isDeleting } = useDeleteDocument()
   const { mutate: patchDocument, isPending: isPatching } = usePatchDocument()
+  const isBusy = isDownloading || isDeleting || isPatching
+  // Local state for edit mode and form values
   const [editName, setEditName] = useState(baseName)
   const [isEditing, setIsEditing] = useState(false)
   const [editType, setEditType] = useState(document.type)
@@ -51,6 +53,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
   return (
     <div className="border rounded p-3 flex items-center justify-between">
 
+      {/* Display document name and type, or input fields if in edit mode */}
       <div className="flex items-center gap-2 flex-1">
         {isEditing ? (
           <>
@@ -79,38 +82,44 @@ export function DocumentCard({ document }: DocumentCardProps) {
         )}
       </div>
 
-
+      {/* Action buttons: Edit (pencil), Download, Delete (trash) */}
       <div className="flex items-center gap-1">
+        
+        {/* Edit actions */}
         {isEditing ? (
           <>
-            <Button variant="ghost" size="icon" onClick={handleConfirm} disabled={isPatching}>
+            <Button variant="ghost" size="icon" onClick={handleConfirm} disabled={isBusy}>
               <Check className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleCancel} disabled={isPatching}>
+            <Button variant="ghost" size="icon" onClick={handleCancel} disabled={isBusy}>
               <X className="h-4 w-4" />
             </Button>
           </>
         ) : (
-          <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
+          <Button variant="ghost" size="icon"
+            onClick={() => setIsEditing(true)}
+            disabled={isBusy}
+          >
             <Pencil className="h-4 w-4" />
           </Button>
         )}
 
+        {/* Download action */}
         <Button variant="ghost" size="icon"
           onClick={() => download({ jobId: document.jobId, docId: document.docId, fileName: document.name })}
-          disabled={isDownloading}
+          disabled={isBusy || isEditing}
         >
           <Download className="h-4 w-4" />
         </Button>
 
+        {/* Delete action */}
         <Button variant="ghost" size="icon"
           onClick={() => deleteDocument({ jobId: document.jobId, docId: document.docId })}
-          disabled={isDeleting}
+          disabled={isBusy || isEditing}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-
     </div>
   )
 }
