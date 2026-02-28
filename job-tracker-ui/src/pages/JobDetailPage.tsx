@@ -8,6 +8,7 @@
 // └── DocumentList       # uploaded files
 //     └── DocumentCard   # filename, type, upload date, download/delete
 import { JobHeader } from "@/components/JobHeader";
+import { JobInfoCard } from "@/components/JobInfoCard";
 import { useJob } from "@/hooks/jobQuery";
 import { useParams } from "react-router";
 
@@ -25,6 +26,8 @@ function JobDetailPage() {
     <div className="container mx-auto p-4">
       {/* <p className="text-2xl font-bold mb-4">Job Tracker</p> */}
       <JobHeader job={job} />
+      <JobInfoCard job={job} />
+
     </div>
   )
 }
