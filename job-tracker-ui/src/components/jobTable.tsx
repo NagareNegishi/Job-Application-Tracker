@@ -40,7 +40,7 @@ export function JobTable() {
             <TableCell className="font-medium">{job.company}</TableCell>
             <TableCell>{job.role}</TableCell>
             <TableCell><StatusBadge status={job.status} /></TableCell>
-            <TableCell>{job.priority ? <PriorityDot priority={job.priority} /> : "N/A"}</TableCell>
+            <TableCell><PriorityDot priority={job.priority} /></TableCell>
             <TableCell>{job.appliedAt ? new Date(job.appliedAt).toLocaleDateString() : "N/A"}</TableCell>
             <TableCell>{job.closedAt ? new Date(job.closedAt).toLocaleDateString() : "N/A"}</TableCell>
           </TableRow>

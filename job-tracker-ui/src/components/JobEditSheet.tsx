@@ -4,15 +4,56 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { JobStatus, Priority } from "@/types/enums"
 import type { Job } from "@/types/job"
+import { useState } from "react"
 
+
+interface FormState {
+  company: string
+  role: string
+  status: JobStatus
+  priority: Priority
+  appliedAt: Date | undefined
+  closedAt: Date | undefined
+  description: string
+  notes: string
+}
+
+function toFormState(job: Job): FormState {
+  return {
+    company: job.company,
+    role: job.role,
+    status: job.status,
+    priority: job.priority,
+    appliedAt: job.appliedAt ? new Date(job.appliedAt) : undefined,
+    closedAt: job.closedAt ? new Date(job.closedAt) : undefined,
+    description: job.description ?? "",
+    notes: job.notes ?? "",
+  }
+}
+
+
+
+
+
+/**
+ * Props for JobEditSheet component, which provides a form for editing job details.
+ */
 interface JobEditSheetProps {
   job: Job
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
+/**
+ * JobEditSheet component provides a form for editing job details.
+ * It uses a Sheet component for the UI and manages form state internally.
+ */
 export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
+
+  const [form, setForm] = useState<FormState>(() => toFormState(job))
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto sm:max-w-lg">

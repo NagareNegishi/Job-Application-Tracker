@@ -7,12 +7,19 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
-
+/**
+ * Props for JobHeader component, which displays the company and role of a job application,
+ */
 interface JobHeaderProps {
   job: Job
   onEdit: () => void
 }
 
+
+/**
+ * JobHeader component displays the company and role of a job application,
+ * along with action buttons for editing, adding documents, and deleting the job.
+ */
 export function JobHeader({ job, onEdit }: JobHeaderProps) {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -48,7 +55,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
           onChange={handleFileChange}
         />
 
-        {/* <StatusBadge status={job.status} /> */}
+        {/* Edit button opens the JobEditSheet, controlled by state in JobDetailPage */}
         <Button
           variant="outline"
           onClick={onEdit}
@@ -65,6 +72,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
           <option value="CoverLetter">Cover Letter</option>
           <option value="Other">Other</option>
         </select>
+
         {/* "Add Document" button triggers hidden file input */}
         <Button
           variant="outline"

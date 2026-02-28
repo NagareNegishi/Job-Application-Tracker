@@ -8,7 +8,7 @@ export interface Job {
   company: string;
   role: string;
   status: JobStatus;
-  priority?: Priority;
+  priority: Priority;
   appliedAt?: string; // ISO date string
   closedAt?: string; // ISO date string
   documents?: JobDocument[]; // Don't expose internal Document
@@ -24,7 +24,7 @@ export interface CreateJobRequest {
   company: string;
   role: string;
   status: JobStatus;
-  priority?: Priority;
+  priority: Priority;
   appliedAt?: string; // ISO date string
   closedAt?: string; // ISO date string
   description?: string;
@@ -38,7 +38,7 @@ export interface UpdateJobRequest {
   company: string;
   role: string;
   status: JobStatus;
-  priority?: Priority;
+  priority: Priority;
   appliedAt?: string; // ISO date string
   closedAt?: string; // ISO date string
   description?: string;
@@ -55,7 +55,7 @@ export type JobPatchOperation =
   | { op: "replace"; path: "/company"; value: string }
   | { op: "replace"; path: "/role"; value: string }
   | { op: "replace"; path: "/status"; value: JobStatus }
-  | { op: "replace"; path: "/priority"; value: Priority | null }
+  | { op: "replace"; path: "/priority"; value: Priority }
   | { op: "replace"; path: "/appliedAt"; value: string | null }
   | { op: "replace"; path: "/closedAt"; value: string | null }
   | { op: "replace" | "remove"; path: "/description"; value?: string | null }
