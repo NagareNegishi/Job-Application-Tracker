@@ -9,6 +9,7 @@
 //     └── DocumentCard   # filename, type, upload date, download/delete
 import { ContactList } from "@/components/ContactList";
 import { CorrespondenceList } from "@/components/CorrespondenceList";
+import { DocumentList } from "@/components/DocumentList";
 import { JobHeader } from "@/components/JobHeader";
 import { JobInfoCard } from "@/components/JobInfoCard";
 import { useJob } from "@/hooks/jobQuery";
@@ -32,6 +33,7 @@ function JobDetailPage() {
       <ContactList contacts={job.contacts ?? []} />
       <CorrespondenceList entries={job.correspondences ?? []} />
       {/* DocumentList would go here */}
+      <DocumentList jobId={jobId} />
 
     </div>
   )
