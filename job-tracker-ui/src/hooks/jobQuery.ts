@@ -58,7 +58,7 @@ export function useDeleteJob() {
   return useMutation({
     mutationFn: deleteJob,
     // Invalidate and refetch
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"], exact: true })
   })
 }
 

@@ -1,15 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { useCreateDocument } from "@/hooks/documentQuery";
+import { useDeleteJob } from "@/hooks/jobQuery";
 import type { DocumentType } from "@/types/enums";
 import type { Job } from "@/types/job";
+import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 export function JobHeader({ job }: { job: Job }) {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { mutate: addDocument, isPending } = useCreateDocument()
+  const queryClient = useQueryClient()
+  
   const [selectedType, setSelectedType] = useState<DocumentType>("Other")
+  
+  const { mutate: deleteJob, isPending: isDeleting } = useDeleteJob()
+  const { mutate: addDocument, isPending } = useCreateDocument()
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] // get the first selected file (if any)
@@ -39,7 +45,7 @@ export function JobHeader({ job }: { job: Job }) {
         {/* <StatusBadge status={job.status} /> */}
         <Button>Edit</Button>
 
-
+        {/* Document type selector for uploads */}
         <select
           value={selectedType}
           onChange={e => setSelectedType(e.target.value as DocumentType)}
@@ -48,13 +54,28 @@ export function JobHeader({ job }: { job: Job }) {
           <option value="CoverLetter">Cover Letter</option>
           <option value="Other">Other</option>
         </select>
-
-
-
+        {/* "Add Document" button triggers hidden file input */}
         <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
           {isPending ? "Uploading..." : "Add Document"}
         </Button>
-        <Button variant="destructive">Delete</Button>
+
+        {/* Delete button with confirmation */}
+        <Button
+          variant="destructive"
+          onClick={() => {
+            if (window.confirm("Are you sure you want to delete this job? This action cannot be undone.")) {
+              deleteJob(job.id, {
+                onSuccess: () => {
+                  queryClient.invalidateQueries({ queryKey: ["jobs", job.id] })
+                  navigate("/jobs")
+                }
+              })
+            }
+          }}
+          disabled={isDeleting}
+        >
+          {isDeleting ? "Deleting..." : "Delete"}
+        </Button>
       </div>
     </div>
   )
