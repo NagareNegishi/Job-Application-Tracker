@@ -2,18 +2,19 @@ import { Button } from "@/components/ui/button";
 import { useCreateDocument } from "@/hooks/documentQuery";
 import type { DocumentType } from "@/types/enums";
 import type { Job } from "@/types/job";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 export function JobHeader({ job }: { job: Job }) {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { mutate: addDocument, isPending } = useCreateDocument()
+  const [selectedType, setSelectedType] = useState<DocumentType>("Other")
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] // get the first selected file (if any)
     if (!file) return
-    addDocument({ jobId: job.id, data: { file, type: 'Other' as DocumentType } })
+    addDocument({ jobId: job.id, data: { file, type: selectedType } })
     e.target.value = "" // reset so same file can be re-uploaded
   }
 
@@ -37,6 +38,19 @@ export function JobHeader({ job }: { job: Job }) {
 
         {/* <StatusBadge status={job.status} /> */}
         <Button>Edit</Button>
+
+
+        <select
+          value={selectedType}
+          onChange={e => setSelectedType(e.target.value as DocumentType)}
+        >
+          <option value="CV">CV</option>
+          <option value="CoverLetter">Cover Letter</option>
+          <option value="Other">Other</option>
+        </select>
+
+
+
         <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
           {isPending ? "Uploading..." : "Add Document"}
         </Button>
