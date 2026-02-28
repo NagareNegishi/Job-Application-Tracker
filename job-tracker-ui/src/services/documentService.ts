@@ -1,6 +1,6 @@
 import { handleEmptyResponse, handleResponse } from "@/lib/api"
-import { DocumentType } from "../types/enums"
-import type { CreateJobDocumentRequest, JobDocument, UpdateJobDocumentRequest } from "../types/jobDocument"
+import { DocumentType } from "@/types/enums"
+import type { CreateJobDocumentRequest, JobDocument, UpdateJobDocumentRequest } from "@/types/jobDocument"
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 

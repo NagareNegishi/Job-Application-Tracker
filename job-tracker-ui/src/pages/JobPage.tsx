@@ -1,4 +1,4 @@
-import { JobTable } from '../components/JobTable'
+import { JobTable } from '@/components/JobTable'
 
 function JobPage() {
 

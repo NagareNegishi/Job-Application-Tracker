@@ -2,19 +2,19 @@
  * This file contains custom hooks for fetching and mutating job data using React Query.
  */
 import {
-  useMutation,
-  useQuery,
-  useQueryClient
-} from '@tanstack/react-query'
-import {
   createJob,
   deleteJob,
   getJob,
   getJobs,
   patchJob,
   replaceJob
-} from '../services/jobService'
-import type { JobPatchOperation, UpdateJobRequest } from "../types/job"
+} from '@/services/jobService'
+import type { JobPatchOperation, UpdateJobRequest } from "@/types/job"
+import {
+  useMutation,
+  useQuery,
+  useQueryClient
+} from '@tanstack/react-query'
 
 // Custom hook to fetch jobs
 export function useJobs() {
@@ -22,8 +22,13 @@ export function useJobs() {
 }
 
 // Custom hook to fetch a single job by ID
-export function useJob(id: number) {
-  return useQuery({ queryKey: ["jobs", id], queryFn: () => getJob(id) })
+export function useJob(id: number, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["jobs", id],
+    queryFn: () => getJob(id),
+    // Only run this query if the ID is valid (not NaN)
+    enabled: options?.enabled ?? true
+  })
 }
 
 // Custom hook to create a new job

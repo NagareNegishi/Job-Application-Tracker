@@ -1,5 +1,5 @@
 import { handleEmptyResponse, handleResponse } from "@/lib/api"
-import type { CreateJobRequest, Job, JobPatchOperation, UpdateJobRequest } from "../types/job"
+import type { CreateJobRequest, Job, JobPatchOperation, UpdateJobRequest } from "@/types/job"
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
