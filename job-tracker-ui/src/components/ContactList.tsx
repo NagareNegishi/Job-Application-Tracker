@@ -2,6 +2,8 @@ import type { Contact } from "@/types/contact";
 // import type { Job, JobPatchOperation } from "@/types/job"
 // import { usePatchJob } from "@/hooks/jobQuery"
 // import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 
 /**
@@ -30,25 +32,41 @@ export function ContactCard({ contact, onEdit, onDelete }: ContactCardProps) {
 }
 
 
-function handleDelete(contact: Contact) {
-  // remove from array, PATCH
-}
 
-function handleEdit(contact: Contact) {
-  // open edit form with that contact
-}
 
 
 
 export function ContactList({ contacts }: { contacts: Contact[] }) {
 
+  function handleAdd() {
+    // open empty form
+  }
 
+  function handleDelete(contact: Contact) {
+    // remove from array, PATCH
+  }
+
+  function handleEdit(contact: Contact) {
+    // open edit form with that contact
+  }
 
 
 
   if (contacts.length === 0) return <p className="text-sm text-muted-foreground">No contacts.</p>
   return (
     <div className="grid grid-cols-2 gap-3">
+      {/* Label with button to add contact */}
+      <Label className="col-span-2 flex items-center justify-between">
+        Contacts
+        <Button
+          size="sm"
+          onClick={handleAdd}
+        >
+          Add Contact
+        </Button>
+      </Label>
+
+      {/* List of contacts */}
       {contacts.map((c, i) =>
         <ContactCard
           key={i}
