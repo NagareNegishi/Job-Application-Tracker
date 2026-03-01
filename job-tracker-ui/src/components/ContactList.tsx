@@ -51,17 +51,30 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
   const [open, setOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined)
 
-  // Handlers for add
+  // Handlers for add, open dialog with empty form
   function handleAdd() {
     setSelectedContact(undefined)
     setOpen(true)
   }
 
-  // Handlers for edit
+  // Handlers for edit, open dialog with selected contact data
   function handleEdit(contact: Contact) {
     setSelectedContact(contact)
     setOpen(true)
   }
+
+  // Called by dialog on save
+  function handleEditSubmit(updated: Contact) {
+    const updatedContacts = contacts.map(c => c === selectedContact ? updated : c)
+    // PATCH with updatedContacts
+  }
+
+  // Called by dialog on save
+  function handleAddSubmit(contact: Contact) {
+    const updatedContacts = [...contacts, contact]
+    // PATCH with updatedContacts
+  }
+
 
   // Handlers for delete
   function handleDelete(contact: Contact) {
@@ -78,7 +91,7 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
         open={open}
         onOpenChange={setOpen}
         contact={selectedContact}
-        onSubmit={selectedContact ? handleEdit : handleAdd}
+        onSubmit={selectedContact ? handleEditSubmit : handleAddSubmit}
       />
 
       {/* Header with Add button */ }
@@ -148,25 +161,12 @@ export function ContactDialog({
   contact,
   onSubmit }: ContactDialogProps) {
   
-  const [form, setForm] = useState<ContactFormState>(
-    contact ? toContactFormState(contact) : {
-      name: "",
-      email: "",
-      role: "",
-      phone: "",
-      notes: "",
-    }
-  )
+  const emptyContact: ContactFormState = { name: "", email: "", role: "", phone: "", notes: "" }
+  const [form, setForm] = useState<ContactFormState>(emptyContact)
 
   // Reset form when dialog opens with fresh contact data
   useEffect(() => {
-    if (open) setForm(contact ? toContactFormState(contact) : {
-      name: "",
-      email: "",
-      role: "",
-      phone: "",
-      notes: "",
-    })
+    if (open) setForm(contact ? toContactFormState(contact) : emptyContact)
   }, [contact, open])
 
 
@@ -175,7 +175,17 @@ export function ContactDialog({
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
-
+  // Handle form submission for both add and edit
+  function handleSubmit() {
+    onSubmit({
+      name: form.name,
+      email: form.email,
+      role: form.role,
+      phone: form.phone,
+      notes: form.notes,
+    })
+    onOpenChange(false)
+  }
 
   
   return (
@@ -234,10 +244,22 @@ export function ContactDialog({
             />
 
         <DialogFooter>
+          
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button
+              variant="outline"
+            >
+              Cancel
+            </Button>
           </DialogClose>
-          <Button type="submit">Save changes</Button>
+          
+          {/* Save triggers form submission */ }
+          <Button
+            type="submit"
+            onClick={handleSubmit}
+          >
+            Save changes
+          </Button>
         </DialogFooter>
       </DialogContent>
 
