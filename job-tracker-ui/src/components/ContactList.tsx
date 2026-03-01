@@ -74,13 +74,18 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
 }
 
 
+/**
+ * ContactListProps defines the props for the ContactList component
+ */
 interface ContactListProps {
   contacts: Contact[]
   jobId: number
 }
 
 
-
+/**
+ * ContactList component displays a list of contacts for a job
+ */
 export function ContactList({ contacts, jobId }: ContactListProps) {
 
   const [open, setOpen] = useState(false)
@@ -199,6 +204,12 @@ function toContactFormState(contact: Contact): ContactFormState {
   }
 }
 
+// ContactFormErrors represents validation errors for the contact form fields.
+interface ContactFormErrors {
+  name?: string
+  email?: string
+  phone?: string
+}
 
 
 
@@ -224,10 +235,14 @@ export function ContactDialog({
   
   const emptyContact: ContactFormState = { name: "", email: "", role: "", phone: "", notes: "" }
   const [form, setForm] = useState<ContactFormState>(emptyContact)
+  const [errors, setErrors] = useState<ContactFormErrors>({})
 
   // Reset form when dialog opens with fresh contact data
   useEffect(() => {
-    if (open) setForm(contact ? toContactFormState(contact) : emptyContact)
+    if (open) {
+      setForm(contact ? toContactFormState(contact) : emptyContact)
+      setErrors({})
+    }
   }, [contact, open])
 
 
@@ -238,6 +253,7 @@ export function ContactDialog({
 
   // Handle form submission for both add and edit
   function handleSubmit() {
+    if (!validate()) return
     onSubmit({
       name: form.name,
       email: form.email || undefined,
@@ -246,6 +262,18 @@ export function ContactDialog({
       notes: form.notes || undefined,
     })
     onOpenChange(false)
+  }
+
+  // Simple validation logic for required fields and basic formats
+  function validate(): boolean {
+    const newErrors: ContactFormErrors = {}
+    if (!form.name.trim()) newErrors.name = "Name is required"
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      newErrors.email = "Invalid email address"
+    if (form.phone && !/^\+?[\d\s\-().]{7,}$/.test(form.phone))
+      newErrors.phone = "Invalid phone number"
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   
@@ -271,14 +299,7 @@ export function ContactDialog({
             value={form.name}
             onChange={e => setField("name", e.target.value)}
           />
-
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            value={form.email}
-            onChange={e => setField("email", e.target.value)}
-          />
+          {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
 
           <Label htmlFor="role">Role</Label>
           <Input
@@ -288,6 +309,15 @@ export function ContactDialog({
             onChange={e => setField("role", e.target.value)}
           />
 
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            value={form.email}
+            onChange={e => setField("email", e.target.value)}
+          />
+          { errors.email && <p className="text-sm text-destructive">{errors.email}</p> }
+
           <Label htmlFor="phone">Phone</Label>
           <Input
             id="phone"
@@ -295,6 +325,7 @@ export function ContactDialog({
             value={form.phone}
             onChange={e => setField("phone", e.target.value)}
           />
+          {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
 
           <Label htmlFor="notes">Notes</Label>
           <Input
