@@ -91,6 +91,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
   const [open, setOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined)
   const { mutate: patchJob, isPending } = usePatchJob()
+
   // Handlers for add, open dialog with empty form
   function handleAdd() {
     setSelectedContact(undefined)
