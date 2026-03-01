@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/DatePicker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +16,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
+import { usePatchJob } from "@/hooks/jobQuery"
 import { JobStatus, Priority } from "@/types/enums"
 import type { Job } from "@/types/job"
 import { useEffect, useState } from "react"
@@ -63,6 +65,7 @@ interface JobEditSheetProps {
 export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
   const [form, setForm] = useState<FormState>(() => toFormState(job))
+  const { mutate: patchJob, isPending } = usePatchJob()
 
   // Reset form when sheet opens with fresh job data
   useEffect(() => {
@@ -184,8 +187,29 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           />
         </div>
 
+        {/* Action buttons */}
+        <div className="flex gap-2 pt-2">
+          {/* Cancel just closes the sheet without saving */}
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          {/* <Button
+            className="flex-1"
+            onClick={handleSubmit}
+            disabled={isPending}
+          >
+            {isPending ? "Saving..." : "Save"}
+          </Button> */}
+        </div>
 
-        
+
+
+
       </SheetContent>
     </Sheet>
   )
@@ -196,8 +220,6 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
 
 
-// import { Button } from "@/components/ui/button"
-
 
 // import {
 //   Sheet,
@@ -206,7 +228,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 //   SheetTitle,
 // } from "@/components/ui/sheet"
 
-// import { usePatchJob } from "@/hooks/jobQuery"
+
 // import { JobStatus, Priority } from "@/types/enums"
 // import type { Job, JobPatchOperation } from "@/types/job"
 
@@ -254,44 +276,3 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 //       { onSuccess: () => onOpenChange(false) }
 //     )
 //   }
-
-//   return (
-//     <Sheet open={open} onOpenChange={onOpenChange}>
-//       <SheetContent className="overflow-y-auto sm:max-w-lg">
-//         <SheetHeader>
-//           <SheetTitle>Edit Job</SheetTitle>
-//         </SheetHeader>
-
-
-
-
-
-
-
-
-
-
-
-
-//           <div className="flex gap-2 pt-2">
-//             <Button
-//               variant="outline"
-//               className="flex-1"
-//               onClick={() => onOpenChange(false)}
-//               disabled={isPending}
-//             >
-//               Cancel
-//             </Button>
-//             <Button
-//               className="flex-1"
-//               onClick={handleSubmit}
-//               disabled={isPending}
-//             >
-//               {isPending ? "Saving..." : "Save"}
-//             </Button>
-//           </div>
-//         </div>
-//       </SheetContent>
-//     </Sheet>
-//   )
-// }
