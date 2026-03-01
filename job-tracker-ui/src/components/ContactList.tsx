@@ -49,27 +49,36 @@ export function ContactCard({ contact, onEdit, onDelete }: ContactCardProps) {
 export function ContactList({ contacts }: { contacts: Contact[] }) {
 
   const [open, setOpen] = useState(false)
+  const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined)
 
+  // Handlers for add
   function handleAdd() {
-    // open empty form
+    setSelectedContact(undefined)
+    setOpen(true)
   }
 
+  // Handlers for edit
+  function handleEdit(contact: Contact) {
+    setSelectedContact(contact)
+    setOpen(true)
+  }
+
+  // Handlers for delete
   function handleDelete(contact: Contact) {
     // remove from array, PATCH
   }
 
-  function handleEdit(contact: Contact) {
-    // open edit form with that contact
-  }
+
 
   return (
     <div className="space-y-3">
 
       {/* Dialog for adding/editing contacts */ }
       <ContactDialog
-        open={true}
+        open={open}
         onOpenChange={setOpen}
-        onSubmit={(contact) => {}}
+        contact={selectedContact}
+        onSubmit={selectedContact ? handleEdit : handleAdd}
       />
 
       {/* Header with Add button */ }
