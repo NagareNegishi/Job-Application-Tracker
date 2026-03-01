@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
 import type { Contact } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
+import { Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 
@@ -23,16 +24,38 @@ interface ContactCardProps {
   contact: Contact
   onEdit: (contact: Contact) => void
   onDelete: (contact: Contact) => void
+  isPending: boolean
 }
 
 /**
  * ContactCard component displays individual contact information.
  * Edit and delete actions are provided by ContactList
  */
-export function ContactCard({ contact, onEdit, onDelete }: ContactCardProps) {
+export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCardProps) {
   return (
-    <div className="border rounded-lg p-3 space-y-1">
-      <p className="font-medium">{contact.name}</p>
+    <div className="border rounded-lg p-3 space-y-1 w-full">
+      {/* Top row: name + actions */}
+      <div className="flex items-center justify-between">
+        <p className="font-medium">{contact.name}</p>
+        <div className="flex gap-1">
+          {/* Edit action */ }
+          <Button variant="ghost" size="icon"
+            onClick={() => onEdit(contact)}
+            disabled={isPending}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          {/* Delete action */}
+          <Button variant="ghost" size="icon"
+            onClick={() => onDelete(contact)}
+            disabled={isPending}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+
       {contact.role && <p className="text-sm text-muted-foreground">{contact.role}</p>}
       {contact.email && <p className="text-sm">{contact.email}</p>}
       {contact.phone && <p className="text-sm">{contact.phone}</p>}
@@ -115,6 +138,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
         onOpenChange={setOpen}
         contact={selectedContact}
         onSubmit={selectedContact ? handleEditSubmit : handleAddSubmit}
+        isPending={isPending}
       />
 
       {/* Header with Add button */ }
@@ -125,7 +149,8 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
 
       { contacts.length === 0
         ? <p className="text-sm text-muted-foreground">No contacts.</p>
-        : <div className="grid grid-cols-2 gap-3">
+        // TODO: flex-col? or grid-cols-2
+        : <div className="grid grid-cols-4 gap-3">
           {/* List of contacts */}
           {contacts.map((c, i) =>
             <ContactCard
@@ -133,6 +158,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
               contact={c}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              isPending={isPending}
             />
           )}
         </div>
@@ -174,6 +200,7 @@ interface ContactDialogProps {
   onOpenChange: (open: boolean) => void
   contact?: Contact  // undefined = add mode, defined = edit mode
   onSubmit: (contact: Contact) => void
+  isPending: boolean
 }
 
 
@@ -182,7 +209,9 @@ export function ContactDialog({
   open,
   onOpenChange,
   contact,
-  onSubmit }: ContactDialogProps) {
+  onSubmit,
+  isPending
+}: ContactDialogProps) {
   
   const emptyContact: ContactFormState = { name: "", email: "", role: "", phone: "", notes: "" }
   const [form, setForm] = useState<ContactFormState>(emptyContact)
@@ -281,8 +310,9 @@ export function ContactDialog({
           <Button
             type="submit"
             onClick={handleSubmit}
+            disabled={isPending}
           >
-            Save changes
+            {isPending ? "Saving..." : "Save changes"}
           </Button>
         </DialogFooter>
       </DialogContent>
