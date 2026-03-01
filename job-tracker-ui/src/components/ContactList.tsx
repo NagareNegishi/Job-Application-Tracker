@@ -128,7 +128,6 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
     )
   }
 
-
   // Handlers for delete
   function handleDelete(contact: Contact) {
     const index = contacts.indexOf(contact)
@@ -140,8 +139,6 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
       { id: jobId, operations },
     )
   }
-
-
 
   return (
     <div className="space-y-3">
@@ -182,8 +179,6 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
 }
 
 
-
-
 // FormState represents the internal state of the contact editing form.
 interface ContactFormState {
   name: string
@@ -211,10 +206,7 @@ interface ContactFormErrors {
   phone?: string
 }
 
-
-
-
-
+// ContactDialogProps defines the props for the ContactDialog component
 interface ContactDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -224,7 +216,9 @@ interface ContactDialogProps {
 }
 
 
-
+/**
+ * ContactDialog component provides a form for adding/editing a contact.
+ */
 export function ContactDialog({
   open,
   onOpenChange,
@@ -244,7 +238,6 @@ export function ContactDialog({
       setErrors({})
     }
   }, [contact, open])
-
 
   // Helper function to update form state for a specific field
   function setField<K extends keyof ContactFormState>(key: K, value: ContactFormState[K]) {
@@ -276,7 +269,7 @@ export function ContactDialog({
     return Object.keys(newErrors).length === 0
   }
 
-  
+
   return (
     <Dialog
       open={open}
@@ -336,7 +329,6 @@ export function ContactDialog({
           />
 
         <DialogFooter>
-          
           {/* Cancel just closes the dialog without saving */ }
           <DialogClose asChild>
             <Button
@@ -345,7 +337,6 @@ export function ContactDialog({
               Cancel
             </Button>
           </DialogClose>
-          
           {/* Save triggers form submission */ }
           <Button
             type="submit"
@@ -356,8 +347,6 @@ export function ContactDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
-
     </Dialog>
   )
 }
-
