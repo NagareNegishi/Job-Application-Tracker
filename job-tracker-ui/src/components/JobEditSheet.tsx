@@ -1,6 +1,13 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -84,23 +91,48 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             onChange={e => setField("company", e.target.value)}
           />
         </div>
+
+        {/* Edit Role */}
+        <div className="space-y-1.5">
+          <Label htmlFor="role">Role</Label>
+          <Input
+            id="role"
+            value={form.role}
+            onChange={e => setField("role", e.target.value)}
+          />
+        </div>
+
+        {/* Edit Status */}
+        <div className="space-y-1.5">
+          <Label>Status</Label>
+          <Select value={form.status} onValueChange={v => setField("status", v as JobStatus)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(JobStatus).map(s => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+
+
+
       </SheetContent>
     </Sheet>
   )
 }
 
 
+
+
+
 // import { DatePicker } from "@/components/ui/DatePicker"
 // import { Button } from "@/components/ui/button"
-// import { Input } from "@/components/ui/input"
-// import { Label } from "@/components/ui/label"
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select"
+
+
 // import {
 //   Sheet,
 //   SheetContent,
@@ -111,50 +143,8 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 // import { usePatchJob } from "@/hooks/jobQuery"
 // import { JobStatus, Priority } from "@/types/enums"
 // import type { Job, JobPatchOperation } from "@/types/job"
-// import { useEffect, useState } from "react"
 
-// interface JobEditSheetProps {
-//   job: Job
-//   open: boolean
-//   onOpenChange: (open: boolean) => void
-// }
 
-// interface FormState {
-//   company: string
-//   role: string
-//   status: JobStatus
-//   priority: Priority | ""
-//   appliedAt: Date | undefined
-//   closedAt: Date | undefined
-//   description: string
-//   notes: string
-// }
-
-// function toFormState(job: Job): FormState {
-//   return {
-//     company: job.company ?? "",
-//     role: job.role ?? "",
-//     status: job.status,
-//     priority: job.priority ?? "",
-//     appliedAt: job.appliedAt ? new Date(job.appliedAt) : undefined,
-//     closedAt: job.closedAt ? new Date(job.closedAt) : undefined,
-//     description: job.description ?? "",
-//     notes: job.notes ?? "",
-//   }
-// }
-
-// export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
-//   const [form, setForm] = useState<FormState>(() => toFormState(job))
-//   const { mutate: patchJob, isPending } = usePatchJob()
-
-//   // Reset form when sheet opens with fresh job data
-//   useEffect(() => {
-//     if (open) setForm(toFormState(job))
-//   }, [job, open])
-
-//   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
-//     setForm(prev => ({ ...prev, [key]: value }))
-//   }
 
 //   function handleSubmit() {
 //     const operations: JobPatchOperation[] = []
@@ -206,24 +196,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 //           <SheetTitle>Edit Job</SheetTitle>
 //         </SheetHeader>
 
-//         <div className="space-y-4 mt-6">
-//           <div className="space-y-1.5">
-//             <Label htmlFor="company">Company</Label>
-//             <Input
-//               id="company"
-//               value={form.company}
-//               onChange={e => setField("company", e.target.value)}
-//             />
-//           </div>
 
-//           <div className="space-y-1.5">
-//             <Label htmlFor="role">Role</Label>
-//             <Input
-//               id="role"
-//               value={form.role}
-//               onChange={e => setField("role", e.target.value)}
-//             />
-//           </div>
 
 //           <div className="space-y-1.5">
 //             <Label>Status</Label>
