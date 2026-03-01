@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/DatePicker";
 import {
   Dialog,
   DialogClose,
@@ -163,22 +164,18 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
 
 // FormState represents the internal state of the correspondence editing form.
 interface CorrespondenceFormState {
-  date: string
+  date: Date | undefined
   note: string
 }
 
 // Converts a Correspondence object to the CorrespondenceFormState shape
 function toCorrespondenceFormState(entry: Correspondence): CorrespondenceFormState {
   return {
-    date: entry.date,
+    date: entry.date ? new Date(entry.date) : undefined,
     note: entry.note ?? ""
   }
 }
 
-// CorrespondenceFormErrors represents validation errors for the correspondence form fields.
-interface CorrespondenceFormErrors {
-  date?: string
-}
 
 // CorrespondenceDialogProps defines the props for the CorrespondenceDialog component
 interface CorrespondenceDialogProps {
@@ -189,6 +186,8 @@ interface CorrespondenceDialogProps {
   isPending: boolean
 }
 
+// Default form state for adding a new correspondence
+const emptyCorrespondence: CorrespondenceFormState = { date: new Date(), note: "" }
 
 /**
  * CorrespondenceDialog component provides a form for adding/editing a correspondence.
@@ -201,16 +200,11 @@ export function CorrespondenceDialog({
   isPending
 }: CorrespondenceDialogProps) {
   
-  const emptyCorrespondence: CorrespondenceFormState = { date: "", note: "" }
   const [form, setForm] = useState<CorrespondenceFormState>(emptyCorrespondence)
-  const [errors, setErrors] = useState<CorrespondenceFormErrors>({})
 
   // Reset form when dialog opens with fresh correspondence data
   useEffect(() => {
-    if (open) {
-      setForm(entry ? toCorrespondenceFormState(entry) : emptyCorrespondence)
-      setErrors({})
-    }
+    if (open) setForm(entry ? toCorrespondenceFormState(entry) : emptyCorrespondence)
   }, [entry, open])
 
   // Helper function to update form state for a specific field
@@ -220,25 +214,11 @@ export function CorrespondenceDialog({
 
   // Handle form submission for both add and edit
   function handleSubmit() {
-    if (!validate()) return
     onSubmit({
-      date: form.date,
+      date: form.date!.toISOString(),
       note: form.note
     })
     onOpenChange(false)
-  }
-
-  // Simple validation logic for required fields and basic formats
-  function validate(): boolean {
-    const newErrors: CorrespondenceFormErrors = {}
-    // String must match ISO date string
-    if (!form.date.trim()) {
-      newErrors.date = "Date is required"
-    } else if (isNaN(Date.parse(form.date))) {
-      newErrors.date = "Invalid date format"
-    }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
   }
 
 
@@ -257,15 +237,14 @@ export function CorrespondenceDialog({
           </DialogDescription>
         </DialogHeader>
 
-          <Label htmlFor="name">Date</Label>
-          <Input
-            id="date"
-            name="date"
-            // type="date"
-            value={form.date}
-            onChange={e => setField("date", e.target.value)}
-          />
-          {errors.date && <p className="text-sm text-destructive">{errors.date}</p>}
+          <div className="space-y-1.5">
+            <Label>Date</Label>
+            <DatePicker
+              value={form.date}
+              onChange={d => setField("date", d)}
+              placeholder="Select date"
+            />
+          </div>
 
           <Label htmlFor="role">Note</Label>
           <Input
