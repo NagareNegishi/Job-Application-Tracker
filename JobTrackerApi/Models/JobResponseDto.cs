@@ -10,10 +10,10 @@ public class JobResponseDto
     public Priority Priority { get; set; } = Priority.Low;
     public DateTime? AppliedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
-    // Navigation property for related documents (CV, cover letter, etc.)
-    public List<DocumentResponseDto>? Documents { get; set; } // Don't expose internal Document
+    // Navigation property for related documents, Don't expose internal Document
+    public List<DocumentResponseDto> Documents { get; set; } = [];
     public string? Description { get; set; }
     public string? Notes { get; set; }
-    public List<Contact>? Contacts { get; set; }
-    public List<Correspondence>? Correspondences { get; set; }
+    public List<Contact> Contacts { get; set; } = [];
+    public List<Correspondence> Correspondences { get; set; } = [];
 }

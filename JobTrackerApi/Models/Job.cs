@@ -11,11 +11,11 @@ public class Job
     public DateTime? AppliedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
     // Navigation property for related documents (CV, cover letter, etc.)
-    public List<Document>? Documents { get; set; }
+    public List<Document> Documents { get; set; } = [];
     public string? Description { get; set; }
     public string? Notes { get; set; }
-    public List<Contact>? Contacts { get; set; }
-    public List<Correspondence>? Correspondences { get; set; }
+    public List<Contact> Contacts { get; set; } = [];
+    public List<Correspondence> Correspondences { get; set; } = [];
 
 
     // Method to convert Job to JobResponseDto
