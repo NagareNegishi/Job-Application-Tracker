@@ -105,7 +105,11 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
         {/* Edit Status */}
         <div className="space-y-1.5">
           <Label>Status</Label>
-          <Select value={form.status} onValueChange={v => setField("status", v as JobStatus)}>
+          <Select
+            value={form.status}
+            // Select component returns string -> need to cast back to JobStatus
+            onValueChange={v => setField("status", v as JobStatus)}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -117,6 +121,23 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           </Select>
         </div>
 
+        {/* Edit Priority */}
+        <div className="space-y-1.5">
+          <Label>Priority</Label>
+          <Select
+            value={form.priority}
+            onValueChange={v => setField("priority", v as Priority)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(Priority).map(p => (
+                <SelectItem key={p} value={p}>{p} </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
 
 
@@ -198,34 +219,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
 
 
-//           <div className="space-y-1.5">
-//             <Label>Status</Label>
-//             <Select value={form.status} onValueChange={v => setField("status", v as JobStatus)}>
-//               <SelectTrigger>
-//                 <SelectValue />
-//               </SelectTrigger>
-//               <SelectContent>
-//                 {Object.values(JobStatus).map(s => (
-//                   <SelectItem key={s} value={s}>{s}</SelectItem>
-//                 ))}
-//               </SelectContent>
-//             </Select>
-//           </div>
 
-//           <div className="space-y-1.5">
-//             <Label>Priority</Label>
-//             <Select value={form.priority} onValueChange={v => setField("priority", v as Priority | "")}>
-//               <SelectTrigger>
-//                 <SelectValue placeholder="None" />
-//               </SelectTrigger>
-//               <SelectContent>
-//                 <SelectItem value="">None</SelectItem>
-//                 {Object.values(Priority).map(p => (
-//                   <SelectItem key={p} value={p}>{p}</SelectItem>
-//                 ))}
-//               </SelectContent>
-//             </Select>
-//           </div>
 
 //           <div className="space-y-1.5">
 //             <Label>Applied At</Label>
