@@ -18,7 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { usePatchJob } from "@/hooks/jobQuery"
 import { JobStatus, Priority } from "@/types/enums"
-import type { Job } from "@/types/job"
+import type { Job, JobPatchOperation } from "@/types/job"
 import { useEffect, useState } from "react"
 
 // FormState represents the internal state of the job edit form
@@ -48,7 +48,6 @@ function toFormState(job: Job): FormState {
 }
 
 
-
 /**
  * Props for JobEditSheet component, which provides a form for editing job details.
  */
@@ -76,6 +75,50 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
   // Helper function to update form state for a specific field
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm(prev => ({ ...prev, [key]: value }))
+  }
+
+
+  // Handles form submission by comparing current form state with original job data
+  function handleSubmit() {
+    const operations: JobPatchOperation[] = []
+    // Required fields
+    if (form.company !== (job.company))
+      operations.push({ op: "replace", path: "/company", value: form.company })
+    if (form.role !== (job.role))
+      operations.push({ op: "replace", path: "/role", value: form.role })
+    if (form.status !== job.status)
+      operations.push({ op: "replace", path: "/status", value: form.status })
+    if (form.priority !== (job.priority))
+      operations.push({ op: "replace", path: "/priority", value: form.priority })
+
+    // Optional fields, Date fields need to be compared as ISO strings to avoid timezone issues
+    const appliedAtISO = form.appliedAt?.toISOString() ?? null
+    const existingAppliedAt = job.appliedAt ? new Date(job.appliedAt).toISOString() : null
+    if (appliedAtISO !== existingAppliedAt)
+      operations.push({ op: "replace", path: "/appliedAt", value: appliedAtISO })
+
+    const closedAtISO = form.closedAt?.toISOString() ?? null
+    const existingClosedAt = job.closedAt ? new Date(job.closedAt).toISOString() : null
+    if (closedAtISO !== existingClosedAt)
+      operations.push({ op: "replace", path: "/closedAt", value: closedAtISO })
+
+    if (form.description !== (job.description ?? ""))
+      operations.push({ op: "replace", path: "/description", value: form.description })
+
+    if (form.notes !== (job.notes ?? ""))
+      operations.push({ op: "replace", path: "/notes", value: form.notes })
+
+    // Nothing changed
+    if (operations.length === 0) {
+      onOpenChange(false)
+      return
+    }
+
+    // Trigger the patch
+    patchJob(
+      { id: job.id, operations },
+      { onSuccess: () => onOpenChange(false) }
+    )
   }
 
   return (
@@ -198,81 +241,16 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           >
             Cancel
           </Button>
-          {/* <Button
+          {/* Save triggers form submission */}
+          <Button
             className="flex-1"
             onClick={handleSubmit}
             disabled={isPending}
           >
             {isPending ? "Saving..." : "Save"}
-          </Button> */}
+          </Button>
         </div>
-
-
-
-
       </SheetContent>
     </Sheet>
   )
 }
-
-
-
-
-
-
-
-// import {
-//   Sheet,
-//   SheetContent,
-//   SheetHeader,
-//   SheetTitle,
-// } from "@/components/ui/sheet"
-
-
-// import { JobStatus, Priority } from "@/types/enums"
-// import type { Job, JobPatchOperation } from "@/types/job"
-
-
-
-//   function handleSubmit() {
-//     const operations: JobPatchOperation[] = []
-
-//     if (form.company !== (job.company ?? ""))
-//       operations.push({ op: "replace", path: "/company", value: form.company })
-
-//     if (form.role !== (job.role ?? ""))
-//       operations.push({ op: "replace", path: "/role", value: form.role })
-
-//     if (form.status !== job.status)
-//       operations.push({ op: "replace", path: "/status", value: form.status })
-
-//     if (form.priority !== (job.priority ?? ""))
-//       operations.push({ op: "replace", path: "/priority", value: form.priority === "" ? null : form.priority })
-
-//     const appliedAtISO = form.appliedAt?.toISOString() ?? null
-//     const existingAppliedAt = job.appliedAt ? new Date(job.appliedAt).toISOString() : null
-//     if (appliedAtISO !== existingAppliedAt)
-//       operations.push({ op: "replace", path: "/appliedAt", value: appliedAtISO })
-
-//     const closedAtISO = form.closedAt?.toISOString() ?? null
-//     const existingClosedAt = job.closedAt ? new Date(job.closedAt).toISOString() : null
-//     if (closedAtISO !== existingClosedAt)
-//       operations.push({ op: "replace", path: "/closedAt", value: closedAtISO })
-
-//     if (form.description !== (job.description ?? ""))
-//       operations.push({ op: "replace", path: "/description", value: form.description })
-
-//     if (form.notes !== (job.notes ?? ""))
-//       operations.push({ op: "replace", path: "/notes", value: form.notes })
-
-//     // Nothing changed — just close
-//     if (operations.length === 0) {
-//       onOpenChange(false)
-//       return
-//     }
-
-//     patchJob(
-//       { id: job.id, operations },
-//       { onSuccess: () => onOpenChange(false) }
-//     )
-//   }
