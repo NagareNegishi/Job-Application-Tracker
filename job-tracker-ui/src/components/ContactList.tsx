@@ -122,39 +122,39 @@ export function ContactDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <form>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Edit profile</DialogTitle>
-            <DialogDescription>
-              Make changes to your profile here. Click save when you&apos;re
-              done.
-            </DialogDescription>
-          </DialogHeader>
 
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" name="name" defaultValue="Contact Name" />
+      <DialogContent className="sm:max-w-sm">
+        {/* Header for add vs edit mode */}
+        <DialogHeader>
+          <DialogTitle>{contact ? "Edit Contact" : "Add Contact"}</DialogTitle>
+          <DialogDescription>
+            {contact ? "Update contact details." : "Add a new contact to this job."}
+          </DialogDescription>
+        </DialogHeader>
 
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" defaultValue="@email.com" />
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" name="name" defaultValue="Contact Name" />
 
-              <Label htmlFor="role">Role</Label>
-              <Input id="role" name="role" defaultValue="Recruiter" />
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" name="email" defaultValue="@email.com" />
 
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" name="phone" defaultValue="123-456-7890" />
+            <Label htmlFor="role">Role</Label>
+            <Input id="role" name="role" defaultValue="Recruiter" />
 
-              <Label htmlFor="notes">Notes</Label>
-              <Input id="notes" name="notes" defaultValue="Met at career fair." />
+            <Label htmlFor="phone">Phone</Label>
+            <Input id="phone" name="phone" defaultValue="123-456-7890" />
 
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button type="submit">Save changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </form>
+            <Label htmlFor="notes">Notes</Label>
+            <Input id="notes" name="notes" defaultValue="Met at career fair." />
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button type="submit">Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+
     </Dialog>
   )
 }
