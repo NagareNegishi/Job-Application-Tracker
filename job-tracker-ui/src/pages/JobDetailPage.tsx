@@ -41,7 +41,10 @@ function JobDetailPage() {
         contacts={job.contacts ?? []}
         jobId={jobId}
       />
-      <CorrespondenceList entries={job.correspondences ?? []} />
+      <CorrespondenceList
+        entries={job.correspondences ?? []}
+        jobId={jobId}
+      />
       {/* DocumentList would go here */}
       <DocumentList jobId={jobId} />
 
