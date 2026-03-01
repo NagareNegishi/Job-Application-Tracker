@@ -102,6 +102,33 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
 }
 
 
+
+
+// FormState represents the internal state of the contact editing form.
+interface ContactFormState {
+  name: string
+  email: string
+  role: string
+  phone: string
+  notes: string
+}
+
+// Converts a Contact object to the ContactFormState shape
+function toContactFormState(contact: Contact): ContactFormState {
+  return {
+    name: contact.name,
+    email: contact.email ?? "",
+    role: contact.role ?? "",
+    phone: contact.phone ?? "",
+    notes: contact.notes ?? "",
+  }
+}
+
+
+
+
+
+
 interface ContactDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -115,8 +142,20 @@ export function ContactDialog({
   open,
   onOpenChange,
   contact,
-  onSubmit
-  }: ContactDialogProps) {
+  onSubmit }: ContactDialogProps) {
+  
+  const [form, setForm] = useState<ContactFormState>(
+    contact ? toContactFormState(contact) : {
+      name: "",
+      email: "",
+      role: "",
+      phone: "",
+      notes: "",
+    }
+  )
+
+
+  
   return (
     <Dialog
       open={open}
