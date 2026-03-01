@@ -1,6 +1,3 @@
-import type { Contact } from "@/types/contact";
-// import type { Job, JobPatchOperation } from "@/types/job"
-// import { usePatchJob } from "@/hooks/jobQuery"
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { usePatchJob } from "@/hooks/jobQuery";
+import type { Contact } from "@/types/contact";
+import type { JobPatchOperation } from "@/types/job";
 import { useEffect, useState } from "react";
 
 
@@ -42,15 +42,18 @@ export function ContactCard({ contact, onEdit, onDelete }: ContactCardProps) {
 }
 
 
+interface ContactListProps {
+  contacts: Contact[]
+  jobId: number
+}
 
 
 
-
-export function ContactList({ contacts }: { contacts: Contact[] }) {
+export function ContactList({ contacts, jobId }: ContactListProps) {
 
   const [open, setOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined)
-
+  const { mutate: patchJob, isPending } = usePatchJob()
   // Handlers for add, open dialog with empty form
   function handleAdd() {
     setSelectedContact(undefined)
@@ -65,20 +68,40 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
 
   // Called by dialog on save
   function handleEditSubmit(updated: Contact) {
-    const updatedContacts = contacts.map(c => c === selectedContact ? updated : c)
-    // PATCH with updatedContacts
+    const index = contacts.indexOf(selectedContact!)
+    const operations: JobPatchOperation[] = [
+      { op: "replace", path: `/contacts/${index}`, value: updated }
+    ]
+
+    patchJob(
+      { id: jobId, operations },
+      { onSuccess: () => setOpen(false) }
+    )
   }
 
   // Called by dialog on save
   function handleAddSubmit(contact: Contact) {
-    const updatedContacts = [...contacts, contact]
-    // PATCH with updatedContacts
+    const operations: JobPatchOperation[] = [
+      { op: "add", path: "/contacts/-", value: contact }
+    ]
+
+    patchJob(
+      { id: jobId, operations },
+      { onSuccess: () => setOpen(false) }
+    )
   }
 
 
   // Handlers for delete
   function handleDelete(contact: Contact) {
-    // remove from array, PATCH
+    const index = contacts.indexOf(contact)
+    const operations: JobPatchOperation[] = [
+      { op: "remove", path: `/contacts/${index}` }
+    ]
+
+    patchJob(
+      { id: jobId, operations },
+    )
   }
 
 
@@ -203,48 +226,49 @@ export function ContactDialog({
           </DialogDescription>
         </DialogHeader>
 
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              name="name"
-              value={form.name}
-              onChange={e => setField("name", e.target.value)}
-            />
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            name="name"
+            value={form.name}
+            onChange={e => setField("name", e.target.value)}
+          />
 
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              value={form.email}
-              onChange={e => setField("email", e.target.value)}
-            />
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            value={form.email}
+            onChange={e => setField("email", e.target.value)}
+          />
 
-            <Label htmlFor="role">Role</Label>
-            <Input
-              id="role"
-              name="role"
-              value={form.role}
-              onChange={e => setField("role", e.target.value)}
-            />
+          <Label htmlFor="role">Role</Label>
+          <Input
+            id="role"
+            name="role"
+            value={form.role}
+            onChange={e => setField("role", e.target.value)}
+          />
 
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              name="phone"
-              value={form.phone}
-              onChange={e => setField("phone", e.target.value)}
-            />
+          <Label htmlFor="phone">Phone</Label>
+          <Input
+            id="phone"
+            name="phone"
+            value={form.phone}
+            onChange={e => setField("phone", e.target.value)}
+          />
 
-            <Label htmlFor="notes">Notes</Label>
-            <Input
-              id="notes"
-              name="notes"
-              value={form.notes}
-              onChange={e => setField("notes", e.target.value)}
-            />
+          <Label htmlFor="notes">Notes</Label>
+          <Input
+            id="notes"
+            name="notes"
+            value={form.notes}
+            onChange={e => setField("notes", e.target.value)}
+          />
 
         <DialogFooter>
           
+          {/* Cancel just closes the dialog without saving */ }
           <DialogClose asChild>
             <Button
               variant="outline"
