@@ -37,7 +37,10 @@ function JobDetailPage() {
       {/* <p className="text-2xl font-bold mb-4">Job Tracker</p> */}
       <JobHeader job={job} onEdit={() => setEditOpen(true)} />
       <JobInfoCard job={job} />
-      <ContactList contacts={job.contacts ?? []} />
+      <ContactList
+        contacts={job.contacts ?? []}
+        jobId={jobId}
+      />
       <CorrespondenceList entries={job.correspondences ?? []} />
       {/* DocumentList would go here */}
       <DocumentList jobId={jobId} />

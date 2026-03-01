@@ -202,10 +202,10 @@ export function ContactDialog({
   function handleSubmit() {
     onSubmit({
       name: form.name,
-      email: form.email,
-      role: form.role,
-      phone: form.phone,
-      notes: form.notes,
+      email: form.email || undefined,
+      role: form.role || undefined,
+      phone: form.phone || undefined,
+      notes: form.notes || undefined,
     })
     onOpenChange(false)
   }
