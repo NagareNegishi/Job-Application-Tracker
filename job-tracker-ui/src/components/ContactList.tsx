@@ -62,41 +62,36 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
     // open edit form with that contact
   }
 
-
-
-  if (contacts.length === 0) return <p className="text-sm text-muted-foreground">No contacts.</p>
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {/* Label with button to add contact */}
-      <Label className="col-span-2 flex items-center justify-between">
-        Contacts
-        <Button
-          size="sm"
-          onClick={handleAdd}
-        >
-          Add Contact
-        </Button>
+    <div className="space-y-3">
 
-        {/* temp dialog here as visible */}
-        <ContactDialog
-          open={true}
-          onOpenChange={setOpen}
-          onSubmit={(contact) => {}}
-        />
-        
+      {/* Dialog for adding/editing contacts */ }
+      <ContactDialog
+        open={true}
+        onOpenChange={setOpen}
+        onSubmit={(contact) => {}}
+      />
 
+      {/* Header with Add button */ }
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium">Contacts</span>
+        <Button size="sm" onClick={handleAdd}>Add Contact</Button>
+      </div>
 
-      </Label>
-
-      {/* List of contacts */}
-      {contacts.map((c, i) =>
-        <ContactCard
-          key={i}
-          contact={c}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      )}
+      { contacts.length === 0
+        ? <p className="text-sm text-muted-foreground">No contacts.</p>
+        : <div className="grid grid-cols-2 gap-3">
+          {/* List of contacts */}
+          {contacts.map((c, i) =>
+            <ContactCard
+              key={i}
+              contact={c}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          )}
+        </div>
+      }
     </div>
   )
 }
@@ -190,19 +185,44 @@ export function ContactDialog({
         </DialogHeader>
 
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" defaultValue="Contact Name" />
+            <Input
+              id="name"
+              name="name"
+              value={form.name}
+              onChange={e => setField("name", e.target.value)}
+            />
 
             <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" defaultValue="@email.com" />
+            <Input
+              id="email"
+              name="email"
+              value={form.email}
+              onChange={e => setField("email", e.target.value)}
+            />
 
             <Label htmlFor="role">Role</Label>
-            <Input id="role" name="role" defaultValue="Recruiter" />
+            <Input
+              id="role"
+              name="role"
+              value={form.role}
+              onChange={e => setField("role", e.target.value)}
+            />
 
             <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" name="phone" defaultValue="123-456-7890" />
+            <Input
+              id="phone"
+              name="phone"
+              value={form.phone}
+              onChange={e => setField("phone", e.target.value)}
+            />
 
             <Label htmlFor="notes">Notes</Label>
-            <Input id="notes" name="notes" defaultValue="Met at career fair." />
+            <Input
+              id="notes"
+              name="notes"
+              value={form.notes}
+              onChange={e => setField("notes", e.target.value)}
+            />
 
         <DialogFooter>
           <DialogClose asChild>
