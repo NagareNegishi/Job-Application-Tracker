@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 /**
@@ -153,6 +153,24 @@ export function ContactDialog({
       notes: "",
     }
   )
+
+  // Reset form when dialog opens with fresh contact data
+  useEffect(() => {
+    if (open) setForm(contact ? toContactFormState(contact) : {
+      name: "",
+      email: "",
+      role: "",
+      phone: "",
+      notes: "",
+    })
+  }, [contact, open])
+
+
+  // Helper function to update form state for a specific field
+  function setField<K extends keyof ContactFormState>(key: K, value: ContactFormState[K]) {
+    setForm(prev => ({ ...prev, [key]: value }))
+  }
+
 
 
   
