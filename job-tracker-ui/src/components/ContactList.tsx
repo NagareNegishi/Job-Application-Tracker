@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
 import type { Contact } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
-import { Pencil, Trash2 } from "lucide-react";
+import { Mail, Pencil, Phone, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 
@@ -54,11 +54,20 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
           </Button>
         </div>
       </div>
-
-
+      {/* Optional fields */}
       {contact.role && <p className="text-sm text-muted-foreground">{contact.role}</p>}
-      {contact.email && <p className="text-sm">{contact.email}</p>}
-      {contact.phone && <p className="text-sm">{contact.phone}</p>}
+      {contact.email && (
+        <div className="flex items-center gap-1.5 text-sm">
+          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+          <span>{contact.email}</span>
+        </div>
+      )}
+      {contact.phone && (
+        <div className="flex items-center gap-1.5 text-sm">
+          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+          <span>{contact.phone}</span>
+        </div>
+      )}
       {contact.notes && <p className="text-sm text-muted-foreground">{contact.notes}</p>}
     </div>
   )
