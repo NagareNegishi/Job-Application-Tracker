@@ -1,9 +1,19 @@
 import type { Contact } from "@/types/contact";
 // import type { Job, JobPatchOperation } from "@/types/job"
 // import { usePatchJob } from "@/hooks/jobQuery"
-// import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from "react";
 
 
 /**
@@ -38,6 +48,8 @@ export function ContactCard({ contact, onEdit, onDelete }: ContactCardProps) {
 
 export function ContactList({ contacts }: { contacts: Contact[] }) {
 
+  const [open, setOpen] = useState(false)
+
   function handleAdd() {
     // open empty form
   }
@@ -64,6 +76,16 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
         >
           Add Contact
         </Button>
+
+        {/* temp dialog here as visible */}
+        <ContactDialog
+          open={true}
+          onOpenChange={setOpen}
+          onSubmit={(contact) => {}}
+        />
+        
+
+
       </Label>
 
       {/* List of contacts */}
@@ -78,3 +100,62 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
     </div>
   )
 }
+
+
+interface ContactDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  contact?: Contact  // undefined = add mode, defined = edit mode
+  onSubmit: (contact: Contact) => void
+}
+
+
+
+export function ContactDialog({
+  open,
+  onOpenChange,
+  contact,
+  onSubmit
+  }: ContactDialogProps) {
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+    >
+      <form>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit profile</DialogTitle>
+            <DialogDescription>
+              Make changes to your profile here. Click save when you&apos;re
+              done.
+            </DialogDescription>
+          </DialogHeader>
+
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" name="name" defaultValue="Contact Name" />
+
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" defaultValue="@email.com" />
+
+              <Label htmlFor="role">Role</Label>
+              <Input id="role" name="role" defaultValue="Recruiter" />
+
+              <Label htmlFor="phone">Phone</Label>
+              <Input id="phone" name="phone" defaultValue="123-456-7890" />
+
+              <Label htmlFor="notes">Notes</Label>
+              <Input id="notes" name="notes" defaultValue="Met at career fair." />
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="submit">Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </form>
+    </Dialog>
+  )
+}
+
