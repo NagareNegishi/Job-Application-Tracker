@@ -1,3 +1,4 @@
+import { DatePicker } from "@/components/ui/DatePicker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -139,7 +140,25 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           </Select>
         </div>
 
+        {/* Edit Applied At */}
+        <div className="space-y-1.5">
+          <Label>Applied At</Label>
+          <DatePicker
+            value={form.appliedAt}
+            onChange={d => setField("appliedAt", d)}
+            placeholder="Select date"
+          />
+        </div>
 
+        {/* Edit Closed At */}
+        <div className="space-y-1.5">
+          <Label>Closed At</Label>
+          <DatePicker
+            value={form.closedAt}
+            onChange={d => setField("closedAt", d)}
+            placeholder="Select date"
+          />
+        </div>
 
       </SheetContent>
     </Sheet>
@@ -150,7 +169,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
 
 
-// import { DatePicker } from "@/components/ui/DatePicker"
+
 // import { Button } from "@/components/ui/button"
 
 
@@ -221,23 +240,9 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
 
 
-//           <div className="space-y-1.5">
-//             <Label>Applied At</Label>
-//             <DatePicker
-//               value={form.appliedAt}
-//               onChange={d => setField("appliedAt", d)}
-//               placeholder="Select date"
-//             />
-//           </div>
 
-//           <div className="space-y-1.5">
-//             <Label>Closed At</Label>
-//             <DatePicker
-//               value={form.closedAt}
-//               onChange={d => setField("closedAt", d)}
-//               placeholder="Select date"
-//             />
-//           </div>
+
+
 
 //           <div className="space-y-1.5">
 //             <Label htmlFor="description">Description</Label>
