@@ -14,6 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { Textarea } from "@/components/ui/textarea"
 import { JobStatus, Priority } from "@/types/enums"
 import type { Job } from "@/types/job"
 import { useEffect, useState } from "react"
@@ -160,6 +161,31 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           />
         </div>
 
+        {/* Edit Description */}
+        <div className="space-y-1.5">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={form.description}
+            onChange={e => setField("description", e.target.value)}
+            // Initially set to 3 rows
+            rows={3}
+          />
+        </div>
+
+        {/* Edit Notes */}
+        <div className="space-y-1.5">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea
+            id="notes"
+            value={form.notes}
+            onChange={e => setField("notes", e.target.value)}
+            rows={3}
+          />
+        </div>
+
+
+        
       </SheetContent>
     </Sheet>
   )
@@ -179,7 +205,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 //   SheetHeader,
 //   SheetTitle,
 // } from "@/components/ui/sheet"
-// import { Textarea } from "@/components/ui/textarea"
+
 // import { usePatchJob } from "@/hooks/jobQuery"
 // import { JobStatus, Priority } from "@/types/enums"
 // import type { Job, JobPatchOperation } from "@/types/job"
@@ -244,25 +270,8 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
 
 
-//           <div className="space-y-1.5">
-//             <Label htmlFor="description">Description</Label>
-//             <Textarea
-//               id="description"
-//               value={form.description}
-//               onChange={e => setField("description", e.target.value)}
-//               rows={3}
-//             />
-//           </div>
 
-//           <div className="space-y-1.5">
-//             <Label htmlFor="notes">Notes</Label>
-//             <Textarea
-//               id="notes"
-//               value={form.notes}
-//               onChange={e => setField("notes", e.target.value)}
-//               rows={3}
-//             />
-//           </div>
+
 
 //           <div className="flex gap-2 pt-2">
 //             <Button
