@@ -76,12 +76,10 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
     }
   }, [open])
 
-
   // Helper function to update form state for a specific field
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm(prev => ({ ...prev, [key]: value }))
   }
-
 
   // Handles form submission by comparing current form state with original job data
   function handleSubmit() {
