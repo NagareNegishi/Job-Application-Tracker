@@ -30,7 +30,7 @@ public class Job
             Priority = this.Priority,
             AppliedAt = this.AppliedAt,
             ClosedAt = this.ClosedAt,
-            Documents = this.Documents?.Select(d => d.ToResponseDto()).ToList(),
+            Documents = this.Documents?.Select(d => d.ToResponseDto()).ToList() ?? [],
             Description = this.Description,
             Notes = this.Notes,
             Contacts = this.Contacts,
