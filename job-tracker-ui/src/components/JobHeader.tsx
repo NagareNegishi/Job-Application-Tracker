@@ -7,7 +7,20 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
-export function JobHeader({ job }: { job: Job }) {
+/**
+ * Props for JobHeader component, which displays the company and role of a job application,
+ */
+interface JobHeaderProps {
+  job: Job
+  onEdit: () => void
+}
+
+
+/**
+ * JobHeader component displays the company and role of a job application,
+ * along with action buttons for editing, adding documents, and deleting the job.
+ */
+export function JobHeader({ job, onEdit }: JobHeaderProps) {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
@@ -42,8 +55,13 @@ export function JobHeader({ job }: { job: Job }) {
           onChange={handleFileChange}
         />
 
-        {/* <StatusBadge status={job.status} /> */}
-        <Button>Edit</Button>
+        {/* Edit button opens the JobEditSheet, controlled by state in JobDetailPage */}
+        <Button
+          variant="outline"
+          onClick={onEdit}
+        >
+          Edit
+        </Button>
 
         {/* Document type selector for uploads */}
         <select
@@ -54,8 +72,12 @@ export function JobHeader({ job }: { job: Job }) {
           <option value="CoverLetter">Cover Letter</option>
           <option value="Other">Other</option>
         </select>
+
         {/* "Add Document" button triggers hidden file input */}
-        <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isPending}>
+        <Button
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()} disabled={isPending}
+        >
           {isPending ? "Uploading..." : "Add Document"}
         </Button>
 

@@ -18,3 +18,13 @@ services:
 
     ports:
       - "5432:5432"
+
+    volumes:
+      # Refer where postgres mount the data volume:
+      # https://hub.docker.com/_/postgres
+      # ~17 versions: /var/lib/postgresql/data
+      # 18+ versions: /var/lib/postgresql
+      - job_tracker_postgres:/var/lib/postgresql
+
+volumes:
+  job_tracker_postgres:

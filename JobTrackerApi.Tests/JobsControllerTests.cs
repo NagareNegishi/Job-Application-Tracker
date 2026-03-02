@@ -33,8 +33,8 @@ public class JobsControllerTests: IDisposable
     private async Task<Job> SeedJobAsync(
         string company = "A_Company",
         string role = "Dev",
-        JobStatus? status = null,
-        Priority? priority = null,
+        JobStatus status = JobStatus.Wishlist,
+        Priority priority = Priority.Low,
         DateTime? appliedAt = null,
         DateTime? closedAt = null,
         string? description = null,
@@ -46,7 +46,7 @@ public class JobsControllerTests: IDisposable
         var job = new Job {
             Company = company,
             Role = role,
-            Status = status ?? JobStatus.Wishlist,
+            Status = status,
             Priority = priority,
             AppliedAt = appliedAt,
             ClosedAt = closedAt,

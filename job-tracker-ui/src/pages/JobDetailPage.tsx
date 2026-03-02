@@ -12,12 +12,17 @@
 import { ContactList } from "@/components/ContactList";
 import { CorrespondenceList } from "@/components/CorrespondenceList";
 import { DocumentList } from "@/components/DocumentList";
+import { JobEditSheet } from "@/components/JobEditSheet";
 import { JobHeader } from "@/components/JobHeader";
 import { JobInfoCard } from "@/components/JobInfoCard";
 import { useJob } from "@/hooks/jobQuery";
+import { useState } from "react";
 import { useParams } from "react-router";
 
+
 function JobDetailPage() {
+
+  const [editOpen, setEditOpen] = useState(false)
 
   const { id } = useParams()
   const jobId = id ? parseInt(id) : NaN
@@ -30,12 +35,20 @@ function JobDetailPage() {
   return (
     <div className="container mx-auto p-4">
       {/* <p className="text-2xl font-bold mb-4">Job Tracker</p> */}
-      <JobHeader job={job} />
+      <JobHeader job={job} onEdit={() => setEditOpen(true)} />
       <JobInfoCard job={job} />
-      <ContactList contacts={job.contacts ?? []} />
-      <CorrespondenceList entries={job.correspondences ?? []} />
+      <ContactList
+        contacts={job.contacts ?? []}
+        jobId={jobId}
+      />
+      <CorrespondenceList
+        entries={job.correspondences ?? []}
+        jobId={jobId}
+      />
       {/* DocumentList would go here */}
       <DocumentList jobId={jobId} />
+
+      <JobEditSheet job={job} open={editOpen} onOpenChange={setEditOpen} />
 
     </div>
   )

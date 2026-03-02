@@ -77,7 +77,7 @@ public class DocumentDTOTests
 
         // Assert
         Assert.Equal(DocumentType.CV, doc.Type);
-        Assert.Equal("Test Document", doc.Name);
+        Assert.Equal("Test Document.pdf", doc.Name);
         Assert.StartsWith("/fake/path", doc.FilePath);
         Assert.EndsWith(".pdf", doc.FilePath);
         Assert.Equal(1, doc.JobId);

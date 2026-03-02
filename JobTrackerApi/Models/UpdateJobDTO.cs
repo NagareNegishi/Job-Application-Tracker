@@ -17,7 +17,8 @@ public class UpdateJobDTO
     [Required]
     public JobStatus Status { get; set; } = JobStatus.Wishlist;
 
-    public Priority? Priority { get; set; }
+    [Required]
+    public Priority Priority { get; set; } = Priority.Low;
 
     public DateTime? AppliedAt { get; set; }
 
@@ -30,8 +31,8 @@ public class UpdateJobDTO
     public string? Notes { get; set; }
 
     [MaxLength(ValidationConstants.MaxContactSize)]
-    public List<Contact>? Contacts { get; set; }
+    public List<Contact> Contacts { get; set; } = [];
     
     [MaxLength(ValidationConstants.MaxCorrespondenceSize)]
-    public List<Correspondence>? Correspondences { get; set; }
+    public List<Correspondence> Correspondences { get; set; } = [];
 }

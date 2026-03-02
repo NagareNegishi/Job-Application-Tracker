@@ -85,6 +85,8 @@ if (app.Environment.IsDevelopment())
 
     // Enable the Swagger UI for API testing, run with:
     // dotnet run --launch-profile https
+    // NOTE: if Migration in the DB is not running:
+    // dotnet ef database update
     app.UseSwaggerUi(options =>
     {
         options.DocumentPath = "/openapi/v1.json";

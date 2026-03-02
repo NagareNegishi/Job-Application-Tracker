@@ -67,7 +67,7 @@ public class JobDTOTests
         Assert.Equal(dto.Company, job.Company);
         Assert.Equal(dto.Role, job.Role);
         Assert.Equal(dto.Status, job.Status);
-        Assert.Null(job.Priority);
+        Assert.Equal(Priority.Low, job.Priority); // Default value
         Assert.Null(job.AppliedAt);
         Assert.Null(job.ClosedAt);
         Assert.Null(job.Description);
