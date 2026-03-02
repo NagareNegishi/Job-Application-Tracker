@@ -1,3 +1,7 @@
+/**
+ * Note: While post new job could accept array of "Contact" in backend,
+ * frontend simply pass empty array.
+ */
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/DatePicker"
 import { Input } from "@/components/ui/input"
@@ -16,9 +20,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
-import { usePatchJob } from "@/hooks/jobQuery"
+import { useCreateJob } from "@/hooks/jobQuery"
 import { JobStatus, Priority } from "@/types/enums"
-import type { Job, JobPatchOperation } from "@/types/job"
 import { useEffect, useState } from "react"
 
 // FormState represents the internal state of the job edit form
@@ -33,18 +36,17 @@ interface FormState {
   notes: string
 }
 
-// Converts a Job object to the FormState shape
-function toFormState(job: Job): FormState {
-  return {
-    company: job.company,
-    role: job.role,
-    status: job.status,
-    priority: job.priority,
-    appliedAt: job.appliedAt ? new Date(job.appliedAt) : undefined,
-    closedAt: job.closedAt ? new Date(job.closedAt) : undefined,
-    description: job.description ?? "",
-    notes: job.notes ?? "",
-  }
+
+// Default form state for creating a new job, with empty fields and default status/priority
+const defaultForm: FormState = {
+  company: "",
+  role: "",
+  status: JobStatus.Wishlist,
+  priority: Priority.Low,
+  appliedAt: undefined,
+  closedAt: undefined,
+  description: "",
+  notes: "",
 }
 
 
@@ -52,7 +54,6 @@ function toFormState(job: Job): FormState {
  * Props for JobCreateSheet component, which provides a form for editing job details.
  */
 interface JobCreateSheetProps {
-  job: Job
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -61,15 +62,19 @@ interface JobCreateSheetProps {
  * JobCreateSheet component provides a form for editing job details.
  * It uses a Sheet component for the UI and manages form state internally.
  */
-export function JobCreateSheet({ job, open, onOpenChange }: JobCreateSheetProps) {
+export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
 
-  const [form, setForm] = useState<FormState>(() => toFormState(job))
-  const { mutate: patchJob, isPending } = usePatchJob()
+  const [form, setForm] = useState<FormState>(defaultForm)
+  const { mutate: createJob, isPending } = useCreateJob()
+  const [errors, setErrors] = useState<{ company?: string; role?: string }>({})
 
-  // Reset form when sheet opens with fresh job data
+  // Reset form when sheet opens with default values
   useEffect(() => {
-    if (open) setForm(toFormState(job))
-  }, [job, open])
+    if (open) {
+      setForm(defaultForm)
+      setErrors({})
+    }
+  }, [open])
 
 
   // Helper function to update form state for a specific field
@@ -80,43 +85,28 @@ export function JobCreateSheet({ job, open, onOpenChange }: JobCreateSheetProps)
 
   // Handles form submission by comparing current form state with original job data
   function handleSubmit() {
-    const operations: JobPatchOperation[] = []
-    // Required fields
-    if (form.company !== (job.company))
-      operations.push({ op: "replace", path: "/company", value: form.company })
-    if (form.role !== (job.role))
-      operations.push({ op: "replace", path: "/role", value: form.role })
-    if (form.status !== job.status)
-      operations.push({ op: "replace", path: "/status", value: form.status })
-    if (form.priority !== (job.priority))
-      operations.push({ op: "replace", path: "/priority", value: form.priority })
-
-    // Optional fields, Date fields need to be compared as ISO strings to avoid timezone issues
-    const appliedAtISO = form.appliedAt?.toISOString() ?? null
-    const existingAppliedAt = job.appliedAt ? new Date(job.appliedAt).toISOString() : null
-    if (appliedAtISO !== existingAppliedAt)
-      operations.push({ op: "replace", path: "/appliedAt", value: appliedAtISO })
-
-    const closedAtISO = form.closedAt?.toISOString() ?? null
-    const existingClosedAt = job.closedAt ? new Date(job.closedAt).toISOString() : null
-    if (closedAtISO !== existingClosedAt)
-      operations.push({ op: "replace", path: "/closedAt", value: closedAtISO })
-
-    if (form.description !== (job.description ?? ""))
-      operations.push({ op: "replace", path: "/description", value: form.description })
-
-    if (form.notes !== (job.notes ?? ""))
-      operations.push({ op: "replace", path: "/notes", value: form.notes })
-
-    // Nothing changed
-    if (operations.length === 0) {
-      onOpenChange(false)
+    // Validate required fields
+    const newErrors: { company?: string; role?: string } = {}
+    if (!form.company.trim()) newErrors.company = "Company is required"
+    if (!form.role.trim()) newErrors.role = "Role is required"
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
       return
     }
+    setErrors({})
 
     // Trigger the patch
-    patchJob(
-      { id: job.id, operations },
+    createJob(
+      {
+        company: form.company,
+        role: form.role,
+        status: form.status,
+        priority: form.priority,
+        appliedAt: form.appliedAt?.toISOString(),
+        closedAt: form.closedAt?.toISOString(),
+        description: form.description || undefined,
+        notes: form.notes || undefined,
+      },
       { onSuccess: () => onOpenChange(false) }
     )
   }
@@ -125,7 +115,7 @@ export function JobCreateSheet({ job, open, onOpenChange }: JobCreateSheetProps)
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Edit Job</SheetTitle>
+          <SheetTitle>Add New Job</SheetTitle>
         </SheetHeader>
 
         {/* form fields go here */}
@@ -138,6 +128,7 @@ export function JobCreateSheet({ job, open, onOpenChange }: JobCreateSheetProps)
             value={form.company}
             onChange={e => setField("company", e.target.value)}
           />
+          {errors.company && <p className="text-sm text-destructive">{errors.company}</p>}
         </div>
 
         {/* Edit Role */}
@@ -148,6 +139,7 @@ export function JobCreateSheet({ job, open, onOpenChange }: JobCreateSheetProps)
             value={form.role}
             onChange={e => setField("role", e.target.value)}
           />
+          {errors.role && <p className="text-sm text-destructive">{errors.role}</p>}
         </div>
 
         {/* Edit Status */}
