@@ -1,5 +1,8 @@
 FROM mcr.microsoft.com/devcontainers/dotnet:2-10.0
 
+# install PostgreSQL client
+RUN apt-get update && apt-get install -y postgresql-client
+
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
