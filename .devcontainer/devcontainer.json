@@ -6,7 +6,10 @@
     "service": "app",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	"features": {
-		"ghcr.io/devcontainers/features/node:1": {}
+		// Node.js for frontend
+		"ghcr.io/devcontainers/features/node:1": {},
+		// Claude Code
+		"ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
 	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
