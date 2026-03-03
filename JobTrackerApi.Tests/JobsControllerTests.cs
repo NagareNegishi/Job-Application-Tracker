@@ -225,8 +225,8 @@ public class JobsControllerTests: IDisposable
         Assert.Single(createdJob.Contacts);
         Assert.Equal("Jane Smith", createdJob.Contacts[0].Name);
         Assert.Equal("Jane@Email", createdJob.Contacts[0].Email);
-        Assert.Null(createdJob.Correspondences);
-        Assert.Null(createdJob.Documents);
+        Assert.Equal([], createdJob.Correspondences);
+        Assert.Equal([], createdJob.Documents);
     }
 
     // Test for PostJob with missing required fields
