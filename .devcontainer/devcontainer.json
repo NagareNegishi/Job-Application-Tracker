@@ -16,12 +16,25 @@
 	// "customizations": {},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [5000, 5001, 5432],
+	// backend, frontend, postgres
+	"forwardPorts": [7100, 5286, 5173, 5432],
 	// "portsAttributes": {
 	//		"5001": {
 	//			"protocol": "https"
 	//		}
 	// }
+
+    // Bind-mount the host cert into the container
+    "mounts": [
+        "source=${env:HOME}${env:USERPROFILE}/.aspnet/https,target=/home/vscode/.aspnet/https,type=bind"
+    ],
+
+	// Tell Kestrel where to find the cert and its password
+    "remoteEnv": {
+        "ASPNETCORE_Kestrel__Certificates__Default__Password": "${localEnv:KESTREL_CERT_PASSWORD}",
+        "ASPNETCORE_Kestrel__Certificates__Default__Path": "/home/vscode/.aspnet/https/aspnetapp.pfx"
+    },
+
 
     // Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": {
