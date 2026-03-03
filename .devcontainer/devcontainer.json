@@ -13,7 +13,15 @@
 	// "features": {},
 
 	// Configure tool-specific properties.
-	// "customizations": {},
+	// VS code specific properties: https://containers.dev/supporting#visual-studio-code
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csdevkit"
+			]
+		}
+	},
+
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// backend, frontend, postgres
