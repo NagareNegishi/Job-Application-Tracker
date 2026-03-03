@@ -3,9 +3,10 @@ FROM mcr.microsoft.com/devcontainers/dotnet:2-10.0
 # install PostgreSQL client
 RUN apt-get update && apt-get install -y postgresql-client
 
-# Install dotnet-ef global tool
+# Install dotnet-ef global tool as vscode user
+USER vscode
 RUN dotnet tool install -g dotnet-ef
-ENV PATH="$PATH:$HOME/.dotnet/tools"
+ENV PATH="$PATH:/home/vscode/.dotnet/tools"
 
 
 # [Optional] Uncomment this section to install additional OS packages.
