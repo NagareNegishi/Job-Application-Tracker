@@ -6,7 +6,7 @@
     "service": "app",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	"features": {
-		"ghcr.io/stu-bell/devcontainer-features/node:0": {}
+		"ghcr.io/devcontainers/features/node:1": {}
 	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
