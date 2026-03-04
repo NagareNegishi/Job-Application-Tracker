@@ -42,7 +42,15 @@
 		"source=claude-credentials,target=/home/vscode/.claude,type=volume"
     ],
 
-	// Use 'remoteEnv' to set environment variables in the container.
+	// Use 'containerEnv' to set environment variables in the container. (for all processes, set during container build)
+	"containerEnv": {
+		// Increase Node.js memory limit for Claude Code
+		"NODE_OPTIONS": "--max-old-space-size=4096",
+		// Tell Claude Code where to find its config (credentials)
+		"CLAUDE_CONFIG_DIR": "/home/node/.claude"
+	},
+
+	// Use 'remoteEnv' to set environment variables in the container. (for VS Code remote session)
     "remoteEnv": {
 		// Tell Kestrel where to find the cert and its password
         "ASPNETCORE_Kestrel__Certificates__Default__Password": "${localEnv:KESTREL_CERT_PASSWORD}",
@@ -64,3 +72,65 @@
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 }
+
+
+// claude-code example devcontainer configuration:
+// https://github.com/anthropics/claude-code/blob/main/.devcontainer/devcontainer.json
+//
+// {
+//   "name": "Claude Code Sandbox",
+//   "build": {
+//     "dockerfile": "Dockerfile",
+//     "args": {
+//       "TZ": "${localEnv:TZ:America/Los_Angeles}",
+//       "CLAUDE_CODE_VERSION": "latest",
+//       "GIT_DELTA_VERSION": "0.18.2",
+//       "ZSH_IN_DOCKER_VERSION": "1.2.0"
+//     }
+//   },
+//   "runArgs": [
+//     "--cap-add=NET_ADMIN",
+//     "--cap-add=NET_RAW"
+//   ],
+//   "customizations": {
+//     "vscode": {
+//       "extensions": [
+//         "anthropic.claude-code",
+//         "dbaeumer.vscode-eslint",
+//         "esbenp.prettier-vscode",
+//         "eamodio.gitlens"
+//       ],
+//       "settings": {
+//         "editor.formatOnSave": true,
+//         "editor.defaultFormatter": "esbenp.prettier-vscode",
+//         "editor.codeActionsOnSave": {
+//           "source.fixAll.eslint": "explicit"
+//         },
+//         "terminal.integrated.defaultProfile.linux": "zsh",
+//         "terminal.integrated.profiles.linux": {
+//           "bash": {
+//             "path": "bash",
+//             "icon": "terminal-bash"
+//           },
+//           "zsh": {
+//             "path": "zsh"
+//           }
+//         }
+//       }
+//     }
+//   },
+//   "remoteUser": "node",
+//   "mounts": [
+//     "source=claude-code-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
+//     "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume"
+//   ],
+//   "containerEnv": {
+//     "NODE_OPTIONS": "--max-old-space-size=4096",
+//     "CLAUDE_CONFIG_DIR": "/home/node/.claude",
+//     "POWERLEVEL9K_DISABLE_GITSTATUS": "true"
+//   },
+//   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
+//   "workspaceFolder": "/workspace",
+//   "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
+//   "waitFor": "postStartCommand"
+// }
