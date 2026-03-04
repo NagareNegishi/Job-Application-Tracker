@@ -46,7 +46,7 @@
 	"containerEnv": {
 		// Increase Node.js memory limit for Claude Code
 		"NODE_OPTIONS": "--max-old-space-size=4096",
-		// Tell Claude Code where to find its config (credentials)
+		// Tell Claude Code where to find its config
 		"CLAUDE_CONFIG_DIR": "/home/node/.claude"
 	},
 
@@ -66,7 +66,11 @@
     "frontend": "cd job-tracker-ui && npm install",
 	// Set up Claude onboarding state, skip the onboarding process
 	"claude-onboarding": "echo '{\"hasCompletedOnboarding\":true}' > /home/vscode/.claude.json"
-	}
+	},
+	// Executes the firewall script every time the container starts
+	"postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
+	// Wait for the firewall to be set up
+	"waitFor": "postStartCommand"
 
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
@@ -79,6 +83,8 @@
 //
 // {
 //   "name": "Claude Code Sandbox",
+
+	// only required if you need Dockerfile
 //   "build": {
 //     "dockerfile": "Dockerfile",
 //     "args": {
@@ -88,6 +94,7 @@
 //       "ZSH_IN_DOCKER_VERSION": "1.2.0"
 //     }
 //   },
+	// for firewall, but dont work with docker compose setup
 //   "runArgs": [
 //     "--cap-add=NET_ADMIN",
 //     "--cap-add=NET_RAW"

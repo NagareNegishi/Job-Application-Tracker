@@ -15,13 +15,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     aggregate \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+
+# Copy and configure firewall script
+COPY init-firewall.sh /usr/local/bin/init-firewall.sh
+RUN chmod +x /usr/local/bin/init-firewall.sh \
+    && echo "vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/vscode-firewall \
+    && chmod 0440 /etc/sudoers.d/vscode-firewall
+
+
 # Install dotnet-ef global tool as vscode user
 USER vscode
 RUN dotnet tool install -g dotnet-ef
 ENV PATH="$PATH:/home/vscode/.dotnet/tools"
 
 
-
 # [Optional] Uncomment this line to install global node packages.
 # RUN su vscode -c "source /usr/local/share/nvm/nvm.sh && npm install -g <your-package-here>" 2>&1
+
 
