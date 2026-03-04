@@ -35,13 +35,16 @@
 	//		}
 	// }
 
-    // Bind-mount the host cert into the container
     "mounts": [
-        "source=${env:HOME}${env:USERPROFILE}/.aspnet/https,target=/home/vscode/.aspnet/https,type=bind"
+		// Bind-mount the host cert into the container
+        "source=${env:HOME}${env:USERPROFILE}/.aspnet/https,target=/home/vscode/.aspnet/https,type=bind",
+		// Mount a volume for Claude credentials
+		"source=claude-credentials,target=/home/vscode/.claude,type=volume"
     ],
 
-	// Tell Kestrel where to find the cert and its password
+	// Use 'remoteEnv' to set environment variables in the container.
     "remoteEnv": {
+		// Tell Kestrel where to find the cert and its password
         "ASPNETCORE_Kestrel__Certificates__Default__Password": "${localEnv:KESTREL_CERT_PASSWORD}",
         "ASPNETCORE_Kestrel__Certificates__Default__Path": "/home/vscode/.aspnet/https/aspnetapp.pfx"
     },
@@ -52,7 +55,9 @@
     // Restore .NET dependencies
     "backend": "cd JobTrackerApi && dotnet restore",
     // Install frontend dependencies
-    "frontend": "cd job-tracker-ui && npm install"
+    "frontend": "cd job-tracker-ui && npm install",
+	// Set up Claude onboarding state, skip the onboarding process
+	"claude-onboarding": "echo '{\"hasCompletedOnboarding\":true}' > /home/vscode/.claude.json"
 	}
 
 
