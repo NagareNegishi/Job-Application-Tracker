@@ -4,27 +4,59 @@
 set -euo pipefail  # Exit on error, undefined vars, and pipeline failures
 IFS=$'\n\t'       # Stricter word splitting
 
-# 1. Extract Docker DNS info BEFORE any flushing
-DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
+# # 1. Extract Docker DNS info BEFORE any flushing
+# DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
+
+# 1. Read Docker DNS NAT rules BEFORE any flush
+#    Docker injects 4 rules: UDP DNAT, UDP SNAT, TCP DNAT, TCP SNAT
+#    The ephemeral ports are different every startup.
+# UDP_DNS_DEST=$(iptables-save -t nat | grep DOCKER_OUTPUT | grep udp | grep -o '127\.0\.0\.11:[0-9]*' || true)
+# TCP_DNS_DEST=$(iptables-save -t nat | grep DOCKER_OUTPUT | grep tcp | grep -o '127\.0\.0\.11:[0-9]*' || true)
+# UDP_DNS_SPORT=$(iptables-save -t nat | grep DOCKER_POSTROUTING | grep udp | grep -o ':[0-9]*$' | tr -d ':' || true)
+# TCP_DNS_SPORT=$(iptables-save -t nat | grep DOCKER_POSTROUTING | grep tcp | grep -o ':[0-9]*$' | tr -d ':' || true)
+
 
 # Flush existing rules and delete existing ipsets. Clean slate before applying new rules.
 iptables -F
 iptables -X
-iptables -t nat -F
-iptables -t nat -X
+# iptables -t nat -F
+# iptables -t nat -X
 iptables -t mangle -F
 iptables -t mangle -X
 ipset destroy allowed-domains 2>/dev/null || true
 
-# 2. Selectively restore ONLY internal Docker DNS resolution. Puts back the Docker DNS NAT rules saved at the start
-if [ -n "$DOCKER_DNS_RULES" ]; then
-    echo "Restoring Docker DNS rules..."
-    iptables -t nat -N DOCKER_OUTPUT 2>/dev/null || true
-    iptables -t nat -N DOCKER_POSTROUTING 2>/dev/null || true
-    echo "$DOCKER_DNS_RULES" | xargs -L 1 iptables -t nat
-else
-    echo "No Docker DNS rules to restore"
-fi
+
+
+
+# # 3. Rebuild Docker DNS NAT rules using the ports captured above
+# if [ -n "$UDP_DNS_DEST" ] && [ -n "$TCP_DNS_DEST" ]; then
+#     echo "Rebuilding Docker DNS NAT rules..."
+#     iptables -t nat -N DOCKER_OUTPUT 2>/dev/null || true
+#     iptables -t nat -N DOCKER_POSTROUTING 2>/dev/null || true
+#     # DNAT: redirect port 53 -> ephemeral port on 127.0.0.11
+#     iptables -t nat -A DOCKER_OUTPUT -d 127.0.0.11 -p udp --dport 53 -j DNAT --to-destination "$UDP_DNS_DEST"
+#     iptables -t nat -A DOCKER_OUTPUT -d 127.0.0.11 -p tcp --dport 53 -j DNAT --to-destination "$TCP_DNS_DEST"
+#     # SNAT: rewrite source port on replies back to 53
+#     [ -n "$UDP_DNS_SPORT" ] && iptables -t nat -A DOCKER_POSTROUTING -s 127.0.0.11 -p udp --sport "$UDP_DNS_SPORT" -j SNAT --to-source :53
+#     [ -n "$TCP_DNS_SPORT" ] && iptables -t nat -A DOCKER_POSTROUTING -s 127.0.0.11 -p tcp --sport "$TCP_DNS_SPORT" -j SNAT --to-source :53
+#     # Wire the chains into the nat OUTPUT hook
+#     iptables -t nat -A OUTPUT -j DOCKER_OUTPUT
+#     iptables -t nat -A POSTROUTING -j DOCKER_POSTROUTING
+# else
+#     echo "WARNING: No Docker DNS NAT rules found — DNS may not work"
+# fi
+
+
+
+# # 2. Selectively restore ONLY internal Docker DNS resolution. Puts back the Docker DNS NAT rules saved at the start
+# if [ -n "$DOCKER_DNS_RULES" ]; then
+#     echo "Restoring Docker DNS rules..."
+#     iptables -t nat -N DOCKER_OUTPUT 2>/dev/null || true
+#     iptables -t nat -N DOCKER_POSTROUTING 2>/dev/null || true
+#     echo "$DOCKER_DNS_RULES" | xargs -L 1 iptables -t nat
+# else
+#     echo "No Docker DNS rules to restore"
+# fi
 
 
 # First allow DNS and localhost before any restrictions
@@ -72,17 +104,39 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr"
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
+# api.nuget.org and globalcdn.nuget.org are on Akamai CDN.
+# Akamai IPs rotate, so we resolve them fresh here — immediately before dotnet restore runs.
+# NuGet themselves advise domain-allowlisting over IP-allowlisting (no stable CIDR list exists).
+echo "Resolving NuGet CDN IPs (Akamai-backed, resolved fresh to avoid rotation)..."
+for domain in "api.nuget.org" "globalcdn.nuget.org" "dist.nuget.org" "www.nuget.org"; do
+    echo "Resolving $domain..."
+    ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
+    if [ -z "$ips" ]; then
+        echo "WARNING: Failed to resolve $domain — skipping (may cause dotnet restore to fail)"
+    else
+        while read -r ip; do
+            if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+                echo "Adding $ip for $domain"
+                ipset add allowed-domains "$ip" 2>/dev/null || true
+            fi
+        done < <(echo "$ips")
+    fi
+done
+
+
+    # "api.nuget.org" \
+    # "www.nuget.org" \
+    # "globalcdn.nuget.org" \
+    # "dist.nuget.org" \
 
 # Resolve and add other allowed domains
 # registry.npmjs.org — essential for npm installs
 # api.anthropic.com — essential for Claude Code to function
-# api.nuget.org handles package restore, www.nuget.org handles package metadata/search
+# 4 domains for NuGet to function
 # Other 3 are for VS Code extension marketplace access
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
-    "api.nuget.org" \
-    "www.nuget.org" \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com"; do
