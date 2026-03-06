@@ -47,7 +47,7 @@
 		// Increase Node.js memory limit for Claude Code
 		"NODE_OPTIONS": "--max-old-space-size=4096",
 		// Tell Claude Code where to find its config
-		"CLAUDE_CONFIG_DIR": "/home/node/.claude"
+		"CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
 	},
 
 	// Use 'remoteEnv' to set environment variables in the container. (for VS Code remote session)
@@ -58,10 +58,12 @@
     },
 
 
+
     // Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": {
-    // Restore .NET dependencies
-    "backend": "cd JobTrackerApi && dotnet restore",
+	// Restore .NET dependencies
+    // "backend": "cd JobTrackerApi && dotnet restore",
+	"backend": "bash -c 'cd JobTrackerApi && dotnet restore --verbosity detailed 2>&1 | tee /tmp/dotnet-restore.log; exit ${PIPESTATUS[0]}'",
     // Install frontend dependencies
     "frontend": "cd job-tracker-ui && npm install",
 	// Set up Claude onboarding state, skip the onboarding process
