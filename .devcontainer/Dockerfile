@@ -16,11 +16,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
-# Copy and configure firewall script
+# # Copy and configure firewall script
+# COPY init-firewall.sh /usr/local/bin/init-firewall.sh
+# RUN chmod +x /usr/local/bin/init-firewall.sh \
+#     && echo "vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/vscode-firewall \
+#     && chmod 0440 /etc/sudoers.d/vscode-firewall
+
+
+# Copy and configure firewall script + restore wrapper
 COPY init-firewall.sh /usr/local/bin/init-firewall.sh
-RUN chmod +x /usr/local/bin/init-firewall.sh \
-    && echo "vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/vscode-firewall \
+COPY resolve-and-restore.sh /usr/local/bin/resolve-and-restore.sh
+RUN chmod +x /usr/local/bin/init-firewall.sh /usr/local/bin/resolve-and-restore.sh \
+    && echo "vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh, /usr/sbin/ipset" > /etc/sudoers.d/vscode-firewall \
     && chmod 0440 /etc/sudoers.d/vscode-firewall
+
+
+
 
 
 # Install dotnet-ef global tool as vscode user

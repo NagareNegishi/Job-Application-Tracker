@@ -1,8 +1,13 @@
 #!/bin/bash
 
 # Standard defensive bash scripting
-set -euo pipefail  # Exit on error, undefined vars, and pipeline failures
+set -uo pipefail  # Exit on error, undefined vars, and pipeline failures
 IFS=$'\n\t'       # Stricter word splitting
+
+echo "DEBUG: Testing DNS before firewall changes..."
+dig api.github.com +short || echo "DNS FAILED before any iptables changes"
+curl -s --connect-timeout 5 https://api.github.com/zen || echo "CURL FAILED (exit: $?)"
+
 
 # # 1. Extract Docker DNS info BEFORE any flushing
 # DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
@@ -104,24 +109,27 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr"
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# api.nuget.org and globalcdn.nuget.org are on Akamai CDN.
-# Akamai IPs rotate, so we resolve them fresh here — immediately before dotnet restore runs.
-# NuGet themselves advise domain-allowlisting over IP-allowlisting (no stable CIDR list exists).
-echo "Resolving NuGet CDN IPs (Akamai-backed, resolved fresh to avoid rotation)..."
-for domain in "api.nuget.org" "globalcdn.nuget.org" "dist.nuget.org" "www.nuget.org"; do
-    echo "Resolving $domain..."
-    ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
-    if [ -z "$ips" ]; then
-        echo "WARNING: Failed to resolve $domain — skipping (may cause dotnet restore to fail)"
-    else
-        while read -r ip; do
-            if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-                echo "Adding $ip for $domain"
-                ipset add allowed-domains "$ip" 2>/dev/null || true
-            fi
-        done < <(echo "$ips")
-    fi
-done
+
+
+
+# # api.nuget.org and globalcdn.nuget.org are on Akamai CDN.
+# # Akamai IPs rotate, so we resolve them fresh here — immediately before dotnet restore runs.
+# # NuGet themselves advise domain-allowlisting over IP-allowlisting (no stable CIDR list exists).
+# echo "Resolving NuGet CDN IPs (Akamai-backed, resolved fresh to avoid rotation)..."
+# for domain in "api.nuget.org" "globalcdn.nuget.org" "dist.nuget.org" "www.nuget.org"; do
+#     echo "Resolving $domain..."
+#     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
+#     if [ -z "$ips" ]; then
+#         echo "WARNING: Failed to resolve $domain — skipping (may cause dotnet restore to fail)"
+#     else
+#         while read -r ip; do
+#             if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+#                 echo "Adding $ip for $domain"
+#                 ipset add allowed-domains "$ip" 2>/dev/null || true
+#             fi
+#         done < <(echo "$ips")
+#     fi
+# done
 
 
     # "api.nuget.org" \
@@ -133,6 +141,15 @@ done
 # registry.npmjs.org — essential for npm installs
 # api.anthropic.com — essential for Claude Code to function
 # 4 domains for NuGet to function
+# Other 3 are for VS Code extension marketplace access
+
+
+
+
+
+# Resolve and add other allowed domains
+# registry.npmjs.org — essential for npm installs
+# api.anthropic.com — essential for Claude Code to function
 # Other 3 are for VS Code extension marketplace access
 for domain in \
     "registry.npmjs.org" \

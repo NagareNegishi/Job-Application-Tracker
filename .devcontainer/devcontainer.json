@@ -63,7 +63,8 @@
 	"postCreateCommand": {
 	// Restore .NET dependencies
     // "backend": "cd JobTrackerApi && dotnet restore",
-	"backend": "bash -c 'cd JobTrackerApi && dotnet restore --verbosity detailed 2>&1 | tee /tmp/dotnet-restore.log; exit ${PIPESTATUS[0]}'",
+	// "backend": "bash -c 'cd JobTrackerApi && dotnet restore --verbosity detailed 2>&1 | tee /tmp/dotnet-restore.log; exit ${PIPESTATUS[0]}'",
+	"backend": "/usr/local/bin/resolve-and-restore.sh",
     // Install frontend dependencies
     "frontend": "cd job-tracker-ui && npm install",
 	// Set up Claude onboarding state, skip the onboarding process
