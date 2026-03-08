@@ -60,7 +60,7 @@ while read -r cidr; do
         exit 1
     fi
     echo "Adding GitHub range $cidr"
-    ipset add allowed-domains "$cidr"
+    ipset add allowed-domains "$cidr" 2>/dev/null || true
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
 
@@ -92,7 +92,8 @@ for domain in \
             exit 1
         fi
         echo "Adding $ip for $domain"
-        ipset add allowed-domains "$ip"
+        # Avoid failing for duplicate entries
+        ipset add allowed-domains "$ip" 2>/dev/null || true
     done < <(echo "$ips")
 done
 
@@ -119,6 +120,14 @@ iptables -A OUTPUT -d "$HOST_NETWORK" -j ACCEPT
 iptables -P INPUT DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT DROP
+
+
+# Block all IPv6 traffic (our whitelist is IPv4 only)
+ip6tables -P INPUT DROP
+ip6tables -P FORWARD DROP
+ip6tables -P OUTPUT DROP
+ip6tables -A OUTPUT -o lo -j ACCEPT
+ip6tables -A INPUT -i lo -j ACCEPT
 
 
 # First allow established connections for already approved traffic
