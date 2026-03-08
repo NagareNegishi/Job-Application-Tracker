@@ -72,9 +72,9 @@ public class JobDTOTests
         Assert.Null(job.ClosedAt);
         Assert.Null(job.Description);
         Assert.Null(job.Notes);
-        Assert.Empty(job.Contacts!);
-        Assert.Null(job.Documents);
-        Assert.Null(job.Correspondences);
+        Assert.Equal([], job.Contacts);
+        Assert.Equal([], job.Documents);
+        Assert.Equal([], job.Correspondences);
     }
 
     // Missing required fields
