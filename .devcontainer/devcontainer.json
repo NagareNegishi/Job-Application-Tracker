@@ -67,8 +67,11 @@
 	// Set up Claude onboarding state, skip the onboarding process
 	"claude-onboarding": "echo '{\"hasCompletedOnboarding\":true}' > /home/vscode/.claude.json"
 	},
+
 	// Executes the firewall script every time the container starts
-	"postStartCommand": "sudo /usr/local/bin/project-firewall.sh",
+	// and tells git "I trust this directory": https://www.kenmuse.com/blog/avoiding-dubious-ownership-in-dev-containers/
+	"postStartCommand": "sudo /usr/local/bin/project-firewall.sh && git config --global --add safe.directory ${containerWorkspaceFolder}",
+	
 	// Wait for the firewall to be set up
 	"waitFor": "postStartCommand"
 
