@@ -4,12 +4,18 @@
 set -uo pipefail  # Exit on error, undefined vars, and pipeline failures
 IFS=$'\n\t'       # Stricter word splitting
 
-echo "DEBUG: Testing DNS before firewall changes..."
-dig api.github.com +short || echo "DNS FAILED before any iptables changes"
-curl -s --connect-timeout 5 https://api.github.com/zen || echo "CURL FAILED (exit: $?)"
+
+echo "DNS test before any iptables changes..."
+dig api.github.com +short 2>&1 || echo "dig failed with exit $?"
+curl -v --connect-timeout 5 https://api.github.com/zen 2>&1 || echo "curl failed with exit $?"
 
 
-# # 1. Extract Docker DNS info BEFORE any flushing
+# echo "DEBUG: Testing DNS before firewall changes..."
+# dig api.github.com +short || echo "DNS FAILED before any iptables changes"
+# curl -s --connect-timeout 5 https://api.github.com/zen || echo "CURL FAILED (exit: $?)"
+
+
+# 1. Extract Docker DNS info BEFORE any flushing
 # DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
 
 # 1. Read Docker DNS NAT rules BEFORE any flush
@@ -19,6 +25,12 @@ curl -s --connect-timeout 5 https://api.github.com/zen || echo "CURL FAILED (exi
 # TCP_DNS_DEST=$(iptables-save -t nat | grep DOCKER_OUTPUT | grep tcp | grep -o '127\.0\.0\.11:[0-9]*' || true)
 # UDP_DNS_SPORT=$(iptables-save -t nat | grep DOCKER_POSTROUTING | grep udp | grep -o ':[0-9]*$' | tr -d ':' || true)
 # TCP_DNS_SPORT=$(iptables-save -t nat | grep DOCKER_POSTROUTING | grep tcp | grep -o ':[0-9]*$' | tr -d ':' || true)
+
+
+# Reset policies to ACCEPT before flushing to avoid blocking during setup
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
 
 
 # Flush existing rules and delete existing ipsets. Clean slate before applying new rules.
@@ -53,7 +65,7 @@ ipset destroy allowed-domains 2>/dev/null || true
 
 
 
-# # 2. Selectively restore ONLY internal Docker DNS resolution. Puts back the Docker DNS NAT rules saved at the start
+# 2. Selectively restore ONLY internal Docker DNS resolution. Puts back the Docker DNS NAT rules saved at the start
 # if [ -n "$DOCKER_DNS_RULES" ]; then
 #     echo "Restoring Docker DNS rules..."
 #     iptables -t nat -N DOCKER_OUTPUT 2>/dev/null || true
@@ -68,9 +80,14 @@ ipset destroy allowed-domains 2>/dev/null || true
 
 # Need DNS for hostname resolution
 # Allow outbound DNS
-iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
-# Allow inbound DNS responses
-iptables -A INPUT -p udp --sport 53 -j ACCEPT
+# iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+# # Allow inbound DNS responses
+# iptables -A INPUT -p udp --sport 53 -j ACCEPT
+
+# Allow DNS via Docker's embedded resolver (NAT rewrites port 53 to ephemeral port)
+iptables -A OUTPUT -d 127.0.0.11 -j ACCEPT
+iptables -A INPUT -s 127.0.0.11 -j ACCEPT
+
 
 # Need SSH for git operations over SSH
 # Allow outbound SSH
@@ -132,28 +149,20 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 # done
 
 
-    # "api.nuget.org" \
-    # "www.nuget.org" \
-    # "globalcdn.nuget.org" \
-    # "dist.nuget.org" \
+
 
 # Resolve and add other allowed domains
 # registry.npmjs.org — essential for npm installs
 # api.anthropic.com — essential for Claude Code to function
 # 4 domains for NuGet to function
 # Other 3 are for VS Code extension marketplace access
-
-
-
-
-
-# Resolve and add other allowed domains
-# registry.npmjs.org — essential for npm installs
-# api.anthropic.com — essential for Claude Code to function
-# Other 3 are for VS Code extension marketplace access
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
+    "api.nuget.org" \
+    "www.nuget.org" \
+    "globalcdn.nuget.org" \
+    "dist.nuget.org" \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com"; do
