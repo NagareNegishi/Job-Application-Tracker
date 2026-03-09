@@ -1,0 +1,32 @@
+# IDE/Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.db
+*.db-shm
+*.db-wal
+
+# Environment
+.env
+.env.*.local
+
+# Logs
+*.log
+
+# Local configuration files from Backend
+appsettings.Development.json
+
+# Development sample files
+SampleFile/
