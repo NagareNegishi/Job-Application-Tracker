@@ -65,7 +65,7 @@
     // Install frontend dependencies
     "frontend": "cd job-tracker-ui && npm install",
 	// Set up Claude onboarding state, skip the onboarding process
-	"claude-onboarding": "echo '{\"hasCompletedOnboarding\":true}' > /home/vscode/.claude.json"
+	"claude-onboarding": "echo '{\"hasCompletedOnboarding\":true}' > /home/vscode/.claude/.claude.json"
 	},
 
 	// Executes the firewall script every time the container starts
