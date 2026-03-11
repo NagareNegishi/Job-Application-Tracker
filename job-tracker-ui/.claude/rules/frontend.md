@@ -1,0 +1,4 @@
+---
+paths:
+  - "job-tracker-ui/**"
+---
