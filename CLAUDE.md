@@ -64,11 +64,11 @@ API base URL is read from `VITE_API_BASE_URL` (`.env`).
 - `Job` / `Document` — EF Core entities with `ToResponseDto()` methods
 - `JobDTO` / `UpdateJobDTO` / `DocumentDTO` / `UpdateDocumentDTO` — request DTOs with validation attributes
 - `JobResponseDto` / `DocumentResponseDto` — response shapes
-- `Contact` / `Correspondence` — owned types, stored as JSON columns in `Jobs` table (not separate tables)
+- `Contact` / `Correspondence` — owned types, stored as JSON columns in `Jobs` table (not separate tables); `email` and `phone` must be sent as `undefined` not `""` to pass `[EmailAddress]`/`[Phone]` validation
 - `ValidationConstants` — max lengths, file size, allowed extensions (`.pdf`, `.doc`, `.docx`)
 - Enums: `JobStatus`, `Priority`, `DocumentType` — serialized as strings
 
-**Document storage**: Files saved to `Storage:UploadsPath` with a GUID filename (`StoredName`); display name kept in `Document.Name`. No PUT — use DELETE + POST instead.
+**Document storage**: Files saved to `Storage:UploadsPath` with a GUID filename (`StoredName`); display name kept in `Document.Name`. No PUT — use DELETE + POST instead. Uploads use `FormData`, not JSON — don't set `Content-Type` manually.
 
 **JSON Patch**: Jobs support PATCH via `Microsoft.AspNetCore.JsonPatch.SystemTextJson`, applied to `UpdateJobDTO` then mapped to the entity.
 
@@ -80,7 +80,7 @@ API base URL is read from `VITE_API_BASE_URL` (`.env`).
 - `src/hooks/` — TanStack Query hooks
 - `src/pages/` — `JobPage` (list), `JobDetailPage` (detail)
 - `src/components/` — feature components; `src/components/ui/` — shadcn/ui primitives
-- `src/types/` — TypeScript types mirroring backend models
+- `src/types/` — TypeScript types mirroring backend models; enums use `const` object pattern (`enum` keyword disallowed by `erasableSyntaxOnly`)
 
 **Routing**: React Router 7 — `/` redirects to `/jobs`, detail at `/jobs/:id`.
 
