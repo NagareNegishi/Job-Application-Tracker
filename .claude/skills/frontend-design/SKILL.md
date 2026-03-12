@@ -8,11 +8,12 @@ description: Improve the visual design of the job tracker React frontend. Use wh
 ### Allowed
 - Restyle one component at a time — stop after each and wait for approval
 - Improving layout, spacing, typography, color
-- Adding or modifying Tailwind utility classes
+- Add, remove, or change Tailwind class names on existing elements
 - Refactoring components in `src/components/` for visual improvements
 - Suggest new shadcn/ui primitives before adding — explain why it's needed and what alternatives exist, then wait for approval
 
 ### Off-limits
+- Do not make any functional changes — visual and structural changes only
 - Do not modify backend files (`JobTrackerApi/`, `JobTrackerApi.Tests/`)
 - Do not change `src/services/`, `src/hooks/`, or `src/types/`
 - Do not change routing structure
@@ -20,10 +21,10 @@ description: Improve the visual design of the job tracker React frontend. Use wh
 - Do not add npm dependencies without explicit approval
 
 ## Conventions
-- Tailwind utility classes only — no inline styles, no CSS modules
-- Use shadcn/ui primitives from `src/components/ui/` before creating new components
+- Use Tailwind utility classes for all styling — no inline styles, no CSS modules, no custom CSS files
+- Use existing shadcn/ui components from `src/components/ui/` first
+- If no suitable shadcn/ui component exists, suggest an alternative (new component or third-party package) with reasoning — do not install or add dependencies yourself, wait for approval
 - Use `@/` path alias for all imports
-- Enums use `const` object pattern — never the `enum` keyword
 
 ## Workflow
 
