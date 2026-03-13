@@ -4,6 +4,7 @@ import { useDeleteJob } from "@/hooks/jobQuery";
 import type { DocumentType } from "@/types/enums";
 import type { Job } from "@/types/job";
 import { useQueryClient } from '@tanstack/react-query';
+import { ChevronLeft } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -41,7 +42,15 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
   return (
     <div className="flex items-start justify-between">
       <div>
-        <button onClick={() => navigate("/jobs")}>← Back</button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full"
+          onClick={() => navigate("/jobs")}
+          aria-label="Back to jobs"
+        >
+          <ChevronLeft className="h-6 w-6 stroke-[2.5]" />
+        </Button>
         <h1>{job.company}</h1>
         <p>{job.role}</p>
       </div>
