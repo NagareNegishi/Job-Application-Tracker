@@ -26,6 +26,9 @@ export default defineConfig({
     host: '127.0.0.1',
     hmr: {
       clientPort: 5173
+      },                                                                                                                                          
+      watch: {                                                                                                                                    
+        usePolling: true  
     }
   }
 
