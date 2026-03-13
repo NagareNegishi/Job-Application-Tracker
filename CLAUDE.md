@@ -92,4 +92,4 @@ Tests use an in-memory EF Core database (unique per test class via `Guid.NewGuid
 
 ## Skills
 
-- Frontend design tasks: `.claude/skills/frontend-design/SKILL.md`
+- When working on frontend UI or styling: follow: `.claude/skills/frontend-design/SKILL.md`
