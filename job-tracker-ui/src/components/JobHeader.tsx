@@ -42,7 +42,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
       <div className="flex items-center gap-2 mr-1">
         <Button
           variant="secondary"
-          className="hover:bg-secondary/60 active:scale-95"
+          className="hover:bg-border active:scale-95"
           onClick={onEdit}
         >
           <Pencil className="h-4 w-4" />
@@ -51,7 +51,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
 
         <Button
           variant="outline"
-          className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive active:scale-95"
+          className="border-destructive/50 text-destructive/70 hover:bg-destructive/10 hover:text-destructive hover:border-destructive active:scale-95"
           onClick={() => {
             if (window.confirm("Are you sure you want to delete this job? This action cannot be undone.")) {
               deleteJob(job.id, {
