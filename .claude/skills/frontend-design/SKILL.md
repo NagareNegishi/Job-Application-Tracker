@@ -37,5 +37,5 @@ If the request is ambiguous, do not proceed — ask for clarification first:
 1. Make changes to one component only
 2. Show a summary of what changed and why
 3. Stop and wait — do not proceed to the next component
-4. If approved, commit with a short descriptive message
+4. If approved, suggest a commit message but do not run any git commands — the user will handle git themselves
 5. If not approved, ask what to change before retrying
