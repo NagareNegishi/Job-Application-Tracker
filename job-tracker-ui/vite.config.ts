@@ -23,7 +23,10 @@ export default defineConfig({
   // If you are using a Dev Container, you may need to set the server.host option to 127.0.0.1
   // https://vite.dev/guide/troubleshooting#dev-containers-vs-code-port-forwarding
   server: {
-    host: '127.0.0.1'
+    host: '127.0.0.1',
+    hmr: {
+      clientPort: 5173
+    }
   }
 
 })
