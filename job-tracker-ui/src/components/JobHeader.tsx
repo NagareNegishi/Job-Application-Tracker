@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useDeleteJob } from "@/hooks/jobQuery";
 import type { Job } from "@/types/job";
 import { useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router";
 
 /**
@@ -39,16 +39,19 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
         <h1>{job.company}</h1>
         <p>{job.role}</p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mr-1">
         <Button
-          variant="outline"
+          variant="secondary"
+          className="hover:bg-secondary/60 active:scale-95"
           onClick={onEdit}
         >
+          <Pencil className="h-4 w-4" />
           Edit
         </Button>
 
         <Button
-          variant="destructive"
+          variant="outline"
+          className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive active:scale-95"
           onClick={() => {
             if (window.confirm("Are you sure you want to delete this job? This action cannot be undone.")) {
               deleteJob(job.id, {
@@ -61,6 +64,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
           }}
           disabled={isDeleting}
         >
+          <Trash2 className="h-4 w-4" />
           {isDeleting ? "Deleting..." : "Delete"}
         </Button>
       </div>
