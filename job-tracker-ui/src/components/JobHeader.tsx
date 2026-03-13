@@ -1,11 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { useCreateDocument } from "@/hooks/documentQuery";
 import { useDeleteJob } from "@/hooks/jobQuery";
-import type { DocumentType } from "@/types/enums";
 import type { Job } from "@/types/job";
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft } from "lucide-react";
-import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 /**
@@ -23,20 +20,8 @@ interface JobHeaderProps {
  */
 export function JobHeader({ job, onEdit }: JobHeaderProps) {
   const navigate = useNavigate()
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
-  
-  const [selectedType, setSelectedType] = useState<DocumentType>("Other")
-  
   const { mutate: deleteJob, isPending: isDeleting } = useDeleteJob()
-  const { mutate: addDocument, isPending } = useCreateDocument()
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] // get the first selected file (if any)
-    if (!file) return
-    addDocument({ jobId: job.id, data: { file, type: selectedType } })
-    e.target.value = "" // reset so same file can be re-uploaded
-  }
 
 
   return (
@@ -55,16 +40,6 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
         <p>{job.role}</p>
       </div>
       <div className="flex items-center gap-2">
-        {/* Hidden file input for document upload, triggered by "Add Document" button */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.doc,.docx"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-
-        {/* Edit button opens the JobEditSheet, controlled by state in JobDetailPage */}
         <Button
           variant="outline"
           onClick={onEdit}
@@ -72,25 +47,6 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
           Edit
         </Button>
 
-        {/* Document type selector for uploads */}
-        <select
-          value={selectedType}
-          onChange={e => setSelectedType(e.target.value as DocumentType)}
-        >
-          <option value="CV">CV</option>
-          <option value="CoverLetter">Cover Letter</option>
-          <option value="Other">Other</option>
-        </select>
-
-        {/* "Add Document" button triggers hidden file input */}
-        <Button
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()} disabled={isPending}
-        >
-          {isPending ? "Uploading..." : "Add Document"}
-        </Button>
-
-        {/* Delete button with confirmation */}
         <Button
           variant="destructive"
           onClick={() => {
