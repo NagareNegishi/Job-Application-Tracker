@@ -30,18 +30,18 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="rounded-full -ml-2 mb-2"
+        className="rounded-full -ml-2 -mt-2 mb-0"
         onClick={() => navigate("/jobs")}
         aria-label="Back to jobs"
       >
-        <ChevronLeft className="h-6 w-6 stroke-[2.5]" />
+        <ChevronLeft className="h-7 w-7 stroke-[3]" />
       </Button>
 
       {/* Row 2: Avatar + company identity on left, actions on right */}
       <div className="flex items-start justify-between">
-        <div>
-          {/* Avatar and company name on the same line */}
-          <div className="flex items-center gap-3">
+        <div className="pl-10 -mt-1">
+          {/* Avatar centered with company name only */}
+          <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <span className="text-lg font-bold text-primary">
                 {job.company.charAt(0).toUpperCase()}
@@ -49,8 +49,8 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">{job.company}</h1>
           </div>
-          {/* Accent bar and role indented to align under company name (avatar w-12 + gap-3 = 60px) */}
-          <div className="ml-[60px]">
+          {/* Accent bar and role sit below, indented past avatar (w-12=3rem + gap-4=1rem = pl-16=4rem) */}
+          <div className="pl-16">
             <div className="h-1 w-10 rounded-full bg-primary mt-1" />
             <p className="text-sm text-muted-foreground mt-1.5">{job.role}</p>
           </div>
