@@ -1,3 +1,4 @@
+// NOTE: Unused — filtering was moved inline into JobTable column headers (FilterPopover).
 import { Button } from "@/components/ui/button";
 import {
   Select,
