@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useJobs } from "@/hooks/jobQuery";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { JobCreateSheet } from "./JobCreateSheet";
@@ -26,13 +27,14 @@ export function JobTable() {
   return (
     <div className="flex flex-col gap-4">
 
-      {/* Add Job button */}
-      <Button
-        variant="outline"
-        onClick={() => setAddOpen(true)}
-      >
-        Add New Job
-      </Button>
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Job Applications</h1>
+        <Button onClick={() => setAddOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add New Job
+        </Button>
+      </div>
 
       {/* Job table */}
       {jobs.length === 0
