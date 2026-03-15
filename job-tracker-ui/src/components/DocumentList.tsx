@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { DocumentCard } from "@/components/DocumentCard"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateDocument, useDocuments } from "@/hooks/documentQuery"
 import type { DocumentType } from "@/types/enums"
 import { Plus } from "lucide-react"
@@ -37,14 +38,16 @@ export function DocumentList({ jobId }: DocumentListProps) {
             className="hidden"
             onChange={handleFileChange}
           />
-          <select
-            value={selectedType}
-            onChange={e => setSelectedType(e.target.value as DocumentType)}
-          >
-            <option value="CV">CV</option>
-            <option value="CoverLetter">Cover Letter</option>
-            <option value="Other">Other</option>
-          </select>
+          <Select value={selectedType} onValueChange={v => setSelectedType(v as DocumentType)}>
+            <SelectTrigger className="w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CV">CV</SelectItem>
+              <SelectItem value="CoverLetter">Cover Letter</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
