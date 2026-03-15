@@ -33,23 +33,27 @@ function JobDetailPage() {
   if (!job) return <p>Job not found.</p>
 
   return (
-    <div className="container mx-auto p-4">
-      {/* <p className="text-2xl font-bold mb-4">Job Tracker</p> */}
-      <JobHeader job={job} onEdit={() => setEditOpen(true)} />
-      <JobInfoCard job={job} />
-      <ContactList
-        contacts={job.contacts ?? []}
-        jobId={jobId}
-      />
-      <CorrespondenceList
-        entries={job.correspondences ?? []}
-        jobId={jobId}
-      />
-      {/* DocumentList would go here */}
-      <DocumentList jobId={jobId} />
+    <div className="min-h-screen bg-muted">
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="bg-card rounded-lg shadow-sm p-6">
+          <JobHeader job={job} onEdit={() => setEditOpen(true)} />
+          <hr className="border-t border-border mb-6" />
+          <div className="px-4 space-y-6">
+            <JobInfoCard job={job} />
+            <ContactList
+              contacts={job.contacts ?? []}
+              jobId={jobId}
+            />
+            <CorrespondenceList
+              entries={job.correspondences ?? []}
+              jobId={jobId}
+            />
+            <DocumentList jobId={jobId} />
+          </div>
 
-      <JobEditSheet job={job} open={editOpen} onOpenChange={setEditOpen} />
-
+          <JobEditSheet job={job} open={editOpen} onOpenChange={setEditOpen} />
+        </div>
+      </div>
     </div>
   )
 }

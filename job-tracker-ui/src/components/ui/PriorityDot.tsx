@@ -10,10 +10,14 @@ const priorityColors: Record<Priority, string> = {
   Urgent: "bg-red-500",
 }
 
-export function PriorityDot({ priority }: { priority: Priority }) {
+export function PriorityDot({ priority, dotSize = "w-2 h-2", className = "" }: {
+  priority: Priority
+  dotSize?: string
+  className?: string
+}) {
   return (
-    <div className="flex items-center gap-1.5">
-      <span className={`w-2 h-2 rounded-full ${priorityColors[priority]}`} />
+    <div className={`flex items-center gap-1.5 ${className}`}>
+      <span className={`${dotSize} rounded-full ${priorityColors[priority]}`} />
       <span className="text-sm font-medium uppercase tracking-wide">{priority}</span>
     </div>
   )

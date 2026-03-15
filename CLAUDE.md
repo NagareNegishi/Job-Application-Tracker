@@ -89,3 +89,7 @@ API base URL is read from `VITE_API_BASE_URL` (`.env`).
 ### Tests
 
 Tests use an in-memory EF Core database (unique per test class via `Guid.NewGuid()`). Controllers are instantiated directly — no HTTP pipeline involved. `DocumentsControllerTests` uses Moq for `IConfiguration` to supply the uploads path.
+
+## Skills
+
+- When working on frontend UI or styling: follow: `.claude/skills/frontend-design/SKILL.md`
