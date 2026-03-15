@@ -324,6 +324,7 @@ public class JobsControllerTests: IDisposable
         // Assert
         Assert.IsType<NoContentResult>(result);
         Assert.Null(await _context.Jobs.FindAsync(job.Id));
+        Assert.Empty(await _context.Documents.Where(d => d.JobId == job.Id).ToListAsync());
         _storageMock.Verify(s => s.DeleteAsync("key-1"), Times.Once);
         _storageMock.Verify(s => s.DeleteAsync("key-2"), Times.Once);
     }
