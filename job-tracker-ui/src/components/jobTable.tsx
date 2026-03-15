@@ -105,10 +105,11 @@ function SortableHead({
 
   return (
     <TableHead className={className}>
-      <div className="flex items-center gap-1">
+      {/* group: hovering filter icon also highlights sort text, and vice versa */}
+      <div className="flex items-center gap-1 group">
         <button
           onClick={() => onSort(field)}
-          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground group-hover:text-foreground transition-colors"
         >
           {label}
           <Icon className="size-3.5" />
@@ -176,14 +177,12 @@ export function JobTable() {
             <TableRow>
               <SortableHead field="company" label="Company" {...sortProps} />
               <TableHead>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  Role
-                  <FilterPopover
-                    options={availableRoles}
-                    value={filters.role}
-                    onChange={(v) => setFilters((f) => ({ ...f, role: v }))}
-                  />
-                </div>
+                <FilterPopover
+                  label="Role"
+                  options={availableRoles}
+                  value={filters.role}
+                  onChange={(v) => setFilters((f) => ({ ...f, role: v }))}
+                />
               </TableHead>
               <SortableHead
                 field="status"
