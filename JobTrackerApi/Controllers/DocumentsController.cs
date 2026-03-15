@@ -16,6 +16,7 @@ namespace JobTrackerApi.Controllers;
 // No PUT endpoint, it should be achieved by DELETE + POST
 public class DocumentsController : ControllerBase
 {
+    // Assigned once, never changes
     private readonly JobTrackerContext _context;
     private readonly IStorageService _storage;
 

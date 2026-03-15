@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using JobTrackerApi.Data;
+using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
 // using System.Text.Json;
 
@@ -59,6 +60,8 @@ var connectionString = builder.Configuration.GetConnectionString("JobTrackerCont
 // No AddDbContextPool for safety and simplicity
 builder.Services.AddDbContext<JobTrackerContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.AddSingleton<IStorageService, LocalStorageService>();
 
 
 // CORS policy for development, allowing the React app to make API calls to this backend
