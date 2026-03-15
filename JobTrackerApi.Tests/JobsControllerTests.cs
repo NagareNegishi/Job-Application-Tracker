@@ -2,13 +2,16 @@ namespace JobTrackerApi.Tests;
 using JobTrackerApi.Controllers;
 using JobTrackerApi.Data;
 using JobTrackerApi.Models;
+using JobTrackerApi.Services;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Moq;
 
 public class JobsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;
+    private readonly Mock<IStorageService> _storageMock;
     private readonly JobsController _controller;
 
     public JobsControllerTests()
@@ -18,9 +21,11 @@ public class JobsControllerTests: IDisposable
             .UseInMemoryDatabase(Guid.NewGuid().ToString()) // use in-memory, unique name per test class
             .Options; // .Options extracts the built configuration object
 
+        _storageMock = new Mock<IStorageService>();
+
         // create context and controller directly
         _context = new JobTrackerContext(options);
-        _controller = new JobsController(_context);
+        _controller = new JobsController(_context, _storageMock.Object);
     }
 
     public void Dispose()
@@ -300,6 +305,27 @@ public class JobsControllerTests: IDisposable
 
         // Assert: Check that the result is a NotFound result
         Assert.IsType<NotFoundResult>(result);
+    }
+
+    // Test that deleting a job also deletes its associated files from storage
+    [Fact]
+    public async Task DeleteJob_DeletesAssociatedFilesFromStorage()
+    {
+        // Arrange
+        var job = await SeedJobAsync();
+        var doc1 = new Document { JobId = job.Id, Name = "cv.pdf", StorageKey = "key-1", StoredName = "stored-1.pdf", Type = DocumentType.CV };
+        var doc2 = new Document { JobId = job.Id, Name = "cover.pdf", StorageKey = "key-2", StoredName = "stored-2.pdf", Type = DocumentType.CoverLetter };
+        _context.Documents.AddRange(doc1, doc2);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.DeleteJob(job.Id);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+        Assert.Null(await _context.Jobs.FindAsync(job.Id));
+        _storageMock.Verify(s => s.DeleteAsync("key-1"), Times.Once);
+        _storageMock.Verify(s => s.DeleteAsync("key-2"), Times.Once);
     }
 
     // Skip Patch tests, it will be covered in integration tests
