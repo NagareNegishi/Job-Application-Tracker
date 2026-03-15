@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
 import type { Contact } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
-import { Mail, Pencil, Phone, Trash2 } from "lucide-react";
+import { Mail, Pencil, Phone, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 
@@ -156,7 +156,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
       {/* Header with Add button */ }
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Contacts</span>
-        <Button size="sm" onClick={handleAdd}>Add Contact</Button>
+        <Button size="sm" variant="outline" onClick={handleAdd}><Plus className="h-4 w-4" />Add Contact</Button>
       </div>
 
       { contacts.length === 0

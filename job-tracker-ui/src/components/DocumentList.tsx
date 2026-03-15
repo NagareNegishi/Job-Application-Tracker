@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { DocumentCard } from "@/components/DocumentCard"
 import { useCreateDocument, useDocuments } from "@/hooks/documentQuery"
 import type { DocumentType } from "@/types/enums"
+import { Plus } from "lucide-react"
 import { useRef, useState } from "react"
 
 interface DocumentListProps {
@@ -49,7 +50,7 @@ export function DocumentList({ jobId }: DocumentListProps) {
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
           >
-            {isUploading ? "Uploading..." : "Add Document"}
+            <Plus className="h-4 w-4" />{isUploading ? "Uploading..." : "Add Document"}
           </Button>
         </div>
       </div>

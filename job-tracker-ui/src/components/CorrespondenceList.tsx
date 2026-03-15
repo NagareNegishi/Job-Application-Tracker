@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
 import type { Correspondence } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 
@@ -138,7 +138,7 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
       {/* Header with Add button */ }
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Correspondence</span>
-        <Button size="sm" onClick={handleAdd}>Add Correspondence</Button>
+        <Button size="sm" variant="outline" onClick={handleAdd}><Plus className="h-4 w-4" />Add Correspondence</Button>
       </div>
 
       { entries.length === 0
