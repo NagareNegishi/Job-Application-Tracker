@@ -142,7 +142,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
 
       {/* Dialog for adding/editing contacts */ }
       <ContactDialog
@@ -155,7 +155,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
 
       {/* Header with Add button */ }
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Contacts</span>
+        <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Contacts</span>
         <Button size="sm" onClick={handleAdd}>Add Contact</Button>
       </div>
 

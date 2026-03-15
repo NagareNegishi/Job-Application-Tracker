@@ -25,9 +25,9 @@ export function DocumentList({ jobId }: DocumentListProps) {
   if (isError) return <p>Failed to load documents.</p>
 
   return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-semibold">Documents</h2>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Documents</h2>
         <div className="flex items-center gap-2">
           <input
             ref={fileInputRef}

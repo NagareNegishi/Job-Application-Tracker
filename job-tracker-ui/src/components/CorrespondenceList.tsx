@@ -124,7 +124,7 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
 
       {/* Dialog for adding/editing correspondences */ }
       <CorrespondenceDialog
@@ -137,7 +137,7 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
 
       {/* Header with Add button */ }
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Correspondence</span>
+        <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Correspondence</span>
         <Button size="sm" onClick={handleAdd}>Add Correspondence</Button>
       </div>
 
