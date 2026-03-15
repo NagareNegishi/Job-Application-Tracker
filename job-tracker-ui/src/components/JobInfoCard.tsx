@@ -4,30 +4,35 @@ import { StatusBadge } from "./ui/StatusBadge";
 
 export function JobInfoCard({ job }: { job: Job }) {
   return (
-    <div className="border rounded-lg p-4 space-y-4">
-      <div className="flex gap-4">
-        <StatusBadge status={job.status} />
-        {job.priority &&
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">Priority:</span>
-          <PriorityDot priority={job.priority} />
-        </div>
-        }
-        {job.appliedAt && <span>Applied: {new Date(job.appliedAt).toLocaleDateString()}</span>}
-        {job.closedAt && <span>Closed: {new Date(job.closedAt).toLocaleDateString()}</span>}
+    <div className="border rounded-lg p-6 space-y-4">
+      <div className="flex flex-wrap items-center gap-4 border-b border-border pb-4">
+        <StatusBadge status={job.status} className="text-sm px-3 py-0.5" />
+        {job.priority && <PriorityDot priority={job.priority} dotSize="w-3 h-3" className="text-sm" />}
+        {job.appliedAt && (
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Applied</span>
+            <span className="text-sm font-medium">{new Date(job.appliedAt).toLocaleDateString()}</span>
+          </span>
+        )}
+        {job.closedAt && (
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Closed</span>
+            <span className="text-sm font-medium">{new Date(job.closedAt).toLocaleDateString()}</span>
+          </span>
+        )}
       </div>
 
       {job.description && (
-        <div>
-          <p className="text-sm font-medium">Description</p>
-          <p className="text-sm text-muted-foreground">{job.description}</p>
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Description</p>
+          <p className="text-sm text-foreground/80">{job.description}</p>
         </div>
       )}
 
       {job.notes && (
-        <div>
-          <p className="text-sm font-medium">Notes</p>
-          <p className="text-sm text-muted-foreground">{job.notes}</p>
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Notes</p>
+          <p className="text-sm text-foreground/80">{job.notes}</p>
         </div>
       )}
     </div>
