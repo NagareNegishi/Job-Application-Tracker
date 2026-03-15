@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { UnderlinedText } from "@/components/UnderlinedText";
 import { useDeleteJob } from "@/hooks/jobQuery";
 import type { Job } from "@/types/job";
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,7 +26,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
 
 
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       {/* Row 1: Back button */}
       <Button
         variant="ghost"
@@ -47,12 +48,19 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
                 {job.company.charAt(0).toUpperCase()}
               </span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">{job.company}</h1>
+            <UnderlinedText
+              className="text-2xl font-bold tracking-tight text-foreground"
+              underlineColor="var(--primary)"
+              underlineThickness={3}
+              underlineOverhang={6}
+              underlineGap={5}
+            >
+              {job.company}
+            </UnderlinedText>
           </div>
-          {/* Accent bar and role sit below, indented past avatar (w-12=3rem + gap-4=1rem = pl-16=4rem) */}
+          {/* Role sits below, indented past avatar (w-12=3rem + gap-4=1rem = pl-16=4rem) */}
           <div className="pl-16">
-            <div className="h-1 w-10 rounded-full bg-primary mt-1" />
-            <p className="text-sm text-muted-foreground mt-1.5">{job.role}</p>
+            <p className="text-lg font-semibold text-foreground/70 mt-1.5">{job.role}</p>
           </div>
         </div>
 

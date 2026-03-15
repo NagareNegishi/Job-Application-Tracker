@@ -37,16 +37,19 @@ function JobDetailPage() {
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="bg-card rounded-lg shadow-sm p-6">
           <JobHeader job={job} onEdit={() => setEditOpen(true)} />
-          <JobInfoCard job={job} />
-          <ContactList
-            contacts={job.contacts ?? []}
-            jobId={jobId}
-          />
-          <CorrespondenceList
-            entries={job.correspondences ?? []}
-            jobId={jobId}
-          />
-          <DocumentList jobId={jobId} />
+          <hr className="border-t border-border mb-6" />
+          <div className="px-4 space-y-6">
+            <JobInfoCard job={job} />
+            <ContactList
+              contacts={job.contacts ?? []}
+              jobId={jobId}
+            />
+            <CorrespondenceList
+              entries={job.correspondences ?? []}
+              jobId={jobId}
+            />
+            <DocumentList jobId={jobId} />
+          </div>
 
           <JobEditSheet job={job} open={editOpen} onOpenChange={setEditOpen} />
         </div>
