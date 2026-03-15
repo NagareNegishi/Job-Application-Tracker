@@ -13,9 +13,9 @@ const statusStyles: Record<JobStatus, string> = {
   Rejected:   "bg-red-100 text-red-700 border border-red-300",
 }
 
-export function StatusBadge({ status }: { status: JobStatus }) {
+export function StatusBadge({ status, className = "" }: { status: JobStatus; className?: string }) {
   return (
-    <Badge className={statusStyles[status]}>
+    <Badge className={`${statusStyles[status]} ${className}`}>
       {status}
     </Badge>
   )
