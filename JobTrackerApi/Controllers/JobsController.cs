@@ -1,5 +1,6 @@
 using JobTrackerApi.Models;
 using JobTrackerApi.Data;
+using JobTrackerApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
@@ -12,10 +13,12 @@ namespace JobTrackerApi.Controllers;
 public class JobsController : ControllerBase
 {
     private readonly JobTrackerContext _context; // Assigned once, never changes
+    private readonly IStorageService _storage;
 
-    public JobsController(JobTrackerContext context)
+    public JobsController(JobTrackerContext context, IStorageService storage)
     {
         _context = context;
+        _storage = storage;
     }
 
     // Get all jobs
@@ -96,10 +99,28 @@ public class JobsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteJob(int id)
     {
-        var job = await _context.Jobs.FindAsync(id);
+        var job = await _context.Jobs
+            .Include(j => j.Documents)
+            .FirstOrDefaultAsync(j => j.Id == id);
         if (job == null) return NotFound();
+
+        var storageKeys = job.Documents.Select(d => d.StorageKey).ToList();
+
         _context.Jobs.Remove(job);
         await _context.SaveChangesAsync();
+
+        foreach (var key in storageKeys)
+        {
+            try
+            {
+                await _storage.DeleteAsync(key);
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Failed to delete file {key}: {e.Message}");
+            }
+        }
+
         return NoContent();
     }
 
