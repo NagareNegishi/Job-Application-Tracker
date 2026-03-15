@@ -46,14 +46,14 @@ export function JobTable() {
         ? <p className="text-muted-foreground text-md">
             No jobs registered yet. Click "Add New Job" to create your first job application.
           </p>
-        : <Table>
+        : <Table className="min-w-[640px]">
             <TableCaption>Showing {jobs.length} application{jobs.length !== 1 ? "s" : ""}</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>Company</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Priority</TableHead>
                 <TableHead>Applied At</TableHead>
                 <TableHead>Closed At</TableHead>
               </TableRow>
@@ -63,14 +63,14 @@ export function JobTable() {
                 <TableRow
                   key={job.id}
                   onClick={() => navigate(`/jobs/${job.id}`)}
-                  className="cursor-pointer hover:bg-gray-100"
+                  className="cursor-pointer hover:bg-muted/50"
                 >
                   <TableCell className="font-medium">{job.company}</TableCell>
                   <TableCell>{job.role}</TableCell>
-                  <TableCell><StatusBadge status={job.status} /></TableCell>
-                  <TableCell><PriorityDot priority={job.priority} /></TableCell>
-                  <TableCell>{job.appliedAt ? new Date(job.appliedAt).toLocaleDateString() : "N/A"}</TableCell>
-                  <TableCell>{job.closedAt ? new Date(job.closedAt).toLocaleDateString() : "N/A"}</TableCell>
+                  <TableCell className="text-center"><StatusBadge status={job.status} /></TableCell>
+                  <TableCell className="text-center"><div className="flex justify-center"><PriorityDot priority={job.priority} /></div></TableCell>
+                  <TableCell>{job.appliedAt ? new Date(job.appliedAt).toLocaleDateString() : "—"}</TableCell>
+                  <TableCell>{job.closedAt ? new Date(job.closedAt).toLocaleDateString() : "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
