@@ -28,13 +28,18 @@ export function JobTable() {
     <div className="flex flex-col gap-4">
 
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-2">
         <h1 className="text-2xl font-bold">Job Applications</h1>
-        <Button onClick={() => setAddOpen(true)}>
+        <Button
+          variant="outline"
+          className="shadow-xs hover:bg-secondary"
+          onClick={() => setAddOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Add New Job
         </Button>
       </div>
+      <hr className="border-t border-border" />
 
       {/* Job table */}
       {jobs.length === 0
@@ -42,7 +47,7 @@ export function JobTable() {
             No jobs registered yet. Click "Add New Job" to create your first job application.
           </p>
         : <Table>
-            <TableCaption>Jobs</TableCaption>
+            <TableCaption>Showing {jobs.length} application{jobs.length !== 1 ? "s" : ""}</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>Company</TableHead>
