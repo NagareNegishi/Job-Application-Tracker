@@ -162,12 +162,12 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
 
       {/* Header with Add button */ }
       <div className="flex items-center justify-between">
-        <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Contacts</span>
+        <span className="text-sm uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Contacts</span>
         <Button size="sm" variant="outline" onClick={handleAdd}><Plus className="h-4 w-4" />Add Contact</Button>
       </div>
 
       { contacts.length === 0
-        ? <p className="text-sm text-muted-foreground">No contacts.</p>
+        ? <p className="text-muted-foreground">No contacts.</p>
         // TODO: flex-col? or grid-cols-2
         : <div className="grid grid-cols-4 gap-3">
           {/* List of contacts */}
