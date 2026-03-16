@@ -24,23 +24,38 @@ import { JobCreateSheet } from "./JobCreateSheet";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
 
-function useColResize(initial: number) {
-  const [width, setWidth] = useState(initial);
+const COL_RESIZE_MIN = 80;
+const COL_RESIZE_MAX = 550;
+const COL_WIDTH_COMPANY = 200;
+const COL_WIDTH_ROLE = 200;
+const COL_WIDTH_FIXED = 110;
 
-  function startResize(e: React.MouseEvent) {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startW = width;
-    const onMove = (ev: MouseEvent) => setWidth(Math.max(80, startW + ev.clientX - startX));
-    const onUp = () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
+function useColWidths(initial: number[]) {
+  const [widths, setWidths] = useState(initial);
+
+  function startResize(colIndex: number) {
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      const startX = e.clientX;
+      const startW = widths[colIndex];
+      const onMove = (ev: MouseEvent) => {
+        setWidths((prev) => {
+          const next = [...prev];
+          next[colIndex] = Math.min(COL_RESIZE_MAX, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX));
+          return next;
+        });
+      };
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
     };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
   }
 
-  return { width, startResize };
+  const totalWidth = widths.reduce((a, b) => a + b, 0);
+  return { widths, startResize, totalWidth };
 }
 
 // Filter popover for a single column.
@@ -146,8 +161,10 @@ export function JobTable() {
   const { data: jobs, isPending, isError } = useJobs();
   const [addOpen, setAddOpen] = useState(false);
   const navigate = useNavigate();
-  const company = useColResize(200);
-  const role = useColResize(200);
+  const { widths, startResize, totalWidth } = useColWidths([
+    COL_WIDTH_COMPANY, COL_WIDTH_ROLE,
+    COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED,
+  ]);
 
   const {
     filteredJobs,
@@ -188,14 +205,9 @@ export function JobTable() {
           No jobs registered yet. Click "Add New Job" to create your first job application.
         </p>
       ) : (
-        <Table className="w-auto table-fixed">
+        <Table style={{ width: totalWidth, tableLayout: "fixed" }}>
           <colgroup>
-            <col style={{ width: company.width }} />
-            <col style={{ width: role.width }} />
-            <col style={{ width: 110 }} />
-            <col style={{ width: 110 }} />
-            <col style={{ width: 110 }} />
-            <col style={{ width: 110 }} />
+            {widths.map((w, i) => <col key={i} style={{ width: w }} />)}
           </colgroup>
           <TableCaption>
             Showing {filteredJobs.length}
@@ -217,7 +229,7 @@ export function JobTable() {
                   </button>
                 </div>
                 <div
-                  onMouseDown={company.startResize}
+                  onMouseDown={startResize(0)}
                   className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                 />
               </TableHead>
@@ -229,7 +241,7 @@ export function JobTable() {
                   onChange={(v) => setFilters((f) => ({ ...f, role: v }))}
                 />
                 <div
-                  onMouseDown={role.startResize}
+                  onMouseDown={startResize(1)}
                   className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                 />
               </TableHead>
@@ -280,12 +292,8 @@ export function JobTable() {
                 onClick={() => navigate(`/jobs/${job.id}`)}
                 className="cursor-pointer hover:bg-muted/50"
               >
-                <TableCell className="font-medium max-w-0">
-                  <div className="overflow-hidden text-ellipsis whitespace-nowrap">{job.company}</div>
-                </TableCell>
-                <TableCell className="max-w-0">
-                  <div className="overflow-hidden text-ellipsis whitespace-nowrap">{job.role}</div>
-                </TableCell>
+                <TableCell className="font-medium overflow-hidden text-ellipsis">{job.company}</TableCell>
+                <TableCell className="overflow-hidden text-ellipsis">{job.role}</TableCell>
                 <TableCell className="text-center">
                   <StatusBadge status={job.status} />
                 </TableCell>
