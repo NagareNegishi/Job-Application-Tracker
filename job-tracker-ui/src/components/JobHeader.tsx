@@ -39,17 +39,17 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
       </Button>
 
       {/* Row 2: Avatar + company identity on left, actions on right */}
-      <div className="flex items-start justify-between">
-        <div className="pl-10 -mt-1">
+      <div className="flex items-start justify-between gap-4">
+        <div className="pl-10 -mt-1 min-w-0">
           {/* Avatar centered with company name only */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 min-w-0">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <span className="text-lg font-bold text-primary">
                 {job.company.charAt(0).toUpperCase()}
               </span>
             </div>
             <UnderlinedText
-              className="text-2xl font-bold tracking-tight text-foreground"
+              className="text-2xl font-bold tracking-tight text-foreground truncate"
               underlineColor="var(--primary)"
               underlineThickness={3}
               underlineOverhang={6}
@@ -64,7 +64,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-1 shrink-0">
           <Button
             variant="secondary"
             className="hover:bg-border active:scale-95"
