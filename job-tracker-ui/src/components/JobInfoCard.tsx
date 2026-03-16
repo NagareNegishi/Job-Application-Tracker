@@ -24,14 +24,14 @@ export function JobInfoCard({ job }: { job: Job }) {
 
       {job.description && (
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Description</p>
+          <p className="text-sm uppercase tracking-wider font-semibold text-muted-foreground">Description</p>
           <p className="text-sm text-foreground/80">{job.description}</p>
         </div>
       )}
 
       {job.notes && (
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">Notes</p>
+          <p className="text-sm uppercase tracking-wider font-semibold text-muted-foreground">Notes</p>
           <p className="text-sm text-foreground/80">{job.notes}</p>
         </div>
       )}
