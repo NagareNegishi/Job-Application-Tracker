@@ -21,6 +21,12 @@ import {
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { useCreateJob } from "@/hooks/jobQuery"
+import {
+  MAX_COMPANY_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_NOTES_LENGTH,
+  MAX_ROLE_LENGTH,
+} from "@/lib/validationConstants"
 import { JobStatus, Priority } from "@/types/enums"
 import { useEffect, useState } from "react"
 
@@ -125,6 +131,7 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
             id="company"
             value={form.company}
             onChange={e => setField("company", e.target.value)}
+            maxLength={MAX_COMPANY_LENGTH}
           />
           {errors.company && <p className="text-sm text-destructive">{errors.company}</p>}
         </div>
@@ -136,6 +143,7 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
             id="role"
             value={form.role}
             onChange={e => setField("role", e.target.value)}
+            maxLength={MAX_ROLE_LENGTH}
           />
           {errors.role && <p className="text-sm text-destructive">{errors.role}</p>}
         </div>
@@ -206,7 +214,9 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
             onChange={e => setField("description", e.target.value)}
             // Initially set to 3 rows
             rows={3}
+            maxLength={MAX_DESCRIPTION_LENGTH}
           />
+          <p className="text-xs text-muted-foreground text-right">{form.description.length} / {MAX_DESCRIPTION_LENGTH}</p>
         </div>
 
         {/* Edit Notes */}
@@ -217,7 +227,9 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
             value={form.notes}
             onChange={e => setField("notes", e.target.value)}
             rows={3}
+            maxLength={MAX_NOTES_LENGTH}
           />
+          <p className="text-xs text-muted-foreground text-right">{form.notes.length} / {MAX_NOTES_LENGTH}</p>
         </div>
 
         {/* Action buttons */}

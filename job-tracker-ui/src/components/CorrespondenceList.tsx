@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
+import { MAX_NOTES_LENGTH } from "@/lib/validationConstants";
 import type { Correspondence } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
 import { Pencil, Plus, Trash2 } from "lucide-react";
@@ -252,6 +253,7 @@ export function CorrespondenceDialog({
             name="note"
             value={form.note}
             onChange={e => setField("note", e.target.value)}
+            maxLength={MAX_NOTES_LENGTH}
           />
 
         <DialogFooter>

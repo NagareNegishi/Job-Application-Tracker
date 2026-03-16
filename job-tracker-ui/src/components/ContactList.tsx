@@ -11,6 +11,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
+import {
+  MAX_CONTACT_EMAIL_LENGTH,
+  MAX_CONTACT_NAME_LENGTH,
+  MAX_CONTACT_PHONE_LENGTH,
+  MAX_CONTACT_ROLE_LENGTH,
+  MAX_NOTES_LENGTH,
+} from "@/lib/validationConstants";
 import type { Contact } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
 import { Mail, Pencil, Phone, Plus, Trash2 } from "lucide-react";
@@ -292,6 +299,7 @@ export function ContactDialog({
             name="name"
             value={form.name}
             onChange={e => setField("name", e.target.value)}
+            maxLength={MAX_CONTACT_NAME_LENGTH}
           />
           {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
 
@@ -301,6 +309,7 @@ export function ContactDialog({
             name="role"
             value={form.role}
             onChange={e => setField("role", e.target.value)}
+            maxLength={MAX_CONTACT_ROLE_LENGTH}
           />
 
           <Label htmlFor="email">Email</Label>
@@ -309,6 +318,7 @@ export function ContactDialog({
             name="email"
             value={form.email}
             onChange={e => setField("email", e.target.value)}
+            maxLength={MAX_CONTACT_EMAIL_LENGTH}
           />
           { errors.email && <p className="text-sm text-destructive">{errors.email}</p> }
 
@@ -318,6 +328,7 @@ export function ContactDialog({
             name="phone"
             value={form.phone}
             onChange={e => setField("phone", e.target.value)}
+            maxLength={MAX_CONTACT_PHONE_LENGTH}
           />
           {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
 
@@ -327,6 +338,7 @@ export function ContactDialog({
             name="notes"
             value={form.notes}
             onChange={e => setField("notes", e.target.value)}
+            maxLength={MAX_NOTES_LENGTH}
           />
 
         <DialogFooter>
