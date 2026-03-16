@@ -89,7 +89,9 @@ function FilterPopover({
           className={cn(
             "flex items-center gap-1 rounded p-0.5 transition-colors",
             "hover:text-foreground group-hover:text-foreground",
-            value !== "" ? "text-primary" : "text-muted-foreground"
+            value !== ""
+              ? "text-primary bg-primary/10"
+              : "text-muted-foreground"
           )}
         >
           {label && <span>{label}</span>}
@@ -143,7 +145,13 @@ function SortableHead({
       <div className="flex items-center gap-1 group">
         <button
           onClick={() => onSort(field)}
-          className="flex items-center gap-1 text-muted-foreground hover:text-foreground group-hover:text-foreground transition-colors"
+          className={cn(
+            "flex items-center gap-1 rounded px-1 transition-colors",
+            "hover:text-foreground group-hover:text-foreground",
+            isActive
+              ? "text-foreground bg-muted"
+              : "text-muted-foreground"
+          )}
         >
           {label}
           <Icon className="size-3.5" />
@@ -220,7 +228,13 @@ export function JobTable() {
                 <div className="flex items-center gap-1 group">
                   <button
                     onClick={() => sortProps.onSort("company")}
-                    className="flex items-center gap-1 text-muted-foreground hover:text-foreground group-hover:text-foreground transition-colors"
+                    className={cn(
+                      "flex items-center gap-1 rounded px-1 transition-colors",
+                      "hover:text-foreground group-hover:text-foreground",
+                      sortProps.activeField === "company"
+                        ? "text-foreground bg-muted"
+                        : "text-muted-foreground"
+                    )}
                   >
                     Company
                     {sortProps.activeField === "company"
