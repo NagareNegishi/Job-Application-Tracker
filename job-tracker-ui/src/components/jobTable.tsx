@@ -24,6 +24,25 @@ import { JobCreateSheet } from "./JobCreateSheet";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
 
+function useColResize(initial: number) {
+  const [width, setWidth] = useState(initial);
+
+  function startResize(e: React.MouseEvent) {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = width;
+    const onMove = (ev: MouseEvent) => setWidth(Math.max(80, startW + ev.clientX - startX));
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }
+
+  return { width, startResize };
+}
+
 // Filter popover for a single column.
 // - `label`: when provided (filter-only columns), renders label + icon as one
 //   unified trigger so clicking the text also opens the popover.
@@ -127,6 +146,8 @@ export function JobTable() {
   const { data: jobs, isPending, isError } = useJobs();
   const [addOpen, setAddOpen] = useState(false);
   const navigate = useNavigate();
+  const company = useColResize(200);
+  const role = useColResize(200);
 
   const {
     filteredJobs,
@@ -167,7 +188,15 @@ export function JobTable() {
           No jobs registered yet. Click "Add New Job" to create your first job application.
         </p>
       ) : (
-        <Table className="min-w-[640px]">
+        <Table className="w-auto table-fixed">
+          <colgroup>
+            <col style={{ width: company.width }} />
+            <col style={{ width: role.width }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 110 }} />
+          </colgroup>
           <TableCaption>
             Showing {filteredJobs.length}
             {isFiltered && ` of ${jobs.length}`} application
@@ -175,13 +204,33 @@ export function JobTable() {
           </TableCaption>
           <TableHeader>
             <TableRow>
-              <SortableHead field="company" label="Company" {...sortProps} />
-              <TableHead>
+              <TableHead className="relative overflow-visible">
+                <div className="flex items-center gap-1 group">
+                  <button
+                    onClick={() => sortProps.onSort("company")}
+                    className="flex items-center gap-1 text-muted-foreground hover:text-foreground group-hover:text-foreground transition-colors"
+                  >
+                    Company
+                    {sortProps.activeField === "company"
+                      ? sortProps.dir === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                      : <ArrowUpDown className="size-3.5" />}
+                  </button>
+                </div>
+                <div
+                  onMouseDown={company.startResize}
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
+                />
+              </TableHead>
+              <TableHead className="relative overflow-visible">
                 <FilterPopover
                   label="Role"
                   options={availableRoles}
                   value={filters.role}
                   onChange={(v) => setFilters((f) => ({ ...f, role: v }))}
+                />
+                <div
+                  onMouseDown={role.startResize}
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                 />
               </TableHead>
               <SortableHead
@@ -231,8 +280,12 @@ export function JobTable() {
                 onClick={() => navigate(`/jobs/${job.id}`)}
                 className="cursor-pointer hover:bg-muted/50"
               >
-                <TableCell className="font-medium">{job.company}</TableCell>
-                <TableCell>{job.role}</TableCell>
+                <TableCell className="font-medium max-w-0">
+                  <div className="overflow-hidden text-ellipsis whitespace-nowrap">{job.company}</div>
+                </TableCell>
+                <TableCell className="max-w-0">
+                  <div className="overflow-hidden text-ellipsis whitespace-nowrap">{job.role}</div>
+                </TableCell>
                 <TableCell className="text-center">
                   <StatusBadge status={job.status} />
                 </TableCell>
