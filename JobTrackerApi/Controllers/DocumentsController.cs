@@ -1,6 +1,7 @@
 using JobTrackerApi.Models;
 using JobTrackerApi.Data;
 using JobTrackerApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-10.0
@@ -9,6 +10,7 @@ namespace JobTrackerApi.Controllers;
 
 [ApiController]
 [Route("jobs/{jobId}/documents")]
+[Authorize]
 // Route should be nested under jobs
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-10.0
 

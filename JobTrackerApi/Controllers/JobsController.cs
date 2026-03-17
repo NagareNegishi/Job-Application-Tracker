@@ -3,6 +3,7 @@ using JobTrackerApi.Data;
 using JobTrackerApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 // https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-10.0
 
@@ -10,6 +11,7 @@ namespace JobTrackerApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
+[Authorize]
 public class JobsController : ControllerBase
 {
     private readonly JobTrackerContext _context; // Assigned once, never changes
