@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
+import { MAX_NOTES_LENGTH } from "@/lib/validationConstants";
 import type { Correspondence } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
 import { Pencil, Plus, Trash2 } from "lucide-react";
@@ -137,12 +138,12 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
 
       {/* Header with Add button */ }
       <div className="flex items-center justify-between">
-        <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Correspondence</span>
+        <span className="text-sm uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Correspondence</span>
         <Button size="sm" variant="outline" onClick={handleAdd}><Plus className="h-4 w-4" />Add Correspondence</Button>
       </div>
 
       { entries.length === 0
-        ? <p className="text-sm text-muted-foreground">No correspondence.</p>
+        ? <p className="text-muted-foreground">No correspondence.</p>
         // TODO: flex-col? or grid-cols-2
         : <div className="grid grid-cols-4 gap-3">
           {/* List of correspondences */}
@@ -252,6 +253,7 @@ export function CorrespondenceDialog({
             name="note"
             value={form.note}
             onChange={e => setField("note", e.target.value)}
+            maxLength={MAX_NOTES_LENGTH}
           />
 
         <DialogFooter>

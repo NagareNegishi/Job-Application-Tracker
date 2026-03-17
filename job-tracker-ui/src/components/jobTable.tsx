@@ -24,6 +24,41 @@ import { JobCreateSheet } from "./JobCreateSheet";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
 
+const COL_RESIZE_MIN = 80;
+const COL_RESIZE_MAX = 550;
+const COL_WIDTH_COMPANY = 200;
+const COL_WIDTH_ROLE = 200;
+const COL_WIDTH_FIXED = 110;
+
+// Manages column widths and resizing logic for the job table.
+function useColWidths(initial: number[]) {
+  const [widths, setWidths] = useState(initial);
+
+  function startResize(colIndex: number) {
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      const startX = e.clientX;
+      const startW = widths[colIndex];
+      const onMove = (ev: MouseEvent) => {
+        setWidths((prev) => {
+          const next = [...prev];
+          next[colIndex] = Math.min(COL_RESIZE_MAX, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX));
+          return next;
+        });
+      };
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    };
+  }
+
+  const totalWidth = widths.reduce((a, b) => a + b, 0);
+  return { widths, startResize, totalWidth };
+}
+
 // Filter popover for a single column.
 // - `label`: when provided (filter-only columns), renders label + icon as one
 //   unified trigger so clicking the text also opens the popover.
@@ -43,6 +78,7 @@ function FilterPopover({
 }) {
   const [open, setOpen] = useState(false);
 
+  // When an option is selected, update filter and close popover.
   function select(v: string) {
     onChange(v);
     setOpen(false);
@@ -55,7 +91,9 @@ function FilterPopover({
           className={cn(
             "flex items-center gap-1 rounded p-0.5 transition-colors",
             "hover:text-foreground group-hover:text-foreground",
-            value !== "" ? "text-primary" : "text-muted-foreground"
+            value !== ""
+              ? "text-primary bg-primary/10"
+              : "text-muted-foreground"
           )}
         >
           {label && <span>{label}</span>}
@@ -109,7 +147,13 @@ function SortableHead({
       <div className="flex items-center gap-1 group">
         <button
           onClick={() => onSort(field)}
-          className="flex items-center gap-1 text-muted-foreground hover:text-foreground group-hover:text-foreground transition-colors"
+          className={cn(
+            "flex items-center gap-1 rounded px-1 transition-colors",
+            "hover:text-foreground group-hover:text-foreground",
+            isActive
+              ? "text-foreground bg-muted"
+              : "text-muted-foreground"
+          )}
         >
           {label}
           <Icon className="size-3.5" />
@@ -127,6 +171,10 @@ export function JobTable() {
   const { data: jobs, isPending, isError } = useJobs();
   const [addOpen, setAddOpen] = useState(false);
   const navigate = useNavigate();
+  const { widths, startResize, totalWidth } = useColWidths([
+    COL_WIDTH_COMPANY, COL_WIDTH_ROLE,
+    COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED,
+  ]);
 
   const {
     filteredJobs,
@@ -167,7 +215,10 @@ export function JobTable() {
           No jobs registered yet. Click "Add New Job" to create your first job application.
         </p>
       ) : (
-        <Table className="min-w-[640px]">
+        <Table style={{ width: totalWidth, tableLayout: "fixed" }}>
+          <colgroup>
+            {widths.map((w, i) => <col key={i} style={{ width: w }} />)}
+          </colgroup>
           <TableCaption>
             Showing {filteredJobs.length}
             {isFiltered && ` of ${jobs.length}`} application
@@ -175,13 +226,39 @@ export function JobTable() {
           </TableCaption>
           <TableHeader>
             <TableRow>
-              <SortableHead field="company" label="Company" {...sortProps} />
-              <TableHead>
+              <TableHead className="relative overflow-visible">
+                <div className="flex items-center gap-1 group">
+                  <button
+                    onClick={() => sortProps.onSort("company")}
+                    className={cn(
+                      "flex items-center gap-1 rounded px-1 transition-colors",
+                      "hover:text-foreground group-hover:text-foreground",
+                      sortProps.activeField === "company"
+                        ? "text-foreground bg-muted"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    Company
+                    {sortProps.activeField === "company"
+                      ? sortProps.dir === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+                      : <ArrowUpDown className="size-3.5" />}
+                  </button>
+                </div>
+                <div
+                  onMouseDown={startResize(0)}
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
+                />
+              </TableHead>
+              <TableHead className="relative overflow-visible">
                 <FilterPopover
                   label="Role"
                   options={availableRoles}
                   value={filters.role}
                   onChange={(v) => setFilters((f) => ({ ...f, role: v }))}
+                />
+                <div
+                  onMouseDown={startResize(1)}
+                  className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                 />
               </TableHead>
               <SortableHead
@@ -231,8 +308,8 @@ export function JobTable() {
                 onClick={() => navigate(`/jobs/${job.id}`)}
                 className="cursor-pointer hover:bg-muted/50"
               >
-                <TableCell className="font-medium">{job.company}</TableCell>
-                <TableCell>{job.role}</TableCell>
+                <TableCell className="font-medium overflow-hidden text-ellipsis">{job.company}</TableCell>
+                <TableCell className="overflow-hidden text-ellipsis">{job.role}</TableCell>
                 <TableCell className="text-center">
                   <StatusBadge status={job.status} />
                 </TableCell>

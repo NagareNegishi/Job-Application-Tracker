@@ -1,5 +1,7 @@
 using JobTrackerApi.Models;
 using JobTrackerApi.Data;
+using JobTrackerApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-10.0
@@ -8,6 +10,7 @@ namespace JobTrackerApi.Controllers;
 
 [ApiController]
 [Route("jobs/{jobId}/documents")]
+[Authorize]
 // Route should be nested under jobs
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-10.0
 
@@ -17,18 +20,12 @@ public class DocumentsController : ControllerBase
 {
     // Assigned once, never changes
     private readonly JobTrackerContext _context;
-    private readonly string _uploadsPath;
+    private readonly IStorageService _storage;
 
-    // TODO: Document how user supposed to configure the file storage path in appsettings.json, and how to read it here
-    public DocumentsController(JobTrackerContext context, IConfiguration configuration)
+    public DocumentsController(JobTrackerContext context, IStorageService storage)
     {
         _context = context;
-        // ASP.NET Core automatically read appsettings.json and registers IConfiguration
-        var pathCheck = configuration["Storage:UploadsPath"];
-        if (string.IsNullOrEmpty(pathCheck)) {
-            throw new InvalidOperationException("Storage:UploadsPath is not configured in appsettings.");
-        }
-        _uploadsPath = pathCheck;
+        _storage = storage;
     }
 
 
@@ -66,9 +63,8 @@ public class DocumentsController : ControllerBase
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
         if (document.JobId != jobId) return BadRequest();
-        if (!System.IO.File.Exists(document.FilePath)) return NotFound();
 
-        var stream = System.IO.File.OpenRead(document.FilePath);
+        var stream = await _storage.GetAsync(document.StorageKey);
         return File(stream, "application/octet-stream", document.Name);
     }
 
@@ -92,17 +88,11 @@ public class DocumentsController : ControllerBase
             return BadRequest("Maximum number of documents reached.");
         }
 
-        // Convert DTO to entity
-        Document newDocument = dto.ToDocument(jobId, _uploadsPath);
-
-        // Save the file to disk
-        var filePath = newDocument.FilePath;
-        using (var stream = System.IO.File.Create(filePath)) {
-            await dto.File.CopyToAsync(stream);
-        }
+        string storedName = dto.GenerateStoredName();
+        string storageKey = await _storage.SaveAsync(dto.File, storedName);
+        Document newDocument = dto.ToDocument(jobId, storedName, storageKey);
 
         // Save to database
-        // TODO: Replace with logger if required
         try {
             _context.Documents.Add(newDocument);
             await _context.SaveChangesAsync();
@@ -110,7 +100,7 @@ public class DocumentsController : ControllerBase
             // Delete the uploaded file to avoid orphaned files
             try
             {
-                System.IO.File.Delete(filePath);
+                await _storage.DeleteAsync(storageKey);
                 Console.Error.WriteLine($"Deleted uploaded file due to database error: {e.Message}");
             } catch (Exception deleteException)
             {
@@ -143,7 +133,7 @@ public class DocumentsController : ControllerBase
         // Delete the actual file
         try
         {
-            System.IO.File.Delete(document.FilePath);
+            await _storage.DeleteAsync(document.StorageKey);
         }
         catch (Exception e)
         {

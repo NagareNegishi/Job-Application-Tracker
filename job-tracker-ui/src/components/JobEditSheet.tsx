@@ -17,6 +17,12 @@ import {
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { usePatchJob } from "@/hooks/jobQuery"
+import {
+  MAX_COMPANY_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_NOTES_LENGTH,
+  MAX_ROLE_LENGTH,
+} from "@/lib/validationConstants"
 import { JobStatus, Priority } from "@/types/enums"
 import type { Job, JobPatchOperation } from "@/types/job"
 import { useEffect, useState } from "react"
@@ -137,6 +143,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             id="company"
             value={form.company}
             onChange={e => setField("company", e.target.value)}
+            maxLength={MAX_COMPANY_LENGTH}
           />
         </div>
 
@@ -147,6 +154,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             id="role"
             value={form.role}
             onChange={e => setField("role", e.target.value)}
+            maxLength={MAX_ROLE_LENGTH}
           />
         </div>
 
@@ -216,7 +224,9 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             onChange={e => setField("description", e.target.value)}
             // Initially set to 3 rows
             rows={3}
+            maxLength={MAX_DESCRIPTION_LENGTH}
           />
+          <p className="text-xs text-muted-foreground text-right">{form.description.length} / {MAX_DESCRIPTION_LENGTH}</p>
         </div>
 
         {/* Edit Notes */}
@@ -227,7 +237,9 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             value={form.notes}
             onChange={e => setField("notes", e.target.value)}
             rows={3}
+            maxLength={MAX_NOTES_LENGTH}
           />
+          <p className="text-xs text-muted-foreground text-right">{form.notes.length} / {MAX_NOTES_LENGTH}</p>
         </div>
 
         {/* Action buttons */}

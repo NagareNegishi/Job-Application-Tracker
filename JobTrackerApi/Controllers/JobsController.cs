@@ -1,28 +1,39 @@
 using JobTrackerApi.Models;
 using JobTrackerApi.Data;
+using JobTrackerApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using System.Security.Claims;
 // https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-10.0
 
 namespace JobTrackerApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
+[Authorize]
 public class JobsController : ControllerBase
 {
     private readonly JobTrackerContext _context; // Assigned once, never changes
+    private readonly IStorageService _storage;
 
-    public JobsController(JobTrackerContext context)
+    public JobsController(JobTrackerContext context, IStorageService storage)
     {
         _context = context;
+        _storage = storage;
     }
 
+    //NOTE: with UserId, Every action needs two things:
+    // - Read the caller's user ID from the JWT
+    // - Filter or stamp with that ID
     // Get all jobs
     [HttpGet]
     public async Task<ActionResult<IEnumerable<JobResponseDto>>> GetJobs()
     {
-        return (await _context.Jobs.ToListAsync())
+        // ClaimTypes.NameIdentifier maps to the sub claim we put in the JWT at login.
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return (await _context.Jobs.Where(j => j.UserId == userId).ToListAsync())
             .Select(job => job.ToResponseDto())
             .ToList();
     }
@@ -31,14 +42,10 @@ public class JobsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<JobResponseDto>> GetJob(int id)
     {
-        // it should not include doc
-        var job = await _context.Jobs.FindAsync(id);
-
-        // this version should include doc
-        // var job = await _context.Jobs
-        //     .Include(j => j.Documents)
-        //     .FirstOrDefaultAsync(j => j.Id == id);
-
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var job = await _context.Jobs
+            .FirstOrDefaultAsync(j => j.Id == id && j.UserId == userId);
+        // DO NOT leak if job doesn't exist or belongs to another user
         if (job == null) return NotFound();
         return job.ToResponseDto();
     }
@@ -47,7 +54,9 @@ public class JobsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> PutJob(int id, UpdateJobDTO update)
     {
-        var existingJob = await _context.Jobs.FindAsync(id);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var existingJob = await _context.Jobs
+            .FirstOrDefaultAsync(j => j.Id == id && j.UserId == userId);
         if (existingJob == null) return NotFound();
 
         // Update the existing job
@@ -79,7 +88,9 @@ public class JobsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<JobResponseDto>> PostJob(JobDTO dto)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var newJob = dto.ToJob();
+        newJob.UserId = userId ?? string.Empty;
         _context.Jobs.Add(newJob);
         await _context.SaveChangesAsync();
 
@@ -96,10 +107,29 @@ public class JobsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteJob(int id)
     {
-        var job = await _context.Jobs.FindAsync(id);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var job = await _context.Jobs
+            .Include(j => j.Documents)
+            .FirstOrDefaultAsync(j => j.Id == id && j.UserId == userId);
         if (job == null) return NotFound();
+
+        var storageKeys = job.Documents.Select(d => d.StorageKey).ToList();
+
         _context.Jobs.Remove(job);
         await _context.SaveChangesAsync();
+
+        foreach (var key in storageKeys)
+        {
+            try
+            {
+                await _storage.DeleteAsync(key);
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Failed to delete file {key}: {e.Message}");
+            }
+        }
+
         return NoContent();
     }
 
@@ -110,8 +140,9 @@ public class JobsController : ControllerBase
     [HttpPatch("{id}")]
     public async Task<IActionResult> PatchJob(int id, [FromBody] JsonPatchDocument<UpdateJobDTO> patchDoc)
     {
-        // most invalid patch document will be rejected by the framework
-        var job = await _context.Jobs.FindAsync(id);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var job = await _context.Jobs
+            .FirstOrDefaultAsync(j => j.Id == id && j.UserId == userId);
         if (job == null) return NotFound();
 
         // Copy the existing job data into a DTO for patching.

@@ -2,44 +2,40 @@ namespace JobTrackerApi.Tests;
 using JobTrackerApi.Controllers;
 using JobTrackerApi.Data;
 using JobTrackerApi.Models;
+using JobTrackerApi.Services;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
+using Moq;
 
 public class DocumentsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;
     private readonly DocumentsController _controller;
-    private readonly string _testUploadsPath = "TestUploads";
+    private readonly Mock<IStorageService> _storageMock;
 
     public DocumentsControllerTests()
     {
-        _testUploadsPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()); // Unique temp directory for each test class
-        Directory.CreateDirectory(_testUploadsPath); // Ensure the directory exists
-
         // Configure what database provider to use
         var options = new DbContextOptionsBuilder<JobTrackerContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()) // use in-memory, unique name per test class
             .Options; // .Options extracts the built configuration object
 
-        // Create a simple configuration with the uploads path
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> {
-                { "Storage:UploadsPath", _testUploadsPath }
-            })
-            .Build();
+        _storageMock = new Mock<IStorageService>();
+        // Default: SaveAsync returns storedName as the key
+        _storageMock
+            .Setup(s => s.SaveAsync(It.IsAny<IFormFile>(), It.IsAny<string>()))
+            .ReturnsAsync((IFormFile _, string storedName) => storedName);
 
         // create context and controller directly
         _context = new JobTrackerContext(options);
-        _controller = new DocumentsController(_context, configuration);
+        _controller = new DocumentsController(_context, _storageMock.Object);
     }
 
     // Clean up resources after tests
     public void Dispose()
     {
-        Directory.Delete(_testUploadsPath, true);
         _context.Dispose();
         GC.SuppressFinalize(this);
     }
@@ -80,15 +76,15 @@ public class DocumentsControllerTests: IDisposable
         int jobId,
         DocumentType type = DocumentType.CV,
         string name = "Test CV",
-        string filePath = "/tmp/cv.pdf")
+        string storageKey = "test-key.pdf")
     {
         var document = new Document
         {
             JobId = jobId,
             Type = type,
             Name = name,
-            StoredName = $"{Guid.NewGuid()}{Path.GetExtension(filePath)}", // unique stored name
-            FilePath = filePath,
+            StoredName = $"{Guid.NewGuid()}{Path.GetExtension(storageKey)}", // unique stored name
+            StorageKey = storageKey,
             CreatedAt = new DateTime(2024, 1, 1)
         };
         _context.Documents.Add(document);
@@ -118,8 +114,8 @@ public class DocumentsControllerTests: IDisposable
     {
         // Arrange
         var job = await SeedJobAsync();
-        var doc1 = await SeedDocumentAsync(job.Id, DocumentType.CV, "CV.pdf", "/tmp/cv.pdf");
-        var doc2 = await SeedDocumentAsync(job.Id, DocumentType.CoverLetter, "CL.doc", "/tmp/cl.doc");
+        var doc1 = await SeedDocumentAsync(job.Id, DocumentType.CV, "CV.pdf");
+        var doc2 = await SeedDocumentAsync(job.Id, DocumentType.CoverLetter, "CL.doc");
 
         // Act
         var result = await _controller.GetDocuments(job.Id, null);
@@ -137,10 +133,10 @@ public class DocumentsControllerTests: IDisposable
     {
         // Arrange
         var job = await SeedJobAsync();
-        var doc1 = await SeedDocumentAsync(job.Id, DocumentType.CV, "CV.pdf", "/tmp/cv.pdf");
-        var doc2 = await SeedDocumentAsync(job.Id, DocumentType.CV, "CV2.pdf", "/tmp/cv2.pdf");
-        await SeedDocumentAsync(job.Id, DocumentType.CoverLetter, "CL.doc", "/tmp/cl.doc");
-        await SeedDocumentAsync(job.Id, DocumentType.Description, "Portfolio.docx", "/tmp/portfolio.docx");
+        var doc1 = await SeedDocumentAsync(job.Id, DocumentType.CV, "CV.pdf");
+        var doc2 = await SeedDocumentAsync(job.Id, DocumentType.CV, "CV2.pdf");
+        await SeedDocumentAsync(job.Id, DocumentType.CoverLetter, "CL.doc");
+        await SeedDocumentAsync(job.Id, DocumentType.Description, "Portfolio.docx");
 
         // Act
         var result = await _controller.GetDocuments(job.Id, DocumentType.CV);
@@ -206,10 +202,11 @@ public class DocumentsControllerTests: IDisposable
         Assert.Equal(dto.Name + ".pdf", document.Name);
         Assert.Equal(dto.Type, document.Type);
         Assert.Equal(job.Id, document.JobId);
-        // Also check the file was saved to disk
+        // Verify storage service was called
+        _storageMock.Verify(s => s.SaveAsync(dto.File, It.IsAny<string>()), Times.Once);
         var savedDocument = await _context.Documents.FindAsync(document.DocId);
         Assert.NotNull(savedDocument);
-        Assert.True(File.Exists(savedDocument.FilePath));
+        Assert.NotEmpty(savedDocument.StorageKey);
     }
 
     // Test PostDocument with invalid file type
@@ -262,7 +259,7 @@ public class DocumentsControllerTests: IDisposable
         // Arrange
         var job = await SeedJobAsync();
         for (int i = 0; i < ValidationConstants.MaxDocumentPerJob; i++) {
-            await SeedDocumentAsync(job.Id, DocumentType.CV, $"CV_{i}.pdf", $"/tmp/cv_{i}.pdf");
+            await SeedDocumentAsync(job.Id, DocumentType.CV, $"CV_{i}.pdf");
         }
         var dto = new DocumentDTO {
             Type = DocumentType.CV,
@@ -294,11 +291,7 @@ public class DocumentsControllerTests: IDisposable
         Assert.IsType<ActionResult<DocumentResponseDto>>(postResult);
         var createdResult = Assert.IsType<CreatedAtActionResult>(postResult.Result);
         var document = Assert.IsType<DocumentResponseDto>(createdResult.Value);
-        // Ensure the document file exists before deletion
-        var savedDocument = await _context.Documents.FindAsync(document.DocId);
-        Assert.NotNull(savedDocument);
-        Assert.True(File.Exists(savedDocument.FilePath));
-        
+
         // Act
         var result = await _controller.DeleteDocument(job.Id, document.DocId);
 
@@ -306,7 +299,7 @@ public class DocumentsControllerTests: IDisposable
         Assert.IsType<NoContentResult>(result);
         var deletedDocument = await _context.Documents.FindAsync(document.DocId);
         Assert.Null(deletedDocument);
-        Assert.False(File.Exists(savedDocument.FilePath));
+        _storageMock.Verify(s => s.DeleteAsync(It.IsAny<string>()), Times.Once);
     }
 
     // Test DeleteDocument with non-existent document
@@ -349,7 +342,7 @@ public class DocumentsControllerTests: IDisposable
     {
         // Arrange
         var job = await SeedJobAsync();
-        var document = await SeedDocumentAsync(job.Id, DocumentType.CV, "Old Name", "/tmp/old.pdf");
+        var document = await SeedDocumentAsync(job.Id, DocumentType.CV, "Old Name");
         var updateDto = new UpdateDocumentDTO {
             Name = "Updated Name",
             Type = DocumentType.CoverLetter
@@ -393,7 +386,7 @@ public class DocumentsControllerTests: IDisposable
         // Arrange
         var job1 = await SeedJobAsync(company: "Company1");
         var job2 = await SeedJobAsync(company: "Company2");
-        var document = await SeedDocumentAsync(job1.Id, DocumentType.CV, "Old Name", "/tmp/old.pdf");
+        var document = await SeedDocumentAsync(job1.Id, DocumentType.CV, "Old Name");
         var updateDto = new UpdateDocumentDTO {
             Name = "Updated Name",
             Type = DocumentType.CoverLetter

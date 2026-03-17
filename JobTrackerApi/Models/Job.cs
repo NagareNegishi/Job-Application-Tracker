@@ -4,6 +4,7 @@ public class Job
 {
     // EF Core automatically recognizes Id as the primary key
     public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty; // for owner ship, can't be null
     public string Company { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public JobStatus Status { get; set; } = JobStatus.Wishlist;

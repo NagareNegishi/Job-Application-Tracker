@@ -12,7 +12,7 @@ public class Document
     public DocumentType Type { get; set; }
     public required string Name { get; set; } // Original, display name
     public required string StoredName { get; set; } // Randomly generated name for storage
-    public required string FilePath { get; set; }
+    public required string StorageKey { get; set; } // Opaque key used by IStorageService (local: filename; S3: object key)
     public DateTime CreatedAt { get; set; }
     public int JobId { get; set; }
 

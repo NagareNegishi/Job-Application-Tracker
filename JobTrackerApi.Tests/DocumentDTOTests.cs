@@ -73,13 +73,14 @@ public class DocumentDTOTests
         };
 
         // Act
-        Document doc = dto.ToDocument(1, "/fake/path");
+        string storedName = dto.GenerateStoredName();
+        Document doc = dto.ToDocument(1, storedName, storedName); // storageKey == storedName for local storage
 
         // Assert
         Assert.Equal(DocumentType.CV, doc.Type);
         Assert.Equal("Test Document.pdf", doc.Name);
-        Assert.StartsWith("/fake/path", doc.FilePath);
-        Assert.EndsWith(".pdf", doc.FilePath);
+        Assert.EndsWith(".pdf", doc.StorageKey);
+        Assert.Equal(storedName, doc.StoredName);
         Assert.Equal(1, doc.JobId);
         Assert.True((DateTime.UtcNow - doc.CreatedAt).TotalSeconds < 5); // CreatedAt should be recent
     }
