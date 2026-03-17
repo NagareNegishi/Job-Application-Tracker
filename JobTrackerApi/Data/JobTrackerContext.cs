@@ -28,4 +28,5 @@ public class JobTrackerContext : IdentityDbContext<IdentityUser>
 
     public DbSet<Job> Jobs { get; set; } = null!;
     public DbSet<Document> Documents { get; set; } = null!;
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 }
