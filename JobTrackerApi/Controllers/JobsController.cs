@@ -90,7 +90,7 @@ public class JobsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var newJob = dto.ToJob();
-        newJob.UserId = userId;
+        newJob.UserId = userId ?? string.Empty;
         _context.Jobs.Add(newJob);
         await _context.SaveChangesAsync();
 
