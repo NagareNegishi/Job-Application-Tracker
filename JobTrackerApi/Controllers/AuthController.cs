@@ -76,6 +76,21 @@ public class AuthController : ControllerBase
         return Ok(new { accessToken, refreshToken = newRefreshToken.Token });
     }
 
+    // At logout the client sends the refresh token so the server can revoke it in the DB
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] RefreshRequestDTO dto)
+    {
+        var existing = await _context.RefreshTokens
+            .FirstOrDefaultAsync(r => r.Token == dto.RefreshToken);
+
+        if (existing != null && existing.IsActive)
+            existing.RevokedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        // no information leakage about whether the token existed
+        return NoContent();
+    }
+
     // Helper method to generate Access token
     private string GenerateAccessToken(IdentityUser user)
     {
