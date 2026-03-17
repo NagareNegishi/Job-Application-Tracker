@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using System.Text;
 using JobTrackerApi.Data;
 using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
@@ -67,6 +70,24 @@ builder.Services.AddSingleton<IStorageService, LocalStorageService>();
 // Registers Identity's core services
 builder.Services.AddIdentityCore<IdentityUser>()
     .AddEntityFrameworkStores<JobTrackerContext>();
+
+// JWT Bearer authentication — validates the token on every request
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
 
 
 // CORS policy for development, allowing the React app to make API calls to this backend
