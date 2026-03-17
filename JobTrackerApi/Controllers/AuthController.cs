@@ -54,6 +54,28 @@ public class AuthController : ControllerBase
         return Ok(new { accessToken, refreshToken = refreshToken.Token });
     }
 
+    // Rotate tokens
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequestDTO dto)
+    {
+        var existing = await _context.RefreshTokens
+            .FirstOrDefaultAsync(r => r.Token == dto.RefreshToken);
+
+        if (existing == null || !existing.IsActive)
+            return Unauthorized();
+
+        // Revoke old token (rotation)
+        existing.RevokedAt = DateTime.UtcNow;
+
+        var user = await _userManager.FindByIdAsync(existing.UserId);
+        if (user == null) return Unauthorized();
+
+        var accessToken = GenerateAccessToken(user);
+        var newRefreshToken = await CreateRefreshTokenAsync(user.Id);
+
+        return Ok(new { accessToken, refreshToken = newRefreshToken.Token });
+    }
+
     // Helper method to generate Access token
     private string GenerateAccessToken(IdentityUser user)
     {
