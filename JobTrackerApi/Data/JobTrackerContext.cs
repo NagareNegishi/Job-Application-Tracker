@@ -17,7 +17,9 @@ public class JobTrackerContext : IdentityDbContext<IdentityUser>
     // https://www.npgsql.org/efcore/mapping/json.html?tabs=data-annotations%2Ccomplex-types%2Cjsondocument
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // IdentityDbContext has its own OnModelCreating that configures all the Identity tables
         base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Job>()
             .OwnsMany(j => j.Contacts, contacts => contacts.ToJson());
         modelBuilder.Entity<Job>()

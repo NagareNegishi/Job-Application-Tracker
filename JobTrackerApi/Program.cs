@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using JobTrackerApi.Data;
 using JobTrackerApi.Services;
@@ -63,6 +64,10 @@ builder.Services.AddDbContext<JobTrackerContext>(options =>
 
 builder.Services.AddSingleton<IStorageService, LocalStorageService>();
 
+// Registers Identity's core services
+builder.Services.AddIdentityCore<IdentityUser>()
+    .AddEntityFrameworkStores<JobTrackerContext>();
+
 
 // CORS policy for development, allowing the React app to make API calls to this backend
 builder.Services.AddCors(options =>
@@ -99,6 +104,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication(); // on each request, figure out who is calling, must be before UseAuthorization
 app.UseAuthorization();
 
 app.MapControllers();
