@@ -32,8 +32,7 @@ public class JobsController : ControllerBase
     public async Task<ActionResult<IEnumerable<JobResponseDto>>> GetJobs()
     {
         // ClaimTypes.NameIdentifier maps to the sub claim we put in the JWT at login.
-        // [Authorize] guarantees the user is authenticated, so assert non-null with !
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         return (await _context.Jobs.Where(j => j.UserId == userId).ToListAsync())
             .Select(job => job.ToResponseDto())
             .ToList();
@@ -43,7 +42,7 @@ public class JobsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<JobResponseDto>> GetJob(int id)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var job = await _context.Jobs
             .FirstOrDefaultAsync(j => j.Id == id && j.UserId == userId);
         // DO NOT leak if job doesn't exist or belongs to another user
@@ -55,7 +54,7 @@ public class JobsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> PutJob(int id, UpdateJobDTO update)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var existingJob = await _context.Jobs
             .FirstOrDefaultAsync(j => j.Id == id && j.UserId == userId);
         if (existingJob == null) return NotFound();
@@ -89,7 +88,7 @@ public class JobsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<JobResponseDto>> PostJob(JobDTO dto)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var newJob = dto.ToJob();
         newJob.UserId = userId;
         _context.Jobs.Add(newJob);
@@ -108,7 +107,7 @@ public class JobsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteJob(int id)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var job = await _context.Jobs
             .Include(j => j.Documents)
             .FirstOrDefaultAsync(j => j.Id == id && j.UserId == userId);
@@ -141,7 +140,7 @@ public class JobsController : ControllerBase
     [HttpPatch("{id}")]
     public async Task<IActionResult> PatchJob(int id, [FromBody] JsonPatchDocument<UpdateJobDTO> patchDoc)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var job = await _context.Jobs
             .FirstOrDefaultAsync(j => j.Id == id && j.UserId == userId);
         if (job == null) return NotFound();
