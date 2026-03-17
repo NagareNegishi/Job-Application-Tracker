@@ -30,6 +30,7 @@ const COL_WIDTH_COMPANY = 200;
 const COL_WIDTH_ROLE = 200;
 const COL_WIDTH_FIXED = 110;
 
+// Manages column widths and resizing logic for the job table.
 function useColWidths(initial: number[]) {
   const [widths, setWidths] = useState(initial);
 
@@ -77,6 +78,7 @@ function FilterPopover({
 }) {
   const [open, setOpen] = useState(false);
 
+  // When an option is selected, update filter and close popover.
   function select(v: string) {
     onChange(v);
     setOpen(false);
