@@ -62,7 +62,7 @@ public class AuthController : ControllerBase
         return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
     }
 
-    // Helper method to generate access token
+    // Helper method to generate Access token
     private string GenerateAccessToken(IdentityUser user)
     {
         var claims = new[]
@@ -82,5 +82,20 @@ public class AuthController : ControllerBase
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    // Helper method to generate Refresh token
+    private async Task<RefreshToken> CreateRefreshTokenAsync(string userId)
+    {
+        var refreshToken = new RefreshToken
+        {
+            Token = Guid.NewGuid().ToString(),
+            UserId = userId,
+            ExpiresAt = DateTime.UtcNow.AddDays(_config.GetValue<int>("Jwt:RefreshExpiryDays"))
+        };
+
+        _context.RefreshTokens.Add(refreshToken);
+        await _context.SaveChangesAsync();
+        return refreshToken;
     }
 }
