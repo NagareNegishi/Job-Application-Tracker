@@ -17,10 +17,17 @@ public class AuthController : ControllerBase
         _config = config;
     }
 
+    // Register, Identity requires a UserName, using email for both keeps things simple
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDTO dto)
     {
-        throw new NotImplementedException();
+        var user = new IdentityUser { UserName = dto.Email, Email = dto.Email };
+        var result = await _userManager.CreateAsync(user, dto.Password);
+
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        return Ok();
     }
 
     [HttpPost("login")]
