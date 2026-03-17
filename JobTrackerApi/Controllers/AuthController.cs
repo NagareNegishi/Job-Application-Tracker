@@ -1,10 +1,12 @@
+using JobTrackerApi.Data;
+using JobTrackerApi.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using JobTrackerApi.Models;
 
 namespace JobTrackerApi.Controllers;
 
@@ -14,11 +16,13 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IConfiguration _config;
+    private readonly JobTrackerContext _context;
 
-    public AuthController(UserManager<IdentityUser> userManager, IConfiguration config)
+    public AuthController(UserManager<IdentityUser> userManager, IConfiguration config, JobTrackerContext context)
     {
         _userManager = userManager;
         _config = config;
+        _context = context;
     }
 
     // Register, Identity requires a UserName, using email for both keeps things simple
@@ -44,22 +48,10 @@ public class AuthController : ControllerBase
         if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
             return Unauthorized();
 
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email!)
-        };
+        var accessToken = GenerateAccessToken(user);
+        var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-        var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"],
-            audience: _config["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpiryMinutes")),
-            signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
-        );
-
-        return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+        return Ok(new { accessToken, refreshToken = refreshToken.Token });
     }
 
     // Helper method to generate Access token
