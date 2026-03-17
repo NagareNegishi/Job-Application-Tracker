@@ -1,8 +1,10 @@
 using JobTrackerApi.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 namespace JobTrackerApi.Data;
 
-public class JobTrackerContext : DbContext
+public class JobTrackerContext : IdentityDbContext<IdentityUser>
 {
     public JobTrackerContext(DbContextOptions<JobTrackerContext> options)
         : base(options)
@@ -15,6 +17,7 @@ public class JobTrackerContext : DbContext
     // https://www.npgsql.org/efcore/mapping/json.html?tabs=data-annotations%2Ccomplex-types%2Cjsondocument
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<Job>()
             .OwnsMany(j => j.Contacts, contacts => contacts.ToJson());
         modelBuilder.Entity<Job>()
