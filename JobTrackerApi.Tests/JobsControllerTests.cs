@@ -407,4 +407,39 @@ public class JobsControllerTests: IDisposable
 
         Assert.IsType<NotFoundResult>(result);
     }
+
+    // DB is unchanged
+    [Fact]
+    public async Task PutJob_DoesNotModify_OtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id", company: "Original Corp");
+        var update = new UpdateJobDTO { Company = "Hacked", Role = "Hacked" };
+
+        await _controller.PutJob(job.Id, update);
+
+        var unchanged = await _context.Jobs.FindAsync(job.Id);
+        Assert.Equal("Original Corp", unchanged!.Company);
+    }
+
+    // DB is unchanged
+    [Fact]
+    public async Task DeleteJob_DoesNotDelete_OtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+
+        await _controller.DeleteJob(job.Id);
+
+        Assert.NotNull(await _context.Jobs.FindAsync(job.Id));
+    }
+
+    [Fact]
+    public async Task GetJobs_ReturnsEmpty_WhenOnlyOtherUsersJobsExist()
+    {
+        await SeedJobAsync(userId: "other-user-id");
+
+        var result = await _controller.GetJobs();
+
+        var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
+        Assert.Empty(jobs);
+    }
 }
