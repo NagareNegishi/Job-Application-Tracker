@@ -172,7 +172,7 @@ public class DocumentsControllerTests: IDisposable
         var document = await SeedDocumentAsync(job.Id);
 
         // Act
-        var result = await _controller.GetDocument(document.Id);
+        var result = await _controller.GetDocument(job.Id, document.Id);
 
         // Assert
         Assert.IsType<ActionResult<DocumentResponseDto>>(result);
@@ -186,8 +186,10 @@ public class DocumentsControllerTests: IDisposable
     [InlineData(-1)]
     public async Task GetDocument_NonExistent_ReturnsNotFound(int id)
     {
+        var job = await SeedJobAsync();
+
         // Act
-        var result = await _controller.GetDocument(id);
+        var result = await _controller.GetDocument(job.Id, id);
 
         // Assert
         Assert.IsType<ActionResult<DocumentResponseDto>>(result);
@@ -338,8 +340,8 @@ public class DocumentsControllerTests: IDisposable
     public async Task DeleteDocument_WrongJob_ReturnsBadRequest()
     {
         // Arrange
-        var job1 = await SeedJobAsync(company: "Company1");
-        var job2 = await SeedJobAsync(company: "Company2");
+        var job1 = await SeedJobAsync(userId: TestUserId, company: "Company1");
+        var job2 = await SeedJobAsync(userId: TestUserId, company: "Company2");
         var document = await SeedDocumentAsync(job1.Id);
 
         // Act
@@ -394,13 +396,65 @@ public class DocumentsControllerTests: IDisposable
         Assert.IsType<NotFoundResult>(result);
     }
 
+    // Ownership isolation tests — all actions return NotFound for another user's job
+
+    [Fact]
+    public async Task GetDocuments_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+        var result = await _controller.GetDocuments(job.Id, null);
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetDocument_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+        var doc = await SeedDocumentAsync(job.Id);
+        var result = await _controller.GetDocument(job.Id, doc.Id);
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task PostDocument_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+        var dto = new DocumentDTO
+        {
+            Type = DocumentType.CV,
+            Name = "cv.pdf",
+            File = CreateDummyFile("cv.pdf", "content", "application/pdf")
+        };
+        var result = await _controller.PostDocument(job.Id, dto);
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task DeleteDocument_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+        var doc = await SeedDocumentAsync(job.Id);
+        var result = await _controller.DeleteDocument(job.Id, doc.Id);
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task PatchDocument_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+        var doc = await SeedDocumentAsync(job.Id);
+        var update = new UpdateDocumentDTO { Name = "Hacked" };
+        var result = await _controller.PatchDocument(job.Id, doc.Id, update);
+        Assert.IsType<NotFoundResult>(result);
+    }
+
     // Test PatchDocument with document that belongs to another job
     [Fact]
     public async Task PatchDocument_WrongJob_ReturnsBadRequest()
     {
         // Arrange
-        var job1 = await SeedJobAsync(company: "Company1");
-        var job2 = await SeedJobAsync(company: "Company2");
+        var job1 = await SeedJobAsync(userId: TestUserId, company: "Company1");
+        var job2 = await SeedJobAsync(userId: TestUserId, company: "Company2");
         var document = await SeedDocumentAsync(job1.Id, DocumentType.CV, "Old Name");
         var updateDto = new UpdateDocumentDTO {
             Name = "Updated Name",
