@@ -24,7 +24,11 @@ export default function LoginPage() {
           await login(email, password)
           navigate("/jobs")
         } catch (err) {
-          setError(err instanceof ApiError ? err.message : "Something went wrong")
+          setError(
+            err instanceof ApiError && err.status === 401
+              ? "Invalid email or password"
+              : err instanceof ApiError ? err.message : "Something went wrong"
+          )
         } finally { // ensures loading resets
           setLoading(false)
         }
