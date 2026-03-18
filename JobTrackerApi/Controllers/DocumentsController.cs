@@ -36,6 +36,10 @@ public class DocumentsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DocumentResponseDto>>> GetDocuments(int jobId, [FromQuery] DocumentType? type)
     {
+        // verify job ownership before acting
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         // All documents under a specific job
         var query = _context.Documents.Where(doc => doc.JobId == jobId);
         if (type.HasValue)
@@ -49,8 +53,11 @@ public class DocumentsController : ControllerBase
 
     // Get a specific document by ID
     [HttpGet("{id}")]
-    public async Task<ActionResult<DocumentResponseDto>> GetDocument(int id)
+    public async Task<ActionResult<DocumentResponseDto>> GetDocument(int jobId, int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
         return document.ToResponseDto();
@@ -175,8 +182,7 @@ public class DocumentsController : ControllerBase
         return NoContent();
     }
 
-    // Helper methods
-    // if the claim is missing it returns null
+    // the ownership check
     private async Task<bool> JobBelongsToUserAsync(int jobId, string? userId) =>
         await _context.Jobs.AnyAsync(j => j.Id == jobId && j.UserId == userId);
 
