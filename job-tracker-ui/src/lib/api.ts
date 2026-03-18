@@ -98,9 +98,15 @@ async function throwApiError(response: Response): Promise<never> {
 
   throw new ApiError(
     response.status,
-    // if the body has a message field, use it -> if body is a string use it -> fallback
+    // if the body has a message field, use it
+    // -> if body is an array of {description} (Identity errors) join them
+    // -> if body is a string use it -> fallback
     body?.message ??
-    (typeof body === "string" ? body : null) ?? "Unknown error"
+    (Array.isArray(body)
+      ? body.map((e: { description?: string }) => e.description).filter(Boolean).join(". ")
+      : null) ??
+    (typeof body === "string" ? body : null) ??
+    "Unknown error"
   )
 }
 
