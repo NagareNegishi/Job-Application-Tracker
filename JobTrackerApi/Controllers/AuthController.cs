@@ -51,7 +51,8 @@ public class AuthController : ControllerBase
         var accessToken = GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
-        return Ok(new { accessToken, refreshToken = refreshToken.Token });
+        SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
+        return Ok(new { accessToken });
     }
 
     // Rotate tokens
