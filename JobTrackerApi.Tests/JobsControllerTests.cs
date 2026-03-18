@@ -363,5 +363,48 @@ public class JobsControllerTests: IDisposable
         Assert.Equal(TestUserId, savedJob.UserId);
     }
 
+    // the controller's User is still TestUserId, so the queries filter by TestUserId and find nothing.
+    [Fact]
+    public async Task GetJobs_DoesNotReturnOtherUsersJobs()
+    {
+        await SeedJobAsync(userId: "other-user-id", company: "Other Corp");
+        await SeedJobAsync(company: "My Corp");
 
+        var result = await _controller.GetJobs();
+
+        var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
+        Assert.Single(jobs);
+        Assert.Equal("My Corp", jobs[0].Company);
+    }
+
+    [Fact]
+    public async Task GetJob_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+
+        var result = await _controller.GetJob(job.Id);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task PutJob_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+        var update = new UpdateJobDTO { Company = "Hacked", Role = "Hacked" };
+
+        var result = await _controller.PutJob(job.Id, update);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task DeleteJob_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+
+        var result = await _controller.DeleteJob(job.Id);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
 }
