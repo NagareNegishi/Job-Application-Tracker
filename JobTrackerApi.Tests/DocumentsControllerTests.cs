@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 using Moq;
 
 public class DocumentsControllerTests: IDisposable
@@ -14,6 +15,7 @@ public class DocumentsControllerTests: IDisposable
     private readonly JobTrackerContext _context;
     private readonly DocumentsController _controller;
     private readonly Mock<IStorageService> _storageMock;
+    private const string TestUserId = "test-user-id";
 
     public DocumentsControllerTests()
     {
@@ -31,6 +33,17 @@ public class DocumentsControllerTests: IDisposable
         // create context and controller directly
         _context = new JobTrackerContext(options);
         _controller = new DocumentsController(_context, _storageMock.Object);
+        SetUser();
+    }
+
+    private void SetUser(string userId = TestUserId)
+    {
+        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId) };
+        var identity = new ClaimsIdentity(claims, "Test");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+        };
     }
 
     // Clean up resources after tests
@@ -42,6 +55,7 @@ public class DocumentsControllerTests: IDisposable
 
     // Helper method to seed a job into the in-memory database
     private async Task<Job> SeedJobAsync(
+        string userId = TestUserId,
         string company = "A_Company",
         string role = "Dev",
         JobStatus status = JobStatus.Wishlist,
@@ -55,6 +69,7 @@ public class DocumentsControllerTests: IDisposable
         )
     {
         var job = new Job {
+            UserId = userId,
             Company = company,
             Role = role,
             Status = status,
