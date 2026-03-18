@@ -4,6 +4,7 @@ using JobTrackerApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-10.0
 
 namespace JobTrackerApi.Controllers;
@@ -174,6 +175,10 @@ public class DocumentsController : ControllerBase
         return NoContent();
     }
 
+    // Helper methods
+    // if the claim is missing it returns null
+    private async Task<bool> JobBelongsToUserAsync(int jobId, string? userId) =>
+        await _context.Jobs.AnyAsync(j => j.Id == jobId && j.UserId == userId);
 
     private bool DocumentsExists(int id)
     {
