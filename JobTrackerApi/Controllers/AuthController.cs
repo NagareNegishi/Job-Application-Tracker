@@ -57,10 +57,13 @@ public class AuthController : ControllerBase
 
     // Rotate tokens
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshRequestDTO dto)
+    public async Task<IActionResult> Refresh()
     {
+        var token = Request.Cookies["refreshToken"];
+        if (token == null) return Unauthorized();
+
         var existing = await _context.RefreshTokens
-            .FirstOrDefaultAsync(r => r.Token == dto.RefreshToken);
+            .FirstOrDefaultAsync(r => r.Token == token);
 
         if (existing == null || !existing.IsActive)
             return Unauthorized();
@@ -74,7 +77,8 @@ public class AuthController : ControllerBase
         var accessToken = GenerateAccessToken(user);
         var newRefreshToken = await CreateRefreshTokenAsync(user.Id);
 
-        return Ok(new { accessToken, refreshToken = newRefreshToken.Token });
+        SetRefreshTokenCookie(newRefreshToken.Token, newRefreshToken.ExpiresAt);
+        return Ok(new { accessToken });
     }
 
     // At logout the client sends the refresh token so the server can revoke it in the DB
