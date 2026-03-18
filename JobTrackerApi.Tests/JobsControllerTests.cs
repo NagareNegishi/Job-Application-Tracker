@@ -347,4 +347,21 @@ public class JobsControllerTests: IDisposable
     }
 
     // Skip Patch tests, it will be covered in integration tests
+
+    // Test userId is correctly stamped
+    [Fact]
+    public async Task PostJob_StampsUserIdOnCreatedJob()
+    {
+        var jobDto = new JobDTO { Company = "Acme", Role = "Engineer" };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        var savedJob = await _context.Jobs.FindAsync(dto.Id); // bypassing ToResponseDto() which doesn't expose UserId.
+        Assert.NotNull(savedJob);
+        Assert.Equal(TestUserId, savedJob.UserId);
+    }
+
+
 }
