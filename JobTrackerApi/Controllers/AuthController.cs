@@ -81,18 +81,24 @@ public class AuthController : ControllerBase
         return Ok(new { accessToken });
     }
 
-    // At logout the client sends the refresh token so the server can revoke it in the DB
+    // At logout the server reads the refresh token from the httpOnly cookie, revokes it in the DB, then deletes the cookie
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout([FromBody] RefreshRequestDTO dto)
+    public async Task<IActionResult> Logout()
     {
-        var existing = await _context.RefreshTokens
-            .FirstOrDefaultAsync(r => r.Token == dto.RefreshToken);
+        var token = Request.Cookies["refreshToken"];
 
-        if (existing != null && existing.IsActive)
-            existing.RevokedAt = DateTime.UtcNow;
+        if (token != null)
+        {
+            var existing = await _context.RefreshTokens
+                .FirstOrDefaultAsync(r => r.Token == token);
 
-        await _context.SaveChangesAsync();
-        // no information leakage about whether the token existed
+            if (existing != null && existing.IsActive)
+                existing.RevokedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+        }
+
+        Response.Cookies.Delete("refreshToken");
         return NoContent();
     }
 
