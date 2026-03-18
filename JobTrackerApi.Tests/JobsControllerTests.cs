@@ -29,6 +29,7 @@ public class JobsControllerTests: IDisposable
         // create context and controller directly
         _context = new JobTrackerContext(options);
         _controller = new JobsController(_context, _storageMock.Object);
+        SetUser();
     }
 
     public void Dispose()
@@ -50,6 +51,7 @@ public class JobsControllerTests: IDisposable
 
     // Helper method to seed a job into the in-memory database
     private async Task<Job> SeedJobAsync(
+        string userId = TestUserId,
         string company = "A_Company",
         string role = "Dev",
         JobStatus status = JobStatus.Wishlist,
@@ -63,6 +65,7 @@ public class JobsControllerTests: IDisposable
         )
     {
         var job = new Job {
+            UserId = userId,
             Company = company,
             Role = role,
             Status = status,
