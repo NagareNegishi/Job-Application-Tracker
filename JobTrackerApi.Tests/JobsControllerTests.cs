@@ -6,6 +6,8 @@ using JobTrackerApi.Services;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 using Moq;
 
 public class JobsControllerTests: IDisposable
@@ -13,6 +15,7 @@ public class JobsControllerTests: IDisposable
     private readonly JobTrackerContext _context;
     private readonly Mock<IStorageService> _storageMock;
     private readonly JobsController _controller;
+    private const string TestUserId = "test-user-id";
 
     public JobsControllerTests()
     {
@@ -32,6 +35,17 @@ public class JobsControllerTests: IDisposable
     {
         _context.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    // Helper method which set up fixed user for unit test
+    private void SetUser(string userId = TestUserId)
+    {
+        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId) };
+        var identity = new ClaimsIdentity(claims, "Test");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+        };
     }
 
     // Helper method to seed a job into the in-memory database
