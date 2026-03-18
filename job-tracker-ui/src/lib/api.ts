@@ -8,6 +8,28 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL
 // Holds an in-flight refresh call so concurrent 401s share one refresh instead of each triggering their own
 let refreshPromise: Promise<string> | null = null
 
+// Uses plain fetch (not apiFetch) to avoid infinite retry loop on refresh failure
+async function silentRefresh(): Promise<string> {
+  if (refreshPromise) return refreshPromise
+
+  refreshPromise = fetch(`${BASE_URL}/auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+  })
+    .then(async (res) => {
+      if (!res.ok) throw new Error("Refresh failed")
+      const data = await res.json()
+      setToken(data.accessToken)
+      return data.accessToken as string
+    })
+    .finally(() => {
+      refreshPromise = null
+    })
+
+  return refreshPromise
+}
+
+
 /**
  * Custom error class for API errors, includes the HTTP status code and a message.
  */
