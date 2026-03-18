@@ -1,4 +1,4 @@
-import { handleEmptyResponse, handleResponse } from "@/lib/api"
+import { apiFetch, handleEmptyResponse, handleResponse } from "@/lib/api"
 import { DocumentType } from "@/types/enums"
 import type { CreateJobDocumentRequest, JobDocument, UpdateJobDocumentRequest } from "@/types/jobDocument"
 
@@ -14,7 +14,7 @@ export async function getDocuments(jobId: number, type?: DocumentType): Promise<
   if (type !== undefined) {
     url.searchParams.set("type", type)
   }
-  const response = await fetch(url)
+  const response = await apiFetch(url.toString())
   return handleResponse<JobDocument[]>(response)
 }
 
@@ -26,7 +26,7 @@ export async function getDocuments(jobId: number, type?: DocumentType): Promise<
  * @throws An error if the fetch operation fails or if the document is not found.
  */
 export async function getDocument(jobId: number, id: number): Promise<JobDocument> {
-  const response = await fetch(`${BASE_URL}/jobs/${jobId}/documents/${id}`)
+  const response = await apiFetch(`${BASE_URL}/jobs/${jobId}/documents/${id}`)
   return handleResponse<JobDocument>(response)
 }
 
@@ -40,7 +40,7 @@ export async function getDocument(jobId: number, id: number): Promise<JobDocumen
  * @throws An error if the fetch operation fails or if the document is not found.
  */
 export async function downloadDocument(jobId: number, docId: number, fileName: string): Promise<void> {
-  const response = await fetch(`${BASE_URL}/jobs/${jobId}/documents/${docId}/download`)
+  const response = await apiFetch(`${BASE_URL}/jobs/${jobId}/documents/${docId}/download`)
   await handleEmptyResponse(response)
   
   // Response is Binary Large Object, raw bites in memory (Blob is superclass of File)
@@ -72,7 +72,7 @@ export async function createDocument(jobId: number, data: CreateJobDocumentReque
   }
 
   // Let browser set the correct Content-Type
-  const response = await fetch(`${BASE_URL}/jobs/${jobId}/documents`, {
+  const response = await apiFetch(`${BASE_URL}/jobs/${jobId}/documents`, {
     method: "POST",
     body: formData
   })
@@ -87,7 +87,7 @@ export async function createDocument(jobId: number, data: CreateJobDocumentReque
  * @throws An error if the fetch operation fails or if the document is not found.
  */
 export async function deleteDocument(jobId: number, id: number): Promise<void> {
-  const response = await fetch(`${BASE_URL}/jobs/${jobId}/documents/${id}`, { method: "DELETE" })
+  const response = await apiFetch(`${BASE_URL}/jobs/${jobId}/documents/${id}`, { method: "DELETE" })
   return handleEmptyResponse(response)
 }
 
@@ -100,7 +100,7 @@ export async function deleteDocument(jobId: number, id: number): Promise<void> {
  * @throws An error if the fetch operation fails or if the document is not found.
  */
 export async function patchDocument(jobId: number, id: number, patch: UpdateJobDocumentRequest): Promise<void> {
-  const response = await fetch(`${BASE_URL}/jobs/${jobId}/documents/${id}`, {
+  const response = await apiFetch(`${BASE_URL}/jobs/${jobId}/documents/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(patch)
