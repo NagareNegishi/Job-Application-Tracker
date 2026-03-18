@@ -9,7 +9,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL
 let refreshPromise: Promise<string> | null = null
 
 // Uses plain fetch (not apiFetch) to avoid infinite retry loop on refresh failure
-async function silentRefresh(): Promise<string> {
+export async function silentRefresh(): Promise<string> {
   if (refreshPromise) return refreshPromise
 
   refreshPromise = fetch(`${BASE_URL}/auth/refresh`, {
