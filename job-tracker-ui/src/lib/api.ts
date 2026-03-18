@@ -29,6 +29,48 @@ async function silentRefresh(): Promise<string> {
   return refreshPromise
 }
 
+/**
+ * Replacement for fetch, Every API call in the app needs to:
+ * 1. Attach Authorization: Bearer <token> header
+ * 2. Tell the browser to include the cookie (credentials: 'include')
+ * 3. If the server returns 401 — silently get a new access token and retry
+ * 4. If the retry also fails — give up, clear the token, redirect to /login
+ */
+export async function apiFetch(
+  input: string,
+  init: RequestInit = {}
+): Promise<Response> {
+  const token = getToken()
+
+  const response = await fetch(input, {
+    ...init,
+    credentials: "include",
+    headers: {
+      ...init.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  if (response.status !== 401) return response
+
+  // 401 — attempt silent refresh then retry original request once
+  try {
+    const newToken = await silentRefresh()
+    return fetch(input, {
+      ...init,
+      credentials: "include",
+      headers: {
+        ...init.headers,
+        Authorization: `Bearer ${newToken}`,
+      },
+    })
+  } catch {
+    clearToken()
+    window.location.href = "/login"
+    throw new Error("Session expired")
+  }
+}
+
 
 /**
  * Custom error class for API errors, includes the HTTP status code and a message.
