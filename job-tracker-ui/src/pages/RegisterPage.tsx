@@ -2,12 +2,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api"
-import { login } from "@/services/authService"
+import { register } from "@/services/authService"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router"
 
-// LoginPage calls login(), navigates to /jobs
-export default function LoginPage() {
+// RegisterPage calls register(), navigates to /login
+export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -21,15 +21,15 @@ export default function LoginPage() {
         setError(null)
         setLoading(true)
         try {
-          await login(email, password)
-          navigate("/jobs")
+          await register(email, password)
+          navigate("/login")
         } catch (err) {
           setError(err instanceof ApiError ? err.message : "Something went wrong")
-        } finally { // ensures loading resets
+        } finally {
           setLoading(false)
         }
       }} className="w-full max-w-sm space-y-4">
-        <h1 className="text-2xl font-semibold">Sign in</h1>
+        <h1 className="text-2xl font-semibold">Create account</h1>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -46,12 +46,12 @@ export default function LoginPage() {
         </div>
 
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Creating account..." : "Create account"}
         </Button>
 
         <p className="text-sm text-center">
-          No account?{" "}
-          <Link to="/register" className="underline">Register</Link>
+          Already have an account?{" "}
+          <Link to="/login" className="underline">Sign in</Link>
         </p>
       </form>
     </div>
