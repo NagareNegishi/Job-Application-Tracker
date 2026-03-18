@@ -53,6 +53,9 @@ export async function apiFetch(
 
   if (response.status !== 401) return response
 
+  // Auth endpoints return 401 for invalid credentials — not a session expiry, don't retry
+  if (input.includes("/auth/")) return response
+
   // 401 — attempt silent refresh then retry original request once
   try {
     const newToken = await silentRefresh()
