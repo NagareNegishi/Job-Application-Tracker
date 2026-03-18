@@ -95,9 +95,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
     {
+        // NOTE: AllowCredentials() only works when the origin is explicitly listed,
+        // it's incompatible with AllowAnyOrigin(), but we uses WithOrigins() 
         policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()!)
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials(); // Required for browser to send httpOnly cookies cross-origin
     });
 });
 

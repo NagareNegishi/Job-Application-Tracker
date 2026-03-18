@@ -51,6 +51,7 @@ public class AuthController : ControllerBase
         var accessToken = GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
+        // the refresh token is set in cookie not for JS
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
         return Ok(new { accessToken });
     }
