@@ -68,6 +68,9 @@ public class DocumentsController : ControllerBase
     [HttpGet("{id}/download")]
     public async Task<IActionResult> DownloadDocument(int jobId, int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
         if (document.JobId != jobId) return BadRequest();
@@ -84,6 +87,9 @@ public class DocumentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<DocumentResponseDto>> PostDocument(int jobId, [FromForm] DocumentDTO dto)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         // Validate the uploaded file and max document per job
         if (!dto.HasValidExtension()) {
             return BadRequest("File type not allowed.");
@@ -130,6 +136,9 @@ public class DocumentsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteDocument(int jobId, int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
         if (document.JobId != jobId) return BadRequest();
@@ -158,6 +167,9 @@ public class DocumentsController : ControllerBase
     [HttpPatch("{id}")]
     public async Task<IActionResult> PatchDocument(int jobId, int id, UpdateDocumentDTO update)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         var existingDocument = await _context.Documents.FindAsync(id);
         if (existingDocument == null) return NotFound();
         if (existingDocument.JobId != jobId) return BadRequest(); // Ensure the document belongs to the specified job
