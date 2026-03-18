@@ -17,6 +17,7 @@ import { JobHeader } from "@/components/JobHeader";
 import { JobInfoCard } from "@/components/JobInfoCard";
 import { useJob } from "@/hooks/jobQuery";
 import { useState } from "react";
+import NavBar from "@/components/NavBar";
 import { useParams } from "react-router";
 
 
@@ -34,6 +35,7 @@ function JobDetailPage() {
 
   return (
     <div className="min-h-screen bg-muted">
+      <NavBar />
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="bg-card rounded-lg shadow-sm p-6">
           <JobHeader job={job} onEdit={() => setEditOpen(true)} />
