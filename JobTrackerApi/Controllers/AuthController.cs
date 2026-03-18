@@ -91,6 +91,18 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    // Helper method to set the refresh token as an httpOnly cookie
+    private void SetRefreshTokenCookie(string token, DateTime expires)
+    {
+        Response.Cookies.Append("refreshToken", token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = new DateTimeOffset(expires)
+        });
+    }
+
     // Helper method to generate Access token
     private string GenerateAccessToken(IdentityUser user)
     {
