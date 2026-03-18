@@ -1,6 +1,12 @@
 /**
  * This module provides utility functions for handling API responses and errors in the Job Tracker UI application.
  */
+import { clearToken, getToken, setToken } from "@/lib/auth"
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+// Holds an in-flight refresh call so concurrent 401s share one refresh instead of each triggering their own
+let refreshPromise: Promise<string> | null = null
 
 /**
  * Custom error class for API errors, includes the HTTP status code and a message.
