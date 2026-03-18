@@ -24,3 +24,9 @@ export async function register(email: string, password: string): Promise<void> {
   })
   return handleEmptyResponse(response)
 }
+
+// Always clear local token even if server is unreachable
+export async function logout(): Promise<void> {
+  await apiFetch(`${BASE_URL}/auth/logout`, { method: "POST" }).catch(() => {})
+  clearToken()
+}
