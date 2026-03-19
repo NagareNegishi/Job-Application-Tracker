@@ -59,6 +59,9 @@ API base URL is read from `VITE_API_BASE_URL` (`.env`).
 **Controllers** (`Controllers/`) inject `JobTrackerContext` directly — no service/repository layer.
 - `JobsController` — CRUD + JSON Patch, routes to `/jobs`
 - `DocumentsController` — file upload CRUD, nested under `/jobs/{jobId}/documents`
+- `AuthController` — register, login, refresh, logout; manages JWT access tokens and httpOnly refresh token cookie
+
+All controllers except `AuthController` require `[Authorize]`. New controllers must include it.
 
 **Models** (`Models/`):
 - `Job` / `Document` — EF Core entities with `ToResponseDto()` methods
@@ -76,7 +79,7 @@ API base URL is read from `VITE_API_BASE_URL` (`.env`).
 
 **Data flow**: `pages/` → `hooks/` (TanStack Query) → `services/` (fetch wrappers) → API
 
-- `src/services/` — fetch wrappers using `handleResponse`/`handleEmptyResponse` from `src/lib/api.ts`
+- `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, and handles 401 silent refresh automatically
 - `src/hooks/` — TanStack Query hooks
 - `src/pages/` — `JobPage` (list), `JobDetailPage` (detail)
 - `src/components/` — feature components; `src/components/ui/` — shadcn/ui primitives

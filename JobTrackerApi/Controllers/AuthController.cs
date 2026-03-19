@@ -1,5 +1,6 @@
 using JobTrackerApi.Data;
 using JobTrackerApi.Models;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +18,18 @@ public class AuthController : ControllerBase
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IConfiguration _config;
     private readonly JobTrackerContext _context;
+    private readonly IWebHostEnvironment _env;
 
-    public AuthController(UserManager<IdentityUser> userManager, IConfiguration config, JobTrackerContext context)
+    public AuthController(
+        UserManager<IdentityUser> userManager,
+        IConfiguration config,
+        JobTrackerContext context,
+        IWebHostEnvironment env)
     {
         _userManager = userManager;
         _config = config;
         _context = context;
+        _env = env;
     }
 
     // Register, Identity requires a UserName, using email for both keeps things simple
@@ -51,15 +58,20 @@ public class AuthController : ControllerBase
         var accessToken = GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
-        return Ok(new { accessToken, refreshToken = refreshToken.Token });
+        // the refresh token is set in cookie not for JS
+        SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
+        return Ok(new { accessToken });
     }
 
     // Rotate tokens
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshRequestDTO dto)
+    public async Task<IActionResult> Refresh()
     {
+        var token = Request.Cookies["refreshToken"];
+        if (token == null) return Unauthorized();
+
         var existing = await _context.RefreshTokens
-            .FirstOrDefaultAsync(r => r.Token == dto.RefreshToken);
+            .FirstOrDefaultAsync(r => r.Token == token);
 
         if (existing == null || !existing.IsActive)
             return Unauthorized();
@@ -73,22 +85,43 @@ public class AuthController : ControllerBase
         var accessToken = GenerateAccessToken(user);
         var newRefreshToken = await CreateRefreshTokenAsync(user.Id);
 
-        return Ok(new { accessToken, refreshToken = newRefreshToken.Token });
+        SetRefreshTokenCookie(newRefreshToken.Token, newRefreshToken.ExpiresAt);
+        return Ok(new { accessToken });
     }
 
-    // At logout the client sends the refresh token so the server can revoke it in the DB
+    // At logout the server reads the refresh token from the httpOnly cookie, revokes it in the DB, then deletes the cookie
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout([FromBody] RefreshRequestDTO dto)
+    public async Task<IActionResult> Logout()
     {
-        var existing = await _context.RefreshTokens
-            .FirstOrDefaultAsync(r => r.Token == dto.RefreshToken);
+        var token = Request.Cookies["refreshToken"];
 
-        if (existing != null && existing.IsActive)
-            existing.RevokedAt = DateTime.UtcNow;
+        if (token != null)
+        {
+            var existing = await _context.RefreshTokens
+                .FirstOrDefaultAsync(r => r.Token == token);
 
-        await _context.SaveChangesAsync();
-        // no information leakage about whether the token existed
+            if (existing != null && existing.IsActive)
+                existing.RevokedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+        }
+
+        Response.Cookies.Delete("refreshToken");
         return NoContent();
+    }
+
+    // Helper method to set the refresh token as an httpOnly cookie
+    private void SetRefreshTokenCookie(string token, DateTime expires)
+    {
+        var sameSite = _env.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict;
+
+        Response.Cookies.Append("refreshToken", token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = sameSite,
+            Expires = new DateTimeOffset(expires)
+        });
     }
 
     // Helper method to generate Access token

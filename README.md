@@ -4,34 +4,52 @@ Full-stack job application tracking system built with ASP.NET Core and React.
 
 ## Tech Stack
 
-**Backend:** ASP.NET Core 8 Web API, Entity Framework Core, PostgreSQL
-**Frontend:** React + TypeScript
+**Backend:** ASP.NET Core 10 Web API, Entity Framework Core, PostgreSQL, ASP.NET Identity + JWT
+**Frontend:** React 19 + TypeScript + Vite
 **Testing:** xUnit
-**Deployment:** Docker
+**Deployment:** Docker (Dev Container)
 
 ## Problem
 
-Tracking 50-200+ job applications requires structured data management. Existing tools lack customization for backend engineering job hunts in the NZ market.
+Tracking 50-200+ job applications requires structured data management.
 
 ## Solution
 
-RESTful API with job tracking, document management (CV/cover letter references), and status pipeline. Documents stored locally for privacy; metadata in database.
+RESTful API with job tracking, document management (CV/cover letter references), and status pipeline. Documents stored locally for privacy; metadata in database. All endpoints protected by JWT Bearer auth with httpOnly cookie refresh token rotation.
 
 ## Local Setup
+
 ```bash
 # Backend
-cd backend
+cd JobTrackerApi
 dotnet restore
 dotnet ef database update
-dotnet run
+dotnet run --launch-profile https
 
 # Frontend
-cd frontend
+cd job-tracker-ui
 npm install
 npm run dev
 ```
 
-Requires: .NET SDK 8, Node.js 18+, PostgreSQL 14+
+Requires: .NET SDK 10, Node.js 18+, PostgreSQL 14+
+
+> **Note:** The backend requires `appsettings.Development.json` (gitignored).
+> Create it in `JobTrackerApi/` with your JWT config:
+> ```json
+> {
+>   "ConnectionStrings": { "JobTrackerContext": "<your-connection-string>" },
+>   "Jwt": {
+>     "Key": "<min-32-char-secret>",
+>     "Issuer": "JobTrackerApi",
+>     "Audience": "JobTrackerClient",
+>     "ExpiryMinutes": 15,
+>     "RefreshExpiryDays": 7
+>   },
+>   "Storage": { "UploadsPath": "<path-to-uploads-folder>" },
+>   "Cors": { "AllowedOrigins": ["http://localhost:5173"] }
+> }
+> ```
 
 ## Status Pipeline
 

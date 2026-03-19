@@ -6,6 +6,8 @@ using JobTrackerApi.Services;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 using Moq;
 
 public class JobsControllerTests: IDisposable
@@ -13,6 +15,7 @@ public class JobsControllerTests: IDisposable
     private readonly JobTrackerContext _context;
     private readonly Mock<IStorageService> _storageMock;
     private readonly JobsController _controller;
+    private const string TestUserId = "test-user-id";
 
     public JobsControllerTests()
     {
@@ -26,6 +29,7 @@ public class JobsControllerTests: IDisposable
         // create context and controller directly
         _context = new JobTrackerContext(options);
         _controller = new JobsController(_context, _storageMock.Object);
+        SetUser();
     }
 
     public void Dispose()
@@ -34,8 +38,20 @@ public class JobsControllerTests: IDisposable
         GC.SuppressFinalize(this);
     }
 
+    // Helper method which set up fixed user for unit test
+    private void SetUser(string userId = TestUserId)
+    {
+        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId) };
+        var identity = new ClaimsIdentity(claims, "Test");
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+        };
+    }
+
     // Helper method to seed a job into the in-memory database
     private async Task<Job> SeedJobAsync(
+        string userId = TestUserId,
         string company = "A_Company",
         string role = "Dev",
         JobStatus status = JobStatus.Wishlist,
@@ -49,6 +65,7 @@ public class JobsControllerTests: IDisposable
         )
     {
         var job = new Job {
+            UserId = userId,
             Company = company,
             Role = role,
             Status = status,
@@ -330,4 +347,99 @@ public class JobsControllerTests: IDisposable
     }
 
     // Skip Patch tests, it will be covered in integration tests
+
+    // Test userId is correctly stamped
+    [Fact]
+    public async Task PostJob_StampsUserIdOnCreatedJob()
+    {
+        var jobDto = new JobDTO { Company = "Acme", Role = "Engineer" };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        var savedJob = await _context.Jobs.FindAsync(dto.Id); // bypassing ToResponseDto() which doesn't expose UserId.
+        Assert.NotNull(savedJob);
+        Assert.Equal(TestUserId, savedJob.UserId);
+    }
+
+    // the controller's User is still TestUserId, so the queries filter by TestUserId and find nothing.
+    [Fact]
+    public async Task GetJobs_DoesNotReturnOtherUsersJobs()
+    {
+        await SeedJobAsync(userId: "other-user-id", company: "Other Corp");
+        await SeedJobAsync(company: "My Corp");
+
+        var result = await _controller.GetJobs();
+
+        var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
+        Assert.Single(jobs);
+        Assert.Equal("My Corp", jobs[0].Company);
+    }
+
+    [Fact]
+    public async Task GetJob_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+
+        var result = await _controller.GetJob(job.Id);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task PutJob_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+        var update = new UpdateJobDTO { Company = "Hacked", Role = "Hacked" };
+
+        var result = await _controller.PutJob(job.Id, update);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task DeleteJob_ReturnsNotFound_ForOtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+
+        var result = await _controller.DeleteJob(job.Id);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    // DB is unchanged
+    [Fact]
+    public async Task PutJob_DoesNotModify_OtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id", company: "Original Corp");
+        var update = new UpdateJobDTO { Company = "Hacked", Role = "Hacked" };
+
+        await _controller.PutJob(job.Id, update);
+
+        var unchanged = await _context.Jobs.FindAsync(job.Id);
+        Assert.Equal("Original Corp", unchanged!.Company);
+    }
+
+    // DB is unchanged
+    [Fact]
+    public async Task DeleteJob_DoesNotDelete_OtherUsersJob()
+    {
+        var job = await SeedJobAsync(userId: "other-user-id");
+
+        await _controller.DeleteJob(job.Id);
+
+        Assert.NotNull(await _context.Jobs.FindAsync(job.Id));
+    }
+
+    [Fact]
+    public async Task GetJobs_ReturnsEmpty_WhenOnlyOtherUsersJobsExist()
+    {
+        await SeedJobAsync(userId: "other-user-id");
+
+        var result = await _controller.GetJobs();
+
+        var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
+        Assert.Empty(jobs);
+    }
 }

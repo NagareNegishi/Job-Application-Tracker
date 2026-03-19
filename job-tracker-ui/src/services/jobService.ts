@@ -1,4 +1,4 @@
-import { handleEmptyResponse, handleResponse } from "@/lib/api"
+import { apiFetch, handleEmptyResponse, handleResponse } from "@/lib/api"
 import type { CreateJobRequest, Job, JobPatchOperation, UpdateJobRequest } from "@/types/job"
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL
@@ -9,7 +9,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL
  * @throws An error if the fetch operation fails.
  */
 export async function getJobs(): Promise<Job[]> {
-  const response = await fetch(`${BASE_URL}/jobs`)
+  const response = await apiFetch(`${BASE_URL}/jobs`)
   return handleResponse<Job[]>(response)
 }
 
@@ -21,7 +21,7 @@ export async function getJobs(): Promise<Job[]> {
  * @throws An error if the fetch operation fails or if the job is not found.
  */
 export async function getJob(id: number): Promise<Job> {
-  const response = await fetch(`${BASE_URL}/jobs/${id}`)
+  const response = await apiFetch(`${BASE_URL}/jobs/${id}`)
   return handleResponse<Job>(response)
 }
 
@@ -33,7 +33,7 @@ export async function getJob(id: number): Promise<Job> {
  * @throws An error if the fetch operation fails.
  */
 export async function createJob(data: CreateJobRequest): Promise<Job> {
-  const response = await fetch(`${BASE_URL}/jobs`, {
+  const response = await apiFetch(`${BASE_URL}/jobs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -50,7 +50,7 @@ export async function createJob(data: CreateJobRequest): Promise<Job> {
  * @throws An error if the fetch operation fails or if the job is not found.
  */
 export async function replaceJob(id: number, data: UpdateJobRequest): Promise<void> {
-  const response = await fetch(`${BASE_URL}/jobs/${id}`, {
+  const response = await apiFetch(`${BASE_URL}/jobs/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -66,7 +66,7 @@ export async function replaceJob(id: number, data: UpdateJobRequest): Promise<vo
  * @throws An error if the fetch operation fails or if the job is not found.
  */
 export async function deleteJob(id: number): Promise<void> {
-  const response = await fetch(`${BASE_URL}/jobs/${id}`, { method: "DELETE" })
+  const response = await apiFetch(`${BASE_URL}/jobs/${id}`, { method: "DELETE" })
   return handleEmptyResponse(response)
 }
 
@@ -79,7 +79,7 @@ export async function deleteJob(id: number): Promise<void> {
  * @throws An error if the fetch operation fails or if the job is not found.
  */
 export async function patchJob(id: number, patch: JobPatchOperation[]): Promise<void> {
-  const response = await fetch(`${BASE_URL}/jobs/${id}`, {
+  const response = await apiFetch(`${BASE_URL}/jobs/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json-patch+json" },
     body: JSON.stringify(patch)

@@ -4,6 +4,7 @@ using JobTrackerApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-10.0
 
 namespace JobTrackerApi.Controllers;
@@ -35,6 +36,10 @@ public class DocumentsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DocumentResponseDto>>> GetDocuments(int jobId, [FromQuery] DocumentType? type)
     {
+        // verify job ownership before acting
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         // All documents under a specific job
         var query = _context.Documents.Where(doc => doc.JobId == jobId);
         if (type.HasValue)
@@ -48,8 +53,11 @@ public class DocumentsController : ControllerBase
 
     // Get a specific document by ID
     [HttpGet("{id}")]
-    public async Task<ActionResult<DocumentResponseDto>> GetDocument(int id)
+    public async Task<ActionResult<DocumentResponseDto>> GetDocument(int jobId, int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
         return document.ToResponseDto();
@@ -60,6 +68,9 @@ public class DocumentsController : ControllerBase
     [HttpGet("{id}/download")]
     public async Task<IActionResult> DownloadDocument(int jobId, int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
         if (document.JobId != jobId) return BadRequest();
@@ -76,6 +87,9 @@ public class DocumentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<DocumentResponseDto>> PostDocument(int jobId, [FromForm] DocumentDTO dto)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         // Validate the uploaded file and max document per job
         if (!dto.HasValidExtension()) {
             return BadRequest("File type not allowed.");
@@ -122,6 +136,9 @@ public class DocumentsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteDocument(int jobId, int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
         if (document.JobId != jobId) return BadRequest();
@@ -150,6 +167,9 @@ public class DocumentsController : ControllerBase
     [HttpPatch("{id}")]
     public async Task<IActionResult> PatchDocument(int jobId, int id, UpdateDocumentDTO update)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+
         var existingDocument = await _context.Documents.FindAsync(id);
         if (existingDocument == null) return NotFound();
         if (existingDocument.JobId != jobId) return BadRequest(); // Ensure the document belongs to the specified job
@@ -174,6 +194,9 @@ public class DocumentsController : ControllerBase
         return NoContent();
     }
 
+    // the ownership check
+    private async Task<bool> JobBelongsToUserAsync(int jobId, string? userId) =>
+        await _context.Jobs.AnyAsync(j => j.Id == jobId && j.UserId == userId);
 
     private bool DocumentsExists(int id)
     {
