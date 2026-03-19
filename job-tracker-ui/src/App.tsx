@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Navigate, Route, Routes } from "react-router"
 import ProtectedRoute from "./components/ProtectedRoute"
@@ -15,8 +16,12 @@ function App() {
     silentRefresh().finally(() => setInitialized(true))
   }, []) // empty dependency array means "run once after first render" -> "on mount"
 
-  // renders nothing to the DOM until the refresh attempt settles
-  if (!initialized) return null
+  // Load animation until the refresh attempt settles
+  if (!initialized) return (
+    <div className="min-h-screen bg-muted flex items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  )
 
   return (
     <Routes>
