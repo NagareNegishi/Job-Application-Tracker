@@ -1,5 +1,6 @@
 using JobTrackerApi.Data;
 using JobTrackerApi.Models;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +18,18 @@ public class AuthController : ControllerBase
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IConfiguration _config;
     private readonly JobTrackerContext _context;
+    private readonly IWebHostEnvironment _env;
 
-    public AuthController(UserManager<IdentityUser> userManager, IConfiguration config, JobTrackerContext context)
+    public AuthController(
+        UserManager<IdentityUser> userManager,
+        IConfiguration config,
+        JobTrackerContext context,
+        IWebHostEnvironment env)
     {
         _userManager = userManager;
         _config = config;
         _context = context;
+        _env = env;
     }
 
     // Register, Identity requires a UserName, using email for both keeps things simple
@@ -106,11 +113,13 @@ public class AuthController : ControllerBase
     // Helper method to set the refresh token as an httpOnly cookie
     private void SetRefreshTokenCookie(string token, DateTime expires)
     {
+        var sameSite = _env.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Strict;
+
         Response.Cookies.Append("refreshToken", token, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = sameSite,
             Expires = new DateTimeOffset(expires)
         });
     }
