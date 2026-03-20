@@ -36,12 +36,14 @@ public class S3StorageService : IStorageService
         await _s3.DeleteObjectAsync(_bucketName, storageKey);
     }
 
-    // Returns the S3 response stream directly. This is the fallback path
-    // Should not be used but must exist to satisfy the interface.
-    public async Task<Stream> GetAsync(string storageKey)
+    public Task<Stream> GetAsync(string storageKey)
     {
-        var response = await _s3.GetObjectAsync(_bucketName, storageKey);
-        return response.ResponseStream;
+        // S3 files are served via pre-signed URLs (GetDownloadUrlAsync).
+        // Streaming through the server is not supported — it would incur EC2 egress costs.
+        // Uncomment below if direct streaming is ever needed:
+        // var response = await _s3.GetObjectAsync(_bucketName, storageKey);
+        // return response.ResponseStream;
+        throw new NotSupportedException("S3StorageService does not support streaming. Use GetDownloadUrlAsync instead.");
     }
 
     // NOTE:
