@@ -98,25 +98,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 
-// CORS policy for development, allowing the React app to make API calls to this backend
-builder.Services.AddCors(options =>
+// CORS only needed in dev — in production, Nginx proxies /api/* so frontend and backend share one origin
+if (builder.Environment.IsDevelopment())
 {
-    options.AddPolicy("DevCors", policy =>
+    builder.Services.AddCors(options =>
     {
-        // NOTE: AllowCredentials() only works when the origin is explicitly listed,
-        // it's incompatible with AllowAnyOrigin(), but we uses WithOrigins() 
-        policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()!)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials(); // Required for browser to send httpOnly cookies cross-origin
+        options.AddPolicy("DevCors", policy =>
+        {
+            // NOTE: AllowCredentials() only works when the origin is explicitly listed,
+            // it's incompatible with AllowAnyOrigin(), but we uses WithOrigins()
+            policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()!)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials(); // Required for browser to send httpOnly cookies cross-origin
+        });
     });
-});
+}
 
 
 // <snippet_UseSwagger>
 var app = builder.Build();
 
-app.UseCors("DevCors"); // Apply CORS policy
+if (app.Environment.IsDevelopment())
+    app.UseCors("DevCors"); // Apply CORS policy
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -134,7 +138,9 @@ if (app.Environment.IsDevelopment())
 }
 // <snippet_UseSwagger>
 
-app.UseHttpsRedirection();
+// In production the backend is behind Nginx (HTTP only) — Nginx handles SSL termination
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.UseAuthentication(); // on each request, figure out who is calling, must be before UseAuthorization
 app.UseAuthorization();
