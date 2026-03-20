@@ -33,4 +33,10 @@ public class LocalStorageService : IStorageService
         Stream stream = File.OpenRead(filePath);
         return Task.FromResult(stream);
     }
+
+    public Task<string?> GetDownloadUrlAsync(string storageKey)
+    {
+        // S3 needs async. But local disk has no async work to do here
+        return Task.FromResult<string?>(null);
+    }
 }
