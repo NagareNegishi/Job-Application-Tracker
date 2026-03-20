@@ -75,6 +75,10 @@ public class DocumentsController : ControllerBase
         if (document == null) return NotFound();
         if (document.JobId != jobId) return BadRequest();
 
+        var url = await _storage.GetDownloadUrlAsync(document.StorageKey);
+        if (url != null)
+            return Redirect(url);
+
         var stream = await _storage.GetAsync(document.StorageKey);
         return File(stream, "application/octet-stream", document.Name);
     }
