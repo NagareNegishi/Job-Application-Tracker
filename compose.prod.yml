@@ -1,0 +1,32 @@
+services:
+
+  nginx:
+    build:
+      context: ./job-tracker-ui
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"  # needed for SSL (Let's Encrypt / Certbot) — wired up in a later step
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      # Context is repo root so the Dockerfile can reach the .sln file
+      context: .
+      dockerfile: JobTrackerApi/Dockerfile
+    # No ports exposed to host — backend is only reachable from nginx via Docker's internal network.
+    # Docker Compose gives each service a hostname matching its name, so nginx reaches it as "backend".
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080  # Kestrel listens on HTTP only — Nginx handles SSL
+      # Secrets injected at deploy time via .env or EC2 environment — never hardcoded here.
+      # __ = nested config separator in ASP.NET (e.g. ConnectionStrings__X → ConnectionStrings:X)
+      - ConnectionStrings__JobTrackerContext=${DB_CONNECTION_STRING}
+      - Jwt__Key=${JWT_SECRET}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Storage__S3BucketName=${S3_BUCKET_NAME}
+      - AWS_REGION=ap-southeast-2  # AWS SDK reads this automatically for S3 + IAM
+    restart: unless-stopped
