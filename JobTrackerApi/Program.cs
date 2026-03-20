@@ -1,3 +1,4 @@
+using Amazon.S3;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -65,7 +66,14 @@ var connectionString = builder.Configuration.GetConnectionString("JobTrackerCont
 builder.Services.AddDbContext<JobTrackerContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddSingleton<IStorageService, LocalStorageService>();
+// Register IAmazonS3 — reads credentials + AWS_REGION from environment automatically
+builder.Services.AddAWSService<IAmazonS3>();
+
+// Use LocalStorageService in dev, S3StorageService in production
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddSingleton<IStorageService, LocalStorageService>();
+else
+    builder.Services.AddSingleton<IStorageService, S3StorageService>();
 
 // Registers Identity's core services
 builder.Services.AddIdentityCore<IdentityUser>()
