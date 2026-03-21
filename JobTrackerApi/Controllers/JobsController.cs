@@ -11,7 +11,7 @@ using System.Security.Claims;
 namespace JobTrackerApi.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")] 
 [Authorize]
 public class JobsController : ControllerBase
 {

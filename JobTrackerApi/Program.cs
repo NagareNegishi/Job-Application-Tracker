@@ -1,3 +1,4 @@
+using Amazon.S3;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -7,6 +8,9 @@ using System.Text;
 using JobTrackerApi.Data;
 using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Serilog;
+using Serilog.Formatting.Json;
 // using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +26,23 @@ builder.WebHost.ConfigureKestrel(options =>
         );
     });
 
+
+// Replace default ASP.NET logger with Serilog
+builder.Services.AddSerilog((services, lc) =>
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        // Human-readable output for local development
+        lc.MinimumLevel.Information()
+          .WriteTo.Console();
+    }
+    else
+    {
+        // Structured JSON to stdout — Docker captures it; compatible with any log aggregator (Loki, Datadog, etc.)
+        lc.MinimumLevel.Warning()
+          .WriteTo.Console(new JsonFormatter());
+    }
+});
 
 // Add services to the container.
 builder.Services.AddControllers().
@@ -59,13 +80,39 @@ builder.Services.AddOpenApi();
 // .env -> Docker -> OS environment variables -> Configuration in .NET
 var connectionString = builder.Configuration.GetConnectionString("JobTrackerContext")
     ?? throw new InvalidOperationException("Connection string 'JobTrackerContext' not found.");
+
+// Fail-fast: validate required env vars at startup rather than crashing mid-request.
+// ?? throw means: if the config key is missing or null, crash immediately with a clear message.
+// In production these come from environment variables via compose.prod.yml (see .env.example).
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is not configured. Set JWT_SECRET environment variable.");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"]
+    ?? throw new InvalidOperationException("Jwt:Issuer is not configured. Set JWT_ISSUER environment variable.");
+var jwtAudience = builder.Configuration["Jwt:Audience"]
+    ?? throw new InvalidOperationException("Jwt:Audience is not configured. Set JWT_AUDIENCE environment variable.");
+// S3 bucket only required in production — dev uses LocalStorageService instead
+if (!builder.Environment.IsDevelopment())
+    _ = builder.Configuration["Storage:S3BucketName"]
+        ?? throw new InvalidOperationException("Storage:S3BucketName is not configured. Set S3_BUCKET_NAME environment variable.");
+
 // Npgsql Entity Framework
 // https://www.npgsql.org/efcore/index.html?tabs=aspnet
 // No AddDbContextPool for safety and simplicity
 builder.Services.AddDbContext<JobTrackerContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddSingleton<IStorageService, LocalStorageService>();
+// Health check: GET /health — returns 200 (Healthy) or 503 (Unhealthy); includes DB connectivity check
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<JobTrackerContext>();
+
+// Register IAmazonS3 — reads credentials + AWS_REGION from environment automatically
+builder.Services.AddAWSService<IAmazonS3>();
+
+// Use LocalStorageService in dev, S3StorageService in production
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddSingleton<IStorageService, LocalStorageService>();
+else
+    builder.Services.AddSingleton<IStorageService, S3StorageService>();
 
 // Registers Identity's core services
 builder.Services.AddIdentityCore<IdentityUser>()
@@ -82,33 +129,62 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
 
-// CORS policy for development, allowing the React app to make API calls to this backend
-builder.Services.AddCors(options =>
+// CORS only needed in dev — in production, Nginx proxies /api/* so frontend and backend share one origin
+if (builder.Environment.IsDevelopment())
 {
-    options.AddPolicy("DevCors", policy =>
+    builder.Services.AddCors(options =>
     {
-        // NOTE: AllowCredentials() only works when the origin is explicitly listed,
-        // it's incompatible with AllowAnyOrigin(), but we uses WithOrigins() 
-        policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()!)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials(); // Required for browser to send httpOnly cookies cross-origin
+        options.AddPolicy("DevCors", policy =>
+        {
+            // NOTE: AllowCredentials() only works when the origin is explicitly listed,
+            // it's incompatible with AllowAnyOrigin(), but we uses WithOrigins()
+            policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()!)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials(); // Required for browser to send httpOnly cookies cross-origin
+        });
     });
-});
+}
 
 
 // <snippet_UseSwagger>
 var app = builder.Build();
 
-app.UseCors("DevCors"); // Apply CORS policy
+if (app.Environment.IsDevelopment())
+    app.UseCors("DevCors"); // Apply CORS policy
+
+// Catch all unhandled exceptions — logs full details server-side, returns a safe generic JSON 500 to the client
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        // Resolve logger from DI — backed by Serilog at this point
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+        // ASP.NET puts the caught exception here after intercepting it
+        var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+
+        if (error != null)
+            // Logs full exception with stack trace — visible server-side only
+            logger.LogError(error.Error, "Unhandled exception");
+
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+
+        // Generic message to client — no stack trace or internal details exposed
+        await context.Response.WriteAsJsonAsync(new { error = "An unexpected error occurred." });
+    });
+});
+
+app.UseSerilogRequestLogging(); // Emits one structured log event per request (method, path, status, duration)
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -126,11 +202,30 @@ if (app.Environment.IsDevelopment())
 }
 // <snippet_UseSwagger>
 
-app.UseHttpsRedirection();
+// In production the backend is behind Nginx (HTTP only) — Nginx handles SSL termination
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.UseAuthentication(); // on each request, figure out who is calling, must be before UseAuthorization
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Health check endpoint — anonymous (no JWT), JSON response showing per-check status
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = report.Status.ToString(),
+            results = report.Entries.ToDictionary(
+                e => e.Key,
+                e => new { status = e.Value.Status.ToString(), duration = e.Value.Duration }
+            )
+        });
+    }
+}).AllowAnonymous();
 
 app.Run();

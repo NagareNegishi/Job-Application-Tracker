@@ -10,4 +10,10 @@ public interface IStorageService
 
     /// <summary>Returns a readable stream for the file at the given storage key.</summary>
     Task<Stream> GetAsync(string storageKey);
+
+    /// <summary>
+    /// Returns a time-limited download URL for the file, or null if not supported
+    /// (e.g. local storage). When null, callers should fall back to GetAsync.
+    /// </summary>
+    Task<string?> GetDownloadUrlAsync(string storageKey);
 }

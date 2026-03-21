@@ -10,7 +10,7 @@ using System.Security.Claims;
 namespace JobTrackerApi.Controllers;
 
 [ApiController]
-[Route("jobs/{jobId}/documents")]
+[Route("api/jobs/{jobId}/documents")]
 [Authorize]
 // Route should be nested under jobs
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-10.0
@@ -75,6 +75,12 @@ public class DocumentsController : ControllerBase
         if (document == null) return NotFound();
         if (document.JobId != jobId) return BadRequest();
 
+        // Files go S3 → browser directly
+        var url = await _storage.GetDownloadUrlAsync(document.StorageKey);
+        if (url != null)
+            return Redirect(url);
+
+        // Should never reach (S3 signing never fails locally)
         var stream = await _storage.GetAsync(document.StorageKey);
         return File(stream, "application/octet-stream", document.Name);
     }
