@@ -156,6 +156,29 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
     app.UseCors("DevCors"); // Apply CORS policy
 
+// Catch all unhandled exceptions — logs full details server-side, returns a safe generic JSON 500 to the client
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        // Resolve logger from DI — backed by Serilog at this point
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+
+        // ASP.NET puts the caught exception here after intercepting it
+        var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+
+        if (error != null)
+            // Logs full exception with stack trace — visible server-side only
+            logger.LogError(error.Error, "Unhandled exception");
+
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+
+        // Generic message to client — no stack trace or internal details exposed
+        await context.Response.WriteAsJsonAsync(new { error = "An unexpected error occurred." });
+    });
+});
+
 app.UseSerilogRequestLogging(); // Emits one structured log event per request (method, path, status, duration)
 
 // Configure the HTTP request pipeline.
