@@ -12,7 +12,7 @@ using System.Text;
 namespace JobTrackerApi.Controllers;
 
 [ApiController]
-[Route("auth")]
+[Route("api/auth")] 
 public class AuthController : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager;

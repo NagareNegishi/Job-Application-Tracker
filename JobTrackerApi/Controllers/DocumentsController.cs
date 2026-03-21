@@ -10,7 +10,7 @@ using System.Security.Claims;
 namespace JobTrackerApi.Controllers;
 
 [ApiController]
-[Route("jobs/{jobId}/documents")]
+[Route("api/jobs/{jobId}/documents")]
 [Authorize]
 // Route should be nested under jobs
 // https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-10.0
