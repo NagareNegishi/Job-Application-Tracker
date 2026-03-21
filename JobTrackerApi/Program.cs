@@ -60,6 +60,21 @@ builder.Services.AddOpenApi();
 // .env -> Docker -> OS environment variables -> Configuration in .NET
 var connectionString = builder.Configuration.GetConnectionString("JobTrackerContext")
     ?? throw new InvalidOperationException("Connection string 'JobTrackerContext' not found.");
+
+// Fail-fast: validate required env vars at startup rather than crashing mid-request.
+// ?? throw means: if the config key is missing or null, crash immediately with a clear message.
+// In production these come from environment variables via compose.prod.yml (see .env.example).
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is not configured. Set JWT_SECRET environment variable.");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"]
+    ?? throw new InvalidOperationException("Jwt:Issuer is not configured. Set JWT_ISSUER environment variable.");
+var jwtAudience = builder.Configuration["Jwt:Audience"]
+    ?? throw new InvalidOperationException("Jwt:Audience is not configured. Set JWT_AUDIENCE environment variable.");
+// S3 bucket only required in production — dev uses LocalStorageService instead
+if (!builder.Environment.IsDevelopment())
+    _ = builder.Configuration["Storage:S3BucketName"]
+        ?? throw new InvalidOperationException("Storage:S3BucketName is not configured. Set S3_BUCKET_NAME environment variable.");
+
 // Npgsql Entity Framework
 // https://www.npgsql.org/efcore/index.html?tabs=aspnet
 // No AddDbContextPool for safety and simplicity
@@ -90,10 +105,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
