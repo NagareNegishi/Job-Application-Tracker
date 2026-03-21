@@ -156,6 +156,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
     app.UseCors("DevCors"); // Apply CORS policy
 
+app.UseSerilogRequestLogging(); // Emits one structured log event per request (method, path, status, duration)
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
