@@ -8,6 +8,7 @@ using System.Text;
 using JobTrackerApi.Data;
 using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 using Serilog.Formatting.Json;
 // using System.Text.Json;
@@ -99,6 +100,10 @@ if (!builder.Environment.IsDevelopment())
 // No AddDbContextPool for safety and simplicity
 builder.Services.AddDbContext<JobTrackerContext>(options =>
     options.UseNpgsql(connectionString));
+
+// Health check: GET /health — returns 200 (Healthy) or 503 (Unhealthy); includes DB connectivity check
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<JobTrackerContext>();
 
 // Register IAmazonS3 — reads credentials + AWS_REGION from environment automatically
 builder.Services.AddAWSService<IAmazonS3>();
@@ -205,5 +210,22 @@ app.UseAuthentication(); // on each request, figure out who is calling, must be 
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Health check endpoint — anonymous (no JWT), JSON response showing per-check status
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = report.Status.ToString(),
+            results = report.Entries.ToDictionary(
+                e => e.Key,
+                e => new { status = e.Value.Status.ToString(), duration = e.Value.Duration }
+            )
+        });
+    }
+}).AllowAnonymous();
 
 app.Run();
