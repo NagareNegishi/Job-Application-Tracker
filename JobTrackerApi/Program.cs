@@ -8,6 +8,8 @@ using System.Text;
 using JobTrackerApi.Data;
 using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
+using Serilog;
+using Serilog.Formatting.Json;
 // using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +25,23 @@ builder.WebHost.ConfigureKestrel(options =>
         );
     });
 
+
+// Replace default ASP.NET logger with Serilog
+builder.Services.AddSerilog((services, lc) =>
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        // Human-readable output for local development
+        lc.MinimumLevel.Information()
+          .WriteTo.Console();
+    }
+    else
+    {
+        // Structured JSON to stdout — Docker captures it; compatible with any log aggregator (Loki, Datadog, etc.)
+        lc.MinimumLevel.Warning()
+          .WriteTo.Console(new JsonFormatter());
+    }
+});
 
 // Add services to the container.
 builder.Services.AddControllers().
