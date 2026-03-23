@@ -4,7 +4,7 @@ services:
     # Pull pre-built image from ECR — built and pushed by GitHub Actions CI.
     # ECR_REGISTRY format: {account-id}.dkr.ecr.ap-southeast-2.amazonaws.com
     # Set ECR_REGISTRY in the .env file on EC2 (see .env.example).
-    image: ${ECR_REGISTRY}/jobtracker-nginx:latest
+    image: ${ECR_REGISTRY}/jobtracker-frontend:latest
     ports:
       - "80:80"
       - "443:443"  # needed for SSL (Let's Encrypt / Certbot) — wired up in a later step
