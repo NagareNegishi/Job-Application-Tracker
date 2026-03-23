@@ -1,9 +1,10 @@
 services:
 
   nginx:
-    build:
-      context: ./job-tracker-ui
-      dockerfile: Dockerfile
+    # Pull pre-built image from ECR — built and pushed by GitHub Actions CI.
+    # ECR_REGISTRY format: {account-id}.dkr.ecr.ap-southeast-2.amazonaws.com
+    # Set ECR_REGISTRY in the .env file on EC2 (see .env.example).
+    image: ${ECR_REGISTRY}/jobtracker-frontend:latest
     ports:
       - "80:80"
       - "443:443"  # needed for SSL (Let's Encrypt / Certbot) — wired up in a later step
@@ -12,10 +13,8 @@ services:
     restart: unless-stopped
 
   backend:
-    build:
-      # Context is repo root so the Dockerfile can reach the .sln file
-      context: .
-      dockerfile: JobTrackerApi/Dockerfile
+    # Pull pre-built image from ECR — built and pushed by GitHub Actions CI.
+    image: ${ECR_REGISTRY}/jobtracker-backend:latest
     # No ports exposed to host — backend is only reachable from nginx via Docker's internal network.
     # Docker Compose gives each service a hostname matching its name, so nginx reaches it as "backend".
     environment:
