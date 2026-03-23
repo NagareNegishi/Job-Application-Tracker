@@ -9,7 +9,7 @@ on:
 env:
   AWS_REGION: ap-southeast-2
   BACKEND_IMAGE: ${{ secrets.ECR_REGISTRY }}/jobtracker-backend
-  NGINX_IMAGE: ${{ secrets.ECR_REGISTRY }}/jobtracker-nginx
+  NGINX_IMAGE: ${{ secrets.ECR_REGISTRY }}/jobtracker-frontend
 
 jobs:
   # Runs xUnit tests — build-push and deploy declare needs: test, so a failure here stops the pipeline
