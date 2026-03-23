@@ -92,6 +92,9 @@ jobs:
           dotnet tool install --global dotnet-ef
           echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
+      - name: Restore NuGet packages
+        run: dotnet restore
+
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
