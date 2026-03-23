@@ -3,6 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 # Shared env vars available to all jobs.
 # Keeps image names consistent across build-push and deploy jobs.
