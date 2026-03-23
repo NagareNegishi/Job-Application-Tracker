@@ -95,7 +95,7 @@ jobs:
       - name: Copy compose file to EC2
         run: |
           scp -i ~/.ssh/deploy_key compose.prod.yml \
-            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/app/compose.prod.yml
+            ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/compose.prod.yml
 
       # All commands in the heredoc run on EC2 via SSH.
       # ECR login must happen on EC2 — it's the machine doing the pull.
@@ -103,13 +103,13 @@ jobs:
       # until both are ready, minimising the mixed-version window.
       - name: Deploy
         run: |
-          ssh -i ~/.ssh/deploy_key ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
             aws ecr get-login-password --region ${{ env.AWS_REGION }} \
               | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
             docker pull ${{ env.BACKEND_IMAGE }}:latest
             docker pull ${{ env.NGINX_IMAGE }}:latest
 
-            cd /home/ec2-user/app
+            cd /home/ubuntu/app
             docker compose -f compose.prod.yml up --no-build -d
           EOF
