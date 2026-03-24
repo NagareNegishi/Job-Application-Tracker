@@ -1,0 +1,291 @@
+# Production Build Plan
+
+## Progress
+
+| Step | Item | Status |
+|---|---|---|
+| 1 | Auth (JWT, ASP.NET Identity, httpOnly refresh cookie) | Done |
+| 2a | AWS infrastructure + DNS setup | Done — see `docs/stack-decisions.md` |
+| 2b | S3 file storage refactor + Dockerfiles + compose.prod.yml | Done |
+| 3 | appsettings.Production.json + .env.example | Done |
+| 4 | Global exception handler + structured logging (Serilog) | Done |
+| 5 | Health check endpoint | Done |
+| 6 | Security headers | Done |
+| 7 | GitHub Actions CI/CD | Done |
+| 8a | DB migration automation in CI | Done |
+| 8b | First production deploy (merge to main) | Pending |
+| 8c | Rate limiting | Pending |
+| 9 | Monitoring/metrics | Pending |
+
+---
+
+## Architecture (locked — see `docs/stack-decisions.md` for full rationale)
+
+```
+User Browser
+    │ (HTTPS)
+    ▼
+┌─── EC2 Instance (t3.micro, ap-southeast-2) ───────┐
+│                                                    │
+│   Nginx Container                                  │
+│   ├── / → serves React static files (dist/)        │
+│   ├── /api/* → proxy to backend (internal HTTP)    │
+│   └── SSL termination (Let's Encrypt / Certbot)    │
+│                                                    │
+│   ASP.NET Backend Container                        │
+│   ├── NOT exposed to host — Docker network only    │
+│   └── Connects to RDS + S3                         │
+│                                                    │
+│   Docker Compose (compose.prod.yml)                │
+└───────────────────────────────────────────────────┘
+         │                        │
+         ▼                        ▼
+    RDS PostgreSQL              S3 Bucket
+    (db.t4g.micro)          (signed URL access)
+    ap-southeast-2a         Account Regional namespace
+```
+
+One origin — no CORS needed. `try_files $uri $uri/ /index.html` for SPA routing.
+
+---
+
+## Step 2b — S3 Refactor + Dockerfiles + compose.prod.yml
+
+### 2b-1: Refactor file storage to S3
+- `IStorageService` interface + `LocalStorageService` already existed — added `GetDownloadUrlAsync(storageKey) → Task<string?>`
+- `S3StorageService` created: `SaveAsync` → `PutObjectAsync`, `DeleteAsync` → `DeleteObjectAsync`, `GetDownloadUrlAsync` → pre-signed URL (15 min expiry), `GetAsync` throws `NotSupportedException` (streaming not supported, use pre-signed URL)
+- `DocumentsController` download endpoint updated: redirects to pre-signed URL if available, falls back to stream (local dev only)
+- DI wired in `Program.cs`: `AddAWSService<IAmazonS3>()` + env-conditional registration (`LocalStorageService` in dev, `S3StorageService` in prod)
+- NuGet: `AWSSDK.S3`, `AWSSDK.Extensions.NETCore.Setup`
+- Still needed: `Storage:S3BucketName` in `appsettings.Production.json`, IAM role on EC2 with S3 permissions, `AWS_REGION=ap-southeast-2` in EC2 environment
+
+### 2b-2: Backend Dockerfile
+- `JobTrackerApi/Dockerfile` — multi-stage: `dotnet/sdk:10.0` → `dotnet/aspnet:10.0`
+- `.csproj` files copied before source for layer cache; Tests `.csproj` included because `.sln` references it
+- Build context must be repo root (needs `.sln`) — set in `compose.prod.yml` via `context: .`
+
+### 2b-3: Frontend Dockerfile + nginx.conf
+- `job-tracker-ui/Dockerfile` — multi-stage: `node:lts-alpine` → `nginx:alpine`
+- `job-tracker-ui/nginx.conf` — serves static files, `try_files` SPA routing, proxies `/api/*` to `http://backend:8080/api/`
+- `proxy_set_header` lines pass real client IP through to backend
+- **Note:** nginx `proxy_pass` preserves the `/api/` prefix — backend controllers must use `[Route("api/[controller]")]` not `[Route("[controller]")]`
+
+### 2b-4: compose.prod.yml
+- Written fresh at repo root as `compose.prod.yml`
+- `nginx` service: exposes ports 80 + 443, depends on backend
+- `backend` service: no host ports — Docker-internal only; env vars via `${VAR}` substitution at deploy time
+- `__` double-underscore maps env var names to nested ASP.NET config keys
+- Two fixes made to `Program.cs`: `UseHttpsRedirection` and `AddCors`/`UseCors` wrapped in `IsDevelopment()` — both would break the production container
+
+### 2b-5: appsettings.Production.json (completed in Step 3)
+
+---
+
+## Step 3 — appsettings.Production.json + .env.example
+- `appsettings.Production.json`: `AllowedHosts: "*"` + log levels raised to `Warning` — locked to real domain in step 6
+- `job-tracker-ui/.env.production`: `VITE_API_BASE_URL=/api` — relative URL, works on any domain; Vite bakes this in at `npm run build` automatically, no Docker build args needed
+- `.env.example` at repo root: documents all 5 env vars needed by `compose.prod.yml` (`DB_CONNECTION_STRING`, `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE`, `S3_BUCKET_NAME`)
+- `Program.cs`: fail-fast startup validation for all JWT + S3 config keys — crashes at startup with named env var in message rather than mid-request
+
+---
+
+## Step 4 — Global Exception Handler + Structured Logging
+- NuGet: `Serilog.AspNetCore` 10.0.0, `Serilog.Sinks.Console` 6.1.1
+- `builder.Services.AddSerilog(...)` — uses `AddSerilog` (current pattern; `UseSerilog` on host builder is outdated)
+  - Dev: `MinimumLevel.Information` + plain `Console()` — human-readable
+  - Prod: `MinimumLevel.Warning` + `Console(new JsonFormatter())` — structured JSON to stdout; Docker captures it; compatible with any log aggregator (Grafana Loki, Datadog, etc. — TBD; CloudWatch ruled out)
+- `app.UseExceptionHandler(...)` — catches unhandled exceptions; logs full details via `ILogger<Program>` (Serilog-backed); returns `{ "error": "An unexpected error occurred." }` JSON 500 to client
+- `app.UseSerilogRequestLogging()` — one structured event per request (method, path, status, duration); placed after exception handler
+
+---
+
+## Step 5 — Health Check Endpoint
+- NuGet: `Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore` 10.0.5
+- `builder.Services.AddHealthChecks().AddDbContextCheck<JobTrackerContext>()` — runs a test query against RDS; returns `Unhealthy` (503) if DB unreachable
+- `app.MapHealthChecks("/health", ...)` — anonymous (no JWT), JSON response with per-check status and duration
+- `JobTrackerApi/Dockerfile`: `curl` installed in runtime stage; `HEALTHCHECK` directive pings `http://localhost:8080/health` every 30s (3 failures → container marked unhealthy, start-period 30s)
+
+---
+
+## Step 6 — Security Headers
+- `appsettings.Production.json`: `AllowedHosts` locked to real domain (was `"*"`)
+- `job-tracker-ui/nginx.conf`: all headers added at `server {}` level with `always` (covers 4xx/5xx too)
+  - `X-Content-Type-Options: nosniff` — prevents MIME sniffing / JS execution from wrong content type
+  - `X-Frame-Options: DENY` — blocks clickjacking via iframe embedding
+  - `Referrer-Policy: strict-origin-when-cross-origin` — keeps internal paths off third-party logs
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()` — disables unused browser features
+  - `Content-Security-Policy` — XSS allowlist; `style-src 'unsafe-inline'` for Tailwind, `connect-src` includes S3 bucket domain for `fetch()` doc download redirects, `frame-ancestors 'none'` as modern X-Frame-Options replacement
+  - HSTS comment placeholder left in nginx.conf — must go in the HTTPS (443) server block certbot creates; line to add: `add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;`
+- **nginx `add_header` gotcha**: adding `add_header` inside any `location {}` block drops ALL headers defined at `server {}` level for that location — keep all headers at server level
+
+---
+
+## Step 7 — GitHub Actions CI/CD
+Pipeline: test → build+push images to ECR → deploy to EC2
+
+Build strategy: build in GitHub Actions (free 7GB RAM runners), push to ECR, pull on EC2 — keeps t3.micro free for running the app.
+
+### GitHub Actions workflow — `.github/workflows/deploy.yml`
+
+Three jobs, chained via `needs`:
+- `test` — runs xUnit tests; downstream jobs skipped if this fails
+- `build-push` — authenticates to AWS, builds backend + nginx images, pushes to ECR
+- `deploy` — SCPs `compose.prod.yml` to EC2, SSHs in, ECR login on EC2, `docker pull` both images, `docker compose up --no-build -d`
+
+Key details:
+- `docker/setup-buildx-action` required as precondition for `docker/build-push-action`
+- Backend build context is repo root (needs `.sln`); nginx build context is `job-tracker-ui/` only
+- SCP + SSH use plain `run:` steps with standard CLI tools — no third-party actions for secret transfer
+- ECR login runs on EC2 (not runner) — EC2 is the machine pulling images; uses IAM instance role `jobtracker_ec2_ecr_pull` (`AmazonEC2ContainerRegistryReadOnly`) — no AWS credentials needed on EC2
+- `docker pull` both images before `up` — minimises mixed-version window during restart
+- EC2 username is `ubuntu` (Ubuntu AMI), home at `/home/ubuntu/`
+- `compose.prod.yml` deployed to `/home/ubuntu/app/`
+- `compose.prod.yml` `${VAR}` substitution requires env vars exported in the SSH session — done via `export` statements before `docker compose up`
+- `workflow_dispatch` added alongside `push` trigger — enables manual deploys from GitHub Actions UI without a code change
+
+### Confirmed GitHub Actions versions (verified March 2026)
+
+| Action | Version |
+|---|---|
+| `actions/checkout` | `@v6` |
+| `actions/setup-dotnet` | `@v5` |
+| `aws-actions/configure-aws-credentials` | `@v5` |
+| `aws-actions/amazon-ecr-login` | `@v2` |
+| `docker/setup-buildx-action` | `@v4` |
+| `docker/build-push-action` | `@v7` |
+
+### GitHub Actions secrets
+
+| Secret | Source |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | IAM `jobtracker-deploy` access key |
+| `AWS_SECRET_ACCESS_KEY` | IAM `jobtracker-deploy` secret key |
+| `ECR_REGISTRY` | ECR registry URI |
+| `S3_BUCKET_NAME` | Full bucket name (with account regional suffix) |
+| `DB_CONNECTION_STRING` | `Host=RDS_ENDPOINT;Port=5432;Database=jobtracker;Username=postgres;Password=...` |
+| `EC2_HOST` | Elastic IP |
+| `EC2_SSH_KEY` | Contents of `.pem` file |
+| `JWT_SECRET` | Long random string |
+| `JWT_ISSUER` | `https://jobtracker.yourdomain.com` |
+| `JWT_AUDIENCE` | `https://jobtracker.yourdomain.com` |
+
+### EC2 one-time setup
+
+Ubuntu AMI — installed via SSH from WSL:
+- Docker 28.x + Docker Compose v5 plugin
+- AWS CLI v2 (installed via official installer — apt package unavailable on this Ubuntu version)
+- `/home/ubuntu/app/` directory created for compose file
+- IAM instance role `jobtracker_ec2_ecr_pull` attached (`AmazonEC2ContainerRegistryReadOnly`) — allows EC2 to pull from ECR without static credentials
+
+---
+
+## Step 8a — DB Migration Automation in CI
+**Approach:** `migrate` job in `deploy.yml` runs between `build-push` and `deploy`. SSH port-forward tunnels `localhost:5432` on the runner through EC2 to RDS (RDS is VPC-only via `rds-ec2-1` SG — not internet-accessible). `dotnet ef database update` connects to `localhost:5432`; tunnel routes it to RDS. Failed migration exits non-zero → pipeline stops → old containers stay up.
+
+**Key details:**
+- `RDS_ENDPOINT` secret added (hostname only) — used by SSH `-L` flag
+- `DB_CONNECTION_STRING` unchanged — migrate job swaps `Host=` to `localhost` via `sed` at runtime
+- `ExitOnForwardFailure=yes` — SSH fails fast if EC2 can't reach RDS
+- `timeout 30 bash -c 'until nc -z localhost 5432; do sleep 1; done'` — readiness poll, not a fixed sleep
+- `$GITHUB_PATH` used to add `~/.dotnet/tools` to PATH after `dotnet tool install --global dotnet-ef`
+- `dotnet restore` added before SSH tunnel setup — required to generate `project.assets.json` before `dotnet ef database update`
+- `IDesignTimeDbContextFactory<JobTrackerContext>` added at `JobTrackerApi/Data/JobTrackerContextFactory.cs` — EF CLI tools use it instead of building the full DI container via `Program.cs`, bypassing fail-fast JWT validation that would otherwise block migrations
+- `deploy` job changed to `needs: [migrate]`
+
+---
+
+## Step 8b — First Production Deploy
+**What happened:** merge `experiment_claude` → `main` triggered the full pipeline. Containers are running on EC2.
+
+**Outcome:**
+- Pipeline: all 4 jobs pass (test → build-push → migrate → deploy)
+- Backend container: healthy, DB connection confirmed
+- nginx container: up, serving React static files over HTTP
+- HTTP accessible: `curl http://jobtracker.nagarenegishi.com` returns React HTML
+- HTTPS: pending — Certbot not yet configured (see Step 8b-1)
+
+**Issues fixed during first deploy:**
+- `jobTable.tsx` → `JobTable.tsx` — case mismatch caused Docker build failure on Linux
+- `dotnet restore` added to `migrate` job — `project.assets.json` missing
+- `IDesignTimeDbContextFactory` added — EF CLI was hitting JWT fail-fast validation in Program.cs
+- EC2 IAM role `jobtracker_ec2_ecr_pull` attached — ECR pull auth for EC2
+- Env var exports added to deploy SSH session — `compose.prod.yml` `${VAR}` substitution
+- `workflow_dispatch` added — enables manual pipeline trigger from GitHub Actions UI
+- `AllowedHosts` updated to include `localhost` — Docker HEALTHCHECK was getting 400
+- Dockerfile HEALTHCHECK updated with `-H "Host: localhost"`
+
+---
+
+## Step 8b-1 — SSL via Certbot ⬜
+
+**Context:** nginx is running in a Docker container on EC2, serving HTTP on port 80. Certbot needs to run **on the EC2 host** (not inside the container) using the standalone or webroot method. The recommended approach here is **certbot certonly --webroot** — nginx serves the ACME challenge over HTTP, Certbot gets the cert, then nginx is reconfigured to serve HTTPS.
+
+**However:** our nginx config is baked into the Docker image. The simplest approach for a containerised setup is to install Certbot on the EC2 host, use the `--standalone` mode (temporarily stops nginx), get the cert, then mount the cert into the nginx container via `compose.prod.yml`.
+
+**Step-by-step:**
+
+1. **SSH into EC2**
+   ```
+   ssh -i YOUR_KEY.pem ubuntu@YOUR_ELASTIC_IP
+   ```
+
+2. **Install Certbot on EC2 host**
+   ```
+   sudo snap install --classic certbot
+   sudo ln -s /snap/bin/certbot /usr/bin/certbot
+   ```
+
+3. **Stop nginx container temporarily** (Certbot standalone needs port 80)
+   ```
+   cd /home/ubuntu/app
+   docker compose -f compose.prod.yml stop nginx
+   ```
+
+4. **Get the certificate**
+   ```
+   sudo certbot certonly --standalone -d jobtracker.nagarenegishi.com
+   ```
+   Enter email when prompted. Certs saved to `/etc/letsencrypt/live/jobtracker.nagarenegishi.com/`.
+
+5. **Update `compose.prod.yml`** — mount certs into nginx container:
+   Add under the nginx service `volumes:`:
+   ```yaml
+   - /etc/letsencrypt:/etc/letsencrypt:ro
+   ```
+
+6. **Update `nginx.conf`** — add HTTPS server block (443) and redirect HTTP → HTTPS.
+   Certbot's cert files:
+   - `ssl_certificate /etc/letsencrypt/live/jobtracker.nagarenegishi.com/fullchain.pem;`
+   - `ssl_certificate_key /etc/letsencrypt/live/jobtracker.nagarenegishi.com/privkey.pem;`
+   Also add HSTS header here (placeholder already in nginx.conf):
+   `add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;`
+
+7. **Rebuild nginx image + redeploy** — nginx.conf change requires a new image build (push to ECR, pull on EC2). Or for a faster first-time approach, copy the updated nginx.conf directly into the running container and reload:
+   ```
+   docker exec app-nginx-1 nginx -s reload
+   ```
+
+8. **Set up auto-renewal** — Let's Encrypt certs expire every 90 days:
+   ```
+   sudo crontab -e
+   ```
+   Add: `0 3 * * * certbot renew --quiet --deploy-hook "docker exec app-nginx-1 nginx -s reload"`
+
+**Note:** After getting certs, the nginx container needs to be restarted with the volume mount. The cert renewal hook reloads nginx inside the container so it picks up the new cert without a restart.
+
+---
+
+## Step 8c — Rate Limiting ⬜
+
+- `app.UseRateLimiter()` not configured — risk of abuse on auth endpoints in prod
+- Not a deploy blocker — add after first successful deploy
+- Scope: apply a fixed-window policy to `AuthController` (register + login) at minimum
+
+---
+
+## Step 9 — Monitoring/Metrics
+
+- No Application Insights, Prometheus, or equivalent
+- Deferrable — decide on tooling when the app is running
+- Options: Grafana Loki (pairs well with structured JSON logs already emitted), Datadog, Prometheus + Grafana — decide when the app is running; CloudWatch ruled out
+- Dependabot scope: currently only watches devcontainer, not NuGet or npm packages — expand it
