@@ -152,9 +152,10 @@ jobs:
             ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/compose.prod.yml
 
       # All commands in the heredoc run on EC2 via SSH.
-      # ECR login must happen on EC2 — it's the machine doing the pull.
+      # ECR login uses the EC2 IAM role (jobtracker_ec2_ecr_pull) — no AWS credentials needed here.
       # docker pull both images before up — old containers keep running
       # until both are ready, minimising the mixed-version window.
+      # ${{ }} expressions are expanded by GitHub Actions before SSH — safe inside 'EOF'.
       - name: Deploy
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
@@ -165,5 +166,14 @@ jobs:
             docker pull ${{ env.NGINX_IMAGE }}:latest
 
             cd /home/ubuntu/app
+
+            # compose.prod.yml uses ${VAR} substitution — must be exported in this session.
+            export ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+            export DB_CONNECTION_STRING="${{ secrets.DB_CONNECTION_STRING }}"
+            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            export JWT_ISSUER="${{ secrets.JWT_ISSUER }}"
+            export JWT_AUDIENCE="${{ secrets.JWT_AUDIENCE }}"
+            export S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}"
+
             docker compose -f compose.prod.yml up --no-build -d
           EOF
