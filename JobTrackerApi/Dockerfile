@@ -33,7 +33,9 @@ COPY --from=build /app/publish .
 # --start-period=30s: grace period for app startup before failures count
 # -f: curl exits non-zero on HTTP error responses (4xx/5xx), not just network failures
 # Port 8080: Kestrel's default in the aspnet base image
+# -H "Host: localhost": AllowedHosts in appsettings.Production.json validates the Host header;
+#   localhost is explicitly allowed there for internal health checks
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f --max-time 5 --no-verbose http://localhost:8080/health || exit 1
+    CMD curl -f --max-time 5 --no-verbose -H "Host: localhost" http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "JobTrackerApi.dll"]
