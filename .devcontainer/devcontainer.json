@@ -65,7 +65,9 @@
     // Install frontend dependencies
     "frontend": "cd job-tracker-ui && npm install",
 	// Set up Claude onboarding state, skip the onboarding process
-	"claude-onboarding": "echo '{\"hasCompletedOnboarding\":true}' > /home/vscode/.claude/.claude.json"
+	"claude-onboarding": "echo '{\"hasCompletedOnboarding\":true}' > /home/vscode/.claude/.claude.json",
+	// Loads .env vars into every shell session so dotnet ef CLI can read the DB connection string
+	"shell-env": "echo 'set -a; source /workspaces/Job-Application-Tracker/.devcontainer/.env; set +a' >> ~/.bashrc"
 	},
 
 	// Executes the firewall script every time the container starts
