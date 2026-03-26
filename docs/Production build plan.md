@@ -14,8 +14,10 @@
 | 7 | GitHub Actions CI/CD | Done |
 | 8a | DB migration automation in CI | Done |
 | 8b | First production deploy (merge to main) | Pending |
+| 8b-1 | SSL via Certbot (nginx, standalone) | Pending |
 | 8c | Rate limiting | Pending |
 | 9 | Monitoring/metrics | Pending |
+| — | SSL: Migrate to Caddy (optional, when certbot maintenance becomes friction) | Backlog |
 
 ---
 
@@ -218,11 +220,29 @@ Ubuntu AMI — installed via SSH from WSL:
 
 ## Step 8b-1 — SSL via Certbot ⬜
 
-**Context:** nginx is running in a Docker container on EC2, serving HTTP on port 80. Certbot needs to run **on the EC2 host** (not inside the container) using the standalone or webroot method. The recommended approach here is **certbot certonly --webroot** — nginx serves the ACME challenge over HTTP, Certbot gets the cert, then nginx is reconfigured to serve HTTPS.
+### Why this approach
 
-**However:** our nginx config is baked into the Docker image. The simplest approach for a containerised setup is to install Certbot on the EC2 host, use the `--standalone` mode (temporarily stops nginx), get the cert, then mount the cert into the nginx container via `compose.prod.yml`.
+Four options were considered (March 2026):
 
-**Step-by-step:**
+| Option | Decision |
+|---|---|
+| ACM + ALB | ~$16–25/mo minimum — exceeds EC2 cost, overkill for solo app |
+| CloudFront + ACM | $1–5/mo, adds AWS complexity (cache behaviors, invalidation), revisit later if CDN needed |
+| certbot Docker + webroot | Everything stays in Docker but has a chicken-and-egg bootstrap problem — nginx won't start without a cert, can't get cert without nginx running |
+| **Certbot standalone on host (chosen)** | Simpler first-time setup; teaches ACME, TLS cert structure, nginx SSL termination, and renewal automation — all transferable concepts |
+
+**Why not Caddy (which handles HTTPS automatically):** Caddy's built-in ACME client (certmagic) abstracts away the entire cert process. Since the point of this project is understanding how things work, Caddy hides too much. Doing certbot first means actually encountering how domain validation, cert files, and renewal work. **Caddy is a standing backlog option once this is understood — see bottom of doc.**
+
+### Maintenance reality
+
+- Let's Encrypt certs expire every **90 days**
+- Renewal cron runs automatically, renews when <30 days remain (~every 60 days in practice)
+- **No proactive notification if cron fails** — but Let's Encrypt emails you at 20 days and 7 days before expiry if the cert hasn't renewed yet. That's your safety net — 20 days to SSH in and fix it manually
+- Renewal briefly stops nginx (pre-hook) and restarts it (post-hook) — a few seconds of downtime every ~60 days
+
+### Step-by-step
+
+**Context:** nginx is running in a Docker container on EC2, serving HTTP on port 80. Our nginx config is baked into the Docker image. Certbot runs on the EC2 host using `--standalone` mode — temporarily stops nginx, gets the cert from Let's Encrypt, then the cert is mounted into the nginx container via `compose.prod.yml`.
 
 1. **SSH into EC2**
    ```
@@ -280,6 +300,35 @@ Ubuntu AMI — installed via SSH from WSL:
 - `app.UseRateLimiter()` not configured — risk of abuse on auth endpoints in prod
 - Not a deploy blocker — add after first successful deploy
 - Scope: apply a fixed-window policy to `AuthController` (register + login) at minimum
+
+---
+
+## SSL: Migrate to Caddy (Backlog — no fixed sequence)
+
+**When to do this:** When the certbot 90-day renewal cycle starts feeling like overhead, or when revisiting the nginx config for another reason. Not sequenced — pick it up after all planned steps are done, or later. Option A (certbot) gives ~90 days before renewal is even relevant.
+
+**What Caddy is:** A reverse proxy with a built-in ACME client (certmagic — written in Go, not certbot). Uses the same Let's Encrypt ACME protocol as certbot but handles cert issuance and renewal internally on a background timer. No cron jobs, no host packages, no renewal downtime.
+
+**Migration scope — what changes:**
+
+| File | Change |
+|---|---|
+| `job-tracker-ui/Dockerfile` | 2 lines: base image `nginx:alpine` → `caddy:alpine`, copy `Caddyfile` instead of `nginx.conf` |
+| `job-tracker-ui/Caddyfile` | New file (~20 lines). Replaces nginx.conf — same responsibilities: static files, SPA routing, API proxy, security headers, HTTPS |
+| `compose.prod.yml` | Add named volume `caddy_data:/data` — critical, see gotcha below. Remove `/etc/letsencrypt` mount |
+| EC2 host | Remove certbot cron. Certbot snap can be left or removed |
+
+**nginx.conf is kept** as reference — coexists alongside Caddyfile. The Dockerfile decides which is used. Switching back to Option A is the same two-line Dockerfile swap.
+
+**Critical gotcha — `/data` volume:** Caddy stores certs in `/data` inside the container. Without a named Docker volume, every container restart triggers a new cert request from Let's Encrypt. Rate limit: 5 duplicate requests per 7 days — hit this and you're locked out for the rest of the week. Always mount a named volume for `/data`.
+
+**Testing before going live:** Use Let's Encrypt staging while verifying Caddyfile config — staging has no rate limits but issues untrusted certs. Add to Caddyfile global block:
+```
+{
+  acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+```
+Remove once config is verified and ready for production.
 
 ---
 
