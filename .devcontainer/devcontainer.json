@@ -36,8 +36,8 @@
 	// }
 
     "mounts": [
-		// Bind-mount the host cert into the container
-        "source=${env:HOME}${env:USERPROFILE}/.aspnet/https,target=/home/vscode/.aspnet/https,type=bind",
+		// Store dev cert in a Docker volume — persists across rebuilds without needing .NET on the Windows host
+        "source=aspnet-https,target=/home/vscode/.aspnet/https,type=volume",
 		// Mount a volume for Claude credentials
 		"source=claude-credentials,target=/home/vscode/.claude,type=volume"
     ],
