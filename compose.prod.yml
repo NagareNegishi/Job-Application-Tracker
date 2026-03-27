@@ -8,6 +8,10 @@ services:
     ports:
       - "80:80"
       - "443:443"  # needed for SSL (Let's Encrypt / Certbot) — wired up in a later step
+    volumes:
+      # Certbot writes certs to /etc/letsencrypt/ on the EC2 host.
+      # Mount it read-only into the container so nginx can serve HTTPS.
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
     restart: unless-stopped

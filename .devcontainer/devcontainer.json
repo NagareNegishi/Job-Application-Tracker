@@ -36,8 +36,8 @@
 	// }
 
     "mounts": [
-		// Bind-mount the host cert into the container
-        "source=${env:HOME}${env:USERPROFILE}/.aspnet/https,target=/home/vscode/.aspnet/https,type=bind",
+		// Store dev cert in a Docker volume — persists across rebuilds without needing .NET on the Windows host
+        "source=aspnet-https,target=/home/vscode/.aspnet/https,type=volume",
 		// Mount a volume for Claude credentials
 		"source=claude-credentials,target=/home/vscode/.claude,type=volume"
     ],
@@ -65,7 +65,10 @@
     // Install frontend dependencies
     "frontend": "cd job-tracker-ui && npm install",
 	// Set up Claude onboarding state, skip the onboarding process
-	"claude-onboarding": "echo '{\"hasCompletedOnboarding\":true}' > /home/vscode/.claude/.claude.json"
+	"claude-onboarding": "echo '{\"hasCompletedOnboarding\":true}' > /home/vscode/.claude/.claude.json",
+	// Sources .env vars then explicitly builds ConnectionStrings__JobTrackerContext (what dotnet ef CLI reads)
+	// from individual POSTGRES_* vars — avoids duplication in .env and works automatically on every new machine
+	"shell-env": "echo 'set -a; source /workspaces/Job-Application-Tracker/.devcontainer/.env; set +a; export ConnectionStrings__JobTrackerContext=\"Host=db;Database=$POSTGRES_DB;Username=$POSTGRES_USER;Password=$POSTGRES_PASSWORD\"' >> ~/.bashrc"
 	},
 
 	// Executes the firewall script every time the container starts

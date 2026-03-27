@@ -42,3 +42,6 @@ SampleFile/
 
 # Local configuration files from Backend
 appsettings.Development.json
+
+# Claude code
+creds.json

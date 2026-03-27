@@ -42,3 +42,6 @@ volumes:
   # find existing volume named "claude-credentials" and use it, or create a new one if it doesn't exist
   claude-credentials:
     name: claude-credentials
+  # stores the dev HTTPS cert — persists across rebuilds without needing .NET on the Windows host
+  aspnet-https:
+    name: aspnet-https
