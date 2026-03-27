@@ -173,8 +173,30 @@ When nginx starts, it reads `fullchain.pem` and `privkey.pem` **into memory**. I
 
 `nginx -s reload` sends a signal to the nginx master process to gracefully re-read configuration and cert files. Existing connections finish normally; new connections get the fresh cert. No downtime.
 
-### Cron-Based Renewal (Standalone Mode)
+### What Actually Happened (Ubuntu + snap install)
 
+When Certbot is installed via `sudo snap install --classic certbot` on Ubuntu, it automatically sets up a **systemd timer** — no manual cron needed. Verified on this project's EC2 instance (March 2026):
+
+```
+● snap.certbot.renew.timer - Timer renew for snap application certbot.renew
+   Loaded: loaded (/etc/systemd/system/snap.certbot.renew.timer; enabled; preset: enabled)
+   Active: active (waiting)
+```
+
+- `enabled` — survives reboots automatically
+- Runs twice daily, renews only when cert is within 30 days of expiry (~every 60 days in practice)
+- No pre/post hooks configured — renewal stops nginx briefly (standalone mode), restarts it after
+
+To verify the timer is active after your own install:
+```bash
+sudo systemctl status snap.certbot.renew.timer
+```
+
+### Cron-Based Renewal (reference — not used here)
+
+If Certbot was installed via apt or on a non-Ubuntu system, you may need to set up renewal manually. The approaches below are kept as reference.
+
+**Standalone mode** (briefly stops nginx):
 ```bash
 certbot renew --quiet \
   --pre-hook "docker stop <NGINX_CONTAINER_NAME>" \
@@ -185,14 +207,11 @@ certbot renew --quiet \
 - `--post-hook` starts nginx back up, which naturally loads the new cert.
 - `--quiet` suppresses output unless there's an error.
 
-### Cron-Based Renewal (Webroot Mode — No Downtime)
-
+**Webroot mode** (no downtime):
 ```bash
 certbot renew --quiet \
   --post-hook "docker exec <NGINX_CONTAINER_NAME> nginx -s reload"
 ```
-
-No need to stop nginx since it serves the challenge itself.
 
 ### What Can Go Wrong With Cron-Based Renewal
 

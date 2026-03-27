@@ -3,6 +3,7 @@ using JobTrackerApi.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -34,6 +35,7 @@ public class AuthController : ControllerBase
 
     // Register, Identity requires a UserName, using email for both keeps things simple
     [HttpPost("register")]
+    [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents registration spam
     public async Task<IActionResult> Register(RegisterDTO dto)
     {
         var user = new IdentityUser { UserName = dto.Email, Email = dto.Email };
@@ -48,6 +50,7 @@ public class AuthController : ControllerBase
     // Login
     // https://codewithmukesh.com/blog/aspnet-core-api-with-jwt-authentication/
     [HttpPost("login")]
+    [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents brute force
     public async Task<IActionResult> Login(LoginDTO dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);

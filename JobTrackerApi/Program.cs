@@ -9,6 +9,7 @@ using JobTrackerApi.Data;
 using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
 using Serilog.Formatting.Json;
 // using System.Text.Json;
@@ -137,6 +138,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 
+// Rate limiting — fixed window per IP, applied to auth endpoints only via [EnableRateLimiting("auth")]
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429; // Too Many Requests — returned immediately when limit is exceeded
+
+    options.AddFixedWindowLimiter("auth", config =>
+    {
+        config.Window = TimeSpan.FromMinutes(1);  // counter resets every 1 minute
+        config.PermitLimit = 5;                   // max 5 requests per window per IP
+        config.QueueLimit = 0;                    // reject immediately — don't queue excess requests
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
+});
+
 // CORS only needed in dev — in production, Nginx proxies /api/* so frontend and backend share one origin
 if (builder.Environment.IsDevelopment())
 {
@@ -208,6 +223,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication(); // on each request, figure out who is calling, must be before UseAuthorization
 app.UseAuthorization();
+app.UseRateLimiter(); // must be after UseAuthorization so rate limit policies can inspect auth state if needed
 
 app.MapControllers();
 
