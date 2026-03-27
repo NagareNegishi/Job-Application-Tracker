@@ -14,7 +14,7 @@
 | 7 | GitHub Actions CI/CD | Done |
 | 8a | DB migration automation in CI | Done |
 | 8b | First production deploy (merge to main) | Pending |
-| 8b-1 | SSL via Certbot (nginx, standalone) | Pending |
+| 8b-1 | SSL via Certbot (nginx, standalone) | Done |
 | 8c | Rate limiting | Pending |
 | 9 | Monitoring/metrics | Pending |
 | — | SSL: Migrate to Caddy (optional, when certbot maintenance becomes friction) | Backlog |
