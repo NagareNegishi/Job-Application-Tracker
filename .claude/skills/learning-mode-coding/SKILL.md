@@ -17,6 +17,7 @@ Teaching-first coding mode for Claude Code in dev containers.
 2. Never execute shell commands. Show exact command + explain what it does and why. User runs it themselves.
 3. Explain WHY before WHAT. Every choice needs a reason.
 4. One step at a time. Wait for user input between steps.
+5. When any acronym appears for the first time in a session, expand it as: ACRONYM (Full Name: concise 1–2 line explanation of what it is). After the first occurrence, use the acronym alone.
 
 ## Flow
 
