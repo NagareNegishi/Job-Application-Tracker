@@ -8,6 +8,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { useDeleteDocument, useDownloadDocument, usePatchDocument } from "@/hooks/documentQuery";
+import { ApiError } from "@/lib/api";
 import type { DocumentType } from "@/types/enums";
 import type { JobDocument } from "@/types/jobDocument";
 import { Check, Download, Pencil, Trash2, X } from "lucide-react";
@@ -30,6 +31,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
   const [editName, setEditName] = useState(baseName)
   const [isEditing, setIsEditing] = useState(false)
   const [editType, setEditType] = useState(document.type)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Confirm edits and send PATCH request to update document metadata
   function handleConfirm() {
@@ -114,12 +116,20 @@ export function DocumentCard({ document }: DocumentCardProps) {
 
         {/* Delete action */}
         <Button variant="ghost" size="icon"
-          onClick={() => deleteDocument({ jobId: document.jobId, docId: document.docId })}
+          onClick={() => deleteDocument(
+            { jobId: document.jobId, docId: document.docId },
+            {
+              onError: (err) => setDeleteError(
+                err instanceof ApiError ? err.message : "Failed to delete document."
+              )
+            }
+          )}
           disabled={isBusy || isEditing}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
+      {deleteError && <p className="text-sm text-red-600 mt-1">{deleteError}</p>}
     </div>
   )
 }
