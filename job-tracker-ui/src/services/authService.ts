@@ -25,6 +25,13 @@ export async function register(email: string, password: string): Promise<void> {
   return handleEmptyResponse(response)
 }
 
+// No credentials needed — server issues tokens for the demo account directly
+export async function loginDemo(): Promise<void> {
+  const response = await apiFetch(`${BASE_URL}/auth/demo`, { method: "POST" })
+  const data = await handleResponse<{ accessToken: string }>(response)
+  setToken(data.accessToken)
+}
+
 // Always clear local token even if server is unreachable
 export async function logout(): Promise<void> {
   await apiFetch(`${BASE_URL}/auth/logout`, { method: "POST" }).catch(() => {})
