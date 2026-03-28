@@ -95,7 +95,7 @@ public class DocumentsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
-        if (IsDemo()) return StatusCode(403, new { message = "Document upload is not available in demo mode." });
+        if (IsDemo()) return StatusCode(403, new { message = "Document upload is not available in demo mode. Create a free account to try this feature." });
 
         // Validate the uploaded file and max document per job
         if (!dto.HasValidExtension()) {
@@ -145,7 +145,7 @@ public class DocumentsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
-        if (IsDemo()) return StatusCode(403, new { message = "Document delete is not available in demo mode." });
+        if (IsDemo()) return StatusCode(403, new { message = "Document delete is not available in demo mode. Create a free account to try this feature." });
 
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
