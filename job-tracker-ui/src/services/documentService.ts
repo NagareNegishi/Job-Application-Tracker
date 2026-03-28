@@ -10,11 +10,9 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL
  * @throws An error if the fetch operation fails.
  */
 export async function getDocuments(jobId: number, type?: DocumentType): Promise<JobDocument[]> {
-  const url = new URL(`${BASE_URL}/jobs/${jobId}/documents`)
-  if (type !== undefined) {
-    url.searchParams.set("type", type)
-  }
-  const response = await apiFetch(url.toString())
+  // new URL() requires an absolute URL — use string concat instead so relative BASE_URL works in prod
+  const query = type !== undefined ? `?type=${encodeURIComponent(type)}` : ''
+  const response = await apiFetch(`${BASE_URL}/jobs/${jobId}/documents${query}`)
   return handleResponse<JobDocument[]>(response)
 }
 
