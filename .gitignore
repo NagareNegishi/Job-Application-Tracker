@@ -45,3 +45,6 @@ appsettings.Development.json
 
 # Claude code
 creds.json
+
+# Document Storage for dev version
+uploads
