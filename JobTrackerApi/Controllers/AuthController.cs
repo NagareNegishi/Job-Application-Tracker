@@ -33,6 +33,21 @@ public class AuthController : ControllerBase
         _env = env;
     }
 
+    // Demo login — bypasses password check, issues tokens for the seeded demo account directly
+    [HttpPost("demo")]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> Demo()
+    {
+        var user = await _userManager.FindByEmailAsync(DemoUser.Email);
+        if (user == null) return StatusCode(503, new { message = "Demo account unavailable." });
+
+        var accessToken = GenerateAccessToken(user);
+        var refreshToken = await CreateRefreshTokenAsync(user.Id);
+
+        SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
+        return Ok(new { accessToken });
+    }
+
     // Register, Identity requires a UserName, using email for both keeps things simple
     [HttpPost("register")]
     [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents registration spam
