@@ -1,7 +1,7 @@
 # Demo and Auth Features Plan
 
 > **⚠ DECISIONS NOT FINALISED**
-> This document is a planning draft. Technical approach for each step is marked as **[DECISION REQUIRED]** where a choice has not been confirmed. Do not begin implementation until the relevant decision is made.
+> Steps 1 and 2 have decisions locked (see Open Decisions Summary). Steps 3–6 still require decisions before implementation.
 
 ---
 
@@ -10,7 +10,7 @@
 | Step | Item | Status |
 |---|---|---|
 | 1 | Demo user + "Try Demo" button | Pending |
-| 2 | Periodic demo data reset | Pending |
+| 2 | Periodic demo data reset + login re-seed | Pending |
 | 3 | Change password | Pending |
 | 4 | AWS SES setup (email infrastructure) | Pending |
 | 5 | Forgot password | Pending |
@@ -22,62 +22,59 @@
 
 **Goal:** Let visitors try the app without registering. One button on the login page logs them in as a fixed demo account automatically.
 
+**Decisions locked:**
+- Registration stays open — demo button is an optional shortcut, not a replacement
+- Startup seed in `Program.cs` — idempotent, no migration needed, easy to update
+- Demo user email: `demo@jobtracker.com` (fake address, no real mailbox needed)
+- Demo user password: strong random value stored in DB but never used — `/api/auth/demo` bypasses password check entirely
+
 ### Backend
 
-- Seed a demo user into the DB (fixed email, e.g. `demo@jobtracker.com`) on startup or via a migration
-- Add `POST /api/auth/demo` endpoint — finds the demo user, returns access token + sets refresh cookie, same as login
-- Rate-limit the `/demo` endpoint (reuse the existing `"auth"` rate limiting policy)
-
-**[DECISION REQUIRED] — Demo user seeding approach:**
-
-| Option | Notes |
-|---|---|
-| EF Core migration with hardcoded credentials | Simple, reproducible, runs in CI. Password hash is environment-specific (Identity hashes differ per instance). Harder to rotate credentials. |
-| Application startup seed (in `Program.cs`) | Runs on every start, idempotent — skips if user already exists. Easy to change. No migration needed. |
-| Manual one-time creation via register endpoint | Zero code. Fragile — deleted user breaks the demo. |
-
-Leaning toward **startup seed in `Program.cs`** — idempotent, no migration, easy to update.
-
-**[DECISION REQUIRED] — Should visitors be able to register their own accounts, or demo-only?**
-
-Affects whether the Register page/route stays public or gets hidden/disabled for the demo.
+- Startup seed: on app start, check if `demo@jobtracker.com` exists — create it if not (password never used)
+- Add `POST /api/auth/demo` endpoint — looks up demo user by email, issues access token + sets refresh cookie directly, no password check
+- Rate-limit `/demo` with the existing `"auth"` policy
+- **Demo restrictions** (enforced by checking `user.Email == "demo@jobtracker.com"` in relevant endpoints):
+  - Cannot upload documents → 403
+  - Cannot delete documents → 403
+  - Cannot change password → 403 (Step 3)
+  - Document upload/delete endpoints return a clear message: `"Document upload and delete are not available in demo mode."`
 
 ### Frontend
 
 - Add "Try Demo" button to the login page
-- Button calls `/api/auth/demo`, then navigates to `/jobs` on success — same flow as login
+- Button calls `POST /api/auth/demo`, navigates to `/jobs` on success — same flow as login
 - No form fields needed
+- When document upload/delete returns 403, show inline note: "This feature is not available in demo mode. Create an account to try it." (not a generic error toast)
 
 ---
 
-## Step 2 — Periodic Demo Data Reset
+## Step 2 — Demo Data Reset + Login Re-seed
 
-**Goal:** Keep the demo account's data clean without manual intervention. Resets jobs/documents for the demo user on a schedule.
+**Goal:** Keep demo account data clean automatically and ensure every visitor sees a populated demo.
 
-**[DECISION REQUIRED] — Reset mechanism:**
-
-| Option | Notes |
-|---|---|
-| GitHub Actions scheduled workflow (cron) | Calls a protected reset endpoint via HTTP. No server changes needed. Easy to monitor (Actions UI shows run history). Requires a secret API key to authorise the call. |
-| Cron job on EC2 host | `crontab -e` on EC2, calls reset endpoint via `curl`. No GitHub Actions dependency. Harder to monitor/audit. |
-| Backend `IHostedService` on a timer | Runs inside the app process. No external trigger needed. Harder to inspect or trigger manually. |
-
-Leaning toward **GitHub Actions scheduled workflow** — consistent with existing CI/CD approach, visible run history, easy to trigger manually.
+**Decisions locked:**
+- **On every demo login:** check which predefined sample jobs are missing (by title + company), insert only the missing ones — visitor additions are left alone, deleted samples are restored
+- **Nightly cron (GitHub Actions scheduled workflow):** full wipe of all demo user jobs + re-seed from scratch — clears visitor-added data and any accumulated mess
+- **Documents are never pre-seeded** — avoids S3 cost; visitors can see the upload UI but cannot use it in demo mode (Step 1)
 
 ### Backend
 
-- Add `POST /api/auth/demo/reset` endpoint
-- Deletes all jobs (and cascading documents, contacts, correspondences) owned by the demo user
-- Optionally re-seeds a few sample jobs so the demo isn't empty after reset
-- Authorised by a secret header (e.g. `X-Reset-Key`) — not JWT, since this is called from outside
-- Demo user account itself is never deleted — only data
+- `POST /api/auth/demo` (from Step 1) calls re-seed logic before issuing token:
+  - Query existing demo jobs by title + company
+  - Insert any predefined jobs that are missing
+  - Predefined set: ~3–5 sample jobs with varied statuses, priorities, contacts, correspondences
+- `POST /api/auth/demo/reset` — separate endpoint for nightly cron:
+  - Deletes all jobs owned by demo user (documents cascade from DB; S3 files deleted via `IStorageService.DeleteAsync` before DB delete to avoid orphans)
+  - Re-seeds full predefined job set
+  - Authorised by secret header `X-Reset-Key` (not JWT — called from GitHub Actions, not a logged-in user)
+  - Demo user account itself is never deleted
 
-**[DECISION REQUIRED] — Re-seed sample data on reset?**
+### GitHub Actions
 
-| Option | Notes |
-|---|---|
-| Reset to empty | Simplest. Demo starts blank after each reset. |
-| Reset with sample jobs | Better first impression — visitor lands on a non-empty list. Requires hardcoded seed data. |
+- New scheduled workflow (separate from `deploy.yml`) — runs nightly (e.g. `0 3 * * *` UTC)
+- `curl -X POST https://jobtracker.nagarenegishi.com/api/auth/demo/reset -H "X-Reset-Key: ${{ secrets.DEMO_RESET_KEY }}"`
+- `DEMO_RESET_KEY` added as a GitHub Actions secret
+- `workflow_dispatch` trigger included — allows manual reset from Actions UI
 
 ---
 
@@ -91,9 +88,9 @@ No external services required — ASP.NET Identity provides `ChangePasswordAsync
 
 - Add `POST /api/auth/change-password` endpoint (requires `[Authorize]`)
 - DTO: `{ currentPassword, newPassword, confirmNewPassword }`
-- Calls `_userManager.ChangePasswordAsync(...)` — Identity validates the current password and enforces password rules
-- Returns 400 with errors on failure (wrong current password, weak new password, etc.)
-- **Guard: demo user cannot change password** — check `user.Email == demoemail` and return 403
+- Calls `_userManager.ChangePasswordAsync(...)` — Identity validates current password and enforces password rules
+- Returns 400 with errors on failure
+- Demo user blocked — returns 403
 
 **[DECISION REQUIRED] — Where to surface this in the UI?**
 
@@ -148,7 +145,7 @@ Leaning toward **AWSSDK.SimpleEmailV2** — already using AWS SDK pattern for S3
 
 **Requires:** Step 4 (SES) complete.
 
-ASP.NET Identity provides `GeneratePasswordResetTokenAsync` and `ResetPasswordAsync` — the token generation and validation are built in.
+ASP.NET Identity provides `GeneratePasswordResetTokenAsync` and `ResetPasswordAsync` — token generation and validation are built in.
 
 ### Backend
 
@@ -186,12 +183,12 @@ Identity's default reset token expiry is 1 day. Configurable via `DataProtection
 
 ASP.NET Identity provides `GenerateEmailConfirmationTokenAsync` and `ConfirmEmailAsync`. The `EmailConfirmed` flag on `IdentityUser` is set to `true` after confirmation.
 
-**[DECISION REQUIRED] — Whether to implement this at all for the demo:**
+**[DECISION REQUIRED] — Whether to implement this at all:**
 
 | Option | Notes |
 |---|---|
 | Implement verification | Adds friction to registration. Prevents spam. Makes the app more production-realistic. |
-| Skip for now | Demo-user flow means most visitors won't register. Can be added later if spam becomes a problem. |
+| Skip for now | Most visitors will use demo and not register. Can be added later if spam becomes a problem. |
 
 If implemented:
 
@@ -200,7 +197,7 @@ If implemented:
 - Update `Register` endpoint: after creating user, generate email confirmation token and send verification email
 - Add `GET /api/auth/confirm-email?userId=...&token=...` endpoint — calls `ConfirmEmailAsync`, redirects to frontend
 - Update `Login` endpoint: check `user.EmailConfirmed` — return 403 with `"Email not verified"` if false
-- Demo user: mark `EmailConfirmed = true` in seed so the demo button is unaffected
+- Demo user: `EmailConfirmed = true` in startup seed — unaffected by this feature
 
 **[DECISION REQUIRED] — Confirm email flow:**
 
@@ -219,19 +216,36 @@ If implemented:
 
 ---
 
+## Future Enhancement — Rate Limiting on Document Operations
+
+> **Not blocking current work. Revisit if abuse is observed in production.**
+
+Current rate limiting covers auth endpoints only (IP-based, 5 req/min). Document upload and delete have no limit for real users.
+
+Potential approach:
+- Per-user rate limit (keyed on JWT user ID claim, not IP) — more accurate for authenticated endpoints
+- Separate policy for document operations, e.g. 20 uploads per user per hour
+- ASP.NET's built-in rate limiter supports custom partition keys — requires a custom policy that reads the user ID from `HttpContext.User`
+
+Demo users are already blocked from upload/delete entirely (Step 1), so this only applies to registered users.
+
+---
+
 ## Open Decisions Summary
 
-| # | Decision | Options |
+| # | Decision | Status |
 |---|---|---|
-| 1-A | Demo user seeding approach | Startup seed vs migration vs manual |
-| 1-B | Allow public registration alongside demo? | Yes (keep register page) / No (demo-only) |
-| 2-A | Reset mechanism | GitHub Actions cron / EC2 cron / hosted service |
-| 2-B | Re-seed sample data on reset? | Empty / Pre-populated sample jobs |
-| 3-A | Change password UI location | Settings page / NavBar modal |
-| 4-A | SES sending identity | Domain verification / Single email |
-| 4-B | Email library | AWSSDK.SimpleEmailV2 / MailKit |
-| 5-A | Reset link format | Frontend route / Backend redirect |
-| 5-B | Token expiry | Default 1 day / Custom |
-| 6-A | Implement email verification at all? | Yes / Skip for demo |
-| 6-B | Confirm email flow | Backend redirect / Frontend calls API |
-| 6-C | Resend verification endpoint | Yes / No |
+| 1-A | Demo user seeding approach | **Locked: startup seed in `Program.cs`** |
+| 1-B | Allow public registration alongside demo? | **Locked: yes, registration stays open** |
+| 1-C | Demo document restrictions | **Locked: upload + delete blocked for demo user, inline message shown** |
+| 2-A | Reset mechanism | **Locked: GitHub Actions nightly cron** |
+| 2-B | Re-seed on demo login? | **Locked: yes — insert missing predefined jobs on every demo login** |
+| 2-C | Pre-seed documents? | **Locked: no — avoids S3 cost** |
+| 3-A | Change password UI location | **[DECISION REQUIRED]** Settings page / NavBar modal |
+| 4-A | SES sending identity | **[DECISION REQUIRED]** Domain verification / Single email |
+| 4-B | Email library | **[DECISION REQUIRED]** AWSSDK.SimpleEmailV2 / MailKit |
+| 5-A | Reset link format | **[DECISION REQUIRED]** Frontend route / Backend redirect |
+| 5-B | Token expiry | **[DECISION REQUIRED]** Default 1 day / Custom |
+| 6-A | Implement email verification at all? | **[DECISION REQUIRED]** Yes / Skip |
+| 6-B | Confirm email flow | **[DECISION REQUIRED]** Backend redirect / Frontend calls API |
+| 6-C | Resend verification endpoint | **[DECISION REQUIRED]** Yes / No |
