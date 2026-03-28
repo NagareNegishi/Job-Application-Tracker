@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { DocumentCard } from "@/components/DocumentCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateDocument, useDocuments } from "@/hooks/documentQuery"
+import { ApiError } from "@/lib/api"
 import type { DocumentType } from "@/types/enums"
 import { Plus } from "lucide-react"
 import { useRef, useState } from "react"
@@ -14,12 +15,21 @@ export function DocumentList({ jobId }: DocumentListProps) {
   const { data: documents, isPending, isError } = useDocuments(jobId)
   const { mutate: addDocument, isPending: isUploading } = useCreateDocument()
   const [selectedType, setSelectedType] = useState<DocumentType>("Other")
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    addDocument({ jobId, data: { file, type: selectedType } })
+    addDocument(
+      { jobId, data: { file, type: selectedType } },
+      {
+        onSuccess: () => setUploadError(null),
+        onError: (err) => setUploadError(
+          err instanceof ApiError ? err.message : "Failed to upload document."
+        )
+      }
+    )
     e.target.value = ""
   }
 
@@ -57,6 +67,8 @@ export function DocumentList({ jobId }: DocumentListProps) {
           </Button>
         </div>
       </div>
+      {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
+
       {documents.length === 0
         ? <p className="text-muted-foreground">No documents uploaded.</p>
         : documents.map(doc => <DocumentCard key={doc.docId} document={doc} />)

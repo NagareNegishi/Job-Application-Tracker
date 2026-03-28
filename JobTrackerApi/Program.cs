@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using System.Text;
 using JobTrackerApi.Data;
+using JobTrackerApi.Models;
 using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -243,5 +244,21 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         });
     }
 }).AllowAnonymous();
+
+// Seed demo user on startup — idempotent, skips if already exists
+// UserManager is a scoped service so it must be resolved inside a manually created scope.
+// This is the standard pattern for using scoped DI services outside of a request.
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#scope-validation
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    if (await userManager.FindByEmailAsync(DemoUser.Email) == null)
+    {
+        var demo = new IdentityUser { UserName = DemoUser.Email, Email = DemoUser.Email };
+        // Password is never used — demo endpoint bypasses auth entirely.
+        // Random GUID + fixed suffix satisfies Identity's complexity rules (upper, digit, special char).
+        await userManager.CreateAsync(demo, Guid.NewGuid().ToString() + "Aa1!");
+    }
+}
 
 app.Run();

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api"
-import { login } from "@/services/authService"
+import { login, loginDemo } from "@/services/authService"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router"
 
@@ -12,7 +12,21 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const navigate = useNavigate()
+
+  async function handleDemo() {
+    setError(null)
+    setDemoLoading(true)
+    try {
+      await loginDemo()
+      navigate("/jobs")
+    } catch {
+      setError("Demo login failed. Please try again.")
+    } finally {
+      setDemoLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -51,6 +65,20 @@ export default function LoginPage() {
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Signing in..." : "Sign in"}
+        </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs text-muted-foreground">
+            <span className="bg-background px-2">or</span>
+          </div>
+        </div>
+
+        <Button type="button" variant="outline" className="w-full"
+          onClick={handleDemo} disabled={loading || demoLoading}>
+          {demoLoading ? "Loading demo..." : "Try Demo"}
         </Button>
 
         <p className="text-sm text-center">

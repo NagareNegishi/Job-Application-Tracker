@@ -95,6 +95,7 @@ public class DocumentsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+        if (IsDemo()) return StatusCode(403, new { message = "Document upload is not available in demo mode." });
 
         // Validate the uploaded file and max document per job
         if (!dto.HasValidExtension()) {
@@ -144,6 +145,7 @@ public class DocumentsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
+        if (IsDemo()) return StatusCode(403, new { message = "Document delete is not available in demo mode." });
 
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
@@ -204,9 +206,11 @@ public class DocumentsController : ControllerBase
     private async Task<bool> JobBelongsToUserAsync(int jobId, string? userId) =>
         await _context.Jobs.AnyAsync(j => j.Id == jobId && j.UserId == userId);
 
-    private bool DocumentsExists(int id)
-    {
-        return _context.Documents.Any(e => e.Id == id);
-    }
+    // Returns true if the current request is authenticated as the demo account
+    private bool IsDemo() =>
+        User.FindFirstValue("email") == DemoUser.Email;
+
+    private bool DocumentsExists(int id) =>
+        _context.Documents.Any(e => e.Id == id);
 
 }
