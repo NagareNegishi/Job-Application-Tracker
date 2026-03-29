@@ -177,7 +177,7 @@ Ubuntu AMI — installed via SSH from WSL:
 - Docker 28.x + Docker Compose v5 plugin
 - AWS CLI v2 (installed via official installer — apt package unavailable on this Ubuntu version)
 - `/home/ubuntu/app/` directory created for compose file
-- IAM instance role: originally `jobtracker_ec2_ecr_pull` (`AmazonEC2ContainerRegistryReadOnly` only) — **pending replacement** with new role `jobtracker_ec2_role` (same ECR policy + inline S3 policy `jobtracker-s3-access`). IAM role names are immutable so a new role must be created and swapped on the EC2 instance. Role description: `EC2 instance role for Job Tracker — grants ECR image pull and S3 document storage access`
+- IAM instance role: `jobtracker_ec2_role` — `AmazonEC2ContainerRegistryReadOnly` (managed) + `jobtracker-s3-access` (inline: `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` scoped to app bucket). Replaced original `jobtracker_ec2_ecr_pull` role (ECR only — caused 500 on document upload). IAM role names are immutable — new role created and swapped via EC2 console → Actions → Security → Modify IAM role.
 
 ---
 
@@ -205,6 +205,12 @@ Ubuntu AMI — installed via SSH from WSL:
 - nginx container: up, serving React static files over HTTP
 - HTTP accessible: `curl http://jobtracker.nagarenegishi.com` returns React HTML
 - HTTPS: pending — Certbot not yet configured (see Step 8b-1)
+
+**Issues fixed post-first-deploy (merged experiment_claude → main):**
+- `DocumentsController.cs`: `IsDemo()` now uses `ClaimTypes.Email` instead of hardcoded `"email"` string — JWT middleware remaps the claim; hardcoded string caused demo restrictions to silently fail
+- `LocalStorageService.cs`: auto-creates uploads directory on startup if missing (dev mode)
+- Demo mode 403 error messages updated to be user-facing
+- EC2 IAM role swapped to `jobtracker_ec2_role` — fixed 500 on S3 document upload (see EC2 one-time setup above)
 
 **Issues fixed during first deploy:**
 - `jobTable.tsx` → `JobTable.tsx` — case mismatch caused Docker build failure on Linux
