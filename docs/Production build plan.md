@@ -59,7 +59,7 @@ One origin — no CORS needed. `try_files $uri $uri/ /index.html` for SPA routin
 - `DocumentsController` download endpoint updated: redirects to pre-signed URL if available, falls back to stream (local dev only)
 - DI wired in `Program.cs`: `AddAWSService<IAmazonS3>()` + env-conditional registration (`LocalStorageService` in dev, `S3StorageService` in prod)
 - NuGet: `AWSSDK.S3`, `AWSSDK.Extensions.NETCore.Setup`
-- Still needed: `Storage:S3BucketName` in `appsettings.Production.json`, IAM role on EC2 with S3 permissions, `AWS_REGION=ap-southeast-2` in EC2 environment
+- Still needed: IAM role on EC2 with S3 permissions — `Storage:S3BucketName` and `AWS_REGION` already wired in `compose.prod.yml`
 
 ### 2b-2: Backend Dockerfile
 - `JobTrackerApi/Dockerfile` — multi-stage: `dotnet/sdk:10.0` → `dotnet/aspnet:10.0`
@@ -138,7 +138,7 @@ Key details:
 - `docker/setup-buildx-action` required as precondition for `docker/build-push-action`
 - Backend build context is repo root (needs `.sln`); nginx build context is `job-tracker-ui/` only
 - SCP + SSH use plain `run:` steps with standard CLI tools — no third-party actions for secret transfer
-- ECR login runs on EC2 (not runner) — EC2 is the machine pulling images; uses IAM instance role `jobtracker_ec2_ecr_pull` (`AmazonEC2ContainerRegistryReadOnly`) — no AWS credentials needed on EC2
+- ECR login runs on EC2 (not runner) — EC2 is the machine pulling images; uses IAM instance role (see below) — no AWS credentials needed on EC2
 - `docker pull` both images before `up` — minimises mixed-version window during restart
 - EC2 username is `ubuntu` (Ubuntu AMI), home at `/home/ubuntu/`
 - `compose.prod.yml` deployed to `/home/ubuntu/app/`
@@ -177,7 +177,7 @@ Ubuntu AMI — installed via SSH from WSL:
 - Docker 28.x + Docker Compose v5 plugin
 - AWS CLI v2 (installed via official installer — apt package unavailable on this Ubuntu version)
 - `/home/ubuntu/app/` directory created for compose file
-- IAM instance role `jobtracker_ec2_ecr_pull` attached (`AmazonEC2ContainerRegistryReadOnly`) — allows EC2 to pull from ECR without static credentials
+- IAM instance role: originally `jobtracker_ec2_ecr_pull` (`AmazonEC2ContainerRegistryReadOnly` only) — **pending replacement** with new role `jobtracker_ec2_role` (same ECR policy + inline S3 policy `jobtracker-s3-access`). IAM role names are immutable so a new role must be created and swapped on the EC2 instance. Role description: `EC2 instance role for Job Tracker — grants ECR image pull and S3 document storage access`
 
 ---
 
