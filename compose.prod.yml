@@ -31,5 +31,6 @@ services:
       - Jwt__Issuer=${JWT_ISSUER}
       - Jwt__Audience=${JWT_AUDIENCE}
       - Storage__S3BucketName=${S3_BUCKET_NAME}
+      - Demo__ResetKey=${DEMO_RESET_KEY}
       - AWS_REGION=ap-southeast-2  # AWS SDK reads this automatically for S3 + IAM
     restart: unless-stopped
