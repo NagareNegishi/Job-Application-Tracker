@@ -1,5 +1,6 @@
 using JobTrackerApi.Data;
 using JobTrackerApi.Models;
+using JobTrackerApi.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,17 +21,20 @@ public class AuthController : ControllerBase
     private readonly IConfiguration _config;
     private readonly JobTrackerContext _context;
     private readonly IWebHostEnvironment _env;
+    private readonly IStorageService _storageService;
 
     public AuthController(
         UserManager<IdentityUser> userManager,
         IConfiguration config,
         JobTrackerContext context,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        IStorageService storageService)
     {
         _userManager = userManager;
         _config = config;
         _context = context;
         _env = env;
+        _storageService = storageService;
     }
 
     // Demo login — bypasses password check, issues tokens for the seeded demo account directly
@@ -41,11 +45,56 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByEmailAsync(DemoUser.Email);
         if (user == null) return StatusCode(503, new { message = "Demo account unavailable." });
 
+        // Re-seed any predefined jobs that are missing — visitor deletions are restored, additions left alone
+        var existingKeys = await _context.Jobs
+            .Where(j => j.UserId == user.Id)
+            .Select(j => new { j.Company, j.Role })
+            .ToListAsync();
+
+        var missingJobs = DemoSeed.CreateJobs(user.Id)
+            .Where(j => !existingKeys.Any(e => e.Company == j.Company && e.Role == j.Role))
+            .ToList();
+
+        if (missingJobs.Count > 0)
+        {
+            _context.Jobs.AddRange(missingJobs);
+            await _context.SaveChangesAsync();
+        }
+
         var accessToken = GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
         return Ok(new { accessToken });
+    }
+
+    // Nightly cron reset — full wipe + re-seed, authorized by X-Reset-Key header (not JWT)
+    [HttpPost("demo/reset")]
+    public async Task<IActionResult> DemoReset([FromHeader(Name = "X-Reset-Key")] string? resetKey)
+    {
+        var expected = _config["Demo:ResetKey"];
+        if (string.IsNullOrEmpty(expected) || resetKey != expected)
+            return Unauthorized();
+
+        var user = await _userManager.FindByEmailAsync(DemoUser.Email);
+        if (user == null) return StatusCode(503, new { message = "Demo account unavailable." });
+
+        // Delete S3 files before removing DB records to avoid orphans
+        var jobs = await _context.Jobs
+            .Where(j => j.UserId == user.Id)
+            .Include(j => j.Documents)
+            .ToListAsync();
+
+        foreach (var doc in jobs.SelectMany(j => j.Documents))
+            await _storageService.DeleteAsync(doc.StoredName);
+
+        _context.Jobs.RemoveRange(jobs);
+        await _context.SaveChangesAsync();
+
+        _context.Jobs.AddRange(DemoSeed.CreateJobs(user.Id));
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Demo data reset." });
     }
 
     // Register, Identity requires a UserName, using email for both keeps things simple

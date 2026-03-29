@@ -1,7 +1,7 @@
 # Demo and Auth Features Plan
 
 > **⚠ DECISIONS NOT FINALISED**
-> Steps 1 and 2 have decisions locked (see Open Decisions Summary). Steps 3–6 still require decisions before implementation.
+> Steps 1 and 2 are complete. Steps 3–6 still require decisions before implementation.
 
 ---
 
@@ -10,7 +10,7 @@
 | Step | Item | Status |
 |---|---|---|
 | 1 | Demo user + "Try Demo" button | Done |
-| 2 | Periodic demo data reset + login re-seed | Pending |
+| 2 | Periodic demo data reset + login re-seed | Done |
 | 3 | Change password | Pending |
 | 4 | AWS SES setup (email infrastructure) | Pending |
 | 5 | Forgot password | Pending |
@@ -75,6 +75,15 @@
 - `curl -X POST https://jobtracker.nagarenegishi.com/api/auth/demo/reset -H "X-Reset-Key: ${{ secrets.DEMO_RESET_KEY }}"`
 - `DEMO_RESET_KEY` added as a GitHub Actions secret
 - `workflow_dispatch` trigger included — allows manual reset from Actions UI
+
+### Implementation notes
+
+- `JobTrackerApi/Models/DemoSeed.cs` — static class holding `JobKeys` (Company + Role pairs for missing-check) and `CreateJobs(userId)` (returns 3 sample jobs: Wishlist / Interview / Rejected)
+- Sample companies: `Sample Corp`, `Demo Industries`, `Example Ltd` — clearly fictional, professional-looking
+- Correspondence dates are relative to `DateTime.UtcNow` — always look recent after a reset
+- `AuthController` now injects `IStorageService` (needed by the reset endpoint to delete S3 files before DB records)
+- `Demo:ResetKey` config key wired in `compose.prod.yml` as `Demo__ResetKey=${DEMO_RESET_KEY}`; exported in `deploy.yml` SSH session alongside other secrets
+- `--fail` flag on curl — workflow step fails visibly if endpoint returns 4xx/5xx
 
 ---
 
