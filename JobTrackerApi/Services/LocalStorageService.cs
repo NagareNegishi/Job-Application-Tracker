@@ -10,6 +10,7 @@ public class LocalStorageService : IStorageService
         if (string.IsNullOrEmpty(path))
             throw new InvalidOperationException("Storage:UploadsPath is not configured in appsettings.");
         _uploadsPath = path;
+        Directory.CreateDirectory(_uploadsPath);
     }
 
     public async Task<string> SaveAsync(IFormFile file, string storedName)

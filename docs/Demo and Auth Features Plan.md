@@ -9,7 +9,7 @@
 
 | Step | Item | Status |
 |---|---|---|
-| 1 | Demo user + "Try Demo" button | Pending |
+| 1 | Demo user + "Try Demo" button | Done |
 | 2 | Periodic demo data reset + login re-seed | Pending |
 | 3 | Change password | Pending |
 | 4 | AWS SES setup (email infrastructure) | Pending |

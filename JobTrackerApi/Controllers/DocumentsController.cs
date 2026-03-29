@@ -95,7 +95,7 @@ public class DocumentsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
-        if (IsDemo()) return StatusCode(403, new { message = "Document upload is not available in demo mode." });
+        if (IsDemo()) return StatusCode(403, new { message = "Document upload is not available in demo mode. Create a free account to try this feature." });
 
         // Validate the uploaded file and max document per job
         if (!dto.HasValidExtension()) {
@@ -145,7 +145,7 @@ public class DocumentsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!await JobBelongsToUserAsync(jobId, userId)) return NotFound();
-        if (IsDemo()) return StatusCode(403, new { message = "Document delete is not available in demo mode." });
+        if (IsDemo()) return StatusCode(403, new { message = "Document delete is not available in demo mode. Create a free account to try this feature." });
 
         var document = await _context.Documents.FindAsync(id);
         if (document == null) return NotFound();
@@ -207,8 +207,9 @@ public class DocumentsController : ControllerBase
         await _context.Jobs.AnyAsync(j => j.Id == jobId && j.UserId == userId);
 
     // Returns true if the current request is authenticated as the demo account
+    // JWT middleware maps "email" → ClaimTypes.Email — "email" (short name) no longer exists in User.Claims
     private bool IsDemo() =>
-        User.FindFirstValue("email") == DemoUser.Email;
+        User.FindFirstValue(ClaimTypes.Email) == DemoUser.Email;
 
     private bool DocumentsExists(int id) =>
         _context.Documents.Any(e => e.Id == id);
