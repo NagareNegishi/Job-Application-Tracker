@@ -1,0 +1,16 @@
+name: Reset Demo Data
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 3am UTC daily
+  workflow_dispatch:       # manual trigger from GitHub Actions UI
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reset demo data
+        run: |
+          curl -X POST https://jobtracker.nagarenegishi.com/api/auth/demo/reset \
+               -H "X-Reset-Key: ${{ secrets.DEMO_RESET_KEY }}" \
+               --fail
