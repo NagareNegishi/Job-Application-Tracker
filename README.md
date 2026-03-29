@@ -6,57 +6,61 @@ Full-stack job application tracking system built with ASP.NET Core and React.
 
 **Backend:** ASP.NET Core 10 Web API, Entity Framework Core, PostgreSQL, ASP.NET Identity + JWT
 **Frontend:** React 19 + TypeScript + Vite
+**Storage:** AWS S3 (production), local filesystem (development)
+**Infrastructure:** EC2 + Docker Compose, RDS PostgreSQL, ECR
 **Testing:** xUnit
-**Deployment:** Docker (Dev Container)
+**CI/CD:** GitHub Actions (test → build → migrate → deploy)
+
+## Features
+
+- Track job applications through a status pipeline (Wishlist → Applied → Screening → Interview → Offer / Rejected)
+- Attach documents (CV, cover letter) per application
+- Contact and correspondence history per application
+- JWT authentication with httpOnly refresh token rotation
+- Demo mode — try the app without registering
 
 ## Problem
 
 Tracking 50-200+ job applications requires structured data management.
-
-## Solution
-
-RESTful API with job tracking, document management (CV/cover letter references), and status pipeline. Documents stored locally for privacy; metadata in database. All endpoints protected by JWT Bearer auth with httpOnly cookie refresh token rotation.
-
-## Local Setup
-
-```bash
-# Backend
-cd JobTrackerApi
-dotnet restore
-dotnet ef database update
-dotnet run --launch-profile https
-
-# Frontend
-cd job-tracker-ui
-npm install
-npm run dev
-```
-
-Requires: .NET SDK 10, Node.js 18+, PostgreSQL 14+
-
-> **Note:** The backend requires `appsettings.Development.json` (gitignored).
-> Create it in `JobTrackerApi/` with your JWT config:
-> ```json
-> {
->   "ConnectionStrings": { "JobTrackerContext": "<your-connection-string>" },
->   "Jwt": {
->     "Key": "<min-32-char-secret>",
->     "Issuer": "JobTrackerApi",
->     "Audience": "JobTrackerClient",
->     "ExpiryMinutes": 15,
->     "RefreshExpiryDays": 7
->   },
->   "Storage": { "UploadsPath": "<path-to-uploads-folder>" },
->   "Cors": { "AllowedOrigins": ["http://localhost:5173"] }
-> }
-> ```
-
-## Status Pipeline
-
-Wishlist → Applied → Screening → Interview → Offer/Rejected
 
 ## Project Goals
 
 1. **Functional:** Daily-use job tracking tool
 2. **Portfolio:** Demonstrate C#/.NET + full-stack capability
 3. **Market:** Open Wellington .NET job opportunities
+
+---
+
+## Local Development
+
+The project runs in a Dev Container (recommended — PostgreSQL included as a Docker service).
+
+1. Open in VS Code with the Dev Containers extension
+2. Create `JobTrackerApi/appsettings.Development.json` (gitignored):
+```json
+{
+  "ConnectionStrings": { "JobTrackerContext": "<your-connection-string>" },
+  "Jwt": {
+    "Key": "<min-32-char-secret>",
+    "Issuer": "JobTrackerApi",
+    "Audience": "JobTrackerClient",
+    "ExpiryMinutes": 15,
+    "RefreshExpiryDays": 7
+  },
+  "Storage": { "UploadsPath": "<path-to-uploads-folder>" },
+  "Cors": { "AllowedOrigins": ["http://localhost:5173"] }
+}
+```
+3. Run migrations: `cd JobTrackerApi && dotnet ef database update`
+4. Start backend: `cd JobTrackerApi && dotnet run --launch-profile https`
+5. Start frontend: `cd job-tracker-ui && npm install && npm run dev`
+
+In development, documents are stored in the local filesystem path set in `Storage:UploadsPath`. The folder is created automatically on startup if it does not exist.
+
+---
+
+## Production Deployment
+
+Deployed on AWS: EC2 (Docker Compose) + RDS PostgreSQL + S3 document storage. nginx handles SSL termination and serves the React frontend; the backend runs on the internal Docker network only.
+
+See [`docs/deployment-setup.md`](docs/deployment-setup.md) for required AWS infrastructure, GitHub Actions secrets, and EC2 setup.
