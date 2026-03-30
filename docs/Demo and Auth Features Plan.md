@@ -1,7 +1,7 @@
 # Demo and Auth Features Plan
 
 > **⚠ DECISIONS NOT FINALISED**
-> Steps 1 and 2 are complete. Steps 3–6 still require decisions before implementation.
+> Steps 1–4 (partial) are complete. Implementation order revised: Step 6 (email verification) before Step 5 (forgot password) — verification is foundational; forgot password is only meaningful once emails are confirmed.
 
 ---
 
@@ -12,9 +12,9 @@
 | 1 | Demo user + "Try Demo" button | Done |
 | 2 | Periodic demo data reset + login re-seed | Done |
 | 3 | Change password | Done |
-| 4 | AWS SES setup (email infrastructure) | Pending |
-| 5 | Forgot password | Pending |
-| 6 | Email verification on register | Pending |
+| 4 | AWS SES setup (email infrastructure) | Done (pending production access approval) |
+| 6 | Email verification on register | Pending (implement first) |
+| 5 | Forgot password | Pending (implement after Step 6) |
 
 ---
 
@@ -121,30 +121,26 @@ No external services required — ASP.NET Identity provides `ChangePasswordAsync
 
 **Goal:** Enable the app to send transactional emails. Required by Steps 5 and 6. No code changes in this step — infrastructure only.
 
-**[DECISION REQUIRED] — SES sending identity:**
-
-| Option | Notes |
-|---|---|
-| Verify domain (`nagarenegishi.com`) | Allows sending from any address at the domain (e.g. `noreply@nagarenegishi.com`). Requires DNS TXT/DKIM records. More professional. |
-| Verify single email address only | Simpler setup. Only that exact address can send. Fine for low volume. |
-
-Leaning toward **domain verification** — one-time DNS setup, more flexible.
+**Decisions locked:**
+- Sending identity: **domain verification** — more professional, one-time DNS setup
+- Email library: **`AWSSDK.SimpleEmailV2`** behind an `IEmailService` abstraction — consistent with existing S3 SDK pattern; abstraction makes future provider swap a single implementation class change
+- DKIM: **Easy DKIM** with **RSA_2048_BIT** signing key
+- Custom MAIL FROM domain: subdomain of verified domain — enables DMARC alignment
+- MAIL FROM MX failure behavior: **Use default MAIL FROM domain** for now — tighten to **Reject** once DNS is confirmed stable in production
+- Sending address: `noreply@<your-domain>` (set in `appsettings.Production.json`)
 
 ### Steps (all infrastructure, no code)
 
-1. Go to AWS SES console → verify sending domain → add DNS records (TXT for domain, CNAME for DKIM)
-2. If account is in SES sandbox: request production access (or add recipient addresses to sandbox for testing)
-3. Create IAM policy for SES `ses:SendEmail` — attach to EC2 instance role (reuses existing IAM role pattern)
-4. Note the sending address and region for `appsettings.Production.json`
+1. ✅ Verify domain in SES console — domain identity created, DKIM and MAIL FROM configured
+2. ✅ Add DNS records in DNS provider — 3 CNAME (DKIM) + 1 MX + 1 TXT (SPF) for custom MAIL FROM subdomain
+3. ✅ Domain verified — DKIM configuration and MAIL FROM configuration both show Verified in SES console
+4. ✅ Request SES production access — submitted, pending AWS approval (typically 24h)
+5. ✅ Create IAM policy for SES `ses:SendEmail` + `ses:SendRawEmail` — attached to EC2 instance role
+6. ⬜ Note sending address and region for `appsettings.Production.json` — do after production access approved
 
-**[DECISION REQUIRED] — Email sending library:**
-
-| Option | Notes |
-|---|---|
-| `AWSSDK.SimpleEmailV2` (SES v2 SDK) | Native AWS, consistent with existing S3 SDK pattern in the project. |
-| `MailKit` + SES SMTP endpoint | SMTP abstraction, not AWS-specific. More portable if hosting changes. Extra NuGet dependency. |
-
-Leaning toward **AWSSDK.SimpleEmailV2** — already using AWS SDK pattern for S3, consistent DI wiring.
+### Notes
+- AWS SES free tier (as of 2026): 3,000 emails/month for first 12 months only (new accounts); $0.10/1,000 after — effectively free at expected volume
+- DNS records added manually via DNS provider (Route 53 auto-publish not used)
 
 ---
 
@@ -163,18 +159,9 @@ ASP.NET Identity provides `GeneratePasswordResetTokenAsync` and `ResetPasswordAs
 - `POST /api/auth/reset-password` — accepts `{ email, token, newPassword }`, calls `ResetPasswordAsync`
   - Token is URL-encoded in the reset link; must be decoded before passing to Identity
 
-**[DECISION REQUIRED] — Reset link format:**
-
-| Option | Notes |
-|---|---|
-| `/reset-password?token=...&email=...` frontend route | Token decoded in the browser, submitted via form. Simple. |
-| `/api/auth/reset-password?token=...` direct backend link | User lands on a backend redirect. Less control over UX. |
-
-Leaning toward **frontend route** — consistent with SPA pattern, better UX.
-
-**[DECISION REQUIRED] — Token expiry:**
-
-Identity's default reset token expiry is 1 day. Configurable via `DataProtectionTokenProviderOptions`. Likely fine as-is — confirm before implementing.
+**Decisions locked:**
+- Reset link format: **frontend route** `/reset-password?token=...&email=...` — consistent with SPA pattern, full UX control
+- Token expiry: **default 1 day** — single-use tokens already limit abuse window; 24h is industry standard for password reset
 
 ### Frontend
 
@@ -192,14 +179,7 @@ Identity's default reset token expiry is 1 day. Configurable via `DataProtection
 
 ASP.NET Identity provides `GenerateEmailConfirmationTokenAsync` and `ConfirmEmailAsync`. The `EmailConfirmed` flag on `IdentityUser` is set to `true` after confirmation.
 
-**[DECISION REQUIRED] — Whether to implement this at all:**
-
-| Option | Notes |
-|---|---|
-| Implement verification | Adds friction to registration. Prevents spam. Makes the app more production-realistic. |
-| Skip for now | Most visitors will use demo and not register. Can be added later if spam becomes a problem. |
-
-If implemented:
+**Decision locked: implement email verification.** Goal is to guarantee every account owns its email address — without verification, users can register with emails they don't own, and forgot password becomes unreliable.
 
 ### Backend
 
