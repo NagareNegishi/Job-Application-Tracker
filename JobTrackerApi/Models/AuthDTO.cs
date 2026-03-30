@@ -15,6 +15,11 @@ public class LoginDTO
     public string Password { get; set; } = "";
 }
 
+public class ResendConfirmationDTO
+{
+    public string Email { get; set; } = "";
+}
+
 public class ChangePasswordDTO
 {
     public string CurrentPassword { get; set; } = "";
