@@ -130,6 +130,45 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Registration successful. Check your email to confirm your account." });
     }
 
+    // Resend confirmation email — always returns 200 to avoid leaking whether the email exists
+    [HttpPost("resend-confirmation")]
+    [EnableRateLimiting("resend-confirmation")] // 3 per hour per IP — each request triggers a real SES call
+    public async Task<IActionResult> ResendConfirmation(ResendConfirmationDTO dto)
+    {
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        // Silently skip if user doesn't exist or is already confirmed
+        if (user == null || user.EmailConfirmed) return Ok();
+
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encoded = Uri.EscapeDataString(token);
+        var link = $"{GetFrontendBaseUrl()}/confirm-email?userId={user.Id}&token={encoded}";
+        await _emailService.SendEmailAsync(
+            user.Email!,
+            "Confirm your email — Job Tracker",
+            $"<p>Click <a href='{link}'>here</a> to confirm your email address.</p><p>If you didn't register, ignore this email.</p>"
+        );
+
+        return Ok();
+    }
+
+    // Confirm email — called by the React /confirm-email page after user clicks the link in their inbox
+    [HttpGet("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        // Same message for missing user and invalid token — avoids leaking whether a userId exists
+        if (user == null) return BadRequest(new { message = "Invalid confirmation link." });
+
+        // Reverse the URL encoding applied in Register before Identity validates the signature
+        var decoded = Uri.UnescapeDataString(token);
+        var result = await _userManager.ConfirmEmailAsync(user, decoded);
+
+        if (!result.Succeeded)
+            return BadRequest(new { message = "Invalid or expired confirmation link." });
+
+        return Ok(new { message = "Email confirmed. You can now log in." });
+    }
+
     // Login
     // https://codewithmukesh.com/blog/aspnet-core-api-with-jwt-authentication/
     [HttpPost("login")]
@@ -140,6 +179,10 @@ public class AuthController : ControllerBase
         // Handle wrong email/password together to prevent attacker guessing
         if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
             return Unauthorized();
+
+        // 403 not 401 — password was correct but account is not yet activated
+        if (!user.EmailConfirmed)
+            return StatusCode(403, new { message = "Email not verified." });
 
         var accessToken = GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
