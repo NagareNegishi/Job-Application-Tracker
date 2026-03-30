@@ -2,6 +2,7 @@ using JobTrackerApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace JobTrackerApi.Controllers;
@@ -24,6 +25,7 @@ public class AccountController : ControllerBase
 
     // Change password — validates current password via Identity, blocks demo user
     [HttpPost("change-password")]
+    [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents brute-forcing with a stolen JWT
     public async Task<IActionResult> ChangePassword(ChangePasswordDTO dto)
     {
         if (User.FindFirstValue(ClaimTypes.Email) == DemoUser.Email)
