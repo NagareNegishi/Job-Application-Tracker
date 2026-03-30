@@ -165,6 +165,15 @@ builder.Services.AddRateLimiter(options =>
         config.QueueLimit = 0;                    // reject immediately — don't queue excess requests
         config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
     });
+
+    // Tighter limit for resend — each request triggers a real SES call with a cost
+    options.AddFixedWindowLimiter("resend-confirmation", config =>
+    {
+        config.Window = TimeSpan.FromHours(1);    // counter resets every 1 hour
+        config.PermitLimit = 3;                   // max 3 resends per hour per IP
+        config.QueueLimit = 0;
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
 });
 
 // CORS only needed in dev — in production, Nginx proxies /api/* so frontend and backend share one origin
