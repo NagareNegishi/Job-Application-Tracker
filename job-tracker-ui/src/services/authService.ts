@@ -32,6 +32,20 @@ export async function loginDemo(): Promise<void> {
   setToken(data.accessToken)
 }
 
+// Calls the authenticated account endpoint — JWT attached automatically by apiFetch
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+  confirmNewPassword: string
+): Promise<void> {
+  const response = await apiFetch(`${BASE_URL}/account/change-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword, confirmNewPassword }),
+  })
+  return handleEmptyResponse(response)
+}
+
 // Always clear local token even if server is unreachable
 export async function logout(): Promise<void> {
   await apiFetch(`${BASE_URL}/auth/logout`, { method: "POST" }).catch(() => {})

@@ -13,8 +13,12 @@ using System.Text;
 
 namespace JobTrackerApi.Controllers;
 
+/// <summary>
+/// Unauthenticated auth flows — register, login, demo login, token refresh, and logout.
+/// No JWT required on these endpoints. Authenticated account management lives in AccountController.
+/// </summary>
 [ApiController]
-[Route("api/auth")] 
+[Route("api/auth")]
 public class AuthController : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager;
