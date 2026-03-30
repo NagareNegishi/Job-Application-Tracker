@@ -7,7 +7,12 @@ export default function ConfirmEmailPage() {
   // useSearchParams reads ?userId=...&token=... from the URL — reactive, no manual URL parsing
   const [searchParams] = useSearchParams()
   const userId = searchParams.get("userId")
-  const token = searchParams.get("token")
+  // Identity tokens contain + chars (base64). URLSearchParams treats raw '+' as space
+  // (HTML form-encoding convention), corrupting the token when clicked from a terminal.
+  // Parse the raw query string with decodeURIComponent instead, which handles both
+  // %2B and raw + correctly as a literal plus sign.
+  const rawToken = /[?&]token=([^&]*)/.exec(window.location.search)?.[1]
+  const token = rawToken ? decodeURIComponent(rawToken) : null
 
   // Union type drives rendering — one state variable, three possible UIs
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
