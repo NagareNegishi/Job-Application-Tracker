@@ -177,6 +177,28 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    // Change password — validates current password via Identity, blocks demo user
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(ChangePasswordDTO dto)
+    {
+        if (User.FindFirstValue(ClaimTypes.Email) == DemoUser.Email)
+            return StatusCode(403, new { message = "Password changes are not available in demo mode." });
+
+        if (dto.NewPassword != dto.ConfirmNewPassword)
+            return BadRequest(new { message = "New passwords do not match." });
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId!);
+        if (user == null) return Unauthorized();
+
+        var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        return Ok();
+    }
+
     // Helper method to set the refresh token as an httpOnly cookie
     private void SetRefreshTokenCookie(string token, DateTime expires)
     {
