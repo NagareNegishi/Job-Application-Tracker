@@ -19,6 +19,24 @@ Full-stack job application tracking system built with ASP.NET Core and React.
 - JWT authentication with httpOnly refresh token rotation
 - Demo mode — try the app without registering
 
+## Demo
+
+A live demo is available at [jobtracker.nagarenegishi.com](https://jobtracker.nagarenegishi.com).
+
+Click **Try Demo** on the login page — no account required. The demo account is pre-loaded with sample job applications across different statuses and priorities.
+
+**Demo limitations:**
+- Document upload and delete are disabled — upload UI is visible but actions return a clear message
+- Password changes are blocked
+
+**Data reset:**
+- On every demo login, any missing sample jobs are automatically restored — visitor deletions come back, visitor additions are left alone
+- Full reset runs nightly at 3am UTC via a scheduled GitHub Actions workflow — clears all data and re-seeds from scratch
+
+To get the full experience (documents, password change), [register a free account](https://jobtracker.nagarenegishi.com/register).
+
+---
+
 ## Problem
 
 Tracking 50-200+ job applications requires structured data management.

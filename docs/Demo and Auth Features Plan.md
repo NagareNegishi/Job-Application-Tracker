@@ -11,7 +11,7 @@
 |---|---|---|
 | 1 | Demo user + "Try Demo" button | Done |
 | 2 | Periodic demo data reset + login re-seed | Done |
-| 3 | Change password | In Progress |
+| 3 | Change password | Done |
 | 4 | AWS SES setup (email infrastructure) | Pending |
 | 5 | Forgot password | Pending |
 | 6 | Email verification on register | Pending |
