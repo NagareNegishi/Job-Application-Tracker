@@ -7,6 +7,7 @@ import JobDetailPage from "./pages/JobDetailPage"
 import JobPage from "./pages/JobPage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
+import SettingsPage from "./pages/SettingsPage"
 
 function App() {
   // the gate. React re-renders when state changes
@@ -30,6 +31,7 @@ function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/jobs" element={<ProtectedRoute><JobPage /></ProtectedRoute>} />
       <Route path="/jobs/:id" element={<ProtectedRoute><JobDetailPage /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
     </Routes>
   )
 }
