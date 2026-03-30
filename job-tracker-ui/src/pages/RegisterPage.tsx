@@ -22,7 +22,7 @@ export default function RegisterPage() {
         setLoading(true)
         try {
           await register(email, password)
-          navigate("/login")
+          navigate("/check-email", { state: { email } })
         } catch (err) {
           setError(err instanceof ApiError ? err.message : "Something went wrong")
         } finally {
