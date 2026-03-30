@@ -1,6 +1,6 @@
 # Demo and Auth Features Plan
 
-> All decisions locked. Steps 1–4 (partial) complete. Implementation order: Step 5 (email verification) → Step 6 (forgot password).
+> All decisions locked. Steps 1–5 complete. Implementation order: Step 6 (forgot password).
 
 ---
 
@@ -12,7 +12,7 @@
 | 2 | Periodic demo data reset + login re-seed | Done |
 | 3 | Change password | Done |
 | 4 | AWS SES setup (email infrastructure) | Done (pending production access approval) |
-| 5 | Email verification on register | Pending |
+| 5 | Email verification on register | Done |
 | 6 | Forgot password | Pending (implement after Step 5) |
 
 ---
@@ -154,26 +154,28 @@ ASP.NET Identity provides `GenerateEmailConfirmationTokenAsync` and `ConfirmEmai
 **Decisions locked:**
 - Implement email verification: **yes** — foundational to the auth model
 
-### Backend
+### Backend ✅
 
-- Update `Register` endpoint: after creating user, generate email confirmation token and send verification email
-- Add `GET /api/auth/confirm-email?userId=...&token=...` endpoint — calls `ConfirmEmailAsync`
-- Update `Login` endpoint: check `user.EmailConfirmed` — return 403 with `"Email not verified"` if false
-- Demo user: `EmailConfirmed = true` in startup seed — unaffected by this feature
+- `IEmailService` abstraction + `LogEmailService` (dev, logs to console) + `SesEmailService` (production, AWS SES v2) — registered in `Program.cs`; swap is one line
+- `Register` endpoint updated — generates confirmation token, URL-encodes it, sends link via `IEmailService`; returns message instead of empty 200
+- `GET /api/auth/confirm-email?userId=...&token=...` — URL-decodes token, calls `ConfirmEmailAsync`, same error message for missing user and invalid token (avoids user enumeration)
+- `Login` updated — returns 403 `"Email not verified."` after password check passes but `EmailConfirmed` is false
+- `POST /api/auth/resend-confirmation` — always returns 200, silently skips unknown/already-confirmed emails; rate limited to 3/hour per IP (dedicated `"resend-confirmation"` policy)
+- Demo user seed: `EmailConfirmed = true` — unaffected by this feature
+- `App:FrontendBaseUrl` config key required in dev (`appsettings.Development.json`) — production derives URL from `Request.Host` (Nginx passes real hostname via `proxy_set_header Host $host`)
 
 **Decisions locked:**
 - Confirm email flow: **frontend route** — link hits `/confirm-email?userId=...&token=...`, React page calls backend to confirm — consistent with Step 6 reset-password pattern
 - Resend verification: **yes** — `POST /api/auth/resend-confirmation` with a dedicated rate limit policy: **3 requests per hour per IP** (tighter than the default auth policy — each resend is a real SES call with a cost)
   - Future enhancement: per-email-address keying (3 per day per email) for more precise abuse prevention — requires custom rate limiter partition key beyond the existing IP-based policy
 
-### Frontend
+### Frontend ✅
 
-- After register: redirect to dedicated "Check your email" page instead of auto-login
-- "Check your email" page messaging: confirm email sent, remind user to check spam folder, show resend button
-- Resend button cooldown: disable for 2–3 minutes after registration or after each resend — frontend state only (timestamp of last send); backend rate limit (3/hour) is the hard enforcement
-- After resend: inline confirmation "We've sent another verification email" + restart cooldown
-- `/confirm-email?userId=...&token=...` page — reads params from URL, calls backend, shows success/failure
-- Login page: handle 403 "Email not verified" with specific message + "Resend verification email" link
+- After register: redirect to `/check-email` with email in router state
+- `CheckEmailPage` — spam reminder, resend button with 2-min frontend cooldown (timestamp-based); cooldown starts on mount (email just sent by register)
+- After resend: inline "We've sent another verification email" + cooldown resets
+- `ConfirmEmailPage` — reads `userId` + `token` from query params via `useSearchParams`, calls backend on mount via `useEffect`, renders loading/success/error
+- Login 403: factored `instanceof ApiError` guard, 403 branch shows "Email not verified." + resend link navigating to `/check-email` with email in router state
 
 ---
 
