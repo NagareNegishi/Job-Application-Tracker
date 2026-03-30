@@ -26,19 +26,22 @@ public class AuthController : ControllerBase
     private readonly JobTrackerContext _context;
     private readonly IWebHostEnvironment _env;
     private readonly IStorageService _storageService;
+    private readonly IEmailService _emailService;
 
     public AuthController(
         UserManager<IdentityUser> userManager,
         IConfiguration config,
         JobTrackerContext context,
         IWebHostEnvironment env,
-        IStorageService storageService)
+        IStorageService storageService,
+        IEmailService emailService)
     {
         _userManager = userManager;
         _config = config;
         _context = context;
         _env = env;
         _storageService = storageService;
+        _emailService = emailService;
     }
 
     // Demo login — bypasses password check, issues tokens for the seeded demo account directly
@@ -112,7 +115,19 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(result.Errors);
 
-        return Ok();
+        // Token is signed by Identity using the user's security stamp — invalidated if password changes
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        // URL-encode before embedding in link — token contains +/= chars that break query strings
+        var encoded = Uri.EscapeDataString(token);
+        var link = $"{GetFrontendBaseUrl()}/confirm-email?userId={user.Id}&token={encoded}";
+        await _emailService.SendEmailAsync(
+            user.Email!,
+            "Confirm your email — Job Tracker",
+            $"<p>Thanks for registering. Click <a href='{link}'>here</a> to confirm your email address.</p><p>If you didn't register, ignore this email.</p>"
+        );
+
+        // Don't auto-login — user must confirm email first
+        return Ok(new { message = "Registration successful. Check your email to confirm your account." });
     }
 
     // Login
@@ -179,6 +194,18 @@ public class AuthController : ControllerBase
 
         Response.Cookies.Delete("refreshToken");
         return NoContent();
+    }
+
+    // Build the frontend base URL for email links — derived from request in production,
+    // config override in dev where frontend and backend run on different ports
+    private string GetFrontendBaseUrl()
+    {
+        if (_env.IsDevelopment())
+            return _config["App:FrontendBaseUrl"]
+                ?? throw new InvalidOperationException("App:FrontendBaseUrl is not configured.");
+
+        // In production, Nginx passes the real public hostname (proxy_set_header Host $host)
+        return $"https://{Request.Host.Value}";
     }
 
     // Helper method to set the refresh token as an httpOnly cookie

@@ -268,7 +268,8 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     if (await userManager.FindByEmailAsync(DemoUser.Email) == null)
     {
-        var demo = new IdentityUser { UserName = DemoUser.Email, Email = DemoUser.Email };
+        // EmailConfirmed = true — demo user bypasses email verification entirely
+        var demo = new IdentityUser { UserName = DemoUser.Email, Email = DemoUser.Email, EmailConfirmed = true };
         // Password is never used — demo endpoint bypasses auth entirely.
         // Random GUID + fixed suffix satisfies Identity's complexity rules (upper, digit, special char).
         await userManager.CreateAsync(demo, Guid.NewGuid().ToString() + "Aa1!");
