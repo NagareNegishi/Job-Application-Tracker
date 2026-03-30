@@ -11,7 +11,7 @@
 |---|---|---|
 | 1 | Demo user + "Try Demo" button | Done |
 | 2 | Periodic demo data reset + login re-seed | Done |
-| 3 | Change password | Pending |
+| 3 | Change password | In Progress |
 | 4 | AWS SES setup (email infrastructure) | Pending |
 | 5 | Forgot password | Pending |
 | 6 | Email verification on register | Pending |
@@ -93,27 +93,27 @@
 
 No external services required — ASP.NET Identity provides `ChangePasswordAsync(user, currentPassword, newPassword)`.
 
-### Backend
+### Backend ✅
 
-- Add `POST /api/auth/change-password` endpoint (requires `[Authorize]`)
-- DTO: `{ currentPassword, newPassword, confirmNewPassword }`
-- Calls `_userManager.ChangePasswordAsync(...)` — Identity validates current password and enforces password rules
-- Returns 400 with errors on failure
-- Demo user blocked — returns 403
-
-**[DECISION REQUIRED] — Where to surface this in the UI?**
-
-| Option | Notes |
-|---|---|
-| Settings/profile page (new route `/settings`) | Clean separation. Requires new page + nav link. |
-| Modal triggered from NavBar user menu | No new route. Stays in context. Simpler. |
+- `ChangePasswordDTO` added to `AuthDTO.cs` — `{ currentPassword, newPassword, confirmNewPassword }`
+- `AccountController.cs` created at `/api/account/` — all authenticated account management lives here, not in `AuthController`
+  - Keeps `AuthController` for unauthenticated flows only; `apiFetch` silent-refresh skip stays scoped to `/auth/`
+- `POST /api/account/change-password` — Identity validates current password, blocks demo user (403), returns Identity errors on failure
+- `[EnableRateLimiting("auth")]` applied — 5 req/min per IP, prevents brute-forcing with a stolen JWT
+- `AuthController` — XML doc comment added clarifying the auth vs account split
 
 ### Frontend
 
-- Form: current password, new password, confirm new password
-- Calls `POST /api/auth/change-password` via `apiFetch`
-- Shows validation errors inline
-- On success: show confirmation, optionally log out and redirect to login
+**Decisions locked:**
+- User icon top-right in NavBar — placeholder avatar, opens dropdown
+- Dropdown: username at top, Settings link (middle), Sign Out at bottom (moved from current location)
+- Settings link navigates to `/settings` page (new route)
+
+**Remaining:**
+- NavBar: replace Sign Out button with user icon + dropdown (`getEmail()` from `auth.ts` for username display)
+- `SettingsPage.tsx` — change password form, calls `changePassword()` from `authService.ts`
+- Register `/settings` route in `App.tsx`
+- On success: show inline confirmation message
 
 ---
 
@@ -250,7 +250,7 @@ Demo users are already blocked from upload/delete entirely (Step 1), so this onl
 | 2-A | Reset mechanism | **Locked: GitHub Actions nightly cron** |
 | 2-B | Re-seed on demo login? | **Locked: yes — insert missing predefined jobs on every demo login** |
 | 2-C | Pre-seed documents? | **Locked: no — avoids S3 cost** |
-| 3-A | Change password UI location | **[DECISION REQUIRED]** Settings page / NavBar modal |
+| 3-A | Change password UI location | **Locked: NavBar user icon → `/settings` page** |
 | 4-A | SES sending identity | **[DECISION REQUIRED]** Domain verification / Single email |
 | 4-B | Email library | **[DECISION REQUIRED]** AWSSDK.SimpleEmailV2 / MailKit |
 | 5-A | Reset link format | **[DECISION REQUIRED]** Frontend route / Backend redirect |
