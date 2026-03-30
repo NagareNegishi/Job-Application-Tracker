@@ -132,7 +132,8 @@ else
 
 // Registers Identity's core services
 builder.Services.AddIdentityCore<IdentityUser>()
-    .AddEntityFrameworkStores<JobTrackerContext>();
+    .AddEntityFrameworkStores<JobTrackerContext>()
+    .AddDefaultTokenProviders(); // Registers the "Default" token provider — Identity's token generation (email confirmation, password reset) won't work without it
 
 // JWT Bearer authentication — validates the token on every request
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
