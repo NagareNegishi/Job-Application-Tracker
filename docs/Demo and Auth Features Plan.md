@@ -1,7 +1,6 @@
 # Demo and Auth Features Plan
 
-> **⚠ DECISIONS NOT FINALISED**
-> Steps 1–4 (partial) are complete. Implementation order revised: Step 6 (email verification) before Step 5 (forgot password) — verification is foundational; forgot password is only meaningful once emails are confirmed.
+> All decisions locked. Steps 1–4 (partial) complete. Implementation order: Step 5 (email verification) → Step 6 (forgot password).
 
 ---
 
@@ -13,8 +12,8 @@
 | 2 | Periodic demo data reset + login re-seed | Done |
 | 3 | Change password | Done |
 | 4 | AWS SES setup (email infrastructure) | Done (pending production access approval) |
-| 6 | Email verification on register | Pending (implement first) |
-| 5 | Forgot password | Pending (implement after Step 6) |
+| 5 | Email verification on register | Pending |
+| 6 | Forgot password | Pending (implement after Step 5) |
 
 ---
 
@@ -144,13 +143,51 @@ No external services required — ASP.NET Identity provides `ChangePasswordAsync
 
 ---
 
-## Step 5 — Forgot Password
+## Step 5 — Email Verification on Register
 
-**Goal:** Unauthenticated users can request a password reset link sent to their email.
+**Goal:** Require users to verify their email before they can log in. Every account is guaranteed to own its email address — without this, users can register with emails they don't own and forgot password becomes unreliable.
 
 **Requires:** Step 4 (SES) complete.
 
+ASP.NET Identity provides `GenerateEmailConfirmationTokenAsync` and `ConfirmEmailAsync`. The `EmailConfirmed` flag on `IdentityUser` is set to `true` after confirmation.
+
+**Decisions locked:**
+- Implement email verification: **yes** — foundational to the auth model
+
+### Backend
+
+- Update `Register` endpoint: after creating user, generate email confirmation token and send verification email
+- Add `GET /api/auth/confirm-email?userId=...&token=...` endpoint — calls `ConfirmEmailAsync`
+- Update `Login` endpoint: check `user.EmailConfirmed` — return 403 with `"Email not verified"` if false
+- Demo user: `EmailConfirmed = true` in startup seed — unaffected by this feature
+
+**Decisions locked:**
+- Confirm email flow: **frontend route** — link hits `/confirm-email?userId=...&token=...`, React page calls backend to confirm — consistent with Step 6 reset-password pattern
+- Resend verification: **yes** — `POST /api/auth/resend-confirmation` with a dedicated rate limit policy: **3 requests per hour per IP** (tighter than the default auth policy — each resend is a real SES call with a cost)
+  - Future enhancement: per-email-address keying (3 per day per email) for more precise abuse prevention — requires custom rate limiter partition key beyond the existing IP-based policy
+
+### Frontend
+
+- After register: redirect to dedicated "Check your email" page instead of auto-login
+- "Check your email" page messaging: confirm email sent, remind user to check spam folder, show resend button
+- Resend button cooldown: disable for 2–3 minutes after registration or after each resend — frontend state only (timestamp of last send); backend rate limit (3/hour) is the hard enforcement
+- After resend: inline confirmation "We've sent another verification email" + restart cooldown
+- `/confirm-email?userId=...&token=...` page — reads params from URL, calls backend, shows success/failure
+- Login page: handle 403 "Email not verified" with specific message + "Resend verification email" link
+
+---
+
+## Step 6 — Forgot Password
+
+**Goal:** Unauthenticated users can request a password reset link sent to their email.
+
+**Requires:** Step 5 (email verification) complete — reset links are only reliable once all emails are verified.
+
 ASP.NET Identity provides `GeneratePasswordResetTokenAsync` and `ResetPasswordAsync` — token generation and validation are built in.
+
+**Decisions locked:**
+- Reset link format: **frontend route** `/reset-password?token=...&email=...` — consistent with SPA pattern, full UX control
+- Token expiry: **default 1 day** — single-use tokens already limit abuse window; 24h is industry standard for password reset
 
 ### Backend
 
@@ -159,49 +196,11 @@ ASP.NET Identity provides `GeneratePasswordResetTokenAsync` and `ResetPasswordAs
 - `POST /api/auth/reset-password` — accepts `{ email, token, newPassword }`, calls `ResetPasswordAsync`
   - Token is URL-encoded in the reset link; must be decoded before passing to Identity
 
-**Decisions locked:**
-- Reset link format: **frontend route** `/reset-password?token=...&email=...` — consistent with SPA pattern, full UX control
-- Token expiry: **default 1 day** — single-use tokens already limit abuse window; 24h is industry standard for password reset
-
 ### Frontend
 
 - "Forgot your password?" link on login page → `/forgot-password` page
 - Form: email input → submit → success message (always shown, same message regardless of email existence)
 - `/reset-password?token=...&email=...` page — new password + confirm → calls reset endpoint → redirect to login on success
-
----
-
-## Step 6 — Email Verification on Register
-
-**Goal:** Require users to verify their email before they can log in. Prevents registration spam.
-
-**Requires:** Step 4 (SES) complete.
-
-ASP.NET Identity provides `GenerateEmailConfirmationTokenAsync` and `ConfirmEmailAsync`. The `EmailConfirmed` flag on `IdentityUser` is set to `true` after confirmation.
-
-**Decision locked: implement email verification.** Goal is to guarantee every account owns its email address — without verification, users can register with emails they don't own, and forgot password becomes unreliable.
-
-### Backend
-
-- Update `Register` endpoint: after creating user, generate email confirmation token and send verification email
-- Add `GET /api/auth/confirm-email?userId=...&token=...` endpoint — calls `ConfirmEmailAsync`, redirects to frontend
-- Update `Login` endpoint: check `user.EmailConfirmed` — return 403 with `"Email not verified"` if false
-- Demo user: `EmailConfirmed = true` in startup seed — unaffected by this feature
-
-**[DECISION REQUIRED] — Confirm email flow:**
-
-| Option | Notes |
-|---|---|
-| Link in email hits backend endpoint → redirect to frontend success page | Simpler email template (just a plain link). |
-| Link hits frontend page → frontend calls backend to confirm | More SPA-consistent. Requires frontend to extract token from URL and call API. |
-
-### Frontend
-
-- After register: show "Check your email" page instead of auto-login
-- `/confirm-email` page — shows success/failure based on API response
-- Login page: handle 403 "Email not verified" with a specific message + "Resend verification" link
-
-**[DECISION REQUIRED] — Resend verification email:** Should users be able to request a new confirmation email? Requires another endpoint (`POST /api/auth/resend-confirmation`). Probably yes — confirmation emails can get lost.
 
 ---
 
@@ -231,10 +230,9 @@ Demo users are already blocked from upload/delete entirely (Step 1), so this onl
 | 2-B | Re-seed on demo login? | **Locked: yes — insert missing predefined jobs on every demo login** |
 | 2-C | Pre-seed documents? | **Locked: no — avoids S3 cost** |
 | 3-A | Change password UI location | **Locked: NavBar user icon → `/settings` page** |
-| 4-A | SES sending identity | **[DECISION REQUIRED]** Domain verification / Single email |
-| 4-B | Email library | **[DECISION REQUIRED]** AWSSDK.SimpleEmailV2 / MailKit |
-| 5-A | Reset link format | **[DECISION REQUIRED]** Frontend route / Backend redirect |
-| 5-B | Token expiry | **[DECISION REQUIRED]** Default 1 day / Custom |
-| 6-A | Implement email verification at all? | **[DECISION REQUIRED]** Yes / Skip |
-| 6-B | Confirm email flow | **[DECISION REQUIRED]** Backend redirect / Frontend calls API |
-| 6-C | Resend verification endpoint | **[DECISION REQUIRED]** Yes / No |
+| 4-A | SES sending identity | **Locked: domain verification** |
+| 4-B | Email library | **Locked: AWSSDK.SimpleEmailV2 behind IEmailService abstraction** |
+| 5-A | Confirm email flow | **Locked: frontend route `/confirm-email?userId=...&token=...`, React page calls backend** |
+| 5-B | Resend verification endpoint | **Locked: yes — 3/hour per IP, 2–3 min frontend cooldown after each send** |
+| 6-A | Reset link format | **Locked: frontend route `/reset-password?token=...&email=...`** |
+| 6-B | Token expiry | **Locked: default 1 day** |
