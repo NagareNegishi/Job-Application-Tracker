@@ -7,6 +7,8 @@ import JobDetailPage from "./pages/JobDetailPage"
 import JobPage from "./pages/JobPage"
 import CheckEmailPage from "./pages/CheckEmailPage"
 import ConfirmEmailPage from "./pages/ConfirmEmailPage"
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import ResetPasswordPage from "./pages/ResetPasswordPage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import SettingsPage from "./pages/SettingsPage"
@@ -33,6 +35,8 @@ function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/check-email" element={<CheckEmailPage />} />
       <Route path="/confirm-email" element={<ConfirmEmailPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/jobs" element={<ProtectedRoute><JobPage /></ProtectedRoute>} />
       <Route path="/jobs/:id" element={<ProtectedRoute><JobDetailPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
