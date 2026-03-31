@@ -1,6 +1,6 @@
 # Demo and Auth Features Plan
 
-> All decisions locked. Steps 1–5 complete. Implementation order: Step 6 (forgot password).
+> All decisions locked. Steps 1–6 complete.
 
 ---
 
@@ -11,9 +11,9 @@
 | 1 | Demo user + "Try Demo" button | Done |
 | 2 | Periodic demo data reset + login re-seed | Done |
 | 3 | Change password | Done |
-| 4 | AWS SES setup (email infrastructure) | Done (pending production access approval) |
+| 4 | AWS SES setup (email infrastructure) | Done (awaiting AWS production access) |
 | 5 | Email verification on register | Done |
-| 6 | Forgot password | Pending (implement after Step 5) |
+| 6 | Forgot password | Done |
 
 ---
 
@@ -71,7 +71,7 @@
 ### GitHub Actions
 
 - New scheduled workflow (separate from `deploy.yml`) — runs nightly (e.g. `0 3 * * *` UTC)
-- `curl -X POST https://jobtracker.nagarenegishi.com/api/auth/demo/reset -H "X-Reset-Key: ${{ secrets.DEMO_RESET_KEY }}"`
+- `curl -X POST https://[your-domain]/api/auth/demo/reset -H "X-Reset-Key: ${{ secrets.DEMO_RESET_KEY }}"`
 - `DEMO_RESET_KEY` added as a GitHub Actions secret
 - `workflow_dispatch` trigger included — allows manual reset from Actions UI
 
@@ -92,7 +92,7 @@
 
 No external services required — ASP.NET Identity provides `ChangePasswordAsync(user, currentPassword, newPassword)`.
 
-### Backend ✅
+### Backend *(complete)*
 
 - `ChangePasswordDTO` added to `AuthDTO.cs` — `{ currentPassword, newPassword, confirmNewPassword }`
 - `AccountController.cs` created at `/api/account/` — all authenticated account management lives here, not in `AuthController`
@@ -101,18 +101,11 @@ No external services required — ASP.NET Identity provides `ChangePasswordAsync
 - `[EnableRateLimiting("auth")]` applied — 5 req/min per IP, prevents brute-forcing with a stolen JWT
 - `AuthController` — XML doc comment added clarifying the auth vs account split
 
-### Frontend
+### Frontend *(complete)*
 
-**Decisions locked:**
-- User icon top-right in NavBar — placeholder avatar, opens dropdown
-- Dropdown: username at top, Settings link (middle), Sign Out at bottom (moved from current location)
-- Settings link navigates to `/settings` page (new route)
-
-**Remaining:**
-- NavBar: replace Sign Out button with user icon + dropdown (`getEmail()` from `auth.ts` for username display)
-- `SettingsPage.tsx` — change password form, calls `changePassword()` from `authService.ts`
-- Register `/settings` route in `App.tsx`
-- On success: show inline confirmation message
+- NavBar: user icon top-right opens dropdown — username at top, Settings link, Sign Out at bottom
+- `SettingsPage.tsx` — change password form, calls `changePassword()` from `authService.ts`; inline success message on change
+- `/settings` route registered in `App.tsx` (protected)
 
 ---
 
@@ -126,16 +119,16 @@ No external services required — ASP.NET Identity provides `ChangePasswordAsync
 - DKIM: **Easy DKIM** with **RSA_2048_BIT** signing key
 - Custom MAIL FROM domain: subdomain of verified domain — enables DMARC alignment
 - MAIL FROM MX failure behavior: **Use default MAIL FROM domain** for now — tighten to **Reject** once DNS is confirmed stable in production
-- Sending address: `noreply@<your-domain>` (set in `appsettings.Production.json`)
+- Sending address: `noreply@[your-domain]` (set in `appsettings.Production.json`)
 
 ### Steps (all infrastructure, no code)
 
-1. ✅ Verify domain in SES console — domain identity created, DKIM and MAIL FROM configured
-2. ✅ Add DNS records in DNS provider — 3 CNAME (DKIM) + 1 MX + 1 TXT (SPF) for custom MAIL FROM subdomain
-3. ✅ Domain verified — DKIM configuration and MAIL FROM configuration both show Verified in SES console
-4. ✅ Request SES production access — submitted, pending AWS approval (typically 24h)
-5. ✅ Create IAM policy for SES `ses:SendEmail` + `ses:SendRawEmail` — attached to EC2 instance role
-6. ⬜ Note sending address and region for `appsettings.Production.json` — do after production access approved
+1. [x] Verify domain in SES console — domain identity created, DKIM and MAIL FROM configured
+2. [x] Add DNS records in DNS provider — 3 CNAME (DKIM) + 1 MX + 1 TXT (SPF) for custom MAIL FROM subdomain
+3. [x] Domain verified — DKIM configuration and MAIL FROM configuration both show Verified in SES console
+4. [x] Request SES production access — submitted, awaiting AWS approval
+5. [x] Create IAM policy for SES `ses:SendEmail` + `ses:SendRawEmail` — attached to EC2 instance role
+6. [ ] Note sending address and region for `appsettings.Production.json` — do after production access approved
 
 ### Notes
 - AWS SES free tier (as of 2026): 3,000 emails/month for first 12 months only (new accounts); $0.10/1,000 after — effectively free at expected volume
@@ -152,9 +145,12 @@ No external services required — ASP.NET Identity provides `ChangePasswordAsync
 ASP.NET Identity provides `GenerateEmailConfirmationTokenAsync` and `ConfirmEmailAsync`. The `EmailConfirmed` flag on `IdentityUser` is set to `true` after confirmation.
 
 **Decisions locked:**
-- Implement email verification: **yes** — foundational to the auth model
+- Confirm email flow: **frontend route** — link hits `/confirm-email?userId=...&token=...`, React page calls backend to confirm
+- Resend verification: **yes** — `POST /api/auth/resend-confirmation` with a dedicated rate limit policy: **3 requests per hour per IP** (tighter than the default auth policy — each resend is a real SES call with a cost)
+- Re-register with unverified email: **overwrite existing unverified account** — enables typo recovery without "already taken" error
+- Unverified account cleanup: **nightly cron deletes all unverified (no time filter)** — re-registration covers the early wipe edge case
 
-### Backend ✅
+### Backend *(complete)*
 
 - `IEmailService` abstraction + `LogEmailService` (dev, logs to console) + `SesEmailService` (production, AWS SES v2) — registered in `Program.cs`; swap is one line
 - `Register` endpoint updated — generates confirmation token, URL-encodes it, sends link via `IEmailService`; returns message instead of empty 200; overwrites existing unverified account on re-register (typo recovery) — demo user excluded
@@ -165,12 +161,7 @@ ASP.NET Identity provides `GenerateEmailConfirmationTokenAsync` and `ConfirmEmai
 - Demo user seed: `EmailConfirmed = true` — unaffected by this feature
 - `App:FrontendBaseUrl` config key required in dev (`appsettings.Development.json`) — production derives URL from `Request.Host` (Nginx passes real hostname via `proxy_set_header Host $host`)
 
-**Decisions locked:**
-- Confirm email flow: **frontend route** — link hits `/confirm-email?userId=...&token=...`, React page calls backend to confirm — consistent with Step 6 reset-password pattern
-- Resend verification: **yes** — `POST /api/auth/resend-confirmation` with a dedicated rate limit policy: **3 requests per hour per IP** (tighter than the default auth policy — each resend is a real SES call with a cost)
-  - Future enhancement: per-email-address keying (3 per day per email) for more precise abuse prevention — requires custom rate limiter partition key beyond the existing IP-based policy
-
-### Frontend ✅
+### Frontend *(complete)*
 
 - After register: redirect to `/check-email` with email in router state
 - `CheckEmailPage` — spam reminder, resend button with 2-min frontend cooldown (timestamp-based); cooldown starts on mount (email just sent by register)
@@ -192,18 +183,18 @@ ASP.NET Identity provides `GeneratePasswordResetTokenAsync` and `ResetPasswordAs
 - Reset link format: **frontend route** `/reset-password?token=...&email=...` — consistent with SPA pattern, full UX control
 - Token expiry: **default 1 day** — single-use tokens already limit abuse window; 24h is industry standard for password reset
 
-### Backend
+### Backend *(complete)*
 
 - `POST /api/auth/forgot-password` — accepts email, generates reset token, sends email with link
   - Always returns 200 regardless of whether email exists (prevents email enumeration)
 - `POST /api/auth/reset-password` — accepts `{ email, token, newPassword }`, calls `ResetPasswordAsync`
   - Token is URL-encoded in the reset link; must be decoded before passing to Identity
 
-### Frontend
+### Frontend *(complete)*
 
 - "Forgot your password?" link on login page → `/forgot-password` page
 - Form: email input → submit → success message (always shown, same message regardless of email existence)
-- `/reset-password?token=...&email=...` page — new password + confirm → calls reset endpoint → redirect to login on success
+- `/reset-password?token=...&email=...` page — new password form → calls reset endpoint → redirect to login on success
 
 ---
 
@@ -229,25 +220,3 @@ Potential approach:
 - ASP.NET's built-in rate limiter supports custom partition keys — requires a custom policy that reads the user ID from `HttpContext.User`
 
 Demo users are already blocked from upload/delete entirely (Step 1), so this only applies to registered users.
-
----
-
-## Open Decisions Summary
-
-| # | Decision | Status |
-|---|---|---|
-| 1-A | Demo user seeding approach | **Locked: startup seed in `Program.cs`** |
-| 1-B | Allow public registration alongside demo? | **Locked: yes, registration stays open** |
-| 1-C | Demo document restrictions | **Locked: upload + delete blocked for demo user, inline message shown** |
-| 2-A | Reset mechanism | **Locked: GitHub Actions nightly cron** |
-| 2-B | Re-seed on demo login? | **Locked: yes — insert missing predefined jobs on every demo login** |
-| 2-C | Pre-seed documents? | **Locked: no — avoids S3 cost** |
-| 3-A | Change password UI location | **Locked: NavBar user icon → `/settings` page** |
-| 4-A | SES sending identity | **Locked: domain verification** |
-| 4-B | Email library | **Locked: AWSSDK.SimpleEmailV2 behind IEmailService abstraction** |
-| 5-A | Confirm email flow | **Locked: frontend route `/confirm-email?userId=...&token=...`, React page calls backend** |
-| 5-B | Resend verification endpoint | **Locked: yes — 3/hour per IP, 2–3 min frontend cooldown after each send** |
-| 5-C | Re-register with unverified email | **Locked: overwrite existing unverified account — enables typo recovery without "already taken" error** |
-| 5-D | Unverified account cleanup | **Locked: nightly cron deletes all unverified (no time filter); re-registration covers early wipe edge case** |
-| 6-A | Reset link format | **Locked: frontend route `/reset-password?token=...&email=...`** |
-| 6-B | Token expiry | **Locked: default 1 day** |
