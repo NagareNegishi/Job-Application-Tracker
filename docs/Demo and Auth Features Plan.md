@@ -157,7 +157,8 @@ ASP.NET Identity provides `GenerateEmailConfirmationTokenAsync` and `ConfirmEmai
 ### Backend ✅
 
 - `IEmailService` abstraction + `LogEmailService` (dev, logs to console) + `SesEmailService` (production, AWS SES v2) — registered in `Program.cs`; swap is one line
-- `Register` endpoint updated — generates confirmation token, URL-encodes it, sends link via `IEmailService`; returns message instead of empty 200
+- `Register` endpoint updated — generates confirmation token, URL-encodes it, sends link via `IEmailService`; returns message instead of empty 200; overwrites existing unverified account on re-register (typo recovery) — demo user excluded
+- `POST /api/auth/cleanup-unverified` — deletes all unverified accounts (except demo); authorized by `X-Reset-Key`; called by nightly cron alongside demo reset
 - `GET /api/auth/confirm-email?userId=...&token=...` — URL-decodes token, calls `ConfirmEmailAsync`, same error message for missing user and invalid token (avoids user enumeration)
 - `Login` updated — returns 403 `"Email not verified."` after password check passes but `EmailConfirmed` is false
 - `POST /api/auth/resend-confirmation` — always returns 200, silently skips unknown/already-confirmed emails; rate limited to 3/hour per IP (dedicated `"resend-confirmation"` policy)
@@ -206,6 +207,16 @@ ASP.NET Identity provides `GeneratePasswordResetTokenAsync` and `ResetPasswordAs
 
 ---
 
+## Future Enhancement — Time-Based Cleanup of Unverified Accounts
+
+> **Not blocking current work. Acceptable given re-registration covers the edge case.**
+
+Current cleanup (`POST /api/auth/cleanup-unverified`) deletes all unverified accounts at cron time regardless of when they registered. Edge case: a user who registers at 2:59am gets wiped 1 minute later before confirming. Re-registration recovers them cleanly, so UX impact is low.
+
+A more precise approach: a separate `PendingRegistrations (UserId, RegisteredAt)` table. On register → insert row. On confirm → delete row. Cleanup → only delete where `RegisteredAt < UtcNow - 24h`. No changes to `AspNetUsers`. Requires one migration.
+
+---
+
 ## Future Enhancement — Rate Limiting on Document Operations
 
 > **Not blocking current work. Revisit if abuse is observed in production.**
@@ -236,5 +247,7 @@ Demo users are already blocked from upload/delete entirely (Step 1), so this onl
 | 4-B | Email library | **Locked: AWSSDK.SimpleEmailV2 behind IEmailService abstraction** |
 | 5-A | Confirm email flow | **Locked: frontend route `/confirm-email?userId=...&token=...`, React page calls backend** |
 | 5-B | Resend verification endpoint | **Locked: yes — 3/hour per IP, 2–3 min frontend cooldown after each send** |
+| 5-C | Re-register with unverified email | **Locked: overwrite existing unverified account — enables typo recovery without "already taken" error** |
+| 5-D | Unverified account cleanup | **Locked: nightly cron deletes all unverified (no time filter); re-registration covers early wipe edge case** |
 | 6-A | Reset link format | **Locked: frontend route `/reset-password?token=...&email=...`** |
 | 6-B | Token expiry | **Locked: default 1 day** |
