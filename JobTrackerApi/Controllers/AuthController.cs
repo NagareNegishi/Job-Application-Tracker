@@ -109,6 +109,12 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents registration spam
     public async Task<IActionResult> Register(RegisterDTO dto)
     {
+        // Unverified accounts can be overwritten — lets users re-register after a typo without hitting "already taken"
+        // Demo user is excluded — its account is managed by the startup seed, not the registration flow
+        var existing = await _userManager.FindByEmailAsync(dto.Email);
+        if (existing != null && !existing.EmailConfirmed && existing.Email != DemoUser.Email)
+            await _userManager.DeleteAsync(existing);
+
         var user = new IdentityUser { UserName = dto.Email, Email = dto.Email };
         var result = await _userManager.CreateAsync(user, dto.Password);
 
@@ -128,6 +134,25 @@ public class AuthController : ControllerBase
 
         // Don't auto-login — user must confirm email first
         return Ok(new { message = "Registration successful. Check your email to confirm your account." });
+    }
+
+    // Nightly cron cleanup — wipes all unverified accounts; re-registration recovers anyone wiped early
+    [HttpPost("cleanup-unverified")]
+    public async Task<IActionResult> CleanupUnverified([FromHeader(Name = "X-Reset-Key")] string? resetKey)
+    {
+        var expected = _config["Demo:ResetKey"];
+        if (string.IsNullOrEmpty(expected) || resetKey != expected)
+            return Unauthorized();
+
+        // Demo user excluded — EmailConfirmed is always true, but guard explicitly for safety
+        var unverified = await _userManager.Users
+            .Where(u => !u.EmailConfirmed && u.Email != DemoUser.Email)
+            .ToListAsync();
+
+        foreach (var user in unverified)
+            await _userManager.DeleteAsync(user);
+
+        return Ok(new { message = $"Cleaned up {unverified.Count} unverified account(s)." });
     }
 
     // Resend confirmation email — always returns 200 to avoid leaking whether the email exists
