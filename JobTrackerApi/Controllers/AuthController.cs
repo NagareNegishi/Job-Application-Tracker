@@ -264,6 +264,44 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    // Forgot password — generates a signed reset token and emails a link; always returns 200 to avoid email enumeration
+    [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDTO dto)
+    {
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        // Always return 200 — never reveal whether the email exists
+        if (user == null) return Ok();
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encoded = Uri.EscapeDataString(token);
+        var link = $"{GetFrontendBaseUrl()}/reset-password?token={encoded}&email={Uri.EscapeDataString(user.Email!)}";
+        await _emailService.SendEmailAsync(
+            user.Email!,
+            "Reset your password — Job Tracker",
+            $"<p>Click <a href='{link}'>here</a> to reset your password.</p><p>This link expires in 24 hours. If you didn't request a reset, ignore this email.</p>"
+        );
+
+        return Ok();
+    }
+
+    // Reset password — validates the token from the email link and applies the new password
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordDTO dto)
+    {
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        if (user == null) return BadRequest(new { message = "Invalid reset link." });
+
+        // Reverse URL encoding before Identity validates the token signature
+        var decoded = Uri.UnescapeDataString(dto.Token);
+        var result = await _userManager.ResetPasswordAsync(user, decoded, dto.NewPassword);
+
+        if (!result.Succeeded)
+            return BadRequest(new { message = result.Errors.First().Description });
+
+        return Ok(new { message = "Password reset successful." });
+    }
+
     // Build the frontend base URL for email links — derived from request in production,
     // config override in dev where frontend and backend run on different ports
     private string GetFrontendBaseUrl()
