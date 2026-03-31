@@ -31,6 +31,13 @@ export default function RegisterPage() {
       }} className="w-full max-w-sm space-y-4">
         <h1 className="text-2xl font-semibold">Create account</h1>
 
+        {/* TEMPORARY: Remove once AWS SES production access is approved */}
+        <div className="rounded-md bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800">
+          Email confirmation is temporarily unavailable — verification emails are not sending yet.
+          You can still register, but you won't be able to log in until this is resolved.{" "}
+          <Link to="/login" className="underline">Try the demo instead.</Link>
+        </div>
+
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <div className="space-y-1">
