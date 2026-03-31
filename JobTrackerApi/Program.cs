@@ -1,4 +1,5 @@
 using Amazon.S3;
+using Amazon.SimpleEmailV2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -96,6 +97,10 @@ var jwtAudience = builder.Configuration["Jwt:Audience"]
 if (!builder.Environment.IsDevelopment())
     _ = builder.Configuration["Storage:S3BucketName"]
         ?? throw new InvalidOperationException("Storage:S3BucketName is not configured. Set S3_BUCKET_NAME environment variable.");
+// Sender address only required in production — dev uses LogEmailService instead
+if (!builder.Environment.IsDevelopment())
+    _ = builder.Configuration["Email:FromAddress"]
+        ?? throw new InvalidOperationException("Email:FromAddress is not configured. Set EMAIL_FROM_ADDRESS environment variable.");
 
 // Npgsql Entity Framework
 // https://www.npgsql.org/efcore/index.html?tabs=aspnet
@@ -116,9 +121,19 @@ if (builder.Environment.IsDevelopment())
 else
     builder.Services.AddSingleton<IStorageService, S3StorageService>();
 
+// Register IAmazonSimpleEmailServiceV2 — reads credentials + AWS_REGION from environment automatically
+builder.Services.AddAWSService<IAmazonSimpleEmailServiceV2>();
+
+// Use LogEmailService in dev (logs to console), SesEmailService in production
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddScoped<IEmailService, LogEmailService>();
+else
+    builder.Services.AddScoped<IEmailService, SesEmailService>();
+
 // Registers Identity's core services
 builder.Services.AddIdentityCore<IdentityUser>()
-    .AddEntityFrameworkStores<JobTrackerContext>();
+    .AddEntityFrameworkStores<JobTrackerContext>()
+    .AddDefaultTokenProviders(); // Registers the "Default" token provider — Identity's token generation (email confirmation, password reset) won't work without it
 
 // JWT Bearer authentication — validates the token on every request
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -149,6 +164,15 @@ builder.Services.AddRateLimiter(options =>
         config.Window = TimeSpan.FromMinutes(1);  // counter resets every 1 minute
         config.PermitLimit = 5;                   // max 5 requests per window per IP
         config.QueueLimit = 0;                    // reject immediately — don't queue excess requests
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
+
+    // Tighter limit for resend — each request triggers a real SES call with a cost
+    options.AddFixedWindowLimiter("resend-confirmation", config =>
+    {
+        config.Window = TimeSpan.FromHours(1);    // counter resets every 1 hour
+        config.PermitLimit = 3;                   // max 3 resends per hour per IP
+        config.QueueLimit = 0;
         config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
     });
 });
@@ -254,7 +278,8 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     if (await userManager.FindByEmailAsync(DemoUser.Email) == null)
     {
-        var demo = new IdentityUser { UserName = DemoUser.Email, Email = DemoUser.Email };
+        // EmailConfirmed = true — demo user bypasses email verification entirely
+        var demo = new IdentityUser { UserName = DemoUser.Email, Email = DemoUser.Email, EmailConfirmed = true };
         // Password is never used — demo endpoint bypasses auth entirely.
         // Random GUID + fixed suffix satisfies Identity's complexity rules (upper, digit, special char).
         await userManager.CreateAsync(demo, Guid.NewGuid().ToString() + "Aa1!");

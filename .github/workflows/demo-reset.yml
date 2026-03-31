@@ -14,3 +14,8 @@ jobs:
           curl -X POST https://jobtracker.nagarenegishi.com/api/auth/demo/reset \
                -H "X-Reset-Key: ${{ secrets.DEMO_RESET_KEY }}" \
                --fail
+      - name: Clean up unverified accounts
+        run: |
+          curl -X POST https://jobtracker.nagarenegishi.com/api/auth/cleanup-unverified \
+               -H "X-Reset-Key: ${{ secrets.DEMO_RESET_KEY }}" \
+               --fail

@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [unverified, setUnverified] = useState(false)
   const [loading, setLoading] = useState(false)
   const [demoLoading, setDemoLoading] = useState(false)
   const navigate = useNavigate()
@@ -33,23 +34,41 @@ export default function LoginPage() {
       <form onSubmit={async (e) => {
         e.preventDefault()
         setError(null)
+        setUnverified(false)
         setLoading(true)
         try {
           await login(email, password)
           navigate("/jobs")
         } catch (err) {
-          setError(
-            err instanceof ApiError && err.status === 401
-              ? "Invalid email or password"
-              : err instanceof ApiError ? err.message : "Something went wrong"
-          )
+          if (err instanceof ApiError) {
+            if (err.status === 403) {
+              setUnverified(true)
+              setError(err.message)
+            } else if (err.status === 401) {
+              setError("Invalid email or password")
+            } else {
+              setError(err.message)
+            }
+          } else {
+            setError("Something went wrong")
+          }
         } finally { // ensures loading resets
           setLoading(false)
         }
       }} className="w-full max-w-sm space-y-4">
         <h1 className="text-2xl font-semibold">Sign in</h1>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <div className="text-sm text-red-600 space-y-1">
+            <p>{error}</p>
+            {unverified && (
+              // Link carries email in router state so CheckEmailPage can populate the resend call
+              <Link to="/check-email" state={{ email }} className="underline">
+                Resend verification email
+              </Link>
+            )}
+          </div>
+        )}
 
         <div className="space-y-1">
           <Label htmlFor="email">Email</Label>
@@ -62,6 +81,10 @@ export default function LoginPage() {
           <Input id="password" type="password" value={password}
             onChange={e => setPassword(e.target.value)} required />
         </div>
+
+        <p className="text-sm text-right">
+          <Link to="/forgot-password" className="underline">Forgot your password?</Link>
+        </p>
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Signing in..." : "Sign in"}

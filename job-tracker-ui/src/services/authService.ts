@@ -51,3 +51,40 @@ export async function logout(): Promise<void> {
   await apiFetch(`${BASE_URL}/auth/logout`, { method: "POST" }).catch(() => {})
   clearToken()
 }
+
+// Token comes from the email link — GET with query params, no body
+export async function confirmEmail(userId: string, token: string): Promise<void> {
+  const url = `${BASE_URL}/auth/confirm-email?userId=${encodeURIComponent(userId)}&token=${encodeURIComponent(token)}`
+  const response = await apiFetch(url, { method: "GET" })
+  return handleEmptyResponse(response)
+}
+
+// Always returns 200 — backend never reveals whether the email exists
+export async function forgotPassword(email: string): Promise<void> {
+  const response = await apiFetch(`${BASE_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  })
+  return handleEmptyResponse(response)
+}
+
+// Token and email come from the reset link query params — Identity validates the token server-side
+export async function resetPassword(email: string, token: string, newPassword: string): Promise<void> {
+  const response = await apiFetch(`${BASE_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, token, newPassword }),
+  })
+  return handleEmptyResponse(response)
+}
+
+// Backend always returns 200 regardless — caller never needs to handle errors
+export async function resendConfirmation(email: string): Promise<void> {
+  const response = await apiFetch(`${BASE_URL}/auth/resend-confirmation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  })
+  return handleEmptyResponse(response)
+}
