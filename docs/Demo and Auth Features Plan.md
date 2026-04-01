@@ -14,6 +14,7 @@
 | 4 | AWS SES setup (email infrastructure) | Done (awaiting AWS production access) |
 | 5 | Email verification on register | Done |
 | 6 | Forgot password | Done |
+| 7 | Migrate email provider from SES to Resend | Code + deployment done — testing pending |
 
 ---
 
@@ -247,16 +248,16 @@ Demo users are already blocked from upload/delete entirely (Step 1), so this onl
 
 ### Backend
 
-- `ResendEmailService.cs` — new implementation of `IEmailService`; uses `HttpClient` to POST to `https://api.resend.com/emails` with Bearer token auth and JSON body (`from`, `to`, `subject`, `html`)
-- `Program.cs` — comment out SES DI registration (`AddAWSService<IAmazonSimpleEmailServiceV2>` + `SesEmailService`); add `AddHttpClient<IEmailService, ResendEmailService>()`
-- Config: add `Resend:ApiKey` to `appsettings.Development.json` (gitignored) and production environment variables; update `Email:FromAddress` to `noreply@jobtracker.nagarenegishi.com`
-- Error handling: `response.EnsureSuccessStatusCode()` on the HTTP response — matches the throw-on-failure pattern of the SES SDK call
+- [x] `ResendEmailService.cs` — new implementation of `IEmailService`; uses `HttpClient` to POST to `https://api.resend.com/emails` with Bearer token auth and JSON body (`from`, `to`, `subject`, `html`)
+- [x] `Program.cs` — comment out SES DI registration (`AddAWSService<IAmazonSimpleEmailServiceV2>` + `SesEmailService`); add `AddHttpClient<IEmailService, ResendEmailService>()`
+- Config: `Resend:ApiKey` not needed in dev (`LogEmailService` used instead); `Email:FromAddress` set via `EMAIL_FROM_ADDRESS` environment variable in production
+- [x] Error handling: `response.EnsureSuccessStatusCode()` on the HTTP response — matches the throw-on-failure pattern of the SES SDK call
 
 ### Production deployment
 
-- `Resend__ApiKey` added as environment variable in `compose.prod.yml` (same pattern as other secrets)
-- `RESEND_API_KEY` added as GitHub Actions secret
-- Exported in `deploy.yml` SSH session alongside other secrets
+- [x] `Resend__ApiKey` + `Email__FromAddress` added as environment variables in `compose.prod.yml`
+- [x] `RESEND_API_KEY` + `EMAIL_FROM_ADDRESS` added as GitHub Actions secrets
+- [x] Exported in `deploy.yml` SSH session alongside other secrets
 - Remove `AWSSDK.SimpleEmailV2` NuGet package from production dependencies (optional — can keep for future SES fallback)
 - Remove SES IAM policy from EC2 instance role (optional — no cost to keep)
 
