@@ -90,6 +90,18 @@ Requested specific answers on what caused the rejection, what changes would lead
 >
 > This feature is blocking a core part of my project (email verification and password reset). If the denial is based on factors I cannot realistically address, I would prefer a clear statement to that effect so I can move to an alternative provider.
 
-## Decision
 
-_Pending AWS response. If no actionable guidance is provided, the plan is to migrate email sending from SES to an alternative provider. The existing `IEmailService` abstraction allows swapping the implementation without changes to controllers or frontend code._
+## Second Resubmission — Rejection (Account Maturity)
+
+AWS responded with a more specific reason:
+
+> Due to some limiting factors on your account currently, you are not eligible to send SES messages in Asia Pacific (Sydney) region. You will need to show a pattern of use of other AWS services and a consistent paid billing history to gain access to this function.
+
+This confirms the rejection is not related to the technical setup or use case. The issue is account maturity — new account with insufficient billing history and usage of other AWS services. No specific threshold was provided for what constitutes "sufficient" billing history or usage.
+
+## Current Status
+
+- All technical requirements are met (DKIM, DMARC, SPF, custom MAIL FROM, scoped IAM, bounce monitoring, sandbox test passing)
+- SES production access is blocked by account-level criteria that cannot be addressed without waiting an undefined period
+- Asking AWS for the exact threshold is unlikely to produce a concrete answer based on prior interactions
+- The `IEmailService` abstraction is in place, allowing migration to an alternative provider without changes to controllers or frontend code
