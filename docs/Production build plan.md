@@ -13,10 +13,10 @@
 | 6 | Security headers | Done |
 | 7 | GitHub Actions CI/CD | Done |
 | 8a | DB migration automation in CI | Done |
-| 8b | First production deploy (merge to main) | Pending |
+| 8b | First production deploy (merge to main) | Done |
 | 8b-1 | SSL via Certbot (nginx, standalone) | Done |
-| 8c | Rate limiting | Pending |
-| 9 | Monitoring/metrics | Pending |
+| 8c | Rate limiting | Done |
+| 9 | Monitoring/metrics | Backlog — revisit when user traffic grows |
 | — | SSL: Migrate to Caddy (optional, when certbot maintenance becomes friction) | Backlog |
 
 ---
@@ -225,7 +225,7 @@ Ubuntu AMI — installed via SSH from WSL:
 
 ---
 
-## Step 8b-1 — SSL via Certbot ⬜
+## Step 8b-1 — SSL via Certbot
 
 ### Why this approach
 
@@ -304,11 +304,15 @@ Four options were considered (March 2026):
 
 ---
 
-## Step 8c — Rate Limiting ⬜
+## Step 8c — Rate Limiting
 
-- `app.UseRateLimiter()` not configured — risk of abuse on auth endpoints in prod
-- Not a deploy blocker — add after first successful deploy
-- Scope: apply a fixed-window policy to `AuthController` (register + login) at minimum
+- Built-in `Microsoft.AspNetCore.RateLimiting` namespace — no NuGet package required
+- Two fixed-window policies registered in `Program.cs` via `builder.Services.AddRateLimiter(...)`:
+  - `"auth"` — 5 requests per minute per IP; applied to login, register, refresh, logout, and password change
+  - `"resend-confirmation"` — 3 requests per hour per IP; applied to the resend confirmation endpoint (each call triggers a real SES send, so tighter limit)
+- `[EnableRateLimiting("auth")]` / `[EnableRateLimiting("resend-confirmation")]` attributes on individual action methods in `AuthController` and `AccountController` — not applied globally, so CRUD endpoints are unaffected
+- `app.UseRateLimiter()` added to the middleware pipeline in `Program.cs` after `UseAuthorization`
+- Returns `429 Too Many Requests` when limit exceeded
 
 ---
 
@@ -341,9 +345,15 @@ Remove once config is verified and ready for production.
 
 ---
 
-## Step 9 — Monitoring/Metrics
+## Step 9 — Monitoring/Metrics (Backlog)
 
-- No Application Insights, Prometheus, or equivalent
-- Deferrable — decide on tooling when the app is running
-- Options: Grafana Loki (pairs well with structured JSON logs already emitted), Datadog, Prometheus + Grafana — decide when the app is running; CloudWatch ruled out
-- Dependabot scope: currently only watches devcontainer, not NuGet or npm packages — expand it
+Deferred until the app has real user traffic worth observing. Current coverage is sufficient for a low-traffic solo app:
+- Structured JSON logs to stdout (Serilog) — readable via `docker logs`
+- Health check at `/health` — DB connectivity confirmed on every deploy
+- Let's Encrypt emails before cert expiry — cert renewal safety net
+
+When to revisit: sustained traffic, repeated error patterns, or on-call needs. Options when ready:
+- **Grafana Loki** — pairs well with existing structured JSON logs; lightweight
+- **Datadog** — managed, more setup but richer alerting
+- **Prometheus + Grafana** — self-hosted, most control
+- CloudWatch ruled out (vendor lock-in, cost)
