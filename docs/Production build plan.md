@@ -297,6 +297,8 @@ Four options were considered (March 2026):
    ```
    Add: `0 3 * * * certbot renew --quiet --deploy-hook "docker exec app-nginx-1 nginx -s reload"`
 
+**Note:** The demo-reset GitHub Actions workflow runs at `0 4 * * *` UTC — offset by 1 hour from certbot to avoid nginx being briefly down during renewal.
+
 **Note:** After getting certs, the nginx container needs to be restarted with the volume mount. The cert renewal hook reloads nginx inside the container so it picks up the new cert without a restart.
 
 ---
