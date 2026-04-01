@@ -211,6 +211,7 @@ Ubuntu AMI — installed via SSH from WSL:
 - `LocalStorageService.cs`: auto-creates uploads directory on startup if missing (dev mode)
 - Demo mode 403 error messages updated to be user-facing
 - EC2 IAM role swapped to `jobtracker_ec2_role` — fixed 500 on S3 document upload (see EC2 one-time setup above)
+- S3 bucket CORS configured: `AllowedOrigins: ["https://jobtracker.nagarenegishi.com"]`, `AllowedMethods: ["GET"]` — required for browser `fetch()` to follow the 302 pre-signed URL redirect cross-origin. CSP `connect-src` was already set; CORS is the S3-side counterpart that was missing.
 
 **Issues fixed during first deploy:**
 - `jobTable.tsx` → `JobTable.tsx` — case mismatch caused Docker build failure on Linux
