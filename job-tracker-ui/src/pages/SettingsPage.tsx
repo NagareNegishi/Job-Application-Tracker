@@ -5,10 +5,16 @@ import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api"
 import { changePassword } from "@/services/authService"
 import { useState } from "react"
+import { useLocation, useNavigate } from "react-router"
 
 // Settings page — authenticated account management.
 // Currently holds change password only; add new sections here as features grow (e.g. email, notifications).
 export default function SettingsPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  // Use the path UserMenu passed via router state; fall back to /jobs on direct URL load
+  const from: string = location.state?.from ?? "/jobs"
+
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
@@ -46,6 +52,13 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-muted">
       <NavBar />
       <div className="max-w-5xl mx-auto px-6 py-8">
+        {/* ← arrow is a plain unicode char — no icon dep needed */}
+        <button
+          onClick={() => navigate(from)}
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
+          ← Back
+        </button>
         <div className="bg-card rounded-lg shadow-sm p-6">
           <h1 className="text-xl font-semibold mb-6">Settings</h1>
           <section>

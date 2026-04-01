@@ -6,7 +6,17 @@
 
 version: 2
 updates:
- - package-ecosystem: "devcontainers"
-   directory: "/"
-   schedule:
-     interval: weekly
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: "nuget"
+    directory: "/JobTrackerApi"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: "npm"
+    directory: "/job-tracker-ui"
+    schedule:
+      interval: weekly
