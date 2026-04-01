@@ -1,6 +1,6 @@
 # Demo and Auth Features Plan
 
-> All decisions locked. Steps 1–6 complete.
+> All decisions locked. Steps 1–7 complete.
 
 ---
 
@@ -14,7 +14,7 @@
 | 4 | AWS SES setup (email infrastructure) | Done (awaiting AWS production access) |
 | 5 | Email verification on register | Done |
 | 6 | Forgot password | Done |
-| 7 | Migrate email provider from SES to Resend | Code + deployment done — testing pending |
+| 7 | Migrate email provider from SES to Resend | Done |
 
 ---
 
@@ -274,7 +274,7 @@ Demo users are already blocked from upload/delete entirely (Step 1), so this onl
 
 ### Testing
 
-- [ ] Send test email via Resend dashboard to verify domain setup
-- [ ] Deploy to staging/production and trigger email verification flow (register new account)
-- [ ] Trigger forgot password flow
-- [ ] Confirm emails arrive with SPF, DKIM, DMARC all passing (check Gmail "Show original")
+- [x] Send test email via Resend dashboard to verify domain setup
+- [x] Deploy to staging/production and trigger email verification flow (register new account)
+- [x] Trigger forgot password flow
+- [x] Confirm emails arrive with SPF, DKIM, DMARC all passing
