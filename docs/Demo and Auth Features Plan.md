@@ -232,24 +232,24 @@ Demo users are already blocked from upload/delete entirely (Step 1), so this onl
 **Decisions locked:**
 - Provider: **Resend** — permanent free tier (3,000 emails/month, 100/day), no production access gatekeeping, not tied to AWS (survives future infrastructure migration)
 - Integration method: **REST API via `HttpClient`** — no official .NET SDK exists, not needed at this volume; one POST call per email
-- `SesEmailService` stays in the codebase — available as a fallback if SES production access is later granted
+- `SesEmailService` stays in the codebase, SES DI registration commented out — available as a fallback if SES production access is later granted
 - Config key: `Resend:ApiKey` — stored as environment variable in production, never committed
-- `Email:FromAddress` config key reused — same sending address as planned for SES (`noreply@[your-domain]`)
+- `Email:FromAddress` updated to `noreply@[app-subdomain]` — matches verified Resend domain (app subdomain, not root); keeps email reputation separate from root domain and SES setup
+- Resend domain: app subdomain (not root domain) — clean separation from SES records on root domain; region closest to users
 
 ### Resend account setup
 
-1. [ ] Sign up at resend.com (free plan, no credit card)
-2. [ ] Add domain in Resend dashboard (Domains > Add Domain) — select region closest to users
-3. [ ] Add Resend DNS records in Namecheap Advanced DNS — DKIM and SPF records; check for conflicts with existing SES DNS records (DKIM selectors differ so no conflict; SPF may need merging into one TXT record)
-4. [ ] Verify domain in Resend dashboard — status shows Verified
-5. [ ] Create API key (Sending access permission only) — copy immediately, store securely
+1. [x] Sign up at resend.com (free plan, no credit card)
+2. [x] Add app subdomain in Resend dashboard (Domains > Add Domain) — pick region closest to users
+3. [x] Add Resend DNS records in DNS provider — DKIM CNAMEs + SPF TXT + MX for bounce handling; all on app subdomain, no conflict with existing SES records on root domain
+4. [x] Verify domain in Resend dashboard — DKIM verified; MX (Enable Receiving) pending DNS propagation
+5. [x] Create API key with Sending access permission only — store in password manager
 
 ### Backend
 
 - `ResendEmailService.cs` — new implementation of `IEmailService`; uses `HttpClient` to POST to `https://api.resend.com/emails` with Bearer token auth and JSON body (`from`, `to`, `subject`, `html`)
-- `Program.cs` — swap DI registration from `SesEmailService` to `ResendEmailService` using `AddHttpClient<IEmailService, ResendEmailService>()`
-- Config: add `Resend:ApiKey` to `appsettings.Development.json` (gitignored) and production environment variables
-- `Email:FromAddress` remains the same — no change needed
+- `Program.cs` — comment out SES DI registration (`AddAWSService<IAmazonSimpleEmailServiceV2>` + `SesEmailService`); add `AddHttpClient<IEmailService, ResendEmailService>()`
+- Config: add `Resend:ApiKey` to `appsettings.Development.json` (gitignored) and production environment variables; update `Email:FromAddress` to `noreply@jobtracker.nagarenegishi.com`
 - Error handling: `response.EnsureSuccessStatusCode()` on the HTTP response — matches the throw-on-failure pattern of the SES SDK call
 
 ### Production deployment
