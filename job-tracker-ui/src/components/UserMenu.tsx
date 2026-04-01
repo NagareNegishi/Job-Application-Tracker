@@ -4,13 +4,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { logout } from "@/services/authService"
 import { getEmail } from "@/lib/auth"
 import { User } from "lucide-react"
-import { useNavigate } from "react-router"
+import { useNavigate, useLocation } from "react-router"
 
 // User icon + dropdown menu in the top-right corner of the app.
 // Handles its own open/close state so NavBar stays a thin layout shell.
 // Add future account actions (profile picture, notifications, etc.) here, not in NavBar.
 export default function UserMenu() {
   const navigate = useNavigate()
+  const location = useLocation()
   // Controlled open state — Radix Popover stays open on inside clicks by default,
   // so we manage it manually to close on menu item selection
   const [open, setOpen] = useState(false)
@@ -36,7 +37,7 @@ export default function UserMenu() {
         <div className="py-1">
           <button
             className="w-full text-left px-4 py-2 text-sm hover:bg-accent"
-            onClick={() => { setOpen(false); navigate("/settings") }}
+            onClick={() => { setOpen(false); navigate("/settings", { state: { from: location.pathname } }) }}
           >
             Settings
           </button>
