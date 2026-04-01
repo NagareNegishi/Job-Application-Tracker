@@ -97,10 +97,14 @@ var jwtAudience = builder.Configuration["Jwt:Audience"]
 if (!builder.Environment.IsDevelopment())
     _ = builder.Configuration["Storage:S3BucketName"]
         ?? throw new InvalidOperationException("Storage:S3BucketName is not configured. Set S3_BUCKET_NAME environment variable.");
-// Sender address only required in production — dev uses LogEmailService instead
+// Sender address + Resend API key only required in production — dev uses LogEmailService instead
 if (!builder.Environment.IsDevelopment())
+{
     _ = builder.Configuration["Email:FromAddress"]
         ?? throw new InvalidOperationException("Email:FromAddress is not configured. Set EMAIL_FROM_ADDRESS environment variable.");
+    _ = builder.Configuration["Resend:ApiKey"]
+        ?? throw new InvalidOperationException("Resend:ApiKey is not configured. Set RESEND_API_KEY environment variable.");
+}
 
 // Npgsql Entity Framework
 // https://www.npgsql.org/efcore/index.html?tabs=aspnet
@@ -121,14 +125,15 @@ if (builder.Environment.IsDevelopment())
 else
     builder.Services.AddSingleton<IStorageService, S3StorageService>();
 
-// Register IAmazonSimpleEmailServiceV2 — reads credentials + AWS_REGION from environment automatically
-builder.Services.AddAWSService<IAmazonSimpleEmailServiceV2>();
+// SES registration kept for reference — uncomment to revert if SES production access is granted
+// builder.Services.AddAWSService<IAmazonSimpleEmailServiceV2>();
 
-// Use LogEmailService in dev (logs to console), SesEmailService in production
+// Use LogEmailService in dev (logs to console), ResendEmailService in production
+// AddHttpClient manages connection pooling safely — don't use AddScoped with HttpClient directly
 if (builder.Environment.IsDevelopment())
     builder.Services.AddScoped<IEmailService, LogEmailService>();
 else
-    builder.Services.AddScoped<IEmailService, SesEmailService>();
+    builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
 
 // Registers Identity's core services
 builder.Services.AddIdentityCore<IdentityUser>()
