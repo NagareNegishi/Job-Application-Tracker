@@ -105,3 +105,4 @@ This confirms the rejection is not related to the technical setup or use case. T
 - SES production access is blocked by account-level criteria that cannot be addressed without waiting an undefined period
 - Asking AWS for the exact threshold is unlikely to produce a concrete answer based on prior interactions
 - The `IEmailService` abstraction is in place, allowing migration to an alternative provider without changes to controllers or frontend code
+- SES-SendEmail inline policy removed from EC2 instance role (no cost impact — app now sends via Resend). Policy JSON preserved in the Demo and Auth Features Plan (Step 7) for future reference.

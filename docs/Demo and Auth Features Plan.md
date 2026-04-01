@@ -272,6 +272,26 @@ Demo users are already blocked from upload/delete entirely (Step 1), so this onl
 
 - No changes required — all email sending is backend-only through `IEmailService`
 
+### IAM cleanup (post-migration)
+
+SES-SendEmail inline policy removed from EC2 instance role — no cost impact, app now sends via Resend. Policy preserved below for future reference if SES production access is later granted:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ses:SendEmail",
+                "ses:SendRawEmail"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
 ### Testing
 
 - [x] Send test email via Resend dashboard to verify domain setup
