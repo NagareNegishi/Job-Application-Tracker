@@ -40,6 +40,8 @@ Add these in: **repo → Settings → Secrets and variables → Actions → New 
 | `JWT_ISSUER` | `https://yourdomain.com` |
 | `JWT_AUDIENCE` | `https://yourdomain.com` |
 | `DEMO_RESET_KEY` | Long random string — authorizes `POST /api/auth/demo/reset` called by the nightly cron |
+| `EMAIL_FROM_ADDRESS` | Sender address for transactional emails — `noreply@jobtracker.nagarenegishi.com` |
+| `RESEND_API_KEY` | Resend API key with Sending access permission only |
 
 Generate random secrets with:
 ```

@@ -175,6 +175,8 @@ jobs:
             export JWT_AUDIENCE="${{ secrets.JWT_AUDIENCE }}"
             export S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}"
             export DEMO_RESET_KEY="${{ secrets.DEMO_RESET_KEY }}"
+            export EMAIL_FROM_ADDRESS="${{ secrets.EMAIL_FROM_ADDRESS }}"
+            export RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}"
 
             docker compose -f compose.prod.yml up --no-build -d
           EOF

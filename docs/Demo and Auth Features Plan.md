@@ -14,6 +14,7 @@
 | 4 | AWS SES setup (email infrastructure) | Done (awaiting AWS production access) |
 | 5 | Email verification on register | Done |
 | 6 | Forgot password | Done |
+| 7 | Migrate email provider from SES to Resend | Code + deployment done — testing pending |
 
 ---
 
@@ -220,3 +221,60 @@ Potential approach:
 - ASP.NET's built-in rate limiter supports custom partition keys — requires a custom policy that reads the user ID from `HttpContext.User`
 
 Demo users are already blocked from upload/delete entirely (Step 1), so this only applies to registered users.
+
+---
+
+## Step 7 — Migrate Email Provider from SES to Resend
+
+**Goal:** Replace AWS SES with Resend for sending transactional emails. SES production access was denied with no actionable feedback (see `docs/ses-rejection-notes.md`). The existing `IEmailService` abstraction allows swapping the provider without changes to controllers, auth flows, or frontend.
+
+**Requires:** Steps 5 and 6 already built against `IEmailService` — no changes needed there.
+
+**Decisions locked:**
+- Provider: **Resend** — permanent free tier (3,000 emails/month, 100/day), no production access gatekeeping, not tied to AWS (survives future infrastructure migration)
+- Integration method: **REST API via `HttpClient`** — no official .NET SDK exists, not needed at this volume; one POST call per email
+- `SesEmailService` stays in the codebase, SES DI registration commented out — available as a fallback if SES production access is later granted
+- Config key: `Resend:ApiKey` — stored as environment variable in production, never committed
+- `Email:FromAddress` updated to `noreply@[app-subdomain]` — matches verified Resend domain (app subdomain, not root); keeps email reputation separate from root domain and SES setup
+- Resend domain: app subdomain (not root domain) — clean separation from SES records on root domain; region closest to users
+
+### Resend account setup
+
+1. [x] Sign up at resend.com (free plan, no credit card)
+2. [x] Add app subdomain in Resend dashboard (Domains > Add Domain) — pick region closest to users
+3. [x] Add Resend DNS records in DNS provider — DKIM CNAMEs + SPF TXT + MX for bounce handling; all on app subdomain, no conflict with existing SES records on root domain
+4. [x] Verify domain in Resend dashboard — DKIM verified; MX (Enable Receiving) pending DNS propagation
+5. [x] Create API key with Sending access permission only — store in password manager
+
+### Backend
+
+- [x] `ResendEmailService.cs` — new implementation of `IEmailService`; uses `HttpClient` to POST to `https://api.resend.com/emails` with Bearer token auth and JSON body (`from`, `to`, `subject`, `html`)
+- [x] `Program.cs` — comment out SES DI registration (`AddAWSService<IAmazonSimpleEmailServiceV2>` + `SesEmailService`); add `AddHttpClient<IEmailService, ResendEmailService>()`
+- Config: `Resend:ApiKey` not needed in dev (`LogEmailService` used instead); `Email:FromAddress` set via `EMAIL_FROM_ADDRESS` environment variable in production
+- [x] Error handling: `response.EnsureSuccessStatusCode()` on the HTTP response — matches the throw-on-failure pattern of the SES SDK call
+
+### Production deployment
+
+- [x] `Resend__ApiKey` + `Email__FromAddress` added as environment variables in `compose.prod.yml`
+- [x] `RESEND_API_KEY` + `EMAIL_FROM_ADDRESS` added as GitHub Actions secrets
+- [x] Exported in `deploy.yml` SSH session alongside other secrets
+- Remove `AWSSDK.SimpleEmailV2` NuGet package from production dependencies (optional — can keep for future SES fallback)
+- Remove SES IAM policy from EC2 instance role (optional — no cost to keep)
+
+### DNS notes
+
+- Resend DKIM records use different selectors from SES — both can coexist
+- If Resend requires an SPF TXT record on the root domain, merge with any existing SPF record into a single TXT record (DNS spec allows only one SPF record per domain)
+- DMARC record (`_dmarc.nagarenegishi.com`) already exists — no change needed, works with any provider that passes DKIM alignment
+- Existing SES DNS records can remain in place — they do not interfere and allow reverting to SES if production access is later granted
+
+### Frontend
+
+- No changes required — all email sending is backend-only through `IEmailService`
+
+### Testing
+
+- [ ] Send test email via Resend dashboard to verify domain setup
+- [ ] Deploy to staging/production and trigger email verification flow (register new account)
+- [ ] Trigger forgot password flow
+- [ ] Confirm emails arrive with SPF, DKIM, DMARC all passing (check Gmail "Show original")
