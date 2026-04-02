@@ -58,7 +58,8 @@ One origin — no CORS needed. `try_files $uri $uri/ /index.html` for SPA routin
 - `S3StorageService` created: `SaveAsync` → `PutObjectAsync`, `DeleteAsync` → `DeleteObjectAsync`, `GetDownloadUrlAsync` → pre-signed URL (15 min expiry), `GetAsync` throws `NotSupportedException` (streaming not supported, use pre-signed URL)
 - `DocumentsController` download endpoint updated: redirects to pre-signed URL if available, falls back to stream (local dev only)
 - DI wired in `Program.cs`: `AddAWSService<IAmazonS3>()` + env-conditional registration (`LocalStorageService` in dev, `S3StorageService` in prod)
-- NuGet: `AWSSDK.S3`, `AWSSDK.Extensions.NETCore.Setup`
+- NuGet: `AWSSDK.S3` (S3 API client — `IAmazonS3`, `PutObjectRequest`, etc.), `AWSSDK.Extensions.NETCore.Setup` (AWS SDK DI integration — enables `AddAWSService<IAmazonS3>()` in `Program.cs`)
+  - [AWSSDK.S3](https://www.nuget.org/packages/AWSSDK.S3) · [AWSSDK.Extensions.NETCore.Setup](https://www.nuget.org/packages/AWSSDK.Extensions.NETCore.Setup) · [AWS SDK .NET DI docs](https://docs.aws.amazon.com/sdk-for-net/v3/developer-guide/net-dg-config-netcore.html)
 - Still needed: IAM role on EC2 with S3 permissions — `Storage:S3BucketName` and `AWS_REGION` already wired in `compose.prod.yml`
 
 ### 2b-2: Backend Dockerfile
