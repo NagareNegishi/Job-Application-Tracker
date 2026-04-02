@@ -17,6 +17,8 @@ Full-stack job application tracking system built with ASP.NET Core and React.
 - Attach documents (CV, cover letter) per application
 - Contact and correspondence history per application
 - JWT authentication with httpOnly refresh token rotation
+- Email verification on registration; forgot / reset password flow
+- Change password from the Settings page
 - Demo mode — try the app without registering
 
 ## Demo
