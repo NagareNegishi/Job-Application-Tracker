@@ -31,12 +31,12 @@ If no language detected, inform user and exit.
 
 ### 2. Read Reference File
 
-Load `${CLAUDE_SKILL_DIR}/../owasp-guard/references/<language>.md` to get the list
+Load `.claude/skills/owasp-guard/references/<language>.md` to get the list
 of required cheat sheet filenames for the detected language.
 
 ### 3. Check What Needs Updating
 
-Read `${CLAUDE_SKILL_DIR}/../owasp-guard/cache/last_updated.json` (create if missing).
+Read `.claude/skills/owasp-guard/cache/last_updated.json` (create if missing).
 
 For each required cheat sheet, check freshness:
 
@@ -63,7 +63,7 @@ For each sheet that needs updating:
 curl -s "https://raw.githubusercontent.com/OWASP/CheatSheetSeries/master/cheatsheets/<FILENAME>"
 ```
 
-Save to `${CLAUDE_SKILL_DIR}/../owasp-guard/cache/<FILENAME>`.
+Save to `.claude/skills/owasp-guard/cache/<FILENAME>`.
 
 Update `last_updated.json` entry:
 ```json
