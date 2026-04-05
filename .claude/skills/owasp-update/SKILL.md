@@ -3,7 +3,6 @@ name: owasp-update
 description: >
   Update the local OWASP cheat sheet cache. Use when the user explicitly runs /owasp-update
   to refresh cached OWASP Cheat Sheet Series content for the current project's language.
-disable-model-invocation: true
 allowed-tools: Bash Read
 ---
 
