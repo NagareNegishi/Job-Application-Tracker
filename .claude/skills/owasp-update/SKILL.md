@@ -37,22 +37,34 @@ of required cheat sheet filenames for the detected language.
 
 Read `.claude/skills/owasp-guard/cache/last_updated.json` (create if missing).
 
-For each required cheat sheet, check freshness:
-
 **Primary — GitHub API** (requires `api.github.com`):
 
 ```bash
-curl -s "https://api.github.com/repos/OWASP/CheatSheetSeries/commits?path=cheatsheets/<FILENAME>&per_page=1"
+curl -s "https://api.github.com/repos/OWASP/CheatSheetSeries/git/trees/master?recursive=1" \
+  > /tmp/owasp_tree.json
 ```
 
-Compare returned commit SHA with SHA stored in `last_updated.json`.
-Match → skip (already up to date). Mismatch or missing → fetch.
+Check truncation:
+```bash
+jq -e '.truncated == false' /tmp/owasp_tree.json
+```
 
-On failure, inform user once:
+If exit code non-zero (truncated or request failed), skip to timestamp fallback for all sheets.
+
+For each required cheat sheet `<FILENAME>`, get its blob SHA:
+```bash
+jq -r '.tree[] | select(.path == "cheatsheets/<FILENAME>") | .sha' /tmp/owasp_tree.json
+```
+
+Compare result against `commit_sha` in `last_updated.json`:
+- Equal → skip
+- Different, empty, or stored value is null → fetch
+
+On curl failure, inform user once:
 > "GitHub API (`api.github.com`) not reachable. Using timestamp fallback.
 > Allow `api.github.com` for accurate staleness checks."
 
-**Fallback — Timestamp**: If `fetched_at` older than 90 days, or file missing → fetch.
+**Fallback — Timestamp**: If `fetched_at` older than 90 days, or file missing on disk → fetch.
 
 ### 4. Fetch Updated Sheets
 
