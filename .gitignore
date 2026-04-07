@@ -45,7 +45,7 @@ appsettings.Development.json
 
 # Claude code
 creds.json
-.claude/owasp-scan/
+.claude/skills/owasp-scan/findings.json
 
 # Document Storage for dev version
 uploads
