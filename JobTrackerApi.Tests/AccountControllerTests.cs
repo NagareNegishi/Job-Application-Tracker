@@ -138,4 +138,32 @@ public class AccountControllerTests
         // Assert
         Assert.IsType<BadRequestObjectResult>(result);
     }
+
+    // Happy path — Identity accepts the change and returns Ok
+    [Fact]
+    public async Task ChangePassword_Success_ReturnsOk()
+    {
+        // Arrange
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "NewPass1!"
+        };
+
+        // Act
+        var result = await _controller.ChangePassword(dto);
+
+        // Assert
+        Assert.IsType<OkResult>(result);
+        _userManagerMock.Verify(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"), Times.Once);
+    }
 }
