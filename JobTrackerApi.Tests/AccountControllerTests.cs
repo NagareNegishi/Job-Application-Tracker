@@ -87,4 +87,27 @@ public class AccountControllerTests
         Assert.NotNull(badRequest.Value);
         _userManagerMock.Verify(m => m.FindByIdAsync(It.IsAny<string>()), Times.Never);
     }
+
+    // If the userId from the JWT does not resolve to a known account, return 401
+    [Fact]
+    public async Task ChangePassword_UserNotFound_ReturnsUnauthorized()
+    {
+        // Arrange: FindByIdAsync returns null — userId in token has no matching account
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync((IdentityUser?)null);
+
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "NewPass1!"
+        };
+
+        // Act
+        var result = await _controller.ChangePassword(dto);
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result);
+    }
 }
