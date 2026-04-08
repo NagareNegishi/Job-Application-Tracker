@@ -66,4 +66,25 @@ public class AccountControllerTests
         Assert.Equal(403, ((ObjectResult)result).StatusCode);
         _userManagerMock.Verify(m => m.FindByIdAsync(It.IsAny<string>()), Times.Never);
     }
+
+    // NewPassword and ConfirmNewPassword must match before reaching Identity
+    [Fact]
+    public async Task ChangePassword_PasswordsDoNotMatch_ReturnsBadRequest()
+    {
+        // Arrange
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "DifferentPass1!" // intentional mismatch
+        };
+
+        // Act
+        var result = await _controller.ChangePassword(dto);
+
+        // Assert
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.NotNull(badRequest.Value);
+        _userManagerMock.Verify(m => m.FindByIdAsync(It.IsAny<string>()), Times.Never);
+    }
 }
