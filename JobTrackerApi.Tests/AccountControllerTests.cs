@@ -44,4 +44,26 @@ public class AccountControllerTests
             HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
         };
     }
+
+    // Demo user is blocked before any Identity call — password changes are not allowed in demo mode
+    [Fact]
+    public async Task ChangePassword_DemoUser_ReturnsForbidden()
+    {
+        // Arrange: set the email claim to the demo account's fixed address
+        SetUser(email: DemoUser.Email);
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "NewPass1!"
+        };
+
+        // Act
+        var result = await _controller.ChangePassword(dto);
+
+        // Assert: 403 returned, and no Identity call was made
+        Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, ((ObjectResult)result).StatusCode);
+        _userManagerMock.Verify(m => m.FindByIdAsync(It.IsAny<string>()), Times.Never);
+    }
 }
