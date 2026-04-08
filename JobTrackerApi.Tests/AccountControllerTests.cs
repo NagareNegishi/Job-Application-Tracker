@@ -1,5 +1,6 @@
 namespace JobTrackerApi.Tests;
 using JobTrackerApi.Controllers;
+using JobTrackerApi.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +25,7 @@ public class AccountControllerTests
             store.Object, null, null, null, null, null, null, null, null);
 
         _controller = new AccountController(_userManagerMock.Object);
+        SetUser();
     }
 
     // In production, JWT middleware builds a ClaimsPrincipal from the Bearer token and sets it
