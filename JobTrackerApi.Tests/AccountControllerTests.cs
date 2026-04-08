@@ -110,4 +110,32 @@ public class AccountControllerTests
         // Assert
         Assert.IsType<UnauthorizedResult>(result);
     }
+
+    // Identity rejects the change (e.g. wrong current password) — surface errors as 400
+    [Fact]
+    public async Task ChangePassword_WrongCurrentPassword_ReturnsBadRequest()
+    {
+        // Arrange
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ChangePasswordAsync(user, "WrongPass1!", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Failed(
+                new IdentityError { Code = "PasswordMismatch", Description = "Incorrect password." }));
+
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "WrongPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "NewPass1!"
+        };
+
+        // Act
+        var result = await _controller.ChangePassword(dto);
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
 }
