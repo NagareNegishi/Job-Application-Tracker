@@ -5,10 +5,15 @@ Full-stack job application tracking system built with ASP.NET Core and React.
 ## Tech Stack
 
 **Backend:** ASP.NET Core 10 Web API, Entity Framework Core, PostgreSQL, ASP.NET Identity + JWT
+
 **Frontend:** React 19 + TypeScript + Vite
+
 **Storage:** AWS S3 (production), local filesystem (development)
+
 **Infrastructure:** EC2 + Docker Compose, RDS PostgreSQL, ECR
+
 **Testing:** xUnit
+
 **CI/CD:** GitHub Actions (test → build → migrate → deploy)
 
 ## Features
