@@ -466,6 +466,26 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // User found — password reset email sent with signed token link, 200 returned
+    [Fact]
+    public async Task ForgotPassword_UserFound_SendsResetEmailAndReturnsOk()
+    {
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.GeneratePasswordResetTokenAsync(user))
+            .ReturnsAsync("reset-token");
+
+        var result = await _controller.ForgotPassword(new ForgotPasswordDTO { Email = TestUserEmail });
+
+        Assert.IsType<OkResult>(result);
+        _emailMock.Verify(
+            e => e.SendEmailAsync(TestUserEmail, It.IsAny<string>(), It.IsAny<string>()),
+            Times.Once);
+    }
+
     // User not found — always 200 to avoid leaking whether the email is registered
     [Fact]
     public async Task ForgotPassword_UserNotFound_ReturnsOkSilently()
