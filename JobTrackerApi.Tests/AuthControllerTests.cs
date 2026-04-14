@@ -364,6 +364,32 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<UnauthorizedResult>(result);
     }
 
+    // Existing unconfirmed account — deleted before re-registration so user can fix a typo
+    // without hitting "email already taken"; demo account is excluded from this path
+    [Fact]
+    public async Task Register_ExistingUnconfirmedAccount_DeletesAndReregisters()
+    {
+        var existing = new IdentityUser { Id = "old-id", Email = TestUserEmail, EmailConfirmed = false };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(existing);
+        _userManagerMock
+            .Setup(m => m.DeleteAsync(existing))
+            .ReturnsAsync(IdentityResult.Success);
+        _userManagerMock
+            .Setup(m => m.CreateAsync(It.IsAny<IdentityUser>(), "Pass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+        _userManagerMock
+            .Setup(m => m.GenerateEmailConfirmationTokenAsync(It.IsAny<IdentityUser>()))
+            .ReturnsAsync("confirm-token");
+
+        var result = await _controller.Register(new RegisterDTO { Email = TestUserEmail, Password = "Pass1!" });
+
+        Assert.IsType<OkObjectResult>(result);
+        // Old account deleted before creating the new one
+        _userManagerMock.Verify(m => m.DeleteAsync(existing), Times.Once);
+    }
+
     // Identity rejects the new account (e.g. password too weak) — surface errors as 400
     [Fact]
     public async Task Register_IdentityFailure_ReturnsBadRequest()
