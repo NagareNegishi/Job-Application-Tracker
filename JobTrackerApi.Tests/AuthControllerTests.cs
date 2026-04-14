@@ -203,6 +203,27 @@ public class AuthControllerTests : IDisposable
         Assert.True(_controller.HttpContext.Response.Headers.ContainsKey("Set-Cookie"));
     }
 
+    // Token in DB but already revoked — rotation or manual revocation set RevokedAt
+    [Fact]
+    public async Task Refresh_TokenRevoked_ReturnsUnauthorized()
+    {
+        // Seed a revoked token — RevokedAt set means IsActive returns false
+        _context.RefreshTokens.Add(new RefreshToken
+        {
+            Token = "revoked-token",
+            UserId = TestUserId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            RevokedAt = DateTime.UtcNow.AddMinutes(-1)
+        });
+        await _context.SaveChangesAsync();
+
+        _controller.HttpContext.Request.Headers["Cookie"] = "refreshToken=revoked-token";
+
+        var result = await _controller.Refresh();
+
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
     // Cookie present but token has no matching row in the DB — rejected as invalid
     [Fact]
     public async Task Refresh_TokenNotInDb_ReturnsUnauthorized()
