@@ -143,6 +143,35 @@ public class AuthControllerTests : IDisposable
         Assert.Equal(503, statusResult.StatusCode);
     }
 
+    // Happy path — existing jobs and their documents deleted from storage, then fresh seed applied
+    [Fact]
+    public async Task DemoReset_Success_WipesAndReseeds()
+    {
+        // Arrange: demo user exists, one existing job with a document in storage
+        var user = new IdentityUser { Id = TestUserId, Email = DemoUser.Email };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(DemoUser.Email))
+            .ReturnsAsync(user);
+
+        var job = await SeedJobAsync(TestUserId);
+        var doc = new Document { JobId = job.Id, Name = "cv.pdf", StoredName = "stored-key.pdf", StorageKey = "stored-key.pdf", Type = DocumentType.CV };
+        _context.Documents.Add(doc);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.DemoReset(TestResetKey);
+
+        // Assert: 200
+        Assert.IsType<OkObjectResult>(result);
+
+        // Storage delete was called for the document
+        _storageMock.Verify(s => s.DeleteAsync("stored-key.pdf"), Times.Once);
+
+        // Old jobs gone, fresh seed in place
+        var jobCount = await _context.Jobs.CountAsync(j => j.UserId == TestUserId);
+        Assert.Equal(DemoSeed.CreateJobs(TestUserId).Count, jobCount);
+    }
+
     // X-Reset-Key header missing or wrong — reject before touching the DB
     [Fact]
     public async Task DemoReset_WrongKey_ReturnsUnauthorized()
