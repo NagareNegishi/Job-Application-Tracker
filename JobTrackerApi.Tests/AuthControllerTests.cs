@@ -128,6 +128,25 @@ public class AuthControllerTests : IDisposable
         Assert.Equal(DemoSeed.CreateJobs(TestUserId).Count, jobCount);
     }
 
+    // Password correct but account not yet activated — 403 not 401 to distinguish from bad credentials
+    [Fact]
+    public async Task Login_EmailNotConfirmed_ReturnsForbidden()
+    {
+        // EmailConfirmed = false — password correct but account not yet activated
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail, EmailConfirmed = false };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.CheckPasswordAsync(user, "Pass1!"))
+            .ReturnsAsync(true);
+
+        var result = await _controller.Login(new LoginDTO { Email = TestUserEmail, Password = "Pass1!" });
+
+        var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, statusResult.StatusCode);
+    }
+
     // Wrong password — same 401 as wrong email to avoid leaking whether the address exists
     [Fact]
     public async Task Login_WrongPassword_ReturnsUnauthorized()
