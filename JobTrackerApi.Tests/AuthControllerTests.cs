@@ -53,6 +53,13 @@ public class AuthControllerTests : IDisposable
                 ["App:FrontendBaseUrl"]   = FrontendBaseUrl
             })
             .Build();
+
+        // In-memory EF — unique name per test class so tests don't share state;
+        // AuthController reads RefreshTokens and Jobs from _context directly
+        var options = new DbContextOptionsBuilder<JobTrackerContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        _context = new JobTrackerContext(options);
     }
 
     // xUnit creates a new class instance per test, so Dispose runs after every test
