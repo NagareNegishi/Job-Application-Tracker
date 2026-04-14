@@ -38,6 +38,21 @@ public class AuthControllerTests : IDisposable
         var store = new Mock<IUserStore<IdentityUser>>();
         _userManagerMock = new Mock<UserManager<IdentityUser>>(
             store.Object, null, null, null, null, null, null, null, null);
+
+        // IConfiguration, built in-memory rather than mocked with Moq
+        // GetValue<T> is an extension method Moq can't intercept
+        _config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Demo:ResetKey"]         = TestResetKey,
+                ["Jwt:Key"]               = JwtKey,
+                ["Jwt:Issuer"]            = JwtIssuer,
+                ["Jwt:Audience"]          = JwtAudience,
+                ["Jwt:ExpiryMinutes"]     = "60",
+                ["Jwt:RefreshExpiryDays"] = "7",
+                ["App:FrontendBaseUrl"]   = FrontendBaseUrl
+            })
+            .Build();
     }
 
     // xUnit creates a new class instance per test, so Dispose runs after every test
