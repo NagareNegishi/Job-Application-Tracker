@@ -203,6 +203,18 @@ public class AuthControllerTests : IDisposable
         Assert.True(_controller.HttpContext.Response.Headers.ContainsKey("Set-Cookie"));
     }
 
+    // Cookie present but token has no matching row in the DB — rejected as invalid
+    [Fact]
+    public async Task Refresh_TokenNotInDb_ReturnsUnauthorized()
+    {
+        // DefaultHttpContext reads cookies from the raw Cookie header
+        _controller.HttpContext.Request.Headers["Cookie"] = "refreshToken=unknown-token";
+
+        var result = await _controller.Refresh();
+
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
     // No refreshToken cookie present — nothing to rotate
     [Fact]
     public async Task Refresh_NoCookie_ReturnsUnauthorized()
