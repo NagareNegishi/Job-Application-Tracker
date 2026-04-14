@@ -203,6 +203,39 @@ public class AuthControllerTests : IDisposable
         Assert.True(_controller.HttpContext.Response.Headers.ContainsKey("Set-Cookie"));
     }
 
+    // Happy path — active token rotated, new access token issued
+    [Fact]
+    public async Task Refresh_Success_RotatesTokenAndReturnsNewAccessToken()
+    {
+        // Seed an active refresh token for the test user
+        _context.RefreshTokens.Add(new RefreshToken
+        {
+            Token = "active-token",
+            UserId = TestUserId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        });
+        await _context.SaveChangesAsync();
+
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+
+        _controller.HttpContext.Request.Headers["Cookie"] = "refreshToken=active-token";
+
+        var result = await _controller.Refresh();
+
+        // 200 with new accessToken
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var body = ok.Value!.GetType().GetProperty("accessToken")?.GetValue(ok.Value);
+        Assert.NotNull(body);
+
+        // Old token revoked, new token created — DB has 2 total, old one has RevokedAt set
+        Assert.Equal(2, await _context.RefreshTokens.CountAsync());
+        var old = await _context.RefreshTokens.FirstAsync(r => r.Token == "active-token");
+        Assert.NotNull(old.RevokedAt);
+    }
+
     // Token in DB but already revoked — rotation or manual revocation set RevokedAt
     [Fact]
     public async Task Refresh_TokenRevoked_ReturnsUnauthorized()
