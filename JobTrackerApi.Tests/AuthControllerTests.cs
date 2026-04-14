@@ -203,6 +203,16 @@ public class AuthControllerTests : IDisposable
         Assert.True(_controller.HttpContext.Response.Headers.ContainsKey("Set-Cookie"));
     }
 
+    // No refreshToken cookie present — nothing to rotate
+    [Fact]
+    public async Task Refresh_NoCookie_ReturnsUnauthorized()
+    {
+        // No "Cookie" header set — Request.Cookies["refreshToken"] returns null
+        var result = await _controller.Refresh();
+
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
     // Correct key but demo account missing from Identity
     [Fact]
     public async Task DemoReset_UserNotFound_ReturnsServiceUnavailable()
