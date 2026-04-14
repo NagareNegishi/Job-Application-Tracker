@@ -364,6 +364,23 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<UnauthorizedResult>(result);
     }
 
+    // Identity rejects the new account (e.g. password too weak) — surface errors as 400
+    [Fact]
+    public async Task Register_IdentityFailure_ReturnsBadRequest()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync((IdentityUser?)null);
+        _userManagerMock
+            .Setup(m => m.CreateAsync(It.IsAny<IdentityUser>(), "Pass1!"))
+            .ReturnsAsync(IdentityResult.Failed(
+                new IdentityError { Code = "WeakPassword", Description = "Password too weak." }));
+
+        var result = await _controller.Register(new RegisterDTO { Email = TestUserEmail, Password = "Pass1!" });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
     // Demo account missing from Identity (e.g. seed never ran) — surface as 503 not 404
     // so the caller knows the service is unavailable, not that the route is wrong
     [Fact]
