@@ -60,6 +60,18 @@ public class AuthControllerTests : IDisposable
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         _context = new JobTrackerContext(options);
+
+        // IWebHostEnvironment — IsDevelopment() is an extension that checks EnvironmentName == "Development";
+        // mocking the property is the correct hook since the extension method itself can't be intercepted
+        _envMock = new Mock<IWebHostEnvironment>();
+        _envMock.Setup(e => e.EnvironmentName).Returns("Development");
+
+        // IStorageService — same mock as DocumentsControllerTests; DemoReset calls DeleteAsync
+        _storageMock = new Mock<IStorageService>();
+
+        // IEmailService — Register, ResendConfirmation, ForgotPassword all call SendEmailAsync;
+        // default mock behaviour returns a completed Task, which is what we want
+        _emailMock = new Mock<IEmailService>();
     }
 
     // xUnit creates a new class instance per test, so Dispose runs after every test
