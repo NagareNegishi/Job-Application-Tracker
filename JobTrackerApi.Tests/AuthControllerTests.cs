@@ -466,6 +466,26 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // Unconfirmed user — resend confirmation email and return 200
+    [Fact]
+    public async Task ResendConfirmation_UnconfirmedUser_SendsEmailAndReturnsOk()
+    {
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail, EmailConfirmed = false };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.GenerateEmailConfirmationTokenAsync(user))
+            .ReturnsAsync("confirm-token");
+
+        var result = await _controller.ResendConfirmation(new ResendConfirmationDTO { Email = TestUserEmail });
+
+        Assert.IsType<OkResult>(result);
+        _emailMock.Verify(
+            e => e.SendEmailAsync(TestUserEmail, It.IsAny<string>(), It.IsAny<string>()),
+            Times.Once);
+    }
+
     // User not found or already confirmed — always 200 to avoid leaking whether the email exists;
     // no email sent in either case
     [Fact]
