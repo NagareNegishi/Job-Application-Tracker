@@ -501,6 +501,15 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // X-Reset-Key header missing or wrong — reject before touching the DB
+    [Fact]
+    public async Task CleanupUnverified_WrongKey_ReturnsUnauthorized()
+    {
+        var result = await _controller.CleanupUnverified("wrong-key");
+
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
     // Email in the reset link doesn't match any account — reject with 400
     [Fact]
     public async Task ResetPassword_UserNotFound_ReturnsBadRequest()
