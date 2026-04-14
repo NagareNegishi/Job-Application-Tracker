@@ -94,4 +94,31 @@ public class AuthControllerTests : IDisposable
         _context.Dispose();
         GC.SuppressFinalize(this);
     }
+
+    // Helper method to seed a job into the in-memory database
+    private async Task<Job> SeedJobAsync(string userId, string company = "A_Company", string role = "Dev")
+    {
+        var job = new Job { UserId = userId, Company = company, Role = role, Status = JobStatus.Wishlist, Priority = Priority.Low };
+        _context.Jobs.Add(job);
+        await _context.SaveChangesAsync();
+        return job;
+    }
+
+    // Demo account missing from Identity (e.g. seed never ran) — surface as 503 not 404
+    // so the caller knows the service is unavailable, not that the route is wrong
+    [Fact]
+    public async Task Demo_UserNotFound_ReturnsServiceUnavailable()
+    {
+        // Arrange: FindByEmailAsync returns null — no demo account in Identity
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(DemoUser.Email))
+            .ReturnsAsync((IdentityUser?)null);
+
+        // Act
+        var result = await _controller.Demo();
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(503, statusResult.StatusCode);
+    }
 }
