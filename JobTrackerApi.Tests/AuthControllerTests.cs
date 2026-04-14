@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Query;
 
 public class AuthControllerTests : IDisposable
 {
@@ -93,6 +95,44 @@ public class AuthControllerTests : IDisposable
     {
         _context.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    // EF Core's ToListAsync requires IAsyncEnumerable<T>, which plain .AsQueryable() doesn't implement.
+    // These three classes are the standard test wrapper for mocking IQueryable sources with async support.
+    // EnumerableQuery<T> handles sync LINQ (.Where etc.); IAsyncEnumerable<T> satisfies ToListAsync.
+    private class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
+    {
+        public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable) { }
+        public TestAsyncEnumerable(Expression expression) : base(expression) { }
+
+        // Override Provider so .Where() returns another TestAsyncEnumerable, not a plain EnumerableQuery
+        IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken ct = default)
+            => new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+    }
+
+    // Intercepts CreateQuery so chained LINQ operators stay inside the async-capable type
+    private class TestAsyncQueryProvider<T>(IQueryProvider inner) : IAsyncQueryProvider
+    {
+        public IQueryable CreateQuery(Expression expression) => new TestAsyncEnumerable<T>(expression);
+        public IQueryable<TElement> CreateQuery<TElement>(Expression expression) => new TestAsyncEnumerable<TElement>(expression);
+        public object? Execute(Expression expression) => inner.Execute(expression);
+        public TResult Execute<TResult>(Expression expression) => inner.Execute<TResult>(expression);
+        public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken ct)
+        {
+            var resultType = typeof(TResult).GetGenericArguments()[0];
+            var result = inner.Execute(expression);
+            return (TResult)typeof(Task).GetMethod(nameof(Task.FromResult))!
+                .MakeGenericMethod(resultType).Invoke(null, [result])!;
+        }
+    }
+
+    private class TestAsyncEnumerator<T>(IEnumerator<T> inner) : IAsyncEnumerator<T>
+    {
+        public T Current => inner.Current;
+        public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(inner.MoveNext());
+        public ValueTask DisposeAsync() { inner.Dispose(); return ValueTask.CompletedTask; }
     }
 
     // Helper method to seed a job into the in-memory database
@@ -511,7 +551,7 @@ public class AuthControllerTests : IDisposable
         // UserManager.Users is an IQueryable backed by the store — return a fixed set for this test
         _userManagerMock
             .Setup(m => m.Users)
-            .Returns(new[] { unconfirmed1, unconfirmed2 }.AsQueryable());
+            .Returns(new TestAsyncEnumerable<IdentityUser>(new[] { unconfirmed1, unconfirmed2 }));
         _userManagerMock
             .Setup(m => m.DeleteAsync(It.IsAny<IdentityUser>()))
             .ReturnsAsync(IdentityResult.Success);
