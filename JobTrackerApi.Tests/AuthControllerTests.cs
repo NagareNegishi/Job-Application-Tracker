@@ -71,6 +71,21 @@ public class AuthControllerTests : IDisposable
         // IEmailService — Register, ResendConfirmation, ForgotPassword all call SendEmailAsync;
         // default mock behaviour returns a completed Task, which is what we want
         _emailMock = new Mock<IEmailService>();
+
+        _controller = new AuthController(
+            _userManagerMock.Object,
+            _config,
+            _context,
+            _envMock.Object,
+            _storageMock.Object,
+            _emailMock.Object);
+
+        // AuthController endpoints are unauthenticated, but DefaultHttpContext is still
+        // needed so Request.Cookies and Response.Cookies are reachable (Refresh, Logout, Login)
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
     }
 
     // xUnit creates a new class instance per test, so Dispose runs after every test
