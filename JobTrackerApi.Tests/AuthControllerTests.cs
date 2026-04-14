@@ -269,6 +269,29 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<UnauthorizedResult>(result);
     }
 
+    // Active token — revoked in DB on logout, cookie deleted, 204 returned
+    [Fact]
+    public async Task Logout_ActiveToken_RevokesTokenAndReturnsNoContent()
+    {
+        _context.RefreshTokens.Add(new RefreshToken
+        {
+            Token = "active-token",
+            UserId = TestUserId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        });
+        await _context.SaveChangesAsync();
+
+        _controller.HttpContext.Request.Headers["Cookie"] = "refreshToken=active-token";
+
+        var result = await _controller.Logout();
+
+        Assert.IsType<NoContentResult>(result);
+
+        // Token revoked in DB — not deleted, so audit trail is preserved
+        var token = await _context.RefreshTokens.FirstAsync(r => r.Token == "active-token");
+        Assert.NotNull(token.RevokedAt);
+    }
+
     // No cookie — nothing to revoke, but logout should still succeed
     [Fact]
     public async Task Logout_NoCookie_ReturnsNoContent()
