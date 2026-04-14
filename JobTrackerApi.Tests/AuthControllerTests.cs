@@ -364,6 +364,30 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<UnauthorizedResult>(result);
     }
 
+    // Happy path — account created, confirmation email sent, 200 returned
+    [Fact]
+    public async Task Register_Success_SendsConfirmationEmailAndReturnsOk()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync((IdentityUser?)null);
+        _userManagerMock
+            .Setup(m => m.CreateAsync(It.IsAny<IdentityUser>(), "Pass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+        _userManagerMock
+            .Setup(m => m.GenerateEmailConfirmationTokenAsync(It.IsAny<IdentityUser>()))
+            .ReturnsAsync("confirm-token");
+
+        var result = await _controller.Register(new RegisterDTO { Email = TestUserEmail, Password = "Pass1!" });
+
+        Assert.IsType<OkObjectResult>(result);
+
+        // Confirmation email must be sent — user can't log in until they click the link
+        _emailMock.Verify(
+            e => e.SendEmailAsync(TestUserEmail, It.IsAny<string>(), It.IsAny<string>()),
+            Times.Once);
+    }
+
     // Existing unconfirmed account — deleted before re-registration so user can fix a typo
     // without hitting "email already taken"; demo account is excluded from this path
     [Fact]
