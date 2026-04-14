@@ -104,6 +104,30 @@ public class AuthControllerTests : IDisposable
         return job;
     }
 
+    // Happy path — demo user exists, missing seed jobs are added, tokens issued
+    [Fact]
+    public async Task Demo_Success_ReturnsOkWithAccessToken()
+    {
+        // Arrange
+        var user = new IdentityUser { Id = TestUserId, Email = DemoUser.Email };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(DemoUser.Email))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _controller.Demo();
+
+        // Assert: 200 with an accessToken in the body
+        var ok = Assert.IsType<OkObjectResult>(result);
+        // Controller returns Ok(new { accessToken }) — anonymous type, unwrapped via reflection
+        var body = ok.Value!.GetType().GetProperty("accessToken")?.GetValue(ok.Value);
+        Assert.NotNull(body);
+
+        // All seed jobs should now exist in the DB — Demo re-seeds any that are missing
+        var jobCount = await _context.Jobs.CountAsync(j => j.UserId == TestUserId);
+        Assert.Equal(DemoSeed.CreateJobs(TestUserId).Count, jobCount);
+    }
+
     // Demo account missing from Identity (e.g. seed never ran) — surface as 503 not 404
     // so the caller knows the service is unavailable, not that the route is wrong
     [Fact]
