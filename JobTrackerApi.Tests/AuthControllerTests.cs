@@ -466,6 +466,19 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // Email in the reset link doesn't match any account — reject with 400
+    [Fact]
+    public async Task ResetPassword_UserNotFound_ReturnsBadRequest()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync((IdentityUser?)null);
+
+        var result = await _controller.ResetPassword(new ResetPasswordDTO { Email = TestUserEmail, Token = "any-token", NewPassword = "NewPass1!" });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
     // User found — password reset email sent with signed token link, 200 returned
     [Fact]
     public async Task ForgotPassword_UserFound_SendsResetEmailAndReturnsOk()
