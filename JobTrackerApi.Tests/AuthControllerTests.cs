@@ -177,6 +177,32 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<UnauthorizedResult>(result);
     }
 
+    // Happy path — correct credentials, confirmed email, tokens issued and cookie set
+    [Fact]
+    public async Task Login_Success_ReturnsOkWithAccessTokenAndSetsCookie()
+    {
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail, EmailConfirmed = true };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.CheckPasswordAsync(user, "Pass1!"))
+            .ReturnsAsync(true);
+
+        var result = await _controller.Login(new LoginDTO { Email = TestUserEmail, Password = "Pass1!" });
+
+        // 200 with accessToken in body
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var body = ok.Value!.GetType().GetProperty("accessToken")?.GetValue(ok.Value);
+        Assert.NotNull(body);
+
+        // Refresh token persisted in DB
+        Assert.Equal(1, await _context.RefreshTokens.CountAsync());
+
+        // HttpOnly cookie written to the response
+        Assert.True(_controller.HttpContext.Response.Headers.ContainsKey("Set-Cookie"));
+    }
+
     // Correct key but demo account missing from Identity
     [Fact]
     public async Task DemoReset_UserNotFound_ReturnsServiceUnavailable()
