@@ -466,6 +466,20 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // User not found — always 200 to avoid leaking whether the email is registered
+    [Fact]
+    public async Task ForgotPassword_UserNotFound_ReturnsOkSilently()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync((IdentityUser?)null);
+
+        var result = await _controller.ForgotPassword(new ForgotPasswordDTO { Email = TestUserEmail });
+
+        Assert.IsType<OkResult>(result);
+        _emailMock.Verify(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
     // Unconfirmed user — resend confirmation email and return 200
     [Fact]
     public async Task ResendConfirmation_UnconfirmedUser_SendsEmailAndReturnsOk()
