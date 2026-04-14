@@ -501,6 +501,28 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // Happy path — all unconfirmed non-demo users deleted, count returned in body
+    [Fact]
+    public async Task CleanupUnverified_Success_DeletesUnconfirmedUsersAndReturnsOk()
+    {
+        var unconfirmed1 = new IdentityUser { Id = "u1", Email = "a@test.com", EmailConfirmed = false };
+        var unconfirmed2 = new IdentityUser { Id = "u2", Email = "b@test.com", EmailConfirmed = false };
+
+        // UserManager.Users is an IQueryable backed by the store — return a fixed set for this test
+        _userManagerMock
+            .Setup(m => m.Users)
+            .Returns(new[] { unconfirmed1, unconfirmed2 }.AsQueryable());
+        _userManagerMock
+            .Setup(m => m.DeleteAsync(It.IsAny<IdentityUser>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var result = await _controller.CleanupUnverified(TestResetKey);
+
+        Assert.IsType<OkObjectResult>(result);
+        // Both unconfirmed accounts deleted — demo account excluded by the controller's Where clause
+        _userManagerMock.Verify(m => m.DeleteAsync(It.IsAny<IdentityUser>()), Times.Exactly(2));
+    }
+
     // X-Reset-Key header missing or wrong — reject before touching the DB
     [Fact]
     public async Task CleanupUnverified_WrongKey_ReturnsUnauthorized()
