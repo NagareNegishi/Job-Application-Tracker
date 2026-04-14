@@ -466,6 +466,21 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // User not found or already confirmed — always 200 to avoid leaking whether the email exists;
+    // no email sent in either case
+    [Fact]
+    public async Task ResendConfirmation_UserNotFoundOrAlreadyConfirmed_ReturnsOkSilently()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync((IdentityUser?)null);
+
+        var result = await _controller.ResendConfirmation(new ResendConfirmationDTO { Email = TestUserEmail });
+
+        Assert.IsType<OkResult>(result);
+        _emailMock.Verify(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
     // userId in the confirmation link doesn't match any account — same message as invalid token
     // to avoid leaking whether a userId exists
     [Fact]
