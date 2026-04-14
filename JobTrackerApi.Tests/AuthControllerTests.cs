@@ -431,6 +431,24 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // Token signature invalid or expired — Identity rejects it, surface as 400
+    [Fact]
+    public async Task ConfirmEmail_InvalidToken_ReturnsBadRequest()
+    {
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ConfirmEmailAsync(user, "bad-token"))
+            .ReturnsAsync(IdentityResult.Failed(
+                new IdentityError { Code = "InvalidToken", Description = "Invalid token." }));
+
+        var result = await _controller.ConfirmEmail(TestUserId, "bad-token");
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
     // userId in the confirmation link doesn't match any account — same message as invalid token
     // to avoid leaking whether a userId exists
     [Fact]
