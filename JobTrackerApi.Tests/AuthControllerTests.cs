@@ -61,12 +61,11 @@ public class AuthControllerTests : IDisposable
             .Options;
         _context = new JobTrackerContext(options);
 
-        // IWebHostEnvironment — IsDevelopment() is an extension that checks EnvironmentName == "Development";
-        // mocking the property is the correct hook since the extension method itself can't be intercepted
+        // Unit test expect dev mode
         _envMock = new Mock<IWebHostEnvironment>();
         _envMock.Setup(e => e.EnvironmentName).Returns("Development");
 
-        // IStorageService — same mock as DocumentsControllerTests; DemoReset calls DeleteAsync
+        // IStorageService same as DocumentsControllerTests
         _storageMock = new Mock<IStorageService>();
 
         // IEmailService — Register, ResendConfirmation, ForgotPassword all call SendEmailAsync;
