@@ -34,7 +34,10 @@ public class AuthControllerTests : IDisposable
 
     public AuthControllerTests()
     {
-        // sections go here
+        // UserManager, IUserStore is the only required constructor arg
+        var store = new Mock<IUserStore<IdentityUser>>();
+        _userManagerMock = new Mock<UserManager<IdentityUser>>(
+            store.Object, null, null, null, null, null, null, null, null);
     }
 
     // xUnit creates a new class instance per test, so Dispose runs after every test
