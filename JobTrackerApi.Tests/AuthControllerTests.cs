@@ -128,6 +128,21 @@ public class AuthControllerTests : IDisposable
         Assert.Equal(DemoSeed.CreateJobs(TestUserId).Count, jobCount);
     }
 
+    // Correct key but demo account missing from Identity
+    [Fact]
+    public async Task DemoReset_UserNotFound_ReturnsServiceUnavailable()
+    {
+        // Arrange: correct key but no demo account in Identity
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(DemoUser.Email))
+            .ReturnsAsync((IdentityUser?)null);
+
+        var result = await _controller.DemoReset(TestResetKey);
+
+        var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(503, statusResult.StatusCode);
+    }
+
     // X-Reset-Key header missing or wrong — reject before touching the DB
     [Fact]
     public async Task DemoReset_WrongKey_ReturnsUnauthorized()
