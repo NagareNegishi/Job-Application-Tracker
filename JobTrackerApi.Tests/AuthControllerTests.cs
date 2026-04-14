@@ -466,6 +466,23 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // Happy path — user found, token valid, password updated, 200 returned
+    [Fact]
+    public async Task ResetPassword_Success_ReturnsOk()
+    {
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ResetPasswordAsync(user, "valid-token", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var result = await _controller.ResetPassword(new ResetPasswordDTO { Email = TestUserEmail, Token = "valid-token", NewPassword = "NewPass1!" });
+
+        Assert.IsType<OkObjectResult>(result);
+    }
+
     // Token signature invalid or expired — Identity rejects it, surface as 400
     [Fact]
     public async Task ResetPassword_InvalidToken_ReturnsBadRequest()
