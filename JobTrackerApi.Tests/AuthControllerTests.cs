@@ -128,6 +128,19 @@ public class AuthControllerTests : IDisposable
         Assert.Equal(DemoSeed.CreateJobs(TestUserId).Count, jobCount);
     }
 
+    // Wrong email — same 401 as wrong password to avoid leaking whether the address exists
+    [Fact]
+    public async Task Login_UserNotFound_ReturnsUnauthorized()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync("noone@example.com"))
+            .ReturnsAsync((IdentityUser?)null);
+
+        var result = await _controller.Login(new LoginDTO { Email = "noone@example.com", Password = "Pass1!" });
+
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
     // Correct key but demo account missing from Identity
     [Fact]
     public async Task DemoReset_UserNotFound_ReturnsServiceUnavailable()
