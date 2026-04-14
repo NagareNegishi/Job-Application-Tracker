@@ -431,6 +431,20 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // userId in the confirmation link doesn't match any account — same message as invalid token
+    // to avoid leaking whether a userId exists
+    [Fact]
+    public async Task ConfirmEmail_UserNotFound_ReturnsBadRequest()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync("bad-id"))
+            .ReturnsAsync((IdentityUser?)null);
+
+        var result = await _controller.ConfirmEmail("bad-id", "any-token");
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
     // Demo account missing from Identity (e.g. seed never ran) — surface as 503 not 404
     // so the caller knows the service is unavailable, not that the route is wrong
     [Fact]
