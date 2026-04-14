@@ -128,6 +128,15 @@ public class AuthControllerTests : IDisposable
         Assert.Equal(DemoSeed.CreateJobs(TestUserId).Count, jobCount);
     }
 
+    // X-Reset-Key header missing or wrong — reject before touching the DB
+    [Fact]
+    public async Task DemoReset_WrongKey_ReturnsUnauthorized()
+    {
+        var result = await _controller.DemoReset("wrong-key");
+
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
     // Demo account missing from Identity (e.g. seed never ran) — surface as 503 not 404
     // so the caller knows the service is unavailable, not that the route is wrong
     [Fact]
