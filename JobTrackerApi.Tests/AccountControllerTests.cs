@@ -1,15 +1,18 @@
 namespace JobTrackerApi.Tests;
 using JobTrackerApi.Controllers;
+using JobTrackerApi.Data;
 using JobTrackerApi.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Moq;
 
-public class AccountControllerTests
+public class AccountControllerTests : IDisposable
 {
     private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
+    private readonly JobTrackerContext _context;
     private readonly AccountController _controller;
     private const string TestUserId = "test-user-id";
     private const string TestUserEmail = "test@example.com";
@@ -24,9 +27,17 @@ public class AccountControllerTests
         _userManagerMock = new Mock<UserManager<IdentityUser>>(
             store.Object, null, null, null, null, null, null, null, null);
 
-        _controller = new AccountController(_userManagerMock.Object);
+        // unique DB name per test class — parallel runs can't share state
+        var options = new DbContextOptionsBuilder<JobTrackerContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        _context = new JobTrackerContext(options);
+
+        _controller = new AccountController(_userManagerMock.Object, _context);
         SetUser();
     }
+
+    public void Dispose() => _context.Dispose();
 
     // In production, JWT middleware builds a ClaimsPrincipal from the Bearer token and sets it
     // on HttpContext.User. In tests there's no HTTP pipeline, so we build it manually.
