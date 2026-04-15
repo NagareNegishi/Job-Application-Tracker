@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using Moq;
 
@@ -33,7 +34,8 @@ public class AccountControllerTests : IDisposable
             .Options;
         _context = new JobTrackerContext(options);
 
-        _controller = new AccountController(_userManagerMock.Object, _context);
+        var loggerMock = new Mock<ILogger<AccountController>>();
+        _controller = new AccountController(_userManagerMock.Object, _context, loggerMock.Object);
         SetUser();
     }
 
