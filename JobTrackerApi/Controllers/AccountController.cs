@@ -20,11 +20,13 @@ public class AccountController : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly JobTrackerContext _context;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(UserManager<IdentityUser> userManager, JobTrackerContext context)
+    public AccountController(UserManager<IdentityUser> userManager, JobTrackerContext context, ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _context = context;
+        _logger = logger;
     }
 
     // Change password — validates current password via Identity, blocks demo user
@@ -44,7 +46,10 @@ public class AccountController : ControllerBase
 
         var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Password change failed for user {UserId}", userId);
             return BadRequest(new { errors = result.Errors.Select(e => e.Description) }); // human-readable part only
+        }
 
         // Revoke all active tokens (password change must invalidate existing sessions across all devices)
         var activeTokens = await _context.RefreshTokens
@@ -56,6 +61,7 @@ public class AccountController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        _logger.LogInformation("Password changed and all sessions revoked for user {UserId}", userId);
         return Ok();
     }
 }
