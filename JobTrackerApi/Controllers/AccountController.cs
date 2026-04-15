@@ -1,8 +1,10 @@
+using JobTrackerApi.Data;
 using JobTrackerApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace JobTrackerApi.Controllers;
@@ -17,10 +19,12 @@ namespace JobTrackerApi.Controllers;
 public class AccountController : ControllerBase
 {
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly JobTrackerContext _context;
 
-    public AccountController(UserManager<IdentityUser> userManager)
+    public AccountController(UserManager<IdentityUser> userManager, JobTrackerContext context)
     {
         _userManager = userManager;
+        _context = context;
     }
 
     // Change password — validates current password via Identity, blocks demo user
