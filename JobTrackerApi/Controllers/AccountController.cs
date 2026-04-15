@@ -44,7 +44,7 @@ public class AccountController : ControllerBase
 
         var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return BadRequest(new { errors = result.Errors.Select(e => e.Description) }); // human-readable part only
 
         // Revoke all active tokens (password change must invalidate existing sessions across all devices)
         var activeTokens = await _context.RefreshTokens
