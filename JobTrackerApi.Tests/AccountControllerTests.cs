@@ -208,4 +208,35 @@ public class AccountControllerTests : IDisposable
         var tokens = _context.RefreshTokens.Where(t => t.UserId == TestUserId).ToList();
         Assert.All(tokens, t => Assert.NotNull(t.RevokedAt));
     }
+
+    // Revocation must be scoped to the password-changing user only — other users' sessions must survive.
+    [Fact]
+    public async Task ChangePassword_Success_DoesNotRevokeOtherUsersTokens()
+    {
+        // Arrange
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _context.RefreshTokens.AddRange(
+            new RefreshToken { Token = "my-token",    UserId = TestUserId,      ExpiresAt = DateTime.UtcNow.AddDays(7) },
+            new RefreshToken { Token = "other-token", UserId = "other-user-id", ExpiresAt = DateTime.UtcNow.AddDays(7) }
+        );
+        await _context.SaveChangesAsync();
+
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "NewPass1!"
+        };
+
+        // Act
+        await _controller.ChangePassword(dto);
+
+        // Assert: other user's token is untouched
+        var otherToken = _context.RefreshTokens.Single(t => t.UserId == "other-user-id");
+        Assert.Null(otherToken.RevokedAt);
+    }
 }
