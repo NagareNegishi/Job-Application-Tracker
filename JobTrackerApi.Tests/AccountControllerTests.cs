@@ -239,4 +239,35 @@ public class AccountControllerTests : IDisposable
         var otherToken = _context.RefreshTokens.Single(t => t.UserId == "other-user-id");
         Assert.Null(otherToken.RevokedAt);
     }
+
+    // Already-revoked tokens must keep their original RevokedAt — don't overwrite history.
+    [Fact]
+    public async Task ChangePassword_Success_PreservesAlreadyRevokedTokenTimestamp()
+    {
+        // Arrange
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var originalRevokedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        _context.RefreshTokens.Add(
+            new RefreshToken { Token = "old-token", UserId = TestUserId, ExpiresAt = DateTime.UtcNow.AddDays(7), RevokedAt = originalRevokedAt }
+        );
+        await _context.SaveChangesAsync();
+
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "NewPass1!"
+        };
+
+        // Act
+        await _controller.ChangePassword(dto);
+
+        // Assert: original RevokedAt is preserved, not overwritten
+        var token = _context.RefreshTokens.Single(t => t.Token == "old-token");
+        Assert.Equal(originalRevokedAt, token.RevokedAt);
+    }
 }
