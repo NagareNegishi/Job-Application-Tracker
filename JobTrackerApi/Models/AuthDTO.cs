@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace JobTrackerApi.Models;
 
 /// <summary>
@@ -22,8 +24,15 @@ public class ResendConfirmationDTO
 
 public class ChangePasswordDTO
 {
+    [Required]
+    [StringLength(128)]
     public string CurrentPassword { get; set; } = "";
+
+    [Required]
+    [StringLength(128, MinimumLength = 8)]
     public string NewPassword { get; set; } = "";
+
+    [Required]
     public string ConfirmNewPassword { get; set; } = "";
 }
 
