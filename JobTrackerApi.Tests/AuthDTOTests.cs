@@ -166,4 +166,38 @@ public class AuthDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ChangePasswordDTO.ConfirmNewPassword)));
     }
+
+    // ResendConfirmationDTO requires a valid email
+    [Fact]
+    public void Test_ResendConfirmationDTO_InvalidEmail()
+    {
+        // Arrange
+        var dto = new ResendConfirmationDTO { Email = "not-an-email" };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ResendConfirmationDTO.Email)));
+    }
+
+    // ForgotPasswordDTO requires a valid email
+    [Fact]
+    public void Test_ForgotPasswordDTO_InvalidEmail()
+    {
+        // Arrange
+        var dto = new ForgotPasswordDTO { Email = "not-an-email" };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ForgotPasswordDTO.Email)));
+    }
 }
