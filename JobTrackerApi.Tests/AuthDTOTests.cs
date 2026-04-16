@@ -71,4 +71,21 @@ public class AuthDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(RegisterDTO.Password)));
     }
+
+    // LoginDTO requires a valid email
+    [Fact]
+    public void Test_LoginDTO_InvalidEmail()
+    {
+        // Arrange
+        var dto = new LoginDTO { Email = "not-an-email", Password = "Password1!" };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(LoginDTO.Email)));
+    }
 }
