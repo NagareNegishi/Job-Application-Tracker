@@ -1,6 +1,7 @@
 namespace JobTrackerApi.Tests;
 using JobTrackerApi.Models;
 using System.ComponentModel.DataAnnotations;
+using static JobTrackerApi.Models.ValidationConstants;
 
 public class AuthDTOTests
 {
@@ -131,7 +132,7 @@ public class AuthDTOTests
         var dto = new ResetPasswordDTO
         {
             Email = "user@example.com",
-            Token = new string('a', 2049),
+            Token = new string('a', MaxTokenLength + 1),
             NewPassword = "Password1!"
         };
 
