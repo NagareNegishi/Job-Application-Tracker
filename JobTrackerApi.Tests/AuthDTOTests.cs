@@ -54,4 +54,21 @@ public class AuthDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(RegisterDTO.Password)));
     }
+
+    // RegisterDTO rejects password shorter than 8 characters
+    [Fact]
+    public void Test_RegisterDTO_PasswordTooShort()
+    {
+        // Arrange
+        var dto = new RegisterDTO { Email = "user@example.com", Password = "Ab1!" };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(RegisterDTO.Password)));
+    }
 }
