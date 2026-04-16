@@ -144,4 +144,26 @@ public class AuthDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ResetPasswordDTO.Token)));
     }
+
+    // ChangePasswordDTO rejects mismatched confirm password
+    [Fact]
+    public void Test_ChangePasswordDTO_ConfirmPasswordMismatch()
+    {
+        // Arrange
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPassword1!",
+            NewPassword = "NewPassword1!",
+            ConfirmNewPassword = "DifferentPassword1!"
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ChangePasswordDTO.ConfirmNewPassword)));
+    }
 }
