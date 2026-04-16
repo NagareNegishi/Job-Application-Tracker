@@ -20,4 +20,21 @@ public class AuthDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(RegisterDTO.Email)));
     }
+
+    // RegisterDTO rejects malformed email
+    [Fact]
+    public void Test_RegisterDTO_InvalidEmail()
+    {
+        // Arrange
+        var dto = new RegisterDTO { Email = "not-an-email", Password = "Password1!" };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(RegisterDTO.Email)));
+    }
 }
