@@ -18,6 +18,11 @@ public static class ValidationConstants
     public const int MaxFileSize = 10 * 1024 * 1024; // 10 MB
     public static readonly string[] AllowedExtensions = [".pdf", ".doc", ".docx"];
 
+    // Auth / password constraints
+    public const int MaxPasswordLength = 128;
+    public const int MinPasswordLength = 8;
+    public const int MaxTokenLength = 2048;
+
     // Contact entity constraints
     public const int MaxContactNameLength = 50;
     public const int MaxContactRoleLength = 50;
