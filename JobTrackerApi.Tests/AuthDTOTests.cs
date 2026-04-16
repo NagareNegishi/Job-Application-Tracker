@@ -122,4 +122,26 @@ public class AuthDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ResetPasswordDTO.NewPassword)));
     }
+
+    // ResetPasswordDTO rejects token exceeding maximum length
+    [Fact]
+    public void Test_ResetPasswordDTO_TokenTooLong()
+    {
+        // Arrange
+        var dto = new ResetPasswordDTO
+        {
+            Email = "user@example.com",
+            Token = new string('a', 2049),
+            NewPassword = "Password1!"
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ResetPasswordDTO.Token)));
+    }
 }
