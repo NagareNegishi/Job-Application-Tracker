@@ -105,4 +105,21 @@ public class AuthDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(LoginDTO.Password)));
     }
+
+    // ResetPasswordDTO requires new password
+    [Fact]
+    public void Test_ResetPasswordDTO_MissingNewPassword()
+    {
+        // Arrange
+        var dto = new ResetPasswordDTO { Email = "user@example.com", Token = "valid-token" };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ResetPasswordDTO.NewPassword)));
+    }
 }
