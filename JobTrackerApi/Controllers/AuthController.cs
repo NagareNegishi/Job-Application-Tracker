@@ -119,7 +119,7 @@ public class AuthController : ControllerBase
         var result = await _userManager.CreateAsync(user, dto.Password);
 
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return BadRequest(result.Errors.Select(e => e.Description));
 
         // Token is signed by Identity using the user's security stamp — invalidated if password changes
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -290,14 +290,17 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResetPassword(ResetPasswordDTO dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null) return BadRequest(new { message = "Invalid reset link." });
 
         // Reverse URL encoding before Identity validates the token signature
         var decoded = Uri.UnescapeDataString(dto.Token);
+        // Same message for missing user and bad/expired token
+        if (user == null)
+            return BadRequest(new { message = "Invalid or expired reset link." });
+
         var result = await _userManager.ResetPasswordAsync(user, decoded, dto.NewPassword);
 
         if (!result.Succeeded)
-            return BadRequest(new { message = result.Errors.First().Description });
+            return BadRequest(new { message = "Invalid or expired reset link." });
 
         return Ok(new { message = "Password reset successful." });
     }
