@@ -457,6 +457,26 @@ public class AuthControllerTests : IDisposable
         _userManagerMock.Verify(m => m.DeleteAsync(existing), Times.Once);
     }
 
+    // Register failure must not expose IdentityError.Code — machine-readable policy details (OWASP A07)
+    [Fact]
+    public async Task Register_IdentityFailure_DoesNotLeakErrorCode()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync((IdentityUser?)null);
+        _userManagerMock
+            .Setup(m => m.CreateAsync(It.IsAny<IdentityUser>(), "Pass1!"))
+            .ReturnsAsync(IdentityResult.Failed(
+                new IdentityError { Code = "PasswordTooShort", Description = "Password is too short." }));
+
+        var result = await _controller.Register(new RegisterDTO { Email = TestUserEmail, Password = "Pass1!" });
+
+        var bad = Assert.IsType<BadRequestObjectResult>(result);
+        var body = System.Text.Json.JsonSerializer.Serialize(bad.Value);
+        Assert.DoesNotContain("PasswordTooShort", body);
+        Assert.Contains("Password is too short.", body);
+    }
+
     // Identity rejects the new account (e.g. password too weak) — surface errors as 400
     [Fact]
     public async Task Register_IdentityFailure_ReturnsBadRequest()
@@ -586,6 +606,27 @@ public class AuthControllerTests : IDisposable
         var result = await _controller.ResetPassword(new ResetPasswordDTO { Email = TestUserEmail, Token = "any-token", NewPassword = "NewPass1!" });
 
         Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    // Bad token must return the same message as missing user — different text leaks whether the email exists
+    [Fact]
+    public async Task ResetPassword_InvalidToken_ReturnsSameGenericErrorMessage()
+    {
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ResetPasswordAsync(user, "bad-token", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Failed(
+                new IdentityError { Code = "InvalidToken", Description = "Invalid token." }));
+
+        var result = await _controller.ResetPassword(
+            new ResetPasswordDTO { Email = TestUserEmail, Token = "bad-token", NewPassword = "NewPass1!" });
+
+        var bad = Assert.IsType<BadRequestObjectResult>(result);
+        var message = bad.Value!.GetType().GetProperty("message")?.GetValue(bad.Value) as string;
+        Assert.Equal(GenericResetErrorMessage, message);
     }
 
     // Missing user and bad token must return the same message — different text leaks whether the email exists
