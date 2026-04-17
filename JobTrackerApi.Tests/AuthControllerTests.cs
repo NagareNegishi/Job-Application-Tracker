@@ -34,6 +34,9 @@ public class AuthControllerTests : IDisposable
     private const string JwtAudience     = "test-audience";
     private const string FrontendBaseUrl = "http://localhost:5173";
 
+    // Expected error messages — pinned so both ResetPassword failure paths are caught together
+    private const string GenericResetErrorMessage = "Invalid or expired reset link.";
+
     public AuthControllerTests()
     {
         // UserManager, IUserStore is the only required constructor arg
@@ -583,6 +586,22 @@ public class AuthControllerTests : IDisposable
         var result = await _controller.ResetPassword(new ResetPasswordDTO { Email = TestUserEmail, Token = "any-token", NewPassword = "NewPass1!" });
 
         Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    // Missing user and bad token must return the same message — different text leaks whether the email exists
+    [Fact]
+    public async Task ResetPassword_UserNotFound_ReturnsGenericErrorMessage()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync((IdentityUser?)null);
+
+        var result = await _controller.ResetPassword(
+            new ResetPasswordDTO { Email = TestUserEmail, Token = "any-token", NewPassword = "NewPass1!" });
+
+        var bad = Assert.IsType<BadRequestObjectResult>(result);
+        var message = bad.Value!.GetType().GetProperty("message")?.GetValue(bad.Value) as string;
+        Assert.Equal(GenericResetErrorMessage, message);
     }
 
     // User found — password reset email sent with signed token link, 200 returned
