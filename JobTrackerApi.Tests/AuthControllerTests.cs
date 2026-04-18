@@ -34,6 +34,9 @@ public class AuthControllerTests : IDisposable
     private const string JwtAudience     = "test-audience";
     private const string FrontendBaseUrl = "http://localhost:5173";
 
+    // Expected error messages — pinned so both ResetPassword failure paths are caught together
+    private const string GenericResetErrorMessage = "Invalid or expired reset link.";
+
     public AuthControllerTests()
     {
         // UserManager, IUserStore is the only required constructor arg
@@ -215,6 +218,26 @@ public class AuthControllerTests : IDisposable
         var result = await _controller.Login(new LoginDTO { Email = "noone@example.com", Password = "Pass1!" });
 
         Assert.IsType<UnauthorizedResult>(result);
+    }
+
+    // No User should not skip CheckPasswordAsync -> timing difference leaks whether an email address is registered
+    [Fact]
+    public async Task Login_UserNotFound_StillCallsCheckPasswordAsync()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync("noone@example.com"))
+            .ReturnsAsync((IdentityUser?)null);
+        _userManagerMock
+            .Setup(m => m.CheckPasswordAsync(It.IsAny<IdentityUser>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var result = await _controller.Login(new LoginDTO { Email = "noone@example.com", Password = "Pass1!" });
+
+        Assert.IsType<UnauthorizedResult>(result);
+        // CheckPasswordAsync must run regardless
+        _userManagerMock.Verify(
+            m => m.CheckPasswordAsync(It.IsAny<IdentityUser>(), "Pass1!"),
+            Times.Once);
     }
 
     // Happy path — correct credentials, confirmed email, tokens issued and cookie set
@@ -454,6 +477,26 @@ public class AuthControllerTests : IDisposable
         _userManagerMock.Verify(m => m.DeleteAsync(existing), Times.Once);
     }
 
+    // Register failure must not expose IdentityError.Code — machine-readable policy details (OWASP A07)
+    [Fact]
+    public async Task Register_IdentityFailure_DoesNotLeakErrorCode()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync((IdentityUser?)null);
+        _userManagerMock
+            .Setup(m => m.CreateAsync(It.IsAny<IdentityUser>(), "Pass1!"))
+            .ReturnsAsync(IdentityResult.Failed(
+                new IdentityError { Code = "PasswordTooShort", Description = "Password is too short." }));
+
+        var result = await _controller.Register(new RegisterDTO { Email = TestUserEmail, Password = "Pass1!" });
+
+        var bad = Assert.IsType<BadRequestObjectResult>(result);
+        var body = System.Text.Json.JsonSerializer.Serialize(bad.Value);
+        Assert.DoesNotContain("PasswordTooShort", body);
+        Assert.Contains("Password is too short.", body);
+    }
+
     // Identity rejects the new account (e.g. password too weak) — surface errors as 400
     [Fact]
     public async Task Register_IdentityFailure_ReturnsBadRequest()
@@ -523,6 +566,48 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<OkObjectResult>(result);
     }
 
+    // Password reset must revoke all active refresh tokens — an attacker who stole a token
+    // before the reset would otherwise retain a valid session after the password change
+    [Fact]
+    public async Task ResetPassword_Success_RevokesAllActiveRefreshTokens()
+    {
+        // Arrange: two active tokens for the user
+        _context.RefreshTokens.Add(new RefreshToken
+        {
+            Token = "active-token-1",
+            UserId = TestUserId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        });
+        _context.RefreshTokens.Add(new RefreshToken
+        {
+            Token = "active-token-2",
+            UserId = TestUserId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        });
+        await _context.SaveChangesAsync();
+
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ResetPasswordAsync(user, "valid-token", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        var result = await _controller.ResetPassword(
+            new ResetPasswordDTO { Email = TestUserEmail, Token = "valid-token", NewPassword = "NewPass1!" });
+
+        // Assert: 200 — password reset succeeded
+        Assert.IsType<OkObjectResult>(result);
+
+        // Both active tokens revoked — stolen tokens can no longer be used to refresh
+        var token1 = await _context.RefreshTokens.FirstAsync(r => r.Token == "active-token-1");
+        var token2 = await _context.RefreshTokens.FirstAsync(r => r.Token == "active-token-2");
+        Assert.NotNull(token1.RevokedAt);
+        Assert.NotNull(token2.RevokedAt);
+    }
+
     // Token signature invalid or expired — Identity rejects it, surface as 400
     [Fact]
     public async Task ResetPassword_InvalidToken_ReturnsBadRequest()
@@ -583,6 +668,43 @@ public class AuthControllerTests : IDisposable
         var result = await _controller.ResetPassword(new ResetPasswordDTO { Email = TestUserEmail, Token = "any-token", NewPassword = "NewPass1!" });
 
         Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    // Bad token must return the same message as missing user — different text leaks whether the email exists
+    [Fact]
+    public async Task ResetPassword_InvalidToken_ReturnsSameGenericErrorMessage()
+    {
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ResetPasswordAsync(user, "bad-token", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Failed(
+                new IdentityError { Code = "InvalidToken", Description = "Invalid token." }));
+
+        var result = await _controller.ResetPassword(
+            new ResetPasswordDTO { Email = TestUserEmail, Token = "bad-token", NewPassword = "NewPass1!" });
+
+        var bad = Assert.IsType<BadRequestObjectResult>(result);
+        var message = bad.Value!.GetType().GetProperty("message")?.GetValue(bad.Value) as string;
+        Assert.Equal(GenericResetErrorMessage, message);
+    }
+
+    // Missing user and bad token must return the same message — different text leaks whether the email exists
+    [Fact]
+    public async Task ResetPassword_UserNotFound_ReturnsGenericErrorMessage()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync((IdentityUser?)null);
+
+        var result = await _controller.ResetPassword(
+            new ResetPasswordDTO { Email = TestUserEmail, Token = "any-token", NewPassword = "NewPass1!" });
+
+        var bad = Assert.IsType<BadRequestObjectResult>(result);
+        var message = bad.Value!.GetType().GetProperty("message")?.GetValue(bad.Value) as string;
+        Assert.Equal(GenericResetErrorMessage, message);
     }
 
     // User found — password reset email sent with signed token link, 200 returned
@@ -666,6 +788,62 @@ public class AuthControllerTests : IDisposable
         var result = await _controller.ConfirmEmail("bad-id", "any-token");
 
         Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    // Spoofed Host header in production must throw before sending — attacker must not
+    // receive a password reset link pointing to their own domain
+    [Fact]
+    public async Task ForgotPassword_SpoofedHost_Production_ThrowsAndDoesNotSendEmail()
+    {
+        // Arrange: production env with an allowlist that does not include evil.com
+        var prodEnv = new Mock<IWebHostEnvironment>();
+        prodEnv.Setup(e => e.EnvironmentName).Returns("Production");
+
+        var prodConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:Key"]                      = JwtKey,
+                ["Jwt:Issuer"]                   = JwtIssuer,
+                ["Jwt:Audience"]                 = JwtAudience,
+                ["Jwt:ExpiryMinutes"]            = "60",
+                ["Jwt:RefreshExpiryDays"]        = "7",
+                ["Demo:ResetKey"]                = TestResetKey,
+                ["App:AllowedFrontendOrigins:0"] = "https://example.com"
+            })
+            .Build();
+
+        var controller = new AuthController(
+            _userManagerMock.Object,
+            prodConfig,
+            _context,
+            prodEnv.Object,
+            _storageMock.Object,
+            _emailMock.Object);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        
+        // Spoof the Host header 
+        controller.HttpContext.Request.Host = new HostString("evil.com");
+
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.GeneratePasswordResetTokenAsync(user))
+            .ReturnsAsync("reset-token");
+
+        // Act + Assert: unrecognised host must throw before the email is built
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => controller.ForgotPassword(new ForgotPasswordDTO { Email = TestUserEmail }));
+
+        // Email must never be sent — attacker's domain must not reach the victim's inbox
+        _emailMock.Verify(
+            e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
     }
 
     // Demo account missing from Identity (e.g. seed never ran) — surface as 503 not 404

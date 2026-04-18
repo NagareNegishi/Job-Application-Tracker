@@ -1,15 +1,19 @@
 namespace JobTrackerApi.Tests;
 using JobTrackerApi.Controllers;
+using JobTrackerApi.Data;
 using JobTrackerApi.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using Moq;
 
-public class AccountControllerTests
+public class AccountControllerTests : IDisposable
 {
     private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
+    private readonly JobTrackerContext _context;
     private readonly AccountController _controller;
     private const string TestUserId = "test-user-id";
     private const string TestUserEmail = "test@example.com";
@@ -24,9 +28,18 @@ public class AccountControllerTests
         _userManagerMock = new Mock<UserManager<IdentityUser>>(
             store.Object, null, null, null, null, null, null, null, null);
 
-        _controller = new AccountController(_userManagerMock.Object);
+        // unique DB name per test class — parallel runs can't share state
+        var options = new DbContextOptionsBuilder<JobTrackerContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        _context = new JobTrackerContext(options);
+
+        var loggerMock = new Mock<ILogger<AccountController>>();
+        _controller = new AccountController(_userManagerMock.Object, _context, loggerMock.Object);
         SetUser();
     }
+
+    public void Dispose() => _context.Dispose();
 
     // In production, JWT middleware builds a ClaimsPrincipal from the Bearer token and sets it
     // on HttpContext.User. In tests there's no HTTP pipeline, so we build it manually.
@@ -165,5 +178,98 @@ public class AccountControllerTests
         // Assert
         Assert.IsType<OkResult>(result);
         _userManagerMock.Verify(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"), Times.Once);
+    }
+
+    // After a successful password change, every active refresh token for this user must be revoked.
+    [Fact]
+    public async Task ChangePassword_Success_RevokesAllActiveRefreshTokensForUser()
+    {
+        // Arrange
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _context.RefreshTokens.AddRange(
+            new RefreshToken { Token = "token-a", UserId = TestUserId, ExpiresAt = DateTime.UtcNow.AddDays(7) },
+            new RefreshToken { Token = "token-b", UserId = TestUserId, ExpiresAt = DateTime.UtcNow.AddDays(7) }
+        );
+        await _context.SaveChangesAsync();
+
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "NewPass1!"
+        };
+
+        // Act
+        await _controller.ChangePassword(dto);
+
+        // Assert: both tokens now have a RevokedAt timestamp
+        var tokens = _context.RefreshTokens.Where(t => t.UserId == TestUserId).ToList();
+        Assert.All(tokens, t => Assert.NotNull(t.RevokedAt));
+    }
+
+    // Revocation must be scoped to the password-changing user only — other users' sessions must survive.
+    [Fact]
+    public async Task ChangePassword_Success_DoesNotRevokeOtherUsersTokens()
+    {
+        // Arrange
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        _context.RefreshTokens.AddRange(
+            new RefreshToken { Token = "my-token",    UserId = TestUserId,      ExpiresAt = DateTime.UtcNow.AddDays(7) },
+            new RefreshToken { Token = "other-token", UserId = "other-user-id", ExpiresAt = DateTime.UtcNow.AddDays(7) }
+        );
+        await _context.SaveChangesAsync();
+
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "NewPass1!"
+        };
+
+        // Act
+        await _controller.ChangePassword(dto);
+
+        // Assert: other user's token is untouched
+        var otherToken = _context.RefreshTokens.Single(t => t.UserId == "other-user-id");
+        Assert.Null(otherToken.RevokedAt);
+    }
+
+    // Already-revoked tokens must keep their original RevokedAt — don't overwrite history.
+    [Fact]
+    public async Task ChangePassword_Success_PreservesAlreadyRevokedTokenTimestamp()
+    {
+        // Arrange
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var originalRevokedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        _context.RefreshTokens.Add(
+            new RefreshToken { Token = "old-token", UserId = TestUserId, ExpiresAt = DateTime.UtcNow.AddDays(7), RevokedAt = originalRevokedAt }
+        );
+        await _context.SaveChangesAsync();
+
+        var dto = new ChangePasswordDTO
+        {
+            CurrentPassword = "OldPass1!",
+            NewPassword = "NewPass1!",
+            ConfirmNewPassword = "NewPass1!"
+        };
+
+        // Act
+        await _controller.ChangePassword(dto);
+
+        // Assert: original RevokedAt is preserved, not overwritten
+        var token = _context.RefreshTokens.Single(t => t.Token == "old-token");
+        Assert.Equal(originalRevokedAt, token.RevokedAt);
     }
 }

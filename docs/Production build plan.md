@@ -353,6 +353,8 @@ Deferred until the app has real user traffic worth observing. Current coverage i
 - Health check at `/health` — DB connectivity confirmed on every deploy
 - Let's Encrypt emails before cert expiry — cert renewal safety net
 
+**Security audit logging note:** Auth endpoints (`AccountController`, etc.) emit structured log events (password change success/failure, etc.) via `ILogger<T>` backed by Serilog. These go to stdout only — not persisted, do not survive a container restart. A log aggregator is required before these logs provide real incident-response value. Wire this up as part of Step 9.
+
 When to revisit: sustained traffic, repeated error patterns, or on-call needs. Options when ready:
 - **Grafana Loki** — pairs well with existing structured JSON logs; lightweight
 - **Datadog** — managed, more setup but richer alerting

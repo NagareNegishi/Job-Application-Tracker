@@ -119,7 +119,7 @@ public class AuthController : ControllerBase
         var result = await _userManager.CreateAsync(user, dto.Password);
 
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return BadRequest(result.Errors.Select(e => e.Description));
 
         // Token is signed by Identity using the user's security stamp — invalidated if password changes
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -200,9 +200,10 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents brute force
     public async Task<IActionResult> Login(LoginDTO dto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email);
         // Handle wrong email/password together to prevent attacker guessing
-        if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        var passwordValid = await _userManager.CheckPasswordAsync(user ?? new IdentityUser(), dto.Password);
+        if (user == null || !passwordValid)
             return Unauthorized();
 
         // 403 not 401 — password was correct but account is not yet activated
@@ -290,14 +291,27 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResetPassword(ResetPasswordDTO dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null) return BadRequest(new { message = "Invalid reset link." });
 
         // Reverse URL encoding before Identity validates the token signature
         var decoded = Uri.UnescapeDataString(dto.Token);
+        // Same message for missing user and bad/expired token
+        if (user == null)
+            return BadRequest(new { message = "Invalid or expired reset link." });
+
         var result = await _userManager.ResetPasswordAsync(user, decoded, dto.NewPassword);
 
         if (!result.Succeeded)
-            return BadRequest(new { message = result.Errors.First().Description });
+            return BadRequest(new { message = "Invalid or expired reset link." });
+
+        // Revoke all active tokens (password reset must invalidate existing sessions across all devices)
+        var activeTokens = await _context.RefreshTokens
+            .Where(t => t.UserId == user.Id && t.RevokedAt == null)
+            .ToListAsync();
+
+        foreach (var token in activeTokens)
+            token.RevokedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
 
         return Ok(new { message = "Password reset successful." });
     }
@@ -310,8 +324,19 @@ public class AuthController : ControllerBase
             return _config["App:FrontendBaseUrl"]
                 ?? throw new InvalidOperationException("App:FrontendBaseUrl is not configured.");
 
-        // In production, Nginx passes the real public hostname (proxy_set_header Host $host)
-        return $"https://{Request.Host.Value}";
+        // Validate Request.Host against the allowlist — prevents attacker-controlled reset links
+        var allowedOrigins = _config.GetSection("App:AllowedFrontendOrigins").Get<string[]>()
+            ?? throw new InvalidOperationException("App:AllowedFrontendOrigins is not configured.");
+
+        var host = Request.Host.Value;
+        var isAllowed = allowedOrigins
+            .Select(o => new Uri(o).Authority)
+            .Contains(host, StringComparer.OrdinalIgnoreCase);
+
+        if (!isAllowed)
+            throw new InvalidOperationException($"Request.Host '{host}' is not in App:AllowedFrontendOrigins.");
+
+        return $"https://{host}";
     }
 
     // Helper method to set the refresh token as an httpOnly cookie
