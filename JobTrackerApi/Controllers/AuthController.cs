@@ -302,6 +302,16 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(new { message = "Invalid or expired reset link." });
 
+        // Revoke all active tokens (password reset must invalidate existing sessions across all devices)
+        var activeTokens = await _context.RefreshTokens
+            .Where(t => t.UserId == user.Id && t.RevokedAt == null)
+            .ToListAsync();
+
+        foreach (var token in activeTokens)
+            token.RevokedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
         return Ok(new { message = "Password reset successful." });
     }
 
