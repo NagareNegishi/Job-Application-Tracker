@@ -200,9 +200,10 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents brute force
     public async Task<IActionResult> Login(LoginDTO dto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email);
         // Handle wrong email/password together to prevent attacker guessing
-        if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        var passwordValid = await _userManager.CheckPasswordAsync(user ?? new IdentityUser(), dto.Password);
+        if (user == null || !passwordValid)
             return Unauthorized();
 
         // 403 not 401 — password was correct but account is not yet activated
