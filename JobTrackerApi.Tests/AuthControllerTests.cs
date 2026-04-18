@@ -220,6 +220,26 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<UnauthorizedResult>(result);
     }
 
+    // No User should not skip CheckPasswordAsync -> timing difference leaks whether an email address is registered
+    [Fact]
+    public async Task Login_UserNotFound_StillCallsCheckPasswordAsync()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync("noone@example.com"))
+            .ReturnsAsync((IdentityUser?)null);
+        _userManagerMock
+            .Setup(m => m.CheckPasswordAsync(It.IsAny<IdentityUser>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var result = await _controller.Login(new LoginDTO { Email = "noone@example.com", Password = "Pass1!" });
+
+        Assert.IsType<UnauthorizedResult>(result);
+        // CheckPasswordAsync must run regardless
+        _userManagerMock.Verify(
+            m => m.CheckPasswordAsync(It.IsAny<IdentityUser>(), "Pass1!"),
+            Times.Once);
+    }
+
     // Happy path — correct credentials, confirmed email, tokens issued and cookie set
     [Fact]
     public async Task Login_Success_ReturnsOkWithAccessTokenAndSetsCookie()
