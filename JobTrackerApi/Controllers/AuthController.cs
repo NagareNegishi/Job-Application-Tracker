@@ -324,8 +324,19 @@ public class AuthController : ControllerBase
             return _config["App:FrontendBaseUrl"]
                 ?? throw new InvalidOperationException("App:FrontendBaseUrl is not configured.");
 
-        // In production, Nginx passes the real public hostname (proxy_set_header Host $host)
-        return $"https://{Request.Host.Value}";
+        // Validate Request.Host against the allowlist — prevents attacker-controlled reset links
+        var allowedOrigins = _config.GetSection("App:AllowedFrontendOrigins").Get<string[]>()
+            ?? throw new InvalidOperationException("App:AllowedFrontendOrigins is not configured.");
+
+        var host = Request.Host.Value;
+        var isAllowed = allowedOrigins
+            .Select(o => new Uri(o).Authority)
+            .Contains(host, StringComparer.OrdinalIgnoreCase);
+
+        if (!isAllowed)
+            throw new InvalidOperationException($"Request.Host '{host}' is not in App:AllowedFrontendOrigins.");
+
+        return $"https://{host}";
     }
 
     // Helper method to set the refresh token as an httpOnly cookie
