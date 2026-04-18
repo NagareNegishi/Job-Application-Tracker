@@ -546,6 +546,48 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<OkObjectResult>(result);
     }
 
+    // Password reset must revoke all active refresh tokens — an attacker who stole a token
+    // before the reset would otherwise retain a valid session after the password change
+    [Fact]
+    public async Task ResetPassword_Success_RevokesAllActiveRefreshTokens()
+    {
+        // Arrange: two active tokens for the user
+        _context.RefreshTokens.Add(new RefreshToken
+        {
+            Token = "active-token-1",
+            UserId = TestUserId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        });
+        _context.RefreshTokens.Add(new RefreshToken
+        {
+            Token = "active-token-2",
+            UserId = TestUserId,
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        });
+        await _context.SaveChangesAsync();
+
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ResetPasswordAsync(user, "valid-token", "NewPass1!"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        // Act
+        var result = await _controller.ResetPassword(
+            new ResetPasswordDTO { Email = TestUserEmail, Token = "valid-token", NewPassword = "NewPass1!" });
+
+        // Assert: 200 — password reset succeeded
+        Assert.IsType<OkObjectResult>(result);
+
+        // Both active tokens revoked — stolen tokens can no longer be used to refresh
+        var token1 = await _context.RefreshTokens.FirstAsync(r => r.Token == "active-token-1");
+        var token2 = await _context.RefreshTokens.FirstAsync(r => r.Token == "active-token-2");
+        Assert.NotNull(token1.RevokedAt);
+        Assert.NotNull(token2.RevokedAt);
+    }
+
     // Token signature invalid or expired — Identity rejects it, surface as 400
     [Fact]
     public async Task ResetPassword_InvalidToken_ReturnsBadRequest()
