@@ -790,6 +790,62 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    // Spoofed Host header in production must throw before sending — attacker must not
+    // receive a password reset link pointing to their own domain
+    [Fact]
+    public async Task ForgotPassword_SpoofedHost_Production_ThrowsAndDoesNotSendEmail()
+    {
+        // Arrange: production env with an allowlist that does not include evil.com
+        var prodEnv = new Mock<IWebHostEnvironment>();
+        prodEnv.Setup(e => e.EnvironmentName).Returns("Production");
+
+        var prodConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:Key"]                      = JwtKey,
+                ["Jwt:Issuer"]                   = JwtIssuer,
+                ["Jwt:Audience"]                 = JwtAudience,
+                ["Jwt:ExpiryMinutes"]            = "60",
+                ["Jwt:RefreshExpiryDays"]        = "7",
+                ["Demo:ResetKey"]                = TestResetKey,
+                ["App:AllowedFrontendOrigins:0"] = "https://example.com"
+            })
+            .Build();
+
+        var controller = new AuthController(
+            _userManagerMock.Object,
+            prodConfig,
+            _context,
+            prodEnv.Object,
+            _storageMock.Object,
+            _emailMock.Object);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        
+        // Spoof the Host header 
+        controller.HttpContext.Request.Host = new HostString("evil.com");
+
+        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByEmailAsync(TestUserEmail))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.GeneratePasswordResetTokenAsync(user))
+            .ReturnsAsync("reset-token");
+
+        // Act + Assert: unrecognised host must throw before the email is built
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => controller.ForgotPassword(new ForgotPasswordDTO { Email = TestUserEmail }));
+
+        // Email must never be sent — attacker's domain must not reach the victim's inbox
+        _emailMock.Verify(
+            e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
     // Demo account missing from Identity (e.g. seed never ran) — surface as 503 not 404
     // so the caller knows the service is unavailable, not that the route is wrong
     [Fact]
