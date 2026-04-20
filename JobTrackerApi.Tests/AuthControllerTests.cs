@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Query;
@@ -21,6 +22,7 @@ public class AuthControllerTests : IDisposable
     private readonly Mock<IWebHostEnvironment> _envMock;
     private readonly Mock<IStorageService> _storageMock;
     private readonly Mock<IEmailService> _emailMock;
+    private readonly Mock<ILogger<AuthController>> _loggerMock;
     private readonly AuthController _controller;
 
     // Fixed test identities
@@ -76,6 +78,7 @@ public class AuthControllerTests : IDisposable
         // IEmailService — Register, ResendConfirmation, ForgotPassword all call SendEmailAsync;
         // default mock behaviour returns a completed Task, which is what we want
         _emailMock = new Mock<IEmailService>();
+        _loggerMock = new Mock<ILogger<AuthController>>();
 
         _controller = new AuthController(
             _userManagerMock.Object,
@@ -83,7 +86,8 @@ public class AuthControllerTests : IDisposable
             _context,
             _envMock.Object,
             _storageMock.Object,
-            _emailMock.Object);
+            _emailMock.Object,
+            _loggerMock.Object);
 
         // AuthController endpoints are unauthenticated, but DefaultHttpContext is still
         // needed so Request.Cookies and Response.Cookies are reachable (Refresh, Logout, Login)
@@ -818,7 +822,8 @@ public class AuthControllerTests : IDisposable
             _context,
             prodEnv.Object,
             _storageMock.Object,
-            _emailMock.Object);
+            _emailMock.Object,
+            _loggerMock.Object);
 
         controller.ControllerContext = new ControllerContext
         {
