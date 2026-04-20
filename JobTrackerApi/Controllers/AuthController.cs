@@ -122,7 +122,11 @@ public class AuthController : ControllerBase
         var result = await _userManager.CreateAsync(user, dto.Password);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Registration failed for email {Email}: {Errors}",
+                dto.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
             return BadRequest(result.Errors.Select(e => e.Description));
+        }
 
         // Token is signed by Identity using the user's security stamp — invalidated if password changes
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -136,6 +140,7 @@ public class AuthController : ControllerBase
         );
 
         // Don't auto-login — user must confirm email first
+        _logger.LogInformation("User registered, awaiting email confirmation: {UserId}", user.Id);
         return Ok(new { message = "Registration successful. Check your email to confirm your account." });
     }
 
