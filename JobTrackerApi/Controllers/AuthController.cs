@@ -75,6 +75,7 @@ public class AuthController : ControllerBase
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
+        _logger.LogInformation("Demo login for user {UserId}", user.Id);
         return Ok(new { accessToken });
     }
 
