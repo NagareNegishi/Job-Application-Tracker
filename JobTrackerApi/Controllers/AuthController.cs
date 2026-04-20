@@ -317,7 +317,10 @@ public class AuthController : ControllerBase
         var result = await _userManager.ResetPasswordAsync(user, decoded, dto.NewPassword);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Password reset failed for user {UserId}", user.Id);
             return BadRequest(new { message = "Invalid or expired reset link." });
+        }
 
         // Revoke all active tokens (password reset must invalidate existing sessions across all devices)
         var activeTokens = await _context.RefreshTokens
@@ -329,6 +332,7 @@ public class AuthController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        _logger.LogInformation("Password reset and all sessions revoked for user {UserId}", user.Id);
         return Ok(new { message = "Password reset successful." });
     }
 
