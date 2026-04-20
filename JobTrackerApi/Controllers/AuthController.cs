@@ -27,6 +27,7 @@ public class AuthController : ControllerBase
     private readonly IWebHostEnvironment _env;
     private readonly IStorageService _storageService;
     private readonly IEmailService _emailService;
+    private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         UserManager<IdentityUser> userManager,
@@ -34,7 +35,8 @@ public class AuthController : ControllerBase
         JobTrackerContext context,
         IWebHostEnvironment env,
         IStorageService storageService,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<AuthController> logger)
     {
         _userManager = userManager;
         _config = config;
@@ -42,6 +44,7 @@ public class AuthController : ControllerBase
         _env = env;
         _storageService = storageService;
         _emailService = emailService;
+        _logger = logger;
     }
 
     // Demo login — bypasses password check, issues tokens for the seeded demo account directly
