@@ -207,7 +207,10 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByEmailAsync(dto.Email);
         var passwordValid = await _userManager.CheckPasswordAsync(user ?? new IdentityUser(), dto.Password);
         if (user == null || !passwordValid)
+        {
+            _logger.LogWarning("Login failed for email {Email}", dto.Email);
             return Unauthorized();
+        }
 
         // 403 not 401 — password was correct but account is not yet activated
         if (!user.EmailConfirmed)
@@ -218,6 +221,7 @@ public class AuthController : ControllerBase
 
         // the refresh token is set in cookie not for JS
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
+        _logger.LogInformation("Login successful for user {UserId}", user.Id);
         return Ok(new { accessToken });
     }
 
