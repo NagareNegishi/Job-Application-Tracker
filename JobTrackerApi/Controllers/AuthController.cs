@@ -123,8 +123,7 @@ public class AuthController : ControllerBase
 
         if (!result.Succeeded)
         {
-            _logger.LogWarning("Registration failed for email {Email}: {Errors}",
-                dto.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
+            _logger.LogWarning("Registration failed for email {Email}", dto.Email);
             return BadRequest(result.Errors.Select(e => e.Description));
         }
 
@@ -197,8 +196,12 @@ public class AuthController : ControllerBase
         var result = await _userManager.ConfirmEmailAsync(user, decoded);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Email confirmation failed for user {UserId}", userId);
             return BadRequest(new { message = "Invalid or expired confirmation link." });
+        }
 
+        _logger.LogInformation("Email confirmed for user {UserId}", userId);
         return Ok(new { message = "Email confirmed. You can now log in." });
     }
 
