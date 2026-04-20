@@ -298,6 +298,7 @@ public class AuthController : ControllerBase
             $"<p>Click <a href='{link}'>here</a> to reset your password.</p><p>This link expires in 24 hours. If you didn't request a reset, ignore this email.</p>"
         );
 
+        _logger.LogInformation("Password reset requested for {UserId}", user.Id);
         return Ok();
     }
 
