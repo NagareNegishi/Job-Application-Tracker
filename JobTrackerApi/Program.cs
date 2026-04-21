@@ -1,5 +1,5 @@
 using Amazon.S3;
-using Amazon.SimpleEmailV2;
+// using Amazon.SimpleEmailV2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -214,10 +214,6 @@ if (!builder.Environment.IsDevelopment())
             ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 
         // Clear the default loopback-only allowlist, then trust only the Docker internal network.
-        // Without this, any client could spoof X-Forwarded-For and bypass IP-based rate limiting.
-        // 172.16.0.0/12 covers 172.16–172.31.x.x — the full RFC-1918 range Docker uses.
-        // KnownIPNetworks is the modern API (KnownNetworks is obsolete as of ASP.NET Core 9+).
-        // System.Net.IPNetwork is qualified explicitly — both HttpOverrides and System.Net export IPNetwork.
         options.KnownIPNetworks.Clear();
         options.KnownProxies.Clear();
         options.KnownIPNetworks.Add(
@@ -230,7 +226,10 @@ if (!builder.Environment.IsDevelopment())
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-    app.UseCors("DevCors"); // Apply CORS policy
+    app.UseCors("DevCors"); // dev: CORS needed because frontend and backend run on different ports
+else
+    // prod: rewrite RemoteIpAddress + Request.Scheme from Nginx's forwarded headers to see the real client IP
+    app.UseForwardedHeaders();
 
 // Catch all unhandled exceptions — logs full details server-side, returns a safe generic JSON 500 to the client
 app.UseExceptionHandler(errorApp =>
