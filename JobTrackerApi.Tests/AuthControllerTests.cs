@@ -9,7 +9,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Query;
 
@@ -21,6 +23,7 @@ public class AuthControllerTests : IDisposable
     private readonly Mock<IWebHostEnvironment> _envMock;
     private readonly Mock<IStorageService> _storageMock;
     private readonly Mock<IEmailService> _emailMock;
+    private readonly Mock<ILogger<AuthController>> _loggerMock;
     private readonly AuthController _controller;
 
     // Fixed test identities
@@ -76,6 +79,7 @@ public class AuthControllerTests : IDisposable
         // IEmailService — Register, ResendConfirmation, ForgotPassword all call SendEmailAsync;
         // default mock behaviour returns a completed Task, which is what we want
         _emailMock = new Mock<IEmailService>();
+        _loggerMock = new Mock<ILogger<AuthController>>();
 
         _controller = new AuthController(
             _userManagerMock.Object,
@@ -83,7 +87,8 @@ public class AuthControllerTests : IDisposable
             _context,
             _envMock.Object,
             _storageMock.Object,
-            _emailMock.Object);
+            _emailMock.Object,
+            _loggerMock.Object);
 
         // AuthController endpoints are unauthenticated, but DefaultHttpContext is still
         // needed so Request.Cookies and Response.Cookies are reachable (Refresh, Logout, Login)
@@ -818,7 +823,8 @@ public class AuthControllerTests : IDisposable
             _context,
             prodEnv.Object,
             _storageMock.Object,
-            _emailMock.Object);
+            _emailMock.Object,
+            _loggerMock.Object);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -844,6 +850,37 @@ public class AuthControllerTests : IDisposable
         _emailMock.Verify(
             e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
             Times.Never);
+    }
+
+    // Login must embed the user's SecurityStamp in the JWT — OnTokenValidated in Program.cs
+    // compares this claim against the DB on every request to detect password changes mid-session
+    [Fact]
+    public async Task Login_Success_AccessTokenContainsSecurityStamp()
+    {
+        // Arrange
+        var user = new IdentityUser
+        {
+            Id = TestUserId,
+            Email = TestUserEmail,
+            EmailConfirmed = true,
+            SecurityStamp = "known-security-stamp"
+        };
+        _userManagerMock.Setup(m => m.FindByEmailAsync(TestUserEmail)).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.CheckPasswordAsync(user, "Pass1!")).ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.Login(new LoginDTO { Email = TestUserEmail, Password = "Pass1!" });
+
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var accessToken = ok.Value!.GetType().GetProperty("accessToken")?.GetValue(ok.Value) as string;
+        Assert.NotNull(accessToken);
+
+        // Decode without signature validation — only inspecting claims, not verifying cryptographic integrity
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+        var stampClaim = jwt.Claims.FirstOrDefault(c => c.Type == "stamp")?.Value;
+
+        Assert.Equal(user.SecurityStamp, stampClaim);
     }
 
     // Demo account missing from Identity (e.g. seed never ran) — surface as 503 not 404

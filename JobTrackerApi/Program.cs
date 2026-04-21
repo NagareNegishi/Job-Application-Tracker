@@ -1,5 +1,5 @@
 using Amazon.S3;
-using Amazon.SimpleEmailV2;
+// using Amazon.SimpleEmailV2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,7 +11,10 @@ using JobTrackerApi.Models;
 using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Net;
+using System.Security.Claims;
 using Serilog;
 using Serilog.Formatting.Json;
 // using System.Text.Json;
@@ -156,6 +159,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtKey))
         };
+
+        // After signature + expiry are verified, check that the SecurityStamp in the token still matches the DB
+        // catches password changes that happened after the token was issued.
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                var stampClaim = context.Principal?.FindFirstValue("stamp");
+
+                if (userId == null)
+                {
+                    context.Fail("Missing sub claim.");
+                    return;
+                }
+
+                var userManager = context.HttpContext.RequestServices
+                    .GetRequiredService<UserManager<IdentityUser>>();
+                var user = await userManager.FindByIdAsync(userId);
+
+                // Stamp mismatch
+                if (user == null || user.SecurityStamp != stampClaim)
+                    context.Fail("SecurityStamp mismatch — token invalidated.");
+            }
+        };
     });
 
 
@@ -200,11 +228,34 @@ if (builder.Environment.IsDevelopment())
 }
 
 
+// ForwardedHeaders — production only.
+// Tells ASP.NET to overwrite RemoteIpAddress from X-Forwarded-For and Request.Scheme from X-Forwarded-Proto.
+// Must be configured here so UseForwardedHeaders() picks it up at pipeline startup.
+// https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders =
+            ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+        // Clear the default loopback-only allowlist, then trust only the Docker internal network.
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+        options.KnownIPNetworks.Add(
+            new System.Net.IPNetwork(IPAddress.Parse("172.16.0.0"), 12)
+        );
+    });
+}
+
 // <snippet_UseSwagger>
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-    app.UseCors("DevCors"); // Apply CORS policy
+    app.UseCors("DevCors"); // dev: CORS needed because frontend and backend run on different ports
+else
+    // prod: rewrite RemoteIpAddress + Request.Scheme from Nginx's forwarded headers to see the real client IP
+    app.UseForwardedHeaders();
 
 // Catch all unhandled exceptions — logs full details server-side, returns a safe generic JSON 500 to the client
 app.UseExceptionHandler(errorApp =>
@@ -257,20 +308,13 @@ app.UseRateLimiter(); // must be after UseAuthorization so rate limit policies c
 
 app.MapControllers();
 
-// Health check endpoint — anonymous (no JWT), JSON response showing per-check status
+// Health check endpoint — anonymous (no JWT), status only.
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
     {
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new
-        {
-            status = report.Status.ToString(),
-            results = report.Entries.ToDictionary(
-                e => e.Key,
-                e => new { status = e.Value.Status.ToString(), duration = e.Value.Duration }
-            )
-        });
+        await context.Response.WriteAsJsonAsync(new { status = report.Status.ToString() });
     }
 }).AllowAnonymous();
 

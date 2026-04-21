@@ -27,6 +27,7 @@ public class AuthController : ControllerBase
     private readonly IWebHostEnvironment _env;
     private readonly IStorageService _storageService;
     private readonly IEmailService _emailService;
+    private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         UserManager<IdentityUser> userManager,
@@ -34,7 +35,8 @@ public class AuthController : ControllerBase
         JobTrackerContext context,
         IWebHostEnvironment env,
         IStorageService storageService,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<AuthController> logger)
     {
         _userManager = userManager;
         _config = config;
@@ -42,6 +44,7 @@ public class AuthController : ControllerBase
         _env = env;
         _storageService = storageService;
         _emailService = emailService;
+        _logger = logger;
     }
 
     // Demo login — bypasses password check, issues tokens for the seeded demo account directly
@@ -72,6 +75,7 @@ public class AuthController : ControllerBase
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
+        _logger.LogInformation("Demo login for user {UserId}", user.Id);
         return Ok(new { accessToken });
     }
 
@@ -119,7 +123,10 @@ public class AuthController : ControllerBase
         var result = await _userManager.CreateAsync(user, dto.Password);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Registration failed for email {Email}", dto.Email);
             return BadRequest(result.Errors.Select(e => e.Description));
+        }
 
         // Token is signed by Identity using the user's security stamp — invalidated if password changes
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -133,6 +140,7 @@ public class AuthController : ControllerBase
         );
 
         // Don't auto-login — user must confirm email first
+        _logger.LogInformation("User registered, awaiting email confirmation: {UserId}", user.Id);
         return Ok(new { message = "Registration successful. Check your email to confirm your account." });
     }
 
@@ -189,8 +197,12 @@ public class AuthController : ControllerBase
         var result = await _userManager.ConfirmEmailAsync(user, decoded);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Email confirmation failed for user {UserId}", userId);
             return BadRequest(new { message = "Invalid or expired confirmation link." });
+        }
 
+        _logger.LogInformation("Email confirmed for user {UserId}", userId);
         return Ok(new { message = "Email confirmed. You can now log in." });
     }
 
@@ -204,7 +216,10 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByEmailAsync(dto.Email);
         var passwordValid = await _userManager.CheckPasswordAsync(user ?? new IdentityUser(), dto.Password);
         if (user == null || !passwordValid)
+        {
+            _logger.LogWarning("Login failed for email {Email}", dto.Email);
             return Unauthorized();
+        }
 
         // 403 not 401 — password was correct but account is not yet activated
         if (!user.EmailConfirmed)
@@ -215,6 +230,7 @@ public class AuthController : ControllerBase
 
         // the refresh token is set in cookie not for JS
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
+        _logger.LogInformation("Login successful for user {UserId}", user.Id);
         return Ok(new { accessToken });
     }
 
@@ -283,6 +299,7 @@ public class AuthController : ControllerBase
             $"<p>Click <a href='{link}'>here</a> to reset your password.</p><p>This link expires in 24 hours. If you didn't request a reset, ignore this email.</p>"
         );
 
+        _logger.LogInformation("Password reset requested for {UserId}", user.Id);
         return Ok();
     }
 
@@ -301,7 +318,10 @@ public class AuthController : ControllerBase
         var result = await _userManager.ResetPasswordAsync(user, decoded, dto.NewPassword);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Password reset failed for user {UserId}", user.Id);
             return BadRequest(new { message = "Invalid or expired reset link." });
+        }
 
         // Revoke all active tokens (password reset must invalidate existing sessions across all devices)
         var activeTokens = await _context.RefreshTokens
@@ -313,6 +333,7 @@ public class AuthController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        _logger.LogInformation("Password reset and all sessions revoked for user {UserId}", user.Id);
         return Ok(new { message = "Password reset successful." });
     }
 
@@ -360,7 +381,8 @@ public class AuthController : ControllerBase
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim("stamp", user.SecurityStamp!) // SecurityStamp come from AspNet, not JWT standard claim names
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
