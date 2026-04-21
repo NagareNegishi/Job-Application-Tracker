@@ -309,7 +309,6 @@ app.UseRateLimiter(); // must be after UseAuthorization so rate limit policies c
 app.MapControllers();
 
 // Health check endpoint — anonymous (no JWT), status only.
-// DB check still runs internally; per-check detail omitted to avoid leaking stack info to unauthenticated callers.
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
