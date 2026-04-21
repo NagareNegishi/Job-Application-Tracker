@@ -308,20 +308,14 @@ app.UseRateLimiter(); // must be after UseAuthorization so rate limit policies c
 
 app.MapControllers();
 
-// Health check endpoint — anonymous (no JWT), JSON response showing per-check status
+// Health check endpoint — anonymous (no JWT), status only.
+// DB check still runs internally; per-check detail omitted to avoid leaking stack info to unauthenticated callers.
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
     {
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new
-        {
-            status = report.Status.ToString(),
-            results = report.Entries.ToDictionary(
-                e => e.Key,
-                e => new { status = e.Value.Status.ToString(), duration = e.Value.Duration }
-            )
-        });
+        await context.Response.WriteAsJsonAsync(new { status = report.Status.ToString() });
     }
 }).AllowAnonymous();
 
