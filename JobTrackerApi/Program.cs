@@ -160,9 +160,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(jwtKey))
         };
 
-        // After signature + expiry are verified, check that the SecurityStamp in the token
-        // still matches the DB — catches password changes that happened after the token was issued.
-        // UserManager is scoped, so it must be resolved from the request scope, not captured here.
+        // After signature + expiry are verified, check that the SecurityStamp in the token still matches the DB
+        // catches password changes that happened after the token was issued.
         options.Events = new JwtBearerEvents
         {
             OnTokenValidated = async context =>
@@ -170,7 +169,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
                 var stampClaim = context.Principal?.FindFirstValue("stamp");
 
-                // Guard userId only — FindByIdAsync(null) may throw rather than return null cleanly
                 if (userId == null)
                 {
                     context.Fail("Missing sub claim.");
@@ -179,11 +177,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
                 var userManager = context.HttpContext.RequestServices
                     .GetRequiredService<UserManager<IdentityUser>>();
-
                 var user = await userManager.FindByIdAsync(userId);
 
-                // Stamp mismatch — a security event (password change, etc.) occurred after this token was issued
-                // null stampClaim also fails here: SecurityStamp is always non-null, so != null is always true
+                // Stamp mismatch
                 if (user == null || user.SecurityStamp != stampClaim)
                     context.Fail("SecurityStamp mismatch — token invalidated.");
             }
