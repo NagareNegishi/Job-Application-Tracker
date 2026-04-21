@@ -11,7 +11,9 @@ using JobTrackerApi.Models;
 using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Net;
 using Serilog;
 using Serilog.Formatting.Json;
 // using System.Text.Json;
@@ -199,6 +201,30 @@ if (builder.Environment.IsDevelopment())
     });
 }
 
+
+// ForwardedHeaders — production only.
+// Tells ASP.NET to overwrite RemoteIpAddress from X-Forwarded-For and Request.Scheme from X-Forwarded-Proto.
+// Must be configured here so UseForwardedHeaders() picks it up at pipeline startup.
+// https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders =
+            ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+        // Clear the default loopback-only allowlist, then trust only the Docker internal network.
+        // Without this, any client could spoof X-Forwarded-For and bypass IP-based rate limiting.
+        // 172.16.0.0/12 covers 172.16–172.31.x.x — the full RFC-1918 range Docker uses.
+        // KnownIPNetworks is the modern API (KnownNetworks is obsolete as of ASP.NET Core 9+).
+        // System.Net.IPNetwork is qualified explicitly — both HttpOverrides and System.Net export IPNetwork.
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+        options.KnownIPNetworks.Add(
+            new System.Net.IPNetwork(IPAddress.Parse("172.16.0.0"), 12)
+        );
+    });
+}
 
 // <snippet_UseSwagger>
 var app = builder.Build();
