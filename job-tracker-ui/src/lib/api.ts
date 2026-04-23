@@ -66,6 +66,12 @@ export async function apiFetch(
     },
   })
 
+  // 503 — DB unreachable, show maintenance message if within scheduled window
+  if (response.status === 503) {
+    if (isMaintenanceWindow()) throw new MaintenanceError()
+    throw new ApiError(503, "Service temporarily unavailable. Please try again.")
+  }
+
   if (response.status !== 401) return response
 
   // Auth endpoints return 401 for invalid credentials — not a session expiry, don't retry
