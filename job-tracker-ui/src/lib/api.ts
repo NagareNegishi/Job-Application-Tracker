@@ -29,6 +29,21 @@ export async function silentRefresh(): Promise<string> {
   return refreshPromise
 }
 
+const MAINTENANCE_WINDOW = { startHour: 0, endHour: 8, timezone: "Australia/Sydney" }
+
+// Returns true if the current time in Sydney falls within the scheduled maintenance window
+function isMaintenanceWindow(): boolean {
+  const hour = parseInt(
+    new Intl.DateTimeFormat("en-AU", {
+      timeZone: MAINTENANCE_WINDOW.timezone,
+      hour: "numeric",
+      hour12: false,
+    }).format(new Date()),
+    10
+  )
+  return hour >= MAINTENANCE_WINDOW.startHour && hour < MAINTENANCE_WINDOW.endHour
+}
+
 /**
  * Replacement for fetch, Every API call in the app needs to:
  * 1. Attach Authorization: Bearer <token> header
