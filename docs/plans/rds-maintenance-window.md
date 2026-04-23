@@ -58,6 +58,7 @@ Show users a meaningful maintenance message instead of a generic error during th
 - Use EventBridge Scheduler (not Lambda) — simpler, no code needed
 - Two rules: stop RDS at 00:00 AEST, start RDS at 08:00 AEST
 - Target: `rds:StopDBInstance` / `rds:StartDBInstance`
-- IAM role needed with `rds:StopDBInstance` + `rds:StartDBInstance` permissions
-- Schedule in UTC: stop at 14:00 UTC, start at 22:00 UTC (AEST = UTC+10, AEDT = UTC+11 — revisit for DST)
+- IAM role: auto-created by the console when you select the target — no manual setup needed
+- Set timezone to `Australia/Sydney` in the scheduler — DST handled automatically, no UTC offset needed
+- Cost: free tier covers 14M invocations/month; this uses ~60/month — $0
 - Not in this repo — done in AWS console or Terraform separately
