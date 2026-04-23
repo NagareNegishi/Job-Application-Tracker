@@ -88,6 +88,16 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Thrown when a 503 response is received during the scheduled maintenance window (midnight–8 AM Sydney time).
+ */
+export class MaintenanceError extends Error {
+  constructor(message = "Service is in maintenance (midnight–8 AM Sydney time). Please try again later.") {
+    super(message)
+    this.name = "MaintenanceError"
+  }
+}
+
 
 /**
  * Helper function to throw an ApiError with the status code and message from the response body if available.
