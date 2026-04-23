@@ -169,7 +169,7 @@ const STATUS_OPTIONS = Object.values(JobStatus);
 const PRIORITY_OPTIONS = Object.values(Priority);
 
 export function JobTable() {
-  const { data: jobs, isPending, isError } = useJobs();
+  const { data: jobs, isPending, isError, error } = useJobs();
   const [addOpen, setAddOpen] = useState(false);
   const navigate = useNavigate();
   const { widths, startResize, totalWidth } = useColWidths([
