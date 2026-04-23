@@ -35,6 +35,8 @@ Show users a meaningful maintenance message instead of a generic error during th
 - `DocumentList.tsx` — uses `isError` and `uploadError` state separately
 - Decision: add a `MaintenanceError` class to `src/lib/api.ts`, check for it in error display locations and show the maintenance message
 - Components to update: `JobTable`, `JobDetailPage`, `DocumentList`, `LoginPage` (login fails with 503 during window)
+- **Per-component for now** — `instanceof MaintenanceError` inline in each component
+- **Future: migrate to `QueryCache` global `onError`** — one handler for all query errors; `MutationCache` needs separate handling; requires adding a context provider or module-level signal for global UI state
 
 ---
 
