@@ -29,6 +29,21 @@ export async function silentRefresh(): Promise<string> {
   return refreshPromise
 }
 
+const MAINTENANCE_WINDOW = { startHour: 0, endHour: 8, timezone: "Australia/Sydney" }
+
+// Returns true if the current time in Sydney falls within the scheduled maintenance window
+function isMaintenanceWindow(): boolean {
+  const hour = parseInt(
+    new Intl.DateTimeFormat("en-AU", {
+      timeZone: MAINTENANCE_WINDOW.timezone,
+      hour: "numeric",
+      hour12: false,
+    }).format(new Date()),
+    10
+  )
+  return hour >= MAINTENANCE_WINDOW.startHour && hour < MAINTENANCE_WINDOW.endHour
+}
+
 /**
  * Replacement for fetch, Every API call in the app needs to:
  * 1. Attach Authorization: Bearer <token> header
@@ -50,6 +65,12 @@ export async function apiFetch(
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   })
+
+  // 503 — DB unreachable, show maintenance message if within scheduled window
+  if (response.status === 503) {
+    if (isMaintenanceWindow()) throw new MaintenanceError()
+    throw new ApiError(503, "Service temporarily unavailable. Please try again.")
+  }
 
   if (response.status !== 401) return response
 
@@ -85,6 +106,16 @@ export class ApiError extends Error {
     super(message)
     this.name = "ApiError"
     this.status = status
+  }
+}
+
+/**
+ * Thrown when a 503 response is received during the scheduled maintenance window (midnight–8 AM Sydney time).
+ */
+export class MaintenanceError extends Error {
+  constructor(message = "Service is in maintenance (midnight–8 AM Sydney time). Please try again later.") {
+    super(message)
+    this.name = "MaintenanceError"
   }
 }
 

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { useJobs } from "@/hooks/jobQuery";
 import { useJobFilters, type SortField } from "@/hooks/useJobFilters";
+import { MaintenanceError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { JobStatus, Priority } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
@@ -168,7 +169,7 @@ const STATUS_OPTIONS = Object.values(JobStatus);
 const PRIORITY_OPTIONS = Object.values(Priority);
 
 export function JobTable() {
-  const { data: jobs, isPending, isError } = useJobs();
+  const { data: jobs, isPending, isError, error } = useJobs();
   const [addOpen, setAddOpen] = useState(false);
   const navigate = useNavigate();
   const { widths, startResize, totalWidth } = useColWidths([
@@ -188,7 +189,7 @@ export function JobTable() {
   } = useJobFilters(jobs ?? []);
 
   if (isPending) return <p>Loading...</p>;
-  if (isError) return <p>Something went wrong.</p>;
+  if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Something went wrong."}</p>;
 
   const sortProps = { activeField: sortField, dir: sortDir, onSort: setSort };
 

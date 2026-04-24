@@ -269,8 +269,20 @@ app.UseExceptionHandler(errorApp =>
         var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
 
         if (error != null)
+        {
+            if (error.Error is System.Data.Common.DbException)
+            {
+                // DbException includes intentional maintenance window downtime
+                logger.LogError(error.Error, "Database unavailable");
+                context.Response.StatusCode = 503;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsJsonAsync(new { error = "Service temporarily unavailable." });
+                return;
+            }
+
             // Logs full exception with stack trace — visible server-side only
             logger.LogError(error.Error, "Unhandled exception");
+        }
 
         context.Response.StatusCode = 500;
         context.Response.ContentType = "application/json";
