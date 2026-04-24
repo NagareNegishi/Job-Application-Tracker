@@ -1,7 +1,7 @@
 # RDS Maintenance Window — Implementation Plan
 
 ## Goal
-Stop RDS daily 00:00–08:00 AEST to save ~$10/month.
+Stop RDS daily 00:00–08:00 Sydney time to save ~$10/month.
 Show users a meaningful maintenance message instead of a generic error during that window.
 
 ## Cost context
@@ -24,7 +24,7 @@ Show users a meaningful maintenance message instead of a generic error during th
 ### Frontend
 - `apiFetch` in `src/lib/api.ts` — add 503 check before the existing 401 check
 - On 503: check browser clock against maintenance window (00:00–08:00 AEST)
-  - In window → throw `MaintenanceError` with message: `"Service is in maintenance (midnight–8 AM AEST). Please try again later."`
+  - In window → throw `MaintenanceError` with message: `"Service is in maintenance (midnight–8 AM Sydney time). Please try again later."`
   - Outside window → throw `ApiError` with status 503 and message: `"Service temporarily unavailable. Please try again."`
 - Maintenance window constant: `{ startHour: 0, endHour: 8, timezone: "Australia/Sydney" }`
 - Use `Intl.DateTimeFormat` to get current hour in AEST — handles DST automatically
@@ -49,7 +49,7 @@ Show users a meaningful maintenance message instead of a generic error during th
 | `job-tracker-ui/src/components/JobTable.tsx` | Check `MaintenanceError` in `isError` branch |
 | `job-tracker-ui/src/pages/JobDetailPage.tsx` | Same |
 | `job-tracker-ui/src/components/DocumentList.tsx` | Same |
-| `job-tracker-ui/src/pages/LoginPage.tsx` | Add `else if (err.status === 503)` branch in the existing catch block (line 42–54); sets `error` state which renders in the existing inline error div |
+| `job-tracker-ui/src/pages/LoginPage.tsx` | Check `instanceof MaintenanceError` first in the catch block, then `instanceof ApiError`; sets `error` state which renders in the existing inline error div (`apiFetch` converts 503 to `MaintenanceError`/`ApiError` before it reaches the page — no raw status check needed) |
 
 ## Health check
 - `/health` already returns 503 when DB is down (`AddDbContextCheck`) — no change needed
@@ -58,7 +58,7 @@ Show users a meaningful maintenance message instead of a generic error during th
 - Use EventBridge Scheduler (not Lambda) — simpler, no code needed
 - Two rules: stop RDS at 00:00 AEST, start RDS at 08:00 AEST
 - Target: `rds:StopDBInstance` / `rds:StartDBInstance`
-- IAM role: auto-created by the console when you select the target — no manual setup needed
+- IAM role: must be created manually before setting up the scheduler — grant `rds:StopDBInstance` and `rds:StartDBInstance` on the target DB instance; EventBridge Scheduler assumes this role when invoking the targets
 - Set timezone to `Australia/Sydney` in the scheduler — DST handled automatically, no UTC offset needed
 - Cost: free tier covers 14M invocations/month; this uses ~60/month — $0
 - Not in this repo — done in AWS console or Terraform separately
