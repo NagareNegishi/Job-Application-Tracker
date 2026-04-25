@@ -2,7 +2,9 @@ name: Reset Demo Data
 
 on:
   schedule:
-    - cron: '0 4 * * *'  # 4am UTC daily
+    # RDS shutdown at midnight, GitHub Actions could delay ~2 hr 
+    # Runs ~9:30 PM Sydney time daily
+    - cron: '30 9 * * *'
   workflow_dispatch:       # manual trigger from GitHub Actions UI
 
 jobs:
