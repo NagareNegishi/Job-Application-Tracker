@@ -237,6 +237,16 @@ export function JobTable() {
       </div>
       <hr className="border-t border-border" />
 
+      {/* Tab nav */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+        <TabsList>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="closing-soon">Closing Soon</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Job table */}
       {jobs.length === 0 ? (
         <p className="text-muted-foreground text-md">
