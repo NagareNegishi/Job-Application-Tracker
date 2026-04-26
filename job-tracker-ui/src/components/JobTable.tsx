@@ -19,7 +19,7 @@ import { MaintenanceError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { JobStatus, Priority } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { JobCreateSheet } from "./JobCreateSheet";
 import { PriorityDot } from "./ui/PriorityDot";
@@ -177,6 +177,32 @@ export function JobTable() {
     COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED,
   ]);
 
+  const [activeTab, setActiveTab] = useState<"active" | "closing-soon" | "all" | "rejected">("active");
+
+  // Pre-filter by tab before column filters are applied
+  const tabFilteredJobs = useMemo(() => {
+    const all = jobs ?? [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in7Days = new Date(today);
+    in7Days.setDate(today.getDate() + 7);
+
+    switch (activeTab) {
+      case "active":
+        return all.filter((j) => j.status !== JobStatus.Rejected);
+      case "closing-soon":
+        return all.filter((j) => {
+          if (j.status !== JobStatus.Wishlist || !j.closedAt) return false;
+          const d = new Date(j.closedAt);
+          return d >= today && d <= in7Days;
+        });
+      case "rejected":
+        return all.filter((j) => j.status === JobStatus.Rejected);
+      default:
+        return all;
+    }
+  }, [jobs, activeTab]);
+
   const {
     filteredJobs,
     sortField,
@@ -186,7 +212,7 @@ export function JobTable() {
     setFilters,
     availableRoles,
     isFiltered,
-  } = useJobFilters(jobs ?? []);
+  } = useJobFilters(tabFilteredJobs);
 
   if (isPending) return <p>Loading...</p>;
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Something went wrong."}</p>;
