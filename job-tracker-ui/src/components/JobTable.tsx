@@ -21,6 +21,7 @@ import { JobStatus, Priority } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { JobCreateSheet } from "./JobCreateSheet";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
