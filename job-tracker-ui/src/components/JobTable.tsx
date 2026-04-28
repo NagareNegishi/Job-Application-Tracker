@@ -131,6 +131,7 @@ function SortableHead({
   onSort,
   className,
   filter,
+  showControls = true,
 }: {
   field: SortField;
   label: string;
@@ -139,9 +140,14 @@ function SortableHead({
   onSort: (f: SortField) => void;
   className?: string;
   filter?: React.ReactNode;
+  showControls?: boolean;
 }) {
   const isActive = activeField === field;
   const Icon = isActive ? (dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+
+  if (!showControls) {
+    return <TableHead className={className}><span className="px-1 text-sm text-muted-foreground">{label}</span></TableHead>;
+  }
 
   return (
     <TableHead className={className}>
@@ -170,10 +176,10 @@ const STATUS_OPTIONS = Object.values(JobStatus);
 const PRIORITY_OPTIONS = Object.values(Priority);
 
 const TAB_STYLES = {
-  "active":       { tab: "!bg-blue-50 !text-blue-800 border-blue-300",    table: "bg-blue-50" },
-  "closing-soon": { tab: "!bg-amber-50 !text-amber-800 border-amber-300", table: "bg-amber-50" },
-  "all":          { tab: "!bg-slate-50 !text-slate-700 border-slate-300", table: "bg-slate-50" },
-  "rejected":     { tab: "!bg-rose-50 !text-rose-800 border-rose-300",    table: "bg-rose-50" },
+  "active":       { tab: "!bg-blue-50 !text-blue-800 border-blue-300",    table: "bg-blue-50",   rowHover: "hover:bg-blue-100" },
+  "closing-soon": { tab: "!bg-amber-50 !text-amber-800 border-amber-300", table: "bg-amber-50",  rowHover: "hover:bg-amber-100" },
+  "all":          { tab: "!bg-slate-50 !text-slate-700 border-slate-300", table: "bg-slate-50",  rowHover: "hover:bg-slate-100" },
+  "rejected":     { tab: "!bg-rose-50 !text-rose-800 border-rose-300",    table: "bg-rose-50",   rowHover: "hover:bg-rose-100" },
 } as const;
 
 export function JobTable() {
@@ -226,6 +232,7 @@ export function JobTable() {
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Something went wrong."}</p>;
 
   const sortProps = { activeField: sortField, dir: sortDir, onSort: setSort };
+  const showControls = activeTab !== "rejected";
 
   return (
     <div className="flex flex-col gap-4">
@@ -260,7 +267,13 @@ export function JobTable() {
               key={value}
               value={value}
               className={cn(
-                "rounded-t-md rounded-b-none border border-border bg-muted text-muted-foreground px-4 py-1.5 h-auto flex-none -mb-px transition-colors duration-200 data-[state=active]:font-medium data-[state=active]:underline data-[state=active]:underline-offset-4 data-[state=active]:border-2 data-[state=active]:border-b-0 data-[state=active]:!shadow-none",
+                // shape & layout
+                "rounded-t-md rounded-b-none border border-border",
+                "bg-muted text-muted-foreground",
+                "px-4 py-1.5 h-auto flex-none -mb-px transition-colors duration-200",
+                // active state
+                "data-[state=active]:font-medium data-[state=active]:underline data-[state=active]:underline-offset-4",
+                "data-[state=active]:border-2 data-[state=active]:border-b-0 data-[state=active]:!shadow-none",
                 TAB_STYLES[value].tab
               )}
             >
@@ -326,6 +339,7 @@ export function JobTable() {
                 field="status"
                 label="Status"
                 className="text-center"
+                showControls={showControls}
                 {...sortProps}
                 filter={
                   <FilterPopover
@@ -367,7 +381,7 @@ export function JobTable() {
               <TableRow
                 key={job.id}
                 onClick={() => navigate(`/jobs/${job.id}`)}
-                className="cursor-pointer hover:bg-muted/50"
+                className={cn("cursor-pointer", TAB_STYLES[activeTab].rowHover)}
               >
                 <TableCell className="font-medium overflow-hidden text-ellipsis">{job.company}</TableCell>
                 <TableCell className="overflow-hidden text-ellipsis">{job.role}</TableCell>
