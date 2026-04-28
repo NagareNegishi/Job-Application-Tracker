@@ -62,3 +62,8 @@ Show users a meaningful maintenance message instead of a generic error during th
 - Set timezone to `Australia/Sydney` in the scheduler — DST handled automatically, no UTC offset needed
 - Cost: free tier covers 14M invocations/month; this uses ~60/month — $0
 - Not in this repo — done in AWS console or Terraform separately
+
+### Demo reset cron alignment
+- RDS uptime: 08:00–00:00 AEST = 22:00–14:00 UTC
+- GitHub Actions adds ~2 hr delay to scheduled runs — cron must target no later than 12:00 UTC or the delay risks hitting the 14:00 UTC shutdown
+- Demo reset cron set to `30 9 * * *` UTC → fires ~9:30 PM Sydney time — avoids peak Sydney hours and stays safely within RDS uptime

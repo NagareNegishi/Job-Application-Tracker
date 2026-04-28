@@ -19,8 +19,9 @@ import { MaintenanceError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { JobStatus, Priority } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { JobCreateSheet } from "./JobCreateSheet";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
@@ -130,6 +131,7 @@ function SortableHead({
   onSort,
   className,
   filter,
+  showControls = true,
 }: {
   field: SortField;
   label: string;
@@ -138,9 +140,14 @@ function SortableHead({
   onSort: (f: SortField) => void;
   className?: string;
   filter?: React.ReactNode;
+  showControls?: boolean;
 }) {
   const isActive = activeField === field;
   const Icon = isActive ? (dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+
+  if (!showControls) {
+    return <TableHead className={className}><span className="px-1 text-sm text-muted-foreground">{label}</span></TableHead>;
+  }
 
   return (
     <TableHead className={className}>
@@ -168,6 +175,13 @@ function SortableHead({
 const STATUS_OPTIONS = Object.values(JobStatus);
 const PRIORITY_OPTIONS = Object.values(Priority);
 
+const TAB_STYLES = {
+  "active":       { tab: "!bg-blue-50 !text-blue-800 border-blue-300",    table: "bg-blue-50",   rowHover: "hover:bg-blue-100" },
+  "closing-soon": { tab: "!bg-amber-50 !text-amber-800 border-amber-300", table: "bg-amber-50",  rowHover: "hover:bg-amber-100" },
+  "all":          { tab: "!bg-slate-50 !text-slate-700 border-slate-300", table: "bg-slate-50",  rowHover: "hover:bg-slate-100" },
+  "rejected":     { tab: "!bg-rose-50 !text-rose-800 border-rose-300",    table: "bg-rose-50",   rowHover: "hover:bg-rose-100" },
+} as const;
+
 export function JobTable() {
   const { data: jobs, isPending, isError, error } = useJobs();
   const [addOpen, setAddOpen] = useState(false);
@@ -176,6 +190,32 @@ export function JobTable() {
     COL_WIDTH_COMPANY, COL_WIDTH_ROLE,
     COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED,
   ]);
+
+  const [activeTab, setActiveTab] = useState<"active" | "closing-soon" | "all" | "rejected">("active");
+
+  // Pre-filter by tab before column filters are applied
+  const tabFilteredJobs = useMemo(() => {
+    const all = jobs ?? [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const in7Days = new Date(today);
+    in7Days.setDate(today.getDate() + 7);
+
+    switch (activeTab) {
+      case "active":
+        return all.filter((j) => j.status !== JobStatus.Rejected);
+      case "closing-soon":
+        return all.filter((j) => {
+          if (j.status !== JobStatus.Wishlist || !j.closedAt) return false;
+          const d = new Date(j.closedAt);
+          return d >= today && d <= in7Days;
+        });
+      case "rejected":
+        return all.filter((j) => j.status === JobStatus.Rejected);
+      default:
+        return all;
+    }
+  }, [jobs, activeTab]);
 
   const {
     filteredJobs,
@@ -186,12 +226,13 @@ export function JobTable() {
     setFilters,
     availableRoles,
     isFiltered,
-  } = useJobFilters(jobs ?? []);
+  } = useJobFilters(tabFilteredJobs);
 
   if (isPending) return <p>Loading...</p>;
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Something went wrong."}</p>;
 
   const sortProps = { activeField: sortField, dir: sortDir, onSort: setSort };
+  const showControls = activeTab !== "rejected";
 
   return (
     <div className="flex flex-col gap-4">
@@ -209,6 +250,38 @@ export function JobTable() {
         </Button>
       </div>
       <hr className="border-t border-border" />
+
+      {/* Tab nav */}
+      <div className={cn("flex flex-col", TAB_STYLES[activeTab].table)}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+        <TabsList className="bg-background p-0 h-auto rounded-none border-b border-border w-full justify-start items-end gap-1">
+          {(
+            [
+              { value: "active", label: "Active" },
+              { value: "closing-soon", label: "Closing Soon" },
+              { value: "all", label: "All" },
+              { value: "rejected", label: "Rejected" },
+            ] as const
+          ).map(({ value, label }) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className={cn(
+                // shape & layout
+                "rounded-t-md rounded-b-none border border-border",
+                "bg-muted text-muted-foreground",
+                "px-4 py-1.5 h-auto flex-none -mb-px transition-colors duration-200",
+                // active state
+                "data-[state=active]:font-medium data-[state=active]:underline data-[state=active]:underline-offset-4",
+                "data-[state=active]:border-2 data-[state=active]:border-b-0 data-[state=active]:!shadow-none",
+                TAB_STYLES[value].tab
+              )}
+            >
+              {label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Job table */}
       {jobs.length === 0 ? (
@@ -266,6 +339,7 @@ export function JobTable() {
                 field="status"
                 label="Status"
                 className="text-center"
+                showControls={showControls}
                 {...sortProps}
                 filter={
                   <FilterPopover
@@ -307,7 +381,7 @@ export function JobTable() {
               <TableRow
                 key={job.id}
                 onClick={() => navigate(`/jobs/${job.id}`)}
-                className="cursor-pointer hover:bg-muted/50"
+                className={cn("cursor-pointer", TAB_STYLES[activeTab].rowHover)}
               >
                 <TableCell className="font-medium overflow-hidden text-ellipsis">{job.company}</TableCell>
                 <TableCell className="overflow-hidden text-ellipsis">{job.role}</TableCell>
@@ -334,6 +408,7 @@ export function JobTable() {
           </TableBody>
         </Table>
       )}
+      </div>
 
       <JobCreateSheet open={addOpen} onOpenChange={setAddOpen} />
     </div>
