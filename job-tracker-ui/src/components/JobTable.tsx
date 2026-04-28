@@ -260,7 +260,7 @@ export function JobTable() {
               key={value}
               value={value}
               className={cn(
-                "rounded-t-md rounded-b-none border border-border bg-muted text-muted-foreground px-4 py-1.5 h-auto flex-none -mb-px data-[state=active]:font-medium data-[state=active]:border-b-0 data-[state=active]:!shadow-none",
+                "rounded-t-md rounded-b-none border border-border bg-muted text-muted-foreground px-4 py-1.5 h-auto flex-none -mb-px transition-colors duration-200 data-[state=active]:font-medium data-[state=active]:border-b-0 data-[state=active]:!shadow-none",
                 TAB_STYLES[value].tab
               )}
             >
