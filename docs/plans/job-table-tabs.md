@@ -21,7 +21,7 @@ Add tab navigation to the job table for quick triage. The "Closing Soon" tab sur
 
 | Step | Item | Status |
 |---|---|---|
-| 1 | Tab navigation on job table | Pending |
+| 1 | Tab navigation on job table | Done |
 
 ---
 

@@ -239,7 +239,7 @@ export function JobTable() {
 
       {/* Tab nav */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList>
+        <TabsList className="bg-transparent p-0 h-auto rounded-none border-b border-border justify-start items-end gap-1">
           <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="closing-soon">Closing Soon</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
