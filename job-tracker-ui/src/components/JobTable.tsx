@@ -170,10 +170,10 @@ const STATUS_OPTIONS = Object.values(JobStatus);
 const PRIORITY_OPTIONS = Object.values(Priority);
 
 const TAB_STYLES = {
-  "active":       { tab: "bg-blue-100 text-blue-800 border-blue-300",    table: "bg-blue-50" },
-  "closing-soon": { tab: "bg-amber-100 text-amber-800 border-amber-300", table: "bg-amber-50" },
-  "all":          { tab: "bg-slate-100 text-slate-700 border-slate-300", table: "bg-slate-50" },
-  "rejected":     { tab: "bg-rose-100 text-rose-800 border-rose-300",    table: "bg-rose-50" },
+  "active":       { tab: "!bg-blue-50 !text-blue-800 border-blue-300",    table: "bg-blue-50" },
+  "closing-soon": { tab: "!bg-amber-50 !text-amber-800 border-amber-300", table: "bg-amber-50" },
+  "all":          { tab: "!bg-slate-50 !text-slate-700 border-slate-300", table: "bg-slate-50" },
+  "rejected":     { tab: "!bg-rose-50 !text-rose-800 border-rose-300",    table: "bg-rose-50" },
 } as const;
 
 export function JobTable() {
@@ -245,8 +245,9 @@ export function JobTable() {
       <hr className="border-t border-border" />
 
       {/* Tab nav */}
+      <div className={cn("flex flex-col", TAB_STYLES[activeTab].table)}>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList className="bg-transparent p-0 h-auto rounded-none border-b border-border w-full justify-start items-end gap-1">
+        <TabsList className="bg-background p-0 h-auto rounded-none border-b border-border w-full justify-start items-end gap-1">
           {(
             [
               { value: "active", label: "Active" },
@@ -260,7 +261,7 @@ export function JobTable() {
               value={value}
               className={cn(
                 "rounded-t-md rounded-b-none border border-border bg-muted text-muted-foreground px-4 py-1.5 h-auto flex-none -mb-px data-[state=active]:font-medium data-[state=active]:border-b-0 data-[state=active]:!shadow-none",
-                activeTab === value && TAB_STYLES[value].tab
+                TAB_STYLES[value].tab
               )}
             >
               {label}
@@ -270,7 +271,6 @@ export function JobTable() {
       </Tabs>
 
       {/* Job table */}
-      <div className={TAB_STYLES[activeTab].table}>
       {jobs.length === 0 ? (
         <p className="text-muted-foreground text-md">
           No jobs registered yet. Click "Add New Job" to create your first job application.
