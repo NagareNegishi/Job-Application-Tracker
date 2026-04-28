@@ -239,11 +239,23 @@ export function JobTable() {
 
       {/* Tab nav */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList className="bg-transparent p-0 h-auto rounded-none border-b border-border justify-start items-end gap-1">
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="closing-soon">Closing Soon</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+        <TabsList className="bg-transparent p-0 h-auto rounded-none border-b border-border w-full justify-start items-end gap-1">
+          {(
+            [
+              { value: "active", label: "Active" },
+              { value: "closing-soon", label: "Closing Soon" },
+              { value: "all", label: "All" },
+              { value: "rejected", label: "Rejected" },
+            ] as const
+          ).map(({ value, label }) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className="rounded-t-md rounded-b-none border border-border bg-muted text-muted-foreground px-4 py-1.5 h-auto flex-none -mb-px data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:font-medium data-[state=active]:border-b-0 data-[state=active]:!shadow-none"
+            >
+              {label}
+            </TabsTrigger>
+          ))}
         </TabsList>
       </Tabs>
 
