@@ -34,7 +34,10 @@ Click **Try Demo** on the login page — no account required. The demo account i
 
 **Data reset:**
 - On every demo login, any missing sample jobs are automatically restored — visitor deletions come back, visitor additions are left alone
-- Full reset runs nightly at 3am UTC via a scheduled GitHub Actions workflow — clears all data and re-seeds from scratch
+- Full reset runs nightly via a scheduled GitHub Actions workflow — clears all data and re-seeds from scratch
+
+**Availability:**
+- Offline daily midnight–8 AM Sydney time — RDS stopped overnight to reduce demo hosting costs
 
 To get the full experience (documents, password change), [register a free account](https://jobtracker.nagarenegishi.com/register).
 
