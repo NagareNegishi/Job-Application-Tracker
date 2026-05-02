@@ -89,3 +89,9 @@ In development, documents are stored in the local filesystem path set in `Storag
 Deployed on AWS: EC2 (Docker Compose) + RDS PostgreSQL + S3 document storage. nginx handles SSL termination and serves the React frontend; the backend runs on the internal Docker network only.
 
 See [`docs/deployment-setup.md`](docs/deployment-setup.md) for required AWS infrastructure, GitHub Actions secrets, and EC2 setup.
+
+---
+
+## Claude Code
+
+Claude Code is used selectively as an AI coding assistant for targeted tasks, under developer direction. The Dev Container (`.devcontainer/`) with `project-firewall.sh` restricts its outbound network access to an allowlist of domains. `.claude/` contains custom skills (frontend design, OWASP scanning, dev research, learning mode) and `CLAUDE.md` loads codebase context into every session. Architecture decisions and plans are documented in `docs/`.
