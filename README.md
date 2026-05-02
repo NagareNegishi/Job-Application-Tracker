@@ -14,6 +14,7 @@ Full-stack job application tracking system built with ASP.NET Core and React.
 ## Features
 
 - Track job applications through a status pipeline (Wishlist → Applied → Screening → Interview → Offer / Rejected)
+- Tab views on the job table: Active, Closing Soon, All, Rejected
 - Attach documents (CV, cover letter) per application
 - Contact and correspondence history per application
 - JWT authentication with httpOnly refresh token rotation
