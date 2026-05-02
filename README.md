@@ -74,6 +74,7 @@ The project runs in a Dev Container (recommended — PostgreSQL included as a Do
 3. Run migrations: `cd JobTrackerApi && dotnet ef database update`
 4. Start backend: `cd JobTrackerApi && dotnet run --launch-profile https`
 5. Start frontend: `cd job-tracker-ui && npm install && npm run dev`
+6. Run tests: `cd JobTrackerApi.Tests && dotnet test`
 
 In development, documents are stored in the local filesystem path set in `Storage:UploadsPath`. The folder is created automatically on startup if it does not exist.
 
