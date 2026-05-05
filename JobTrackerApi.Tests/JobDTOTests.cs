@@ -237,6 +237,28 @@ public class JobDTOTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(JobDTO.SalaryMax)));
     }
 
+    [Fact]
+    public void Test_Salary_MinEqualsMax_Passes()
+    {
+        // Arrange
+        var dto = new JobDTO
+        {
+            Company = "Test Company",
+            Role = "Software Engineer",
+            SalaryMin = 100000,
+            SalaryMax = 100000
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
+
     // Missing required fields
     [Fact]
     public void Test_MissingRequiredFields()
