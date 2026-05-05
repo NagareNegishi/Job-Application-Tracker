@@ -193,6 +193,27 @@ public class JobDTOTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(JobDTO.JobUrl)));
     }
 
+    [Fact]
+    public void Test_JobUrl_Null_Passes()
+    {
+        // Arrange
+        var dto = new JobDTO
+        {
+            Company = "Test Company",
+            Role = "Software Engineer",
+            JobUrl = null
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
+
     // Missing required fields
     [Fact]
     public void Test_MissingRequiredFields()
