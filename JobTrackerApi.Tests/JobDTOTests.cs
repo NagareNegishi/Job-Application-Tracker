@@ -77,6 +77,38 @@ public class JobDTOTests
         Assert.Equal([], job.Correspondences);
     }
 
+    // Verifies new fields (JobUrl, Source, SalaryMin, SalaryMax, Location, WorkMode, InterviewAt)
+    // are mapped correctly through ToJob()
+    [Fact]
+    public void Test_ToJob_MapsNewFields()
+    {
+        // Arrange
+        var dto = new JobDTO
+        {
+            Company = "Test Company",
+            Role = "Software Engineer",
+            JobUrl = "https://example.com/job",
+            Source = "LinkedIn",
+            SalaryMin = 80000,
+            SalaryMax = 120000,
+            Location = "New York",
+            WorkMode = WorkMode.Hybrid,
+            InterviewAt = new DateTime(2024, 6, 1)
+        };
+
+        // Act
+        var job = dto.ToJob();
+
+        // Assert
+        Assert.Equal(dto.JobUrl, job.JobUrl);
+        Assert.Equal(dto.Source, job.Source);
+        Assert.Equal(dto.SalaryMin, job.SalaryMin);
+        Assert.Equal(dto.SalaryMax, job.SalaryMax);
+        Assert.Equal(dto.Location, job.Location);
+        Assert.Equal(dto.WorkMode, job.WorkMode);
+        Assert.Equal(dto.InterviewAt, job.InterviewAt);
+    }
+
     // Missing required fields
     [Fact]
     public void Test_MissingRequiredFields()
