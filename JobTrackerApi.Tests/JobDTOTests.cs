@@ -259,6 +259,27 @@ public class JobDTOTests
         Assert.Empty(results);
     }
 
+    [Fact]
+    public void Test_Salary_OnlyMinSet_Passes()
+    {
+        // Arrange
+        var dto = new JobDTO
+        {
+            Company = "Test Company",
+            Role = "Software Engineer",
+            SalaryMin = 80000
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
+
     // Missing required fields
     [Fact]
     public void Test_MissingRequiredFields()
