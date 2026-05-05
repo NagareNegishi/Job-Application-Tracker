@@ -151,6 +151,27 @@ public class JobDTOTests
         Assert.Empty(results);
     }
 
+    [Fact]
+    public void Test_JobUrl_JavascriptScheme_Fails()
+    {
+        // Arrange
+        var dto = new JobDTO
+        {
+            Company = "Test Company",
+            Role = "Software Engineer",
+            JobUrl = "javascript:alert(1)"
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(JobDTO.JobUrl)));
+    }
+
     // Missing required fields
     [Fact]
     public void Test_MissingRequiredFields()
