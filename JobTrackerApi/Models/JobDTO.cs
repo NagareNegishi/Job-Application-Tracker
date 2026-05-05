@@ -33,6 +33,25 @@ public class JobDTO
     [MaxLength(ValidationConstants.MaxContactSize)]
     public List<Contact> Contacts { get; set; } = [];
 
+    [Url]
+    [MaxLength(ValidationConstants.MaxJobUrlLength)]
+    [RegularExpression(@"^https?://", ErrorMessage = "URL must use http or https.")]
+    public string? JobUrl { get; set; }
+
+    [MaxLength(ValidationConstants.MaxSourceLength)]
+    public string? Source { get; set; }
+
+    public int? SalaryMin { get; set; }
+
+    public int? SalaryMax { get; set; }
+
+    [MaxLength(ValidationConstants.MaxLocationLength)]
+    public string? Location { get; set; }
+
+    public WorkMode? WorkMode { get; set; }
+
+    public DateTime? InterviewAt { get; set; }
+
     public Job ToJob()
     {
         return new Job
@@ -45,7 +64,14 @@ public class JobDTO
             ClosedAt = ClosedAt,
             Description = Description,
             Notes = Notes,
-            Contacts = Contacts ?? []
+            Contacts = Contacts ?? [],
+            JobUrl = JobUrl,
+            Source = Source,
+            SalaryMin = SalaryMin,
+            SalaryMax = SalaryMax,
+            Location = Location,
+            WorkMode = WorkMode,
+            InterviewAt = InterviewAt
         };
     }
 }
