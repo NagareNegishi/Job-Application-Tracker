@@ -35,7 +35,7 @@ public class JobDTO : IValidatableObject
 
     [Url]
     [MaxLength(ValidationConstants.MaxJobUrlLength)]
-    [RegularExpression(@"^https?://", ErrorMessage = "URL must use http or https.")]
+    [RegularExpression(@"^https?://.+", ErrorMessage = "URL must use http or https.")]
     public string? JobUrl { get; set; }
 
     [MaxLength(ValidationConstants.MaxSourceLength)]
