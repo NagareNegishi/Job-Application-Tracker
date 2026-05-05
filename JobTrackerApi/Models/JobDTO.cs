@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 /// <summary>
 /// DTO for creating or updating a job application
 /// </summary>
-public class JobDTO
+public class JobDTO : IValidatableObject
 {
     [Required(AllowEmptyStrings = false)]
     [MaxLength(ValidationConstants.MaxCompanyLength)]
@@ -51,6 +51,16 @@ public class JobDTO
     public WorkMode? WorkMode { get; set; }
 
     public DateTime? InterviewAt { get; set; }
+
+    // Cross-field validation — runs after per-property attributes pass.
+    // https://learn.microsoft.com/en-us/aspnet/core/mvc/models/validation#ivalidatableobject
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (SalaryMin.HasValue && SalaryMax.HasValue && SalaryMin > SalaryMax)
+            yield return new ValidationResult(
+                "SalaryMin must be less than or equal to SalaryMax.",
+                [nameof(SalaryMin), nameof(SalaryMax)]);
+    }
 
     public Job ToJob()
     {
