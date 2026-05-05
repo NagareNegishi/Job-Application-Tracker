@@ -298,6 +298,24 @@ public class JobDTOTests
         Assert.Null(job.WorkMode);
     }
 
+    [Fact]
+    public void Test_InterviewAt_Null_MapsToJob()
+    {
+        // Arrange
+        var dto = new JobDTO
+        {
+            Company = "Test Company",
+            Role = "Software Engineer",
+            InterviewAt = null
+        };
+
+        // Act
+        var job = dto.ToJob();
+
+        // Assert
+        Assert.Null(job.InterviewAt);
+    }
+
     // Missing required fields
     [Fact]
     public void Test_MissingRequiredFields()
