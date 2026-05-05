@@ -172,6 +172,27 @@ public class JobDTOTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(JobDTO.JobUrl)));
     }
 
+    [Fact]
+    public void Test_JobUrl_FtpScheme_Fails()
+    {
+        // Arrange
+        var dto = new JobDTO
+        {
+            Company = "Test Company",
+            Role = "Software Engineer",
+            JobUrl = "ftp://example.com"
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(JobDTO.JobUrl)));
+    }
+
     // Missing required fields
     [Fact]
     public void Test_MissingRequiredFields()
