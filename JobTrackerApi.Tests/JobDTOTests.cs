@@ -130,6 +130,27 @@ public class JobDTOTests
         Assert.Empty(results);
     }
 
+    [Fact]
+    public void Test_JobUrl_ValidHttp()
+    {
+        // Arrange
+        var dto = new JobDTO
+        {
+            Company = "Test Company",
+            Role = "Software Engineer",
+            JobUrl = "http://example.com/job"
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
+
     // Missing required fields
     [Fact]
     public void Test_MissingRequiredFields()
