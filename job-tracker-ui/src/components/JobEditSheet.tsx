@@ -20,10 +20,13 @@ import { usePatchJob } from "@/hooks/jobQuery"
 import {
   MAX_COMPANY_LENGTH,
   MAX_DESCRIPTION_LENGTH,
+  MAX_JOB_URL_LENGTH,
+  MAX_LOCATION_LENGTH,
   MAX_NOTES_LENGTH,
   MAX_ROLE_LENGTH,
+  MAX_SOURCE_LENGTH,
 } from "@/lib/validationConstants"
-import { JobStatus, Priority } from "@/types/enums"
+import { JobStatus, Priority, WorkMode } from "@/types/enums"
 import type { Job, JobPatchOperation } from "@/types/job"
 import { useEffect, useState } from "react"
 
