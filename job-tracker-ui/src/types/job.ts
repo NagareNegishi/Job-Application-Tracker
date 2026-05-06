@@ -88,3 +88,10 @@ export type JobPatchOperation =
   | { op: "add"; path: "/correspondences/-"; value: Correspondence }
   | { op: "remove"; path: `/correspondences/${number}`; value?: never }
   | { op: "replace"; path: `/correspondences/${number}`; value: Correspondence }
+  | { op: "replace"; path: "/jobUrl"; value: string | null }
+  | { op: "replace"; path: "/source"; value: string | null }
+  | { op: "replace"; path: "/salaryMin"; value: number | null }
+  | { op: "replace"; path: "/salaryMax"; value: number | null }
+  | { op: "replace"; path: "/location"; value: string | null }
+  | { op: "replace"; path: "/workMode"; value: WorkMode | null }
+  | { op: "replace"; path: "/interviewAt"; value: string | null }
