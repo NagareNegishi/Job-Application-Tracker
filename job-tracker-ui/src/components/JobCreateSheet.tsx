@@ -49,7 +49,6 @@ interface FormState {
   salaryMax: number | ""
   location: string
   workMode: WorkMode | ""
-  interviewAt: Date | undefined
 }
 
 
@@ -69,7 +68,6 @@ const defaultForm: FormState = {
   salaryMax: "",
   location: "",
   workMode: "",
-  interviewAt: undefined,
 }
 
 
@@ -276,6 +274,28 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Salary */}
+        <div className="space-y-1.5">
+          <Label>Salary Range</Label>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMin}
+              onChange={e => setField("salaryMin", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Min"
+            />
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMax}
+              onChange={e => setField("salaryMax", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Max"
+            />
+          </div>
+          {errors.salary && <p className="text-sm text-destructive">{errors.salary}</p>}
         </div>
 
         {/* Edit Description */}
