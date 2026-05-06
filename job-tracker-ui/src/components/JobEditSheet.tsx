@@ -40,6 +40,13 @@ interface FormState {
   closedAt: Date | undefined
   description: string
   notes: string
+  jobUrl: string
+  source: string
+  salaryMin: number | ""
+  salaryMax: number | ""
+  location: string
+  workMode: WorkMode | ""
+  interviewAt: Date | undefined
 }
 
 // Converts a Job object to the FormState shape
