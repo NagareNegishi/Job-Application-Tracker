@@ -236,6 +236,18 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
           {errors.jobUrl && <p className="text-sm text-destructive">{errors.jobUrl}</p>}
         </div>
 
+        {/* Source */}
+        <div className="space-y-1.5">
+          <Label htmlFor="source">Source</Label>
+          <Input
+            id="source"
+            value={form.source}
+            onChange={e => setField("source", e.target.value)}
+            maxLength={MAX_SOURCE_LENGTH}
+            placeholder="LinkedIn, Indeed, referral..."
+          />
+        </div>
+
         {/* Edit Description */}
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>
