@@ -1,5 +1,5 @@
 import type { Contact, Correspondence } from "./contact";
-import { JobStatus, Priority } from "./enums";
+import { JobStatus, Priority, WorkMode } from "./enums";
 import type { JobDocument } from "./jobDocument";
 
 // Job interface, mirrors JobResponseDto from the backend
@@ -16,6 +16,13 @@ export interface Job {
   notes?: string;
   contacts?: Contact[];
   correspondences?: Correspondence[];
+  jobUrl?: string;
+  source?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  location?: string;
+  workMode?: WorkMode;
+  interviewAt?: string; // ISO date string
 }
 
 
