@@ -147,29 +147,23 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
     if (form.notes !== (job.notes ?? ""))
       operations.push({ op: "replace", path: "/notes", value: form.notes })
 
-    const jobUrlValue = form.jobUrl || null
-    if (jobUrlValue !== (job.jobUrl ?? null))
-      operations.push({ op: "replace", path: "/jobUrl", value: jobUrlValue })
+    if (form.jobUrl !== (job.jobUrl ?? ""))
+      operations.push({ op: "replace", path: "/jobUrl", value: form.jobUrl || null })
 
-    const sourceValue = form.source || null
-    if (sourceValue !== (job.source ?? null))
-      operations.push({ op: "replace", path: "/source", value: sourceValue })
+    if (form.source !== (job.source ?? ""))
+      operations.push({ op: "replace", path: "/source", value: form.source || null })
 
-    const locationValue = form.location || null
-    if (locationValue !== (job.location ?? null))
-      operations.push({ op: "replace", path: "/location", value: locationValue })
+    if (form.location !== (job.location ?? ""))
+      operations.push({ op: "replace", path: "/location", value: form.location || null })
 
-    const workModeValue = form.workMode || null
-    if (workModeValue !== (job.workMode ?? null))
-      operations.push({ op: "replace", path: "/workMode", value: workModeValue })
+    if (form.workMode !== (job.workMode ?? ""))
+      operations.push({ op: "replace", path: "/workMode", value: form.workMode || null })
 
-    const salaryMinValue = form.salaryMin !== "" ? form.salaryMin : null
-    if (salaryMinValue !== (job.salaryMin ?? null))
-      operations.push({ op: "replace", path: "/salaryMin", value: salaryMinValue })
+    if (form.salaryMin !== (job.salaryMin ?? ""))
+      operations.push({ op: "replace", path: "/salaryMin", value: form.salaryMin !== "" ? form.salaryMin : null })
 
-    const salaryMaxValue = form.salaryMax !== "" ? form.salaryMax : null
-    if (salaryMaxValue !== (job.salaryMax ?? null))
-      operations.push({ op: "replace", path: "/salaryMax", value: salaryMaxValue })
+    if (form.salaryMax !== (job.salaryMax ?? ""))
+      operations.push({ op: "replace", path: "/salaryMax", value: form.salaryMax !== "" ? form.salaryMax : null })
 
     // Date fields need to be compared as ISO strings to avoid timezone issues
     const interviewAtISO = form.interviewAt?.toISOString() ?? null
