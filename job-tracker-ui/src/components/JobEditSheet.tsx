@@ -147,6 +147,36 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
     if (form.notes !== (job.notes ?? ""))
       operations.push({ op: "replace", path: "/notes", value: form.notes })
 
+    const jobUrlValue = form.jobUrl || null
+    if (jobUrlValue !== (job.jobUrl ?? null))
+      operations.push({ op: "replace", path: "/jobUrl", value: jobUrlValue })
+
+    const sourceValue = form.source || null
+    if (sourceValue !== (job.source ?? null))
+      operations.push({ op: "replace", path: "/source", value: sourceValue })
+
+    const locationValue = form.location || null
+    if (locationValue !== (job.location ?? null))
+      operations.push({ op: "replace", path: "/location", value: locationValue })
+
+    const workModeValue = form.workMode || null
+    if (workModeValue !== (job.workMode ?? null))
+      operations.push({ op: "replace", path: "/workMode", value: workModeValue })
+
+    const salaryMinValue = form.salaryMin !== "" ? form.salaryMin : null
+    if (salaryMinValue !== (job.salaryMin ?? null))
+      operations.push({ op: "replace", path: "/salaryMin", value: salaryMinValue })
+
+    const salaryMaxValue = form.salaryMax !== "" ? form.salaryMax : null
+    if (salaryMaxValue !== (job.salaryMax ?? null))
+      operations.push({ op: "replace", path: "/salaryMax", value: salaryMaxValue })
+
+    // Date fields need to be compared as ISO strings to avoid timezone issues
+    const interviewAtISO = form.interviewAt?.toISOString() ?? null
+    const existingInterviewAt = job.interviewAt ? new Date(job.interviewAt).toISOString() : null
+    if (interviewAtISO !== existingInterviewAt)
+      operations.push({ op: "replace", path: "/interviewAt", value: interviewAtISO })
+
     // Nothing changed
     if (operations.length === 0) {
       onOpenChange(false)
