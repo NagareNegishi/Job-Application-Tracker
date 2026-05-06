@@ -6,14 +6,18 @@ Potential additions to consider. Not prioritized — pick up any when ready to p
 
 All fields below added together in a single migration.
 
-**Progress:** Backend done — `WorkMode` enum, `Job` entity, DTOs (`JobDTO`, `UpdateJobDTO`, `JobResponseDto`), validation (URL scheme, salary cross-field), 11 new tests, migration `AddJobModelFields` applied.
-**Remaining:** Frontend TypeScript types, job form inputs, job detail page display.
+**Progress:** Frontend steps 1–5 done — `WorkMode` enum, validation constants, `Job`/`CreateJobRequest`/`UpdateJobRequest`/`JobPatchOperation` types updated, `JobCreateSheet` and `JobEditSheet` updated with all new inputs and diff logic.
+**Remaining:** Step 6 — `JobInfoCard` display.
 
 - **Job URL + Source** — store the listing URL and where it came from (LinkedIn, Indeed, referral, etc.); `JobUrl` must enforce `http`/`https` scheme (backend `[Url]` attribute + frontend check) to prevent XSS via `javascript:` href; `Source` shown on detail page only, never in table
-- **Salary range** — `SalaryMin` / `SalaryMax` as `int?`; both null = unknown; only min set = single figure; both set = range; validate `SalaryMin ≤ SalaryMax` when both present; `SalaryMin == SalaryMax` is valid and means a fixed salary — frontend must display as a single value, not a range
+- **Salary range** — `SalaryMin` / `SalaryMax` as `int?`; both null = unknown; only min set = single figure; both set = range; validate `SalaryMin ≤ SalaryMax` when both present; `SalaryMin == SalaryMax` is valid and means a fixed salary — frontend must display as a single value, not a range; if only one of min/max is set, treat as single value
 - **Location** — city/country free text field; no enum needed
-- **Work mode** — `WorkMode?` nullable enum; null = not specified; Remote / Hybrid / On-site values; most useful as a filter
-- **Interview date** — `InterviewAt: DateTime?`; `Interview` status exists but no date field yet
+- **Work mode** — `WorkMode?` nullable enum; null = not specified; Remote / Hybrid / On-site values; most useful as a filter; display `OnSite` as "On-site"
+- **Interview date** — `InterviewAt: DateTime?`; excluded from create form (set via edit only)
+
+**JobInfoCard layout — to decide next session:**
+- Suggestion A: header row (alongside status, priority, applied, closed) for location, work mode, interview date; separate sections below for job URL (link), salary, source
+- Confirm or adjust this layout before writing any code
 
 ## UI features
 
