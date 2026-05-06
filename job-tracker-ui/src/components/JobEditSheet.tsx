@@ -287,6 +287,27 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           </Select>
         </div>
 
+        {/* Salary */}
+        <div className="space-y-1.5">
+          <Label>Salary Range</Label>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMin}
+              onChange={e => setField("salaryMin", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Min"
+            />
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMax}
+              onChange={e => setField("salaryMax", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Max"
+            />
+          </div>
+        </div>
+
         {/* Edit Description */}
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>
