@@ -308,6 +308,16 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           </div>
         </div>
 
+        {/* Interview Date */}
+        <div className="space-y-1.5">
+          <Label>Interview Date</Label>
+          <DatePicker
+            value={form.interviewAt}
+            onChange={d => setField("interviewAt", d)}
+            placeholder="Select date"
+          />
+        </div>
+
         {/* Edit Description */}
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>
