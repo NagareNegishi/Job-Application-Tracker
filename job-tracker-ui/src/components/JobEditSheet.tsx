@@ -60,6 +60,13 @@ function toFormState(job: Job): FormState {
     closedAt: job.closedAt ? new Date(job.closedAt) : undefined,
     description: job.description ?? "",
     notes: job.notes ?? "",
+    jobUrl: job.jobUrl ?? "",
+    source: job.source ?? "",
+    salaryMin: job.salaryMin ?? "",
+    salaryMax: job.salaryMax ?? "",
+    location: job.location ?? "",
+    workMode: job.workMode ?? "",
+    interviewAt: job.interviewAt ? new Date(job.interviewAt) : undefined,
   }
 }
 
