@@ -43,6 +43,13 @@ interface FormState {
   closedAt: Date | undefined
   description: string
   notes: string
+  jobUrl: string
+  source: string
+  salaryMin: number | ""
+  salaryMax: number | ""
+  location: string
+  workMode: WorkMode | ""
+  interviewAt: Date | undefined
 }
 
 
@@ -56,6 +63,13 @@ const defaultForm: FormState = {
   closedAt: undefined,
   description: "",
   notes: "",
+  jobUrl: "",
+  source: "",
+  salaryMin: "",
+  salaryMax: "",
+  location: "",
+  workMode: "",
+  interviewAt: undefined,
 }
 
 
