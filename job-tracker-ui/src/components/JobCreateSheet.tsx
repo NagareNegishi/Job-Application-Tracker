@@ -1,6 +1,8 @@
 /**
  * Note: While post new job could accept array of "Contact" in backend,
  * frontend simply pass empty array.
+ * Note: InterviewAt is intentionally excluded from the create flow — it is
+ * set later via the edit form once an interview is scheduled.
  */
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/DatePicker"
@@ -105,9 +107,13 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
   // Handles form submission by comparing current form state with original job data
   function handleSubmit() {
     // Validate required fields
-    const newErrors: { company?: string; role?: string } = {}
+    const newErrors: { company?: string; role?: string; jobUrl?: string; salary?: string } = {}
     if (!form.company.trim()) newErrors.company = "Company is required"
     if (!form.role.trim()) newErrors.role = "Role is required"
+    if (form.jobUrl && !/^https?:\/\//i.test(form.jobUrl))
+      newErrors.jobUrl = "URL must start with http:// or https://"
+    if (form.salaryMin !== "" && form.salaryMax !== "" && form.salaryMin > form.salaryMax)
+      newErrors.salary = "Min salary must be less than or equal to max"
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
@@ -125,6 +131,12 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
         closedAt: form.closedAt?.toISOString(),
         description: form.description || undefined,
         notes: form.notes || undefined,
+        jobUrl: form.jobUrl || undefined,
+        source: form.source || undefined,
+        salaryMin: form.salaryMin !== "" ? form.salaryMin : undefined,
+        salaryMax: form.salaryMax !== "" ? form.salaryMax : undefined,
+        location: form.location || undefined,
+        workMode: form.workMode || undefined,
       },
       { onSuccess: () => onOpenChange(false) }
     )
