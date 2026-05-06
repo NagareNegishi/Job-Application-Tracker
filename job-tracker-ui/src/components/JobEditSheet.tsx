@@ -88,10 +88,14 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
   const [form, setForm] = useState<FormState>(() => toFormState(job))
   const { mutate: patchJob, isPending } = usePatchJob()
+  const [errors, setErrors] = useState<{ jobUrl?: string; salary?: string }>({})
 
   // Reset form when sheet opens with fresh job data
   useEffect(() => {
-    if (open) setForm(toFormState(job))
+    if (open) {
+      setForm(toFormState(job))
+      setErrors({})
+    }
   }, [job, open])
 
 
