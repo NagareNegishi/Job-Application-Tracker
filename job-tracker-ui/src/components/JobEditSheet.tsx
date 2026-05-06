@@ -232,6 +232,19 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           />
         </div>
 
+        {/* Job URL */}
+        <div className="space-y-1.5">
+          <Label htmlFor="jobUrl">Job URL</Label>
+          <Input
+            id="jobUrl"
+            type="url"
+            value={form.jobUrl}
+            onChange={e => setField("jobUrl", e.target.value)}
+            maxLength={MAX_JOB_URL_LENGTH}
+            placeholder="https://..."
+          />
+        </div>
+
         {/* Edit Description */}
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>
