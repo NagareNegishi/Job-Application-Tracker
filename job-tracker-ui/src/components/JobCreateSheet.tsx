@@ -89,7 +89,7 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
 
   const [form, setForm] = useState<FormState>(defaultForm)
   const { mutate: createJob, isPending } = useCreateJob()
-  const [errors, setErrors] = useState<{ company?: string; role?: string }>({})
+  const [errors, setErrors] = useState<{ company?: string; role?: string; jobUrl?: string; salary?: string }>({})
 
   // Reset form when sheet opens with default values
   useEffect(() => {
@@ -220,6 +220,20 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
             onChange={d => setField("closedAt", d)}
             placeholder="Select date"
           />
+        </div>
+
+        {/* Job URL */}
+        <div className="space-y-1.5">
+          <Label htmlFor="jobUrl">Job URL</Label>
+          <Input
+            id="jobUrl"
+            type="url"
+            value={form.jobUrl}
+            onChange={e => setField("jobUrl", e.target.value)}
+            maxLength={MAX_JOB_URL_LENGTH}
+            placeholder="https://..."
+          />
+          {errors.jobUrl && <p className="text-sm text-destructive">{errors.jobUrl}</p>}
         </div>
 
         {/* Edit Description */}
