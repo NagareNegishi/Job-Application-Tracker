@@ -257,6 +257,18 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           />
         </div>
 
+        {/* Location */}
+        <div className="space-y-1.5">
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            value={form.location}
+            onChange={e => setField("location", e.target.value)}
+            maxLength={MAX_LOCATION_LENGTH}
+            placeholder="City, Country"
+          />
+        </div>
+
         {/* Edit Description */}
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>
