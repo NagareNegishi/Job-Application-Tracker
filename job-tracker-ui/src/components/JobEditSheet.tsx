@@ -269,6 +269,24 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           />
         </div>
 
+        {/* Work Mode */}
+        <div className="space-y-1.5">
+          <Label>Work Mode</Label>
+          <Select
+            value={form.workMode}
+            onValueChange={v => setField("workMode", v as WorkMode)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select work mode" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(WorkMode).map(m => (
+                <SelectItem key={m} value={m}>{m === "OnSite" ? "On-site" : m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Edit Description */}
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>
