@@ -37,6 +37,13 @@ export interface CreateJobRequest {
   description?: string;
   notes?: string;
   contacts?: Contact[];
+  jobUrl?: string;
+  source?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  location?: string;
+  workMode?: WorkMode;
+  interviewAt?: string; // ISO date string
 }
 
 
@@ -52,6 +59,13 @@ export interface UpdateJobRequest {
   notes?: string;
   contacts?: Contact[];
   correspondences?: Correspondence[];
+  jobUrl?: string;
+  source?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  location?: string;
+  workMode?: WorkMode;
+  interviewAt?: string; // ISO date string
 }
 
 
