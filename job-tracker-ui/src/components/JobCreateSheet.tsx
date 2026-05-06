@@ -24,10 +24,13 @@ import { useCreateJob } from "@/hooks/jobQuery"
 import {
   MAX_COMPANY_LENGTH,
   MAX_DESCRIPTION_LENGTH,
+  MAX_JOB_URL_LENGTH,
+  MAX_LOCATION_LENGTH,
   MAX_NOTES_LENGTH,
   MAX_ROLE_LENGTH,
+  MAX_SOURCE_LENGTH,
 } from "@/lib/validationConstants"
-import { JobStatus, Priority } from "@/types/enums"
+import { JobStatus, Priority, WorkMode } from "@/types/enums"
 import { useEffect, useState } from "react"
 
 // FormState represents the internal state of the job edit form
