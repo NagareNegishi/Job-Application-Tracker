@@ -247,6 +247,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             maxLength={MAX_JOB_URL_LENGTH}
             placeholder="https://..."
           />
+          {errors.jobUrl && <p className="text-sm text-destructive">{errors.jobUrl}</p>}
         </div>
 
         {/* Source */}
@@ -310,6 +311,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
               placeholder="Max"
             />
           </div>
+          {errors.salary && <p className="text-sm text-destructive">{errors.salary}</p>}
         </div>
 
         {/* Interview Date */}
