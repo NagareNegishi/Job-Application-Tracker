@@ -107,6 +107,18 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
   // Handles form submission by comparing current form state with original job data
   function handleSubmit() {
+    // Validate before building patch operations
+    const newErrors: { jobUrl?: string; salary?: string } = {}
+    if (form.jobUrl && !/^https?:\/\//i.test(form.jobUrl))
+      newErrors.jobUrl = "URL must start with http:// or https://"
+    if (form.salaryMin !== "" && form.salaryMax !== "" && form.salaryMin > form.salaryMax)
+      newErrors.salary = "Min salary must be less than or equal to max"
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+    setErrors({})
+
     const operations: JobPatchOperation[] = []
     // Required fields
     if (form.company !== (job.company))
