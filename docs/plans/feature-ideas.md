@@ -15,9 +15,14 @@ All fields below added together in a single migration.
 - **Work mode** — `WorkMode?` nullable enum; null = not specified; Remote / Hybrid / On-site values; most useful as a filter; display `OnSite` as "On-site"
 - **Interview date** — `InterviewAt: DateTime?`; excluded from create form (set via edit only)
 
-**JobInfoCard layout — to decide next session:**
-- Suggestion A: header row (alongside status, priority, applied, closed) for location, work mode, interview date; separate sections below for job URL (link), salary, source
-- Confirm or adjust this layout before writing any code
+**JobInfoCard layout — decided:**
+- Row 1: Status · Priority · Applied · Closed (wider gap than before)
+- Row 2: Location · Work mode (together, only if at least one set)
+- Row 3: Salary range (only if at least one of min/max set)
+- Interview date: highlighted callout section with distinct background color, between metadata rows and body sections — treated as high-priority info
+- Description (if set)
+- Notes (if set)
+- Job URL (clickable link) + Source — after notes, least relevant so placed last inside the card
 
 ## UI features
 
