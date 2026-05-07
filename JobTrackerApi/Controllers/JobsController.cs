@@ -190,6 +190,13 @@ public class JobsController : ControllerBase
         job.Notes = jobToPatch.Notes;
         job.Contacts = jobToPatch.Contacts;
         job.Correspondences = jobToPatch.Correspondences;
+        job.JobUrl = jobToPatch.JobUrl;
+        job.Source = jobToPatch.Source;
+        job.SalaryMin = jobToPatch.SalaryMin;
+        job.SalaryMax = jobToPatch.SalaryMax;
+        job.Location = jobToPatch.Location;
+        job.WorkMode = jobToPatch.WorkMode;
+        job.InterviewAt = jobToPatch.InterviewAt;
 
         try
         {
