@@ -23,7 +23,7 @@ export function JobInfoCard({ job }: { job: Job }) {
       </div>
 
       {(job.location || job.workMode) && (
-        <div className="flex flex-wrap items-center gap-6">
+        <div className="flex flex-wrap items-center gap-6 pl-1">
           {job.location && (
             <span className="flex items-baseline gap-1.5">
               <span className="text-xs uppercase tracking-wider text-muted-foreground">Location</span>
@@ -49,7 +49,7 @@ export function JobInfoCard({ job }: { job: Job }) {
       )}
 
       {(job.salaryMin != null || job.salaryMax != null) && (
-        <div className="flex items-baseline gap-1.5">
+        <div className="flex items-baseline gap-1.5 pl-1">
           <span className="text-xs uppercase tracking-wider text-muted-foreground">Salary</span>
           <span className="text-sm font-medium">
             {/* range when both set and differ; single value otherwise */}
