@@ -14,6 +14,7 @@ Full-stack job application tracking system built with ASP.NET Core and React.
 ## Features
 
 - Track job applications through a status pipeline (Wishlist → Applied → Screening → Interview → Offer / Rejected)
+- Tab views on the job table: Active, Closing Soon, All, Rejected
 - Attach documents (CV, cover letter) per application
 - Contact and correspondence history per application
 - JWT authentication with httpOnly refresh token rotation
@@ -33,7 +34,10 @@ Click **Try Demo** on the login page — no account required. The demo account i
 
 **Data reset:**
 - On every demo login, any missing sample jobs are automatically restored — visitor deletions come back, visitor additions are left alone
-- Full reset runs nightly at 3am UTC via a scheduled GitHub Actions workflow — clears all data and re-seeds from scratch
+- Full reset runs nightly via a scheduled GitHub Actions workflow — clears all data and re-seeds from scratch
+
+**Availability:**
+- Offline daily midnight–8 AM Sydney time — RDS stopped overnight to reduce demo hosting costs
 
 To get the full experience (documents, password change), [register a free account](https://jobtracker.nagarenegishi.com/register).
 
@@ -74,6 +78,7 @@ The project runs in a Dev Container (recommended — PostgreSQL included as a Do
 3. Run migrations: `cd JobTrackerApi && dotnet ef database update`
 4. Start backend: `cd JobTrackerApi && dotnet run --launch-profile https`
 5. Start frontend: `cd job-tracker-ui && npm install && npm run dev`
+6. Run tests: `cd JobTrackerApi.Tests && dotnet test`
 
 In development, documents are stored in the local filesystem path set in `Storage:UploadsPath`. The folder is created automatically on startup if it does not exist.
 
@@ -84,3 +89,9 @@ In development, documents are stored in the local filesystem path set in `Storag
 Deployed on AWS: EC2 (Docker Compose) + RDS PostgreSQL + S3 document storage. nginx handles SSL termination and serves the React frontend; the backend runs on the internal Docker network only.
 
 See [`docs/deployment-setup.md`](docs/deployment-setup.md) for required AWS infrastructure, GitHub Actions secrets, and EC2 setup.
+
+---
+
+## Claude Code
+
+Claude Code is used selectively as an AI coding assistant for targeted tasks, under developer direction. The Dev Container (`.devcontainer/`) with `project-firewall.sh` restricts its outbound network access to an allowlist of domains. `.claude/` contains custom skills (frontend design, OWASP scanning, dev research, learning mode) and `CLAUDE.md` loads codebase context into every session. Architecture decisions and plans are documented in `docs/`.

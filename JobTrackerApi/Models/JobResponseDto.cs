@@ -16,4 +16,11 @@ public class JobResponseDto
     public string? Notes { get; set; }
     public List<Contact> Contacts { get; set; } = [];
     public List<Correspondence> Correspondences { get; set; } = [];
+    public string? JobUrl { get; set; }
+    public string? Source { get; set; }
+    public int? SalaryMin { get; set; }
+    public int? SalaryMax { get; set; }
+    public string? Location { get; set; }
+    public WorkMode? WorkMode { get; set; }
+    public DateTime? InterviewAt { get; set; }
 }

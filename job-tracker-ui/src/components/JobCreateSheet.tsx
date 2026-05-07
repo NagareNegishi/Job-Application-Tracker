@@ -1,6 +1,8 @@
 /**
  * Note: While post new job could accept array of "Contact" in backend,
  * frontend simply pass empty array.
+ * Note: InterviewAt is intentionally excluded from the create flow — it is
+ * set later via the edit form once an interview is scheduled.
  */
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/DatePicker"
@@ -24,10 +26,13 @@ import { useCreateJob } from "@/hooks/jobQuery"
 import {
   MAX_COMPANY_LENGTH,
   MAX_DESCRIPTION_LENGTH,
+  MAX_JOB_URL_LENGTH,
+  MAX_LOCATION_LENGTH,
   MAX_NOTES_LENGTH,
   MAX_ROLE_LENGTH,
+  MAX_SOURCE_LENGTH,
 } from "@/lib/validationConstants"
-import { JobStatus, Priority } from "@/types/enums"
+import { JobStatus, Priority, WorkMode } from "@/types/enums"
 import { useEffect, useState } from "react"
 
 // FormState represents the internal state of the job edit form
@@ -40,6 +45,12 @@ interface FormState {
   closedAt: Date | undefined
   description: string
   notes: string
+  jobUrl: string
+  source: string
+  salaryMin: number | ""
+  salaryMax: number | ""
+  location: string
+  workMode: WorkMode | ""
 }
 
 
@@ -53,6 +64,12 @@ const defaultForm: FormState = {
   closedAt: undefined,
   description: "",
   notes: "",
+  jobUrl: "",
+  source: "",
+  salaryMin: "",
+  salaryMax: "",
+  location: "",
+  workMode: "",
 }
 
 
@@ -72,7 +89,7 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
 
   const [form, setForm] = useState<FormState>(defaultForm)
   const { mutate: createJob, isPending } = useCreateJob()
-  const [errors, setErrors] = useState<{ company?: string; role?: string }>({})
+  const [errors, setErrors] = useState<{ company?: string; role?: string; jobUrl?: string; salary?: string }>({})
 
   // Reset form when sheet opens with default values
   useEffect(() => {
@@ -90,9 +107,13 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
   // Handles form submission by comparing current form state with original job data
   function handleSubmit() {
     // Validate required fields
-    const newErrors: { company?: string; role?: string } = {}
+    const newErrors: { company?: string; role?: string; jobUrl?: string; salary?: string } = {}
     if (!form.company.trim()) newErrors.company = "Company is required"
     if (!form.role.trim()) newErrors.role = "Role is required"
+    if (form.jobUrl && !/^https?:\/\//i.test(form.jobUrl))
+      newErrors.jobUrl = "URL must start with http:// or https://"
+    if (form.salaryMin !== "" && form.salaryMax !== "" && form.salaryMin > form.salaryMax)
+      newErrors.salary = "Min salary must be less than or equal to max"
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
@@ -110,6 +131,12 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
         closedAt: form.closedAt?.toISOString(),
         description: form.description || undefined,
         notes: form.notes || undefined,
+        jobUrl: form.jobUrl || undefined,
+        source: form.source || undefined,
+        salaryMin: form.salaryMin !== "" ? form.salaryMin : undefined,
+        salaryMax: form.salaryMax !== "" ? form.salaryMax : undefined,
+        location: form.location || undefined,
+        workMode: form.workMode || undefined,
       },
       { onSuccess: () => onOpenChange(false) }
     )
@@ -203,6 +230,84 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
             onChange={d => setField("closedAt", d)}
             placeholder="Select date"
           />
+        </div>
+
+        {/* Job URL */}
+        <div className="space-y-1.5">
+          <Label htmlFor="jobUrl">Job URL</Label>
+          <Input
+            id="jobUrl"
+            type="url"
+            value={form.jobUrl}
+            onChange={e => setField("jobUrl", e.target.value)}
+            maxLength={MAX_JOB_URL_LENGTH}
+            placeholder="https://..."
+          />
+          {errors.jobUrl && <p className="text-sm text-destructive">{errors.jobUrl}</p>}
+        </div>
+
+        {/* Source */}
+        <div className="space-y-1.5">
+          <Label htmlFor="source">Source</Label>
+          <Input
+            id="source"
+            value={form.source}
+            onChange={e => setField("source", e.target.value)}
+            maxLength={MAX_SOURCE_LENGTH}
+            placeholder="LinkedIn, Indeed, referral..."
+          />
+        </div>
+
+        {/* Location */}
+        <div className="space-y-1.5">
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            value={form.location}
+            onChange={e => setField("location", e.target.value)}
+            maxLength={MAX_LOCATION_LENGTH}
+            placeholder="City, Country"
+          />
+        </div>
+
+        {/* Work Mode */}
+        <div className="space-y-1.5">
+          <Label>Work Mode</Label>
+          <Select
+            value={form.workMode}
+            onValueChange={v => setField("workMode", v as WorkMode)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select work mode" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(WorkMode).map(m => (
+                <SelectItem key={m} value={m}>{m === "OnSite" ? "On-site" : m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Salary */}
+        <div className="space-y-1.5">
+          <Label>Salary Range</Label>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMin}
+              onChange={e => setField("salaryMin", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Min"
+            />
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMax}
+              onChange={e => setField("salaryMax", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Max"
+            />
+          </div>
+          {errors.salary && <p className="text-sm text-destructive">{errors.salary}</p>}
         </div>
 
         {/* Edit Description */}

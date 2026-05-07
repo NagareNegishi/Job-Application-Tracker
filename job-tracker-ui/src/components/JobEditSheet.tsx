@@ -20,10 +20,13 @@ import { usePatchJob } from "@/hooks/jobQuery"
 import {
   MAX_COMPANY_LENGTH,
   MAX_DESCRIPTION_LENGTH,
+  MAX_JOB_URL_LENGTH,
+  MAX_LOCATION_LENGTH,
   MAX_NOTES_LENGTH,
   MAX_ROLE_LENGTH,
+  MAX_SOURCE_LENGTH,
 } from "@/lib/validationConstants"
-import { JobStatus, Priority } from "@/types/enums"
+import { JobStatus, Priority, WorkMode } from "@/types/enums"
 import type { Job, JobPatchOperation } from "@/types/job"
 import { useEffect, useState } from "react"
 
@@ -37,6 +40,13 @@ interface FormState {
   closedAt: Date | undefined
   description: string
   notes: string
+  jobUrl: string
+  source: string
+  salaryMin: number | ""
+  salaryMax: number | ""
+  location: string
+  workMode: WorkMode | ""
+  interviewAt: Date | undefined
 }
 
 // Converts a Job object to the FormState shape
@@ -50,6 +60,13 @@ function toFormState(job: Job): FormState {
     closedAt: job.closedAt ? new Date(job.closedAt) : undefined,
     description: job.description ?? "",
     notes: job.notes ?? "",
+    jobUrl: job.jobUrl ?? "",
+    source: job.source ?? "",
+    salaryMin: job.salaryMin ?? "",
+    salaryMax: job.salaryMax ?? "",
+    location: job.location ?? "",
+    workMode: job.workMode ?? "",
+    interviewAt: job.interviewAt ? new Date(job.interviewAt) : undefined,
   }
 }
 
@@ -71,10 +88,14 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
   const [form, setForm] = useState<FormState>(() => toFormState(job))
   const { mutate: patchJob, isPending } = usePatchJob()
+  const [errors, setErrors] = useState<{ jobUrl?: string; salary?: string }>({})
 
   // Reset form when sheet opens with fresh job data
   useEffect(() => {
-    if (open) setForm(toFormState(job))
+    if (open) {
+      setForm(toFormState(job))
+      setErrors({})
+    }
   }, [job, open])
 
 
@@ -86,6 +107,18 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
   // Handles form submission by comparing current form state with original job data
   function handleSubmit() {
+    // Validate before building patch operations
+    const newErrors: { jobUrl?: string; salary?: string } = {}
+    if (form.jobUrl && !/^https?:\/\//i.test(form.jobUrl))
+      newErrors.jobUrl = "URL must start with http:// or https://"
+    if (form.salaryMin !== "" && form.salaryMax !== "" && form.salaryMin > form.salaryMax)
+      newErrors.salary = "Min salary must be less than or equal to max"
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+    setErrors({})
+
     const operations: JobPatchOperation[] = []
     // Required fields
     if (form.company !== (job.company))
@@ -113,6 +146,30 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
     if (form.notes !== (job.notes ?? ""))
       operations.push({ op: "replace", path: "/notes", value: form.notes })
+
+    if (form.jobUrl !== (job.jobUrl ?? ""))
+      operations.push({ op: "replace", path: "/jobUrl", value: form.jobUrl || null })
+
+    if (form.source !== (job.source ?? ""))
+      operations.push({ op: "replace", path: "/source", value: form.source || null })
+
+    if (form.location !== (job.location ?? ""))
+      operations.push({ op: "replace", path: "/location", value: form.location || null })
+
+    if (form.workMode !== (job.workMode ?? ""))
+      operations.push({ op: "replace", path: "/workMode", value: form.workMode || null })
+
+    if (form.salaryMin !== (job.salaryMin ?? ""))
+      operations.push({ op: "replace", path: "/salaryMin", value: form.salaryMin !== "" ? form.salaryMin : null })
+
+    if (form.salaryMax !== (job.salaryMax ?? ""))
+      operations.push({ op: "replace", path: "/salaryMax", value: form.salaryMax !== "" ? form.salaryMax : null })
+
+    // Date fields need to be compared as ISO strings to avoid timezone issues
+    const interviewAtISO = form.interviewAt?.toISOString() ?? null
+    const existingInterviewAt = job.interviewAt ? new Date(job.interviewAt).toISOString() : null
+    if (interviewAtISO !== existingInterviewAt)
+      operations.push({ op: "replace", path: "/interviewAt", value: interviewAtISO })
 
     // Nothing changed
     if (operations.length === 0) {
@@ -211,6 +268,94 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           <DatePicker
             value={form.closedAt}
             onChange={d => setField("closedAt", d)}
+            placeholder="Select date"
+          />
+        </div>
+
+        {/* Job URL */}
+        <div className="space-y-1.5">
+          <Label htmlFor="jobUrl">Job URL</Label>
+          <Input
+            id="jobUrl"
+            type="url"
+            value={form.jobUrl}
+            onChange={e => setField("jobUrl", e.target.value)}
+            maxLength={MAX_JOB_URL_LENGTH}
+            placeholder="https://..."
+          />
+          {errors.jobUrl && <p className="text-sm text-destructive">{errors.jobUrl}</p>}
+        </div>
+
+        {/* Source */}
+        <div className="space-y-1.5">
+          <Label htmlFor="source">Source</Label>
+          <Input
+            id="source"
+            value={form.source}
+            onChange={e => setField("source", e.target.value)}
+            maxLength={MAX_SOURCE_LENGTH}
+            placeholder="LinkedIn, Indeed, referral..."
+          />
+        </div>
+
+        {/* Location */}
+        <div className="space-y-1.5">
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            value={form.location}
+            onChange={e => setField("location", e.target.value)}
+            maxLength={MAX_LOCATION_LENGTH}
+            placeholder="City, Country"
+          />
+        </div>
+
+        {/* Work Mode */}
+        <div className="space-y-1.5">
+          <Label>Work Mode</Label>
+          <Select
+            value={form.workMode}
+            onValueChange={v => setField("workMode", v as WorkMode)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select work mode" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(WorkMode).map(m => (
+                <SelectItem key={m} value={m}>{m === "OnSite" ? "On-site" : m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Salary */}
+        <div className="space-y-1.5">
+          <Label>Salary Range</Label>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMin}
+              onChange={e => setField("salaryMin", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Min"
+            />
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMax}
+              onChange={e => setField("salaryMax", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Max"
+            />
+          </div>
+          {errors.salary && <p className="text-sm text-destructive">{errors.salary}</p>}
+        </div>
+
+        {/* Interview Date */}
+        <div className="space-y-1.5">
+          <Label>Interview Date</Label>
+          <DatePicker
+            value={form.interviewAt}
+            onChange={d => setField("interviewAt", d)}
             placeholder="Select date"
           />
         </div>

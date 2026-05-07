@@ -11,6 +11,9 @@ public static class ValidationConstants
     public const int MaxNotesLength = 5000;
     public const int MaxContactSize = 10;
     public const int MaxCorrespondenceSize = 10;
+    public const int MaxJobUrlLength = 2048;
+    public const int MaxSourceLength = 100;
+    public const int MaxLocationLength = 100;
 
     // Document entity constraints
     public const int MaxDocumentPerJob = 10;

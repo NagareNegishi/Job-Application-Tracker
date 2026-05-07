@@ -157,7 +157,14 @@ public class JobsController : ControllerBase
             Description = job.Description,
             Notes = job.Notes,
             Contacts = job.Contacts,
-            Correspondences = job.Correspondences
+            Correspondences = job.Correspondences,
+            JobUrl = job.JobUrl,
+            Source = job.Source,
+            SalaryMin = job.SalaryMin,
+            SalaryMax = job.SalaryMax,
+            Location = job.Location,
+            WorkMode = job.WorkMode,
+            InterviewAt = job.InterviewAt
         };
 
         patchDoc.ApplyTo(jobToPatch, jsonPatchError =>
@@ -183,6 +190,13 @@ public class JobsController : ControllerBase
         job.Notes = jobToPatch.Notes;
         job.Contacts = jobToPatch.Contacts;
         job.Correspondences = jobToPatch.Correspondences;
+        job.JobUrl = jobToPatch.JobUrl;
+        job.Source = jobToPatch.Source;
+        job.SalaryMin = jobToPatch.SalaryMin;
+        job.SalaryMax = jobToPatch.SalaryMax;
+        job.Location = jobToPatch.Location;
+        job.WorkMode = jobToPatch.WorkMode;
+        job.InterviewAt = jobToPatch.InterviewAt;
 
         try
         {

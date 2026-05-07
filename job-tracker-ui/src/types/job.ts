@@ -1,5 +1,5 @@
 import type { Contact, Correspondence } from "./contact";
-import { JobStatus, Priority } from "./enums";
+import { JobStatus, Priority, WorkMode } from "./enums";
 import type { JobDocument } from "./jobDocument";
 
 // Job interface, mirrors JobResponseDto from the backend
@@ -16,6 +16,13 @@ export interface Job {
   notes?: string;
   contacts?: Contact[];
   correspondences?: Correspondence[];
+  jobUrl?: string;
+  source?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  location?: string;
+  workMode?: WorkMode;
+  interviewAt?: string; // ISO date string
 }
 
 
@@ -30,6 +37,13 @@ export interface CreateJobRequest {
   description?: string;
   notes?: string;
   contacts?: Contact[];
+  jobUrl?: string;
+  source?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  location?: string;
+  workMode?: WorkMode;
+  interviewAt?: string; // ISO date string
 }
 
 
@@ -45,6 +59,13 @@ export interface UpdateJobRequest {
   notes?: string;
   contacts?: Contact[];
   correspondences?: Correspondence[];
+  jobUrl?: string;
+  source?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  location?: string;
+  workMode?: WorkMode;
+  interviewAt?: string; // ISO date string
 }
 
 
@@ -67,3 +88,10 @@ export type JobPatchOperation =
   | { op: "add"; path: "/correspondences/-"; value: Correspondence }
   | { op: "remove"; path: `/correspondences/${number}`; value?: never }
   | { op: "replace"; path: `/correspondences/${number}`; value: Correspondence }
+  | { op: "replace"; path: "/jobUrl"; value: string | null }
+  | { op: "replace"; path: "/source"; value: string | null }
+  | { op: "replace"; path: "/salaryMin"; value: number | null }
+  | { op: "replace"; path: "/salaryMax"; value: number | null }
+  | { op: "replace"; path: "/location"; value: string | null }
+  | { op: "replace"; path: "/workMode"; value: WorkMode | null }
+  | { op: "replace"; path: "/interviewAt"; value: string | null }
