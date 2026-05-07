@@ -5,7 +5,7 @@ import { StatusBadge } from "./ui/StatusBadge";
 export function JobInfoCard({ job }: { job: Job }) {
   return (
     <div className="border rounded-lg p-6 space-y-4">
-      <div className="flex flex-wrap items-center gap-4 border-b border-border pb-4">
+      <div className="flex flex-wrap items-center gap-8 border-b border-border pb-4">
         <StatusBadge status={job.status} className="text-sm px-3 py-0.5" />
         {job.priority && <PriorityDot priority={job.priority} dotSize="w-3 h-3" className="text-sm" />}
         {job.appliedAt && (
