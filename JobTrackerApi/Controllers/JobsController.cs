@@ -157,7 +157,14 @@ public class JobsController : ControllerBase
             Description = job.Description,
             Notes = job.Notes,
             Contacts = job.Contacts,
-            Correspondences = job.Correspondences
+            Correspondences = job.Correspondences,
+            JobUrl = job.JobUrl,
+            Source = job.Source,
+            SalaryMin = job.SalaryMin,
+            SalaryMax = job.SalaryMax,
+            Location = job.Location,
+            WorkMode = job.WorkMode,
+            InterviewAt = job.InterviewAt
         };
 
         patchDoc.ApplyTo(jobToPatch, jsonPatchError =>
