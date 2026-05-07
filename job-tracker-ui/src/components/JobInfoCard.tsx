@@ -39,6 +39,15 @@ export function JobInfoCard({ job }: { job: Job }) {
         </div>
       )}
 
+      {job.interviewAt && (
+        <div className="flex items-center gap-3 rounded-md bg-amber-50 border border-amber-200 px-4 py-2.5 dark:bg-amber-950/30 dark:border-amber-800">
+          <span className="text-xs uppercase tracking-wider font-semibold text-amber-700 dark:text-amber-400">Interview</span>
+          <span className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+            {new Date(job.interviewAt).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
+          </span>
+        </div>
+      )}
+
       {(job.salaryMin != null || job.salaryMax != null) && (
         <div className="flex items-baseline gap-1.5">
           <span className="text-xs uppercase tracking-wider text-muted-foreground">Salary</span>
