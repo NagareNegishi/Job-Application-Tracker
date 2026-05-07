@@ -73,6 +73,29 @@ export function JobInfoCard({ job }: { job: Job }) {
           <p className="text-sm text-foreground/80">{job.notes}</p>
         </div>
       )}
+
+      {(job.jobUrl || job.source) && (
+        <div className="space-y-1">
+          {job.jobUrl && (
+            <p>
+              <a
+                href={job.jobUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary underline underline-offset-2 hover:opacity-80"
+              >
+                {job.jobUrl}
+              </a>
+            </p>
+          )}
+          {job.source && (
+            <span className="flex items-baseline gap-1.5">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">Source</span>
+              <span className="text-sm font-medium">{job.source}</span>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
