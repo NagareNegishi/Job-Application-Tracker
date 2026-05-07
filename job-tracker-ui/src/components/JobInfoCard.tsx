@@ -8,6 +8,14 @@ export function JobInfoCard({ job }: { job: Job }) {
       <div className="flex flex-wrap items-center gap-8 border-b border-border pb-4">
         <StatusBadge status={job.status} className="text-sm px-3 py-0.5" />
         {job.priority && <PriorityDot priority={job.priority} dotSize="w-3 h-3" className="text-sm" />}
+        {job.interviewAt && (
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400">Interview</span>
+            <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+              {new Date(job.interviewAt).toLocaleDateString()}
+            </span>
+          </span>
+        )}
         {job.appliedAt && (
           <span className="flex items-baseline gap-1.5">
             <span className="text-xs uppercase tracking-wider text-muted-foreground">Applied</span>
@@ -36,15 +44,6 @@ export function JobInfoCard({ job }: { job: Job }) {
               <span className="text-sm font-medium">{job.workMode === "OnSite" ? "On-site" : job.workMode}</span>
             </span>
           )}
-        </div>
-      )}
-
-      {job.interviewAt && (
-        <div className="flex items-center gap-3 rounded-md bg-amber-50 border border-amber-200 px-4 py-2.5 dark:bg-amber-950/30 dark:border-amber-800">
-          <span className="text-xs uppercase tracking-wider font-semibold text-amber-700 dark:text-amber-400">Interview</span>
-          <span className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-            {new Date(job.interviewAt).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
-          </span>
         </div>
       )}
 
