@@ -53,8 +53,8 @@ export function JobInfoCard({ job }: { job: Job }) {
           <span className="text-sm font-medium">
             {/* range when both set and differ; single value otherwise */}
             {job.salaryMin != null && job.salaryMax != null && job.salaryMin !== job.salaryMax
-              ? `${job.salaryMin.toLocaleString()} – ${job.salaryMax.toLocaleString()}`
-              : (job.salaryMin ?? job.salaryMax)!.toLocaleString()}
+              ? `$${job.salaryMin.toLocaleString()} – $${job.salaryMax.toLocaleString()}`
+              : `$${(job.salaryMin ?? job.salaryMax)!.toLocaleString()}`}
           </span>
         </div>
       )}
