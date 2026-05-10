@@ -12,7 +12,7 @@ using Moq;
 
 public class AccountControllerTests : IDisposable
 {
-    private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
+    private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
     private readonly JobTrackerContext _context;
     private readonly AccountController _controller;
     private const string TestUserId = "test-user-id";
@@ -20,12 +20,12 @@ public class AccountControllerTests : IDisposable
 
     public AccountControllerTests()
     {
-        // In production, ASP.NET Identity registers UserManager<IdentityUser> into the DI container.
+        // In production, ASP.NET Identity registers UserManager<ApplicationUser> into the DI container.
         // Its constructor takes the database layer as an IUserStore, in production that's EF Core.
         // In tests, we don't need a real database, so we mock it.
         // All other constructor args (password hasher, validators, logger, etc.) can be null
-        var store = new Mock<IUserStore<IdentityUser>>();
-        _userManagerMock = new Mock<UserManager<IdentityUser>>(
+        var store = new Mock<IUserStore<ApplicationUser>>();
+        _userManagerMock = new Mock<UserManager<ApplicationUser>>(
             store.Object, null, null, null, null, null, null, null, null);
 
         // unique DB name per test class — parallel runs can't share state
@@ -108,7 +108,7 @@ public class AccountControllerTests : IDisposable
         // Arrange: FindByIdAsync returns null — userId in token has no matching account
         _userManagerMock
             .Setup(m => m.FindByIdAsync(TestUserId))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         var dto = new ChangePasswordDTO
         {
@@ -129,7 +129,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_WrongCurrentPassword_ReturnsBadRequest()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByIdAsync(TestUserId))
             .ReturnsAsync(user);
@@ -157,7 +157,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_Success_ReturnsOk()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByIdAsync(TestUserId))
             .ReturnsAsync(user);
@@ -185,7 +185,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_Success_RevokesAllActiveRefreshTokensForUser()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
         _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
             .ReturnsAsync(IdentityResult.Success);
@@ -216,7 +216,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_Success_DoesNotRevokeOtherUsersTokens()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
         _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
             .ReturnsAsync(IdentityResult.Success);
@@ -247,7 +247,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_Success_PreservesAlreadyRevokedTokenTimestamp()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
         _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
             .ReturnsAsync(IdentityResult.Success);
