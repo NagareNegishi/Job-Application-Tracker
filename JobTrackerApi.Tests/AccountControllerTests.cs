@@ -114,6 +114,22 @@ public class AccountControllerTests : IDisposable
         Assert.Equal(["status", "location"], dto.VisibleColumns);
     }
 
+    [Fact]
+    public async Task UpdatePreferences_ReturnsUnauthorized_WhenUserNotFound()
+    {
+        // Arrange
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        // Act
+        var result = await _controller.UpdatePreferences(
+            new UserPreferencesDto { VisibleColumns = ["status"] });
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
     // Demo user is blocked before any Identity call — password changes are not allowed in demo mode
     [Fact]
     public async Task ChangePassword_DemoUser_ReturnsForbidden()
