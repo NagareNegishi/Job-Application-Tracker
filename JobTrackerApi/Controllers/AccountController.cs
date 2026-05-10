@@ -1,5 +1,6 @@
 using JobTrackerApi.Data;
 using JobTrackerApi.Models;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,23 @@ public class AccountController : ControllerBase
         _userManager = userManager;
         _context = context;
         _logger = logger;
+    }
+
+    // Default columns returned when the user has never saved a preference
+    private static readonly List<string> DefaultColumns = ["status", "priority", "appliedAt", "closedAt"];
+
+    [HttpGet("preferences")]
+    public async Task<IActionResult> GetPreferences()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId!);
+        if (user == null) return Unauthorized();
+
+        if (user.Preferences == null)
+            return Ok(new UserPreferencesDto { VisibleColumns = DefaultColumns });
+
+        var prefs = JsonSerializer.Deserialize<UserPreferencesDto>(user.Preferences);
+        return Ok(prefs ?? new UserPreferencesDto { VisibleColumns = DefaultColumns });
     }
 
     // Change password — validates current password via Identity, blocks demo user
