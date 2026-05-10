@@ -47,6 +47,21 @@ public class AccountController : ControllerBase
         return Ok(prefs ?? new UserPreferencesDto { VisibleColumns = DefaultColumns });
     }
 
+    [HttpPut("preferences")]
+    public async Task<IActionResult> UpdatePreferences(UserPreferencesDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId!);
+        if (user == null) return Unauthorized();
+
+        user.Preferences = JsonSerializer.Serialize(dto);
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            return StatusCode(500, new { errors = result.Errors.Select(e => e.Description) });
+
+        return Ok(dto);
+    }
+
     // Change password — validates current password via Identity, blocks demo user
     [HttpPost("change-password")]
     [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents brute-forcing with a stolen JWT
