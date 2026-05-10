@@ -91,6 +91,29 @@ public class AccountControllerTests : IDisposable
         Assert.Equal(["status", "priority", "appliedAt", "closedAt"], dto.VisibleColumns);
     }
 
+    [Fact]
+    public async Task GetPreferences_ReturnsSaved_WhenPreferencesExist()
+    {
+        // Arrange: user has previously saved a custom column set
+        // JSON is PascalCase — matches JsonSerializer default (no camelCase options applied)
+        var user = new ApplicationUser
+        {
+            Id = TestUserId,
+            Preferences = "{\"VisibleColumns\":[\"status\",\"location\"]}"
+        };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _controller.GetPreferences();
+
+        // Assert: saved columns returned, not the default
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<UserPreferencesDto>(ok.Value);
+        Assert.Equal(["status", "location"], dto.VisibleColumns);
+    }
+
     // Demo user is blocked before any Identity call — password changes are not allowed in demo mode
     [Fact]
     public async Task ChangePassword_DemoUser_ReturnsForbidden()
