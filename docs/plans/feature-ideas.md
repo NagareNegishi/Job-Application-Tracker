@@ -26,7 +26,28 @@ All fields below added together in a single migration.
 
 ## UI features
 
-- **Customizable table columns** — default view stays unchanged (Company, Role, Status, Priority, Applied At, Closed At); Company and Role are fixed; all other existing columns and all new fields above are user-toggleable; `Source` excluded from table entirely
+- **Customizable table columns**
+
+  **Status: Planned.**
+
+  Default visible columns are unchanged: Company, Role, Status, Priority, Applied At, Closed At.
+  Company and Role are always visible (fixed). Source is excluded from the table entirely.
+
+  **Toggleable columns:**
+  - Existing: Status, Priority, Applied At, Closed At
+  - New fields: Location, Work Mode, Salary, Interview Date, Job URL
+
+  **UI:**
+  - "Columns" button with a checkbox dropdown
+  - Button lives in a dedicated toolbar row between the page header and the tabs (keeps "Add New Job" prominent)
+
+  **Storage:**
+  - Backend: add a `Preferences` JSON column to the user record
+  - New GET/PUT endpoint at `/api/account/preferences`
+  - Shape: `{ "visibleColumns": ["status", "priority", ...] }`
+  - Frontend reads preferences from API on load; falls back to default set if none saved
+
+  **Future (Settings page):** Let users save and reset their default column combination via the Settings page — this endpoint will be the same one used above.
 - **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
   - Pipeline funnel — count per status; shows pipeline health
   - Response rate — % of applied jobs that moved past Applied; signals resume/outreach effectiveness
