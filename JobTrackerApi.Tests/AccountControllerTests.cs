@@ -148,6 +148,28 @@ public class AccountControllerTests : IDisposable
         _userManagerMock.Verify(m => m.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
     }
 
+    [Fact]
+    public async Task UpdatePreferences_SavesPreferences_WhenValid()
+    {
+        // Arrange
+        var user = new ApplicationUser { Id = TestUserId };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.UpdateAsync(user))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var dto = new UserPreferencesDto { VisibleColumns = ["status", "location"] };
+
+        // Act
+        var result = await _controller.UpdatePreferences(dto);
+
+        // Assert: 200 returned and UpdateAsync was called exactly once
+        Assert.IsType<OkObjectResult>(result);
+        _userManagerMock.Verify(m => m.UpdateAsync(user), Times.Once);
+    }
+
     // Demo user is blocked before any Identity call — password changes are not allowed in demo mode
     [Fact]
     public async Task ChangePassword_DemoUser_ReturnsForbidden()
