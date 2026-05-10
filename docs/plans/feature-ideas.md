@@ -28,7 +28,7 @@ All fields below added together in a single migration.
 
 - **Customizable table columns**
 
-  **Status: Planned.**
+  **Status: In progress — backend complete, frontend pending.**
 
   Default visible columns are unchanged: Company, Role, Status, Priority, Applied At, Closed At.
   Company and Role are always visible (fixed). Source is excluded from the table entirely.
@@ -41,14 +41,20 @@ All fields below added together in a single migration.
   - "Columns" button with a checkbox dropdown
   - Button lives in a dedicated toolbar row between the page header and the tabs (keeps "Add New Job" prominent)
 
-  **Storage:**
-  - Backend: introduce `ApplicationUser : IdentityUser` and update all references (`Program.cs`, `AuthController`, `AccountController`, `JobTrackerContext`); add `Preferences` JSON column (`string?`) to `ApplicationUser`
-  - New GET/PUT endpoint at `/api/account/preferences`
-  - Shape: `{ "visibleColumns": ["status", "priority", ...] }`
-  - Frontend reads preferences from API on load; falls back to default set if none saved
+  **Storage (complete):**
+  - Introduced `ApplicationUser : IdentityUser`; updated all references (`Program.cs`, `AuthController`, `AccountController`, `JobTrackerContext`); migration `AddApplicationUser` applied
+  - `Preferences` JSON column (`string?`) on `ApplicationUser`; deserialized only in `AccountController`
+  - GET/PUT `/api/account/preferences` — shape: `{ "visibleColumns": ["status", "priority", ...] }`; GET returns default set (`status`, `priority`, `appliedAt`, `closedAt`) if no preference saved
   - Reason for `ApplicationUser` over a separate table: cascade deletes are automatic, no upsert logic needed, preferences are user data and belong on the user row
 
-  **Future (Settings page):** Let users save and reset their default column combination via the Settings page — this endpoint will be the same one used above.
+  **Frontend (pending):**
+  - Define column config — `{ key, label, defaultVisible, fixed }` array; single source of truth
+  - `preferencesService.ts` — GET/PUT fetch wrappers
+  - `usePreferences` hook — TanStack Query fetch + mutation
+  - `ColumnToggle` component — "Columns" button + checkbox dropdown
+  - Update `JobTable` — toolbar row, rekey `useColWidths` by column ID, conditional headers/cells, new column renderers
+
+  **Future (Settings page):** Let users save and reset their default column combination — the same `/api/account/preferences` endpoint will be used.
 - **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
   - Pipeline funnel — count per status; shows pipeline health
   - Response rate — % of applied jobs that moved past Applied; signals resume/outreach effectiveness
