@@ -3,7 +3,7 @@
 /// </summary>
 public enum WorkMode
 {
+    OnSite,
     Remote,
-    Hybrid,
-    OnSite
+    Hybrid
 }
