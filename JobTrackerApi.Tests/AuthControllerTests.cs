@@ -17,7 +17,7 @@ using Microsoft.EntityFrameworkCore.Query;
 
 public class AuthControllerTests : IDisposable
 {
-    private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
+    private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
     private readonly IConfiguration _config;
     private readonly JobTrackerContext _context;
     private readonly Mock<IWebHostEnvironment> _envMock;
@@ -43,8 +43,8 @@ public class AuthControllerTests : IDisposable
     public AuthControllerTests()
     {
         // UserManager, IUserStore is the only required constructor arg
-        var store = new Mock<IUserStore<IdentityUser>>();
-        _userManagerMock = new Mock<UserManager<IdentityUser>>(
+        var store = new Mock<IUserStore<ApplicationUser>>();
+        _userManagerMock = new Mock<UserManager<ApplicationUser>>(
             store.Object, null, null, null, null, null, null, null, null);
 
         // IConfiguration, built in-memory rather than mocked with Moq
@@ -157,7 +157,7 @@ public class AuthControllerTests : IDisposable
     public async Task Demo_Success_ReturnsOkWithAccessToken()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = DemoUser.Email };
+        var user = new ApplicationUser { Id = TestUserId, Email = DemoUser.Email };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(DemoUser.Email))
             .ReturnsAsync(user);
@@ -181,7 +181,7 @@ public class AuthControllerTests : IDisposable
     public async Task Login_EmailNotConfirmed_ReturnsForbidden()
     {
         // EmailConfirmed = false — password correct but account not yet activated
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail, EmailConfirmed = false };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail, EmailConfirmed = false };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -199,7 +199,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task Login_WrongPassword_ReturnsUnauthorized()
     {
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -218,7 +218,7 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByEmailAsync("noone@example.com"))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         var result = await _controller.Login(new LoginDTO { Email = "noone@example.com", Password = "Pass1!" });
 
@@ -231,9 +231,9 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByEmailAsync("noone@example.com"))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
         _userManagerMock
-            .Setup(m => m.CheckPasswordAsync(It.IsAny<IdentityUser>(), It.IsAny<string>()))
+            .Setup(m => m.CheckPasswordAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
             .ReturnsAsync(false);
 
         var result = await _controller.Login(new LoginDTO { Email = "noone@example.com", Password = "Pass1!" });
@@ -241,7 +241,7 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<UnauthorizedResult>(result);
         // CheckPasswordAsync must run regardless
         _userManagerMock.Verify(
-            m => m.CheckPasswordAsync(It.IsAny<IdentityUser>(), "Pass1!"),
+            m => m.CheckPasswordAsync(It.IsAny<ApplicationUser>(), "Pass1!"),
             Times.Once);
     }
 
@@ -249,7 +249,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task Login_Success_ReturnsOkWithAccessTokenAndSetsCookie()
     {
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail, EmailConfirmed = true };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail, EmailConfirmed = true };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -284,7 +284,7 @@ public class AuthControllerTests : IDisposable
         });
         await _context.SaveChangesAsync();
 
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByIdAsync(TestUserId))
             .ReturnsAsync(user);
@@ -386,7 +386,7 @@ public class AuthControllerTests : IDisposable
         // Arrange: correct key but no demo account in Identity
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(DemoUser.Email))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         var result = await _controller.DemoReset(TestResetKey);
 
@@ -399,7 +399,7 @@ public class AuthControllerTests : IDisposable
     public async Task DemoReset_Success_WipesAndReseeds()
     {
         // Arrange: demo user exists, one existing job with a document in storage
-        var user = new IdentityUser { Id = TestUserId, Email = DemoUser.Email };
+        var user = new ApplicationUser { Id = TestUserId, Email = DemoUser.Email };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(DemoUser.Email))
             .ReturnsAsync(user);
@@ -438,12 +438,12 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
         _userManagerMock
-            .Setup(m => m.CreateAsync(It.IsAny<IdentityUser>(), "Pass1!"))
+            .Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), "Pass1!"))
             .ReturnsAsync(IdentityResult.Success);
         _userManagerMock
-            .Setup(m => m.GenerateEmailConfirmationTokenAsync(It.IsAny<IdentityUser>()))
+            .Setup(m => m.GenerateEmailConfirmationTokenAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync("confirm-token");
 
         var result = await _controller.Register(new RegisterDTO { Email = TestUserEmail, Password = "Pass1!" });
@@ -461,7 +461,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task Register_ExistingUnconfirmedAccount_DeletesAndReregisters()
     {
-        var existing = new IdentityUser { Id = "old-id", Email = TestUserEmail, EmailConfirmed = false };
+        var existing = new ApplicationUser { Id = "old-id", Email = TestUserEmail, EmailConfirmed = false };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(existing);
@@ -469,10 +469,10 @@ public class AuthControllerTests : IDisposable
             .Setup(m => m.DeleteAsync(existing))
             .ReturnsAsync(IdentityResult.Success);
         _userManagerMock
-            .Setup(m => m.CreateAsync(It.IsAny<IdentityUser>(), "Pass1!"))
+            .Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), "Pass1!"))
             .ReturnsAsync(IdentityResult.Success);
         _userManagerMock
-            .Setup(m => m.GenerateEmailConfirmationTokenAsync(It.IsAny<IdentityUser>()))
+            .Setup(m => m.GenerateEmailConfirmationTokenAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync("confirm-token");
 
         var result = await _controller.Register(new RegisterDTO { Email = TestUserEmail, Password = "Pass1!" });
@@ -488,9 +488,9 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
         _userManagerMock
-            .Setup(m => m.CreateAsync(It.IsAny<IdentityUser>(), "Pass1!"))
+            .Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), "Pass1!"))
             .ReturnsAsync(IdentityResult.Failed(
                 new IdentityError { Code = "PasswordTooShort", Description = "Password is too short." }));
 
@@ -508,9 +508,9 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
         _userManagerMock
-            .Setup(m => m.CreateAsync(It.IsAny<IdentityUser>(), "Pass1!"))
+            .Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), "Pass1!"))
             .ReturnsAsync(IdentityResult.Failed(
                 new IdentityError { Code = "WeakPassword", Description = "Password too weak." }));
 
@@ -523,7 +523,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task ConfirmEmail_Success_ReturnsOk()
     {
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByIdAsync(TestUserId))
             .ReturnsAsync(user);
@@ -540,7 +540,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task ConfirmEmail_InvalidToken_ReturnsBadRequest()
     {
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByIdAsync(TestUserId))
             .ReturnsAsync(user);
@@ -558,7 +558,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task ResetPassword_Success_ReturnsOk()
     {
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -591,7 +591,7 @@ public class AuthControllerTests : IDisposable
         });
         await _context.SaveChangesAsync();
 
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -617,7 +617,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task ResetPassword_InvalidToken_ReturnsBadRequest()
     {
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -635,22 +635,22 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task CleanupUnverified_Success_DeletesUnconfirmedUsersAndReturnsOk()
     {
-        var unconfirmed1 = new IdentityUser { Id = "u1", Email = "a@test.com", EmailConfirmed = false };
-        var unconfirmed2 = new IdentityUser { Id = "u2", Email = "b@test.com", EmailConfirmed = false };
+        var unconfirmed1 = new ApplicationUser { Id = "u1", Email = "a@test.com", EmailConfirmed = false };
+        var unconfirmed2 = new ApplicationUser { Id = "u2", Email = "b@test.com", EmailConfirmed = false };
 
         // UserManager.Users is an IQueryable backed by the store — return a fixed set for this test
         _userManagerMock
             .Setup(m => m.Users)
-            .Returns(new TestAsyncEnumerable<IdentityUser>(new[] { unconfirmed1, unconfirmed2 }));
+            .Returns(new TestAsyncEnumerable<ApplicationUser>(new[] { unconfirmed1, unconfirmed2 }));
         _userManagerMock
-            .Setup(m => m.DeleteAsync(It.IsAny<IdentityUser>()))
+            .Setup(m => m.DeleteAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync(IdentityResult.Success);
 
         var result = await _controller.CleanupUnverified(TestResetKey);
 
         Assert.IsType<OkObjectResult>(result);
         // Both unconfirmed accounts deleted — demo account excluded by the controller's Where clause
-        _userManagerMock.Verify(m => m.DeleteAsync(It.IsAny<IdentityUser>()), Times.Exactly(2));
+        _userManagerMock.Verify(m => m.DeleteAsync(It.IsAny<ApplicationUser>()), Times.Exactly(2));
     }
 
     // X-Reset-Key header missing or wrong — reject before touching the DB
@@ -668,7 +668,7 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         var result = await _controller.ResetPassword(new ResetPasswordDTO { Email = TestUserEmail, Token = "any-token", NewPassword = "NewPass1!" });
 
@@ -679,7 +679,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task ResetPassword_InvalidToken_ReturnsSameGenericErrorMessage()
     {
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -702,7 +702,7 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         var result = await _controller.ResetPassword(
             new ResetPasswordDTO { Email = TestUserEmail, Token = "any-token", NewPassword = "NewPass1!" });
@@ -716,7 +716,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task ForgotPassword_UserFound_SendsResetEmailAndReturnsOk()
     {
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -738,7 +738,7 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         var result = await _controller.ForgotPassword(new ForgotPasswordDTO { Email = TestUserEmail });
 
@@ -750,7 +750,7 @@ public class AuthControllerTests : IDisposable
     [Fact]
     public async Task ResendConfirmation_UnconfirmedUser_SendsEmailAndReturnsOk()
     {
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail, EmailConfirmed = false };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail, EmailConfirmed = false };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -773,7 +773,7 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         var result = await _controller.ResendConfirmation(new ResendConfirmationDTO { Email = TestUserEmail });
 
@@ -788,7 +788,7 @@ public class AuthControllerTests : IDisposable
     {
         _userManagerMock
             .Setup(m => m.FindByIdAsync("bad-id"))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         var result = await _controller.ConfirmEmail("bad-id", "any-token");
 
@@ -834,7 +834,7 @@ public class AuthControllerTests : IDisposable
         // Spoof the Host header 
         controller.HttpContext.Request.Host = new HostString("evil.com");
 
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(TestUserEmail))
             .ReturnsAsync(user);
@@ -858,7 +858,7 @@ public class AuthControllerTests : IDisposable
     public async Task Login_Success_AccessTokenContainsSecurityStamp()
     {
         // Arrange
-        var user = new IdentityUser
+        var user = new ApplicationUser
         {
             Id = TestUserId,
             Email = TestUserEmail,
@@ -891,7 +891,7 @@ public class AuthControllerTests : IDisposable
         // Arrange: FindByEmailAsync returns null — no demo account in Identity
         _userManagerMock
             .Setup(m => m.FindByEmailAsync(DemoUser.Email))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         // Act
         var result = await _controller.Demo();
