@@ -61,6 +61,10 @@ public class AccountController : ControllerBase
         var user = await _userManager.FindByIdAsync(userId!);
         if (user == null) return Unauthorized();
 
+        var invalid = dto.VisibleColumns.Where(c => !AllowedColumns.Contains(c)).ToList();
+        if (invalid.Count > 0)
+            return BadRequest(new { message = $"Unknown column keys: {string.Join(", ", invalid)}" });
+
         user.Preferences = JsonSerializer.Serialize(dto);
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
