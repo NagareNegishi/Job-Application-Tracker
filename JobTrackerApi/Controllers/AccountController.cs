@@ -18,11 +18,11 @@ namespace JobTrackerApi.Controllers;
 [Authorize]
 public class AccountController : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly JobTrackerContext _context;
     private readonly ILogger<AccountController> _logger;
 
-    public AccountController(UserManager<IdentityUser> userManager, JobTrackerContext context, ILogger<AccountController> logger)
+    public AccountController(UserManager<ApplicationUser> userManager, JobTrackerContext context, ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _context = context;
