@@ -139,7 +139,7 @@ else
     builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
 
 // Registers Identity's core services
-builder.Services.AddIdentityCore<IdentityUser>()
+builder.Services.AddIdentityCore<ApplicationUser>()
     .AddEntityFrameworkStores<JobTrackerContext>()
     .AddDefaultTokenProviders(); // Registers the "Default" token provider — Identity's token generation (email confirmation, password reset) won't work without it
 
@@ -176,7 +176,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 }
 
                 var userManager = context.HttpContext.RequestServices
-                    .GetRequiredService<UserManager<IdentityUser>>();
+                    .GetRequiredService<UserManager<ApplicationUser>>();
                 var user = await userManager.FindByIdAsync(userId);
 
                 // Stamp mismatch
@@ -336,11 +336,11 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#scope-validation
 using (var scope = app.Services.CreateScope())
 {
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     if (await userManager.FindByEmailAsync(DemoUser.Email) == null)
     {
         // EmailConfirmed = true — demo user bypasses email verification entirely
-        var demo = new IdentityUser { UserName = DemoUser.Email, Email = DemoUser.Email, EmailConfirmed = true };
+        var demo = new ApplicationUser { UserName = DemoUser.Email, Email = DemoUser.Email, EmailConfirmed = true };
         // Password is never used — demo endpoint bypasses auth entirely.
         // Random GUID + fixed suffix satisfies Identity's complexity rules (upper, digit, special char).
         await userManager.CreateAsync(demo, Guid.NewGuid().ToString() + "Aa1!");
