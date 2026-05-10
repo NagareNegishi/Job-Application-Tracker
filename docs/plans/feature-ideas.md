@@ -42,10 +42,11 @@ All fields below added together in a single migration.
   - Button lives in a dedicated toolbar row between the page header and the tabs (keeps "Add New Job" prominent)
 
   **Storage:**
-  - Backend: add a `Preferences` JSON column to the user record
+  - Backend: introduce `ApplicationUser : IdentityUser` and update all references (`Program.cs`, `AuthController`, `AccountController`, `JobTrackerContext`); add `Preferences` JSON column (`string?`) to `ApplicationUser`
   - New GET/PUT endpoint at `/api/account/preferences`
   - Shape: `{ "visibleColumns": ["status", "priority", ...] }`
   - Frontend reads preferences from API on load; falls back to default set if none saved
+  - Reason for `ApplicationUser` over a separate table: cascade deletes are automatic, no upsert logic needed, preferences are user data and belong on the user row
 
   **Future (Settings page):** Let users save and reset their default column combination via the Settings page — this endpoint will be the same one used above.
 - **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
