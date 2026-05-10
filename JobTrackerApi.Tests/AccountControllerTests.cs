@@ -130,6 +130,24 @@ public class AccountControllerTests : IDisposable
         Assert.IsType<UnauthorizedResult>(result);
     }
 
+    [Fact]
+    public async Task UpdatePreferences_ReturnsBadRequest_WhenInvalidColumnKey()
+    {
+        // Arrange: one valid key + one unknown key
+        var user = new ApplicationUser { Id = TestUserId };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _controller.UpdatePreferences(
+            new UserPreferencesDto { VisibleColumns = ["status", "invalidKey"] });
+
+        // Assert: rejected before reaching UpdateAsync
+        Assert.IsType<BadRequestObjectResult>(result);
+        _userManagerMock.Verify(m => m.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
+    }
+
     // Demo user is blocked before any Identity call — password changes are not allowed in demo mode
     [Fact]
     public async Task ChangePassword_DemoUser_ReturnsForbidden()
