@@ -58,6 +58,21 @@ public class AccountControllerTests : IDisposable
         };
     }
 
+    [Fact]
+    public async Task GetPreferences_ReturnsUnauthorized_WhenUserNotFound()
+    {
+        // Arrange: userId from JWT has no matching account
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        // Act
+        var result = await _controller.GetPreferences();
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
     // Demo user is blocked before any Identity call — password changes are not allowed in demo mode
     [Fact]
     public async Task ChangePassword_DemoUser_ReturnsForbidden()
