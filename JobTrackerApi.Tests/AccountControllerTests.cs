@@ -73,6 +73,24 @@ public class AccountControllerTests : IDisposable
         Assert.IsType<UnauthorizedResult>(result);
     }
 
+    [Fact]
+    public async Task GetPreferences_ReturnsDefault_WhenNoPreferencesSaved()
+    {
+        // Arrange: user exists but has never saved preferences
+        var user = new ApplicationUser { Id = TestUserId, Preferences = null };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _controller.GetPreferences();
+
+        // Assert: default set returned
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<UserPreferencesDto>(ok.Value);
+        Assert.Equal(["status", "priority", "appliedAt", "closedAt"], dto.VisibleColumns);
+    }
+
     // Demo user is blocked before any Identity call — password changes are not allowed in demo mode
     [Fact]
     public async Task ChangePassword_DemoUser_ReturnsForbidden()
