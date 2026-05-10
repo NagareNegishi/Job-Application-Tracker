@@ -33,6 +33,13 @@ public class AccountController : ControllerBase
     // Default columns returned when the user has never saved a preference
     private static readonly List<string> DefaultColumns = ["status", "priority", "appliedAt", "closedAt"];
 
+    // Update this set whenever a new toggleable column is added to the frontend column config
+    private static readonly HashSet<string> AllowedColumns =
+    [
+        "status", "priority", "appliedAt", "closedAt",
+        "location", "workMode", "salary", "interviewAt", "jobUrl"
+    ];
+
     [HttpGet("preferences")]
     public async Task<IActionResult> GetPreferences()
     {
