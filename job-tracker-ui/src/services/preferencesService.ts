@@ -18,3 +18,18 @@ export async function getPreferences(): Promise<Preferences> {
   const response = await apiFetch(`${BASE_URL}/account/preferences`);
   return handleResponse<Preferences>(response);
 }
+
+/**
+ * Saves the current user's column preferences.
+ * @param prefs - The preferences object to save.
+ * @returns A promise that resolves when the preferences are successfully saved.
+ * @throws An error if the fetch operation fails.
+ */
+export async function updatePreferences(prefs: Preferences): Promise<void> {
+  const response = await apiFetch(`${BASE_URL}/account/preferences`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(prefs),
+  });
+  return handleEmptyResponse(response);
+}
