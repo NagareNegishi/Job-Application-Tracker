@@ -24,3 +24,7 @@ export const COLUMNS = [
   { key: "interviewDate", label: "Interview Date", defaultWidth: 120, defaultVisible: false, fixed: false },
   { key: "jobUrl",        label: "Job URL",        defaultWidth: 150, defaultVisible: false, fixed: false },
 ] as const satisfies readonly ColumnDef[];
+
+// Derived union of all valid column keys — "company" | "role" | "status" | ...
+// Stays in sync with COLUMNS automatically; no manual maintenance needed.
+export type ColumnKey = typeof COLUMNS[number]["key"];
