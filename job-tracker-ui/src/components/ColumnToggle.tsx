@@ -8,7 +8,7 @@ import {
 import { usePreferences, useUpdatePreferences } from "@/hooks/preferencesQuery";
 import { COLUMNS } from "@/lib/columns";
 import type { ColumnKey } from "@/lib/columns";
-import { Columns2 } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 
 // Fixed columns are always visible; only non-fixed columns appear in this toggle list.
@@ -47,8 +47,8 @@ export function ColumnToggle() {
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="shadow-xs hover:bg-secondary">
-          <Columns2 className="mr-2 h-4 w-4" />
-          Columns
+          <SlidersHorizontal className="mr-2 h-4 w-4" />
+          Show/Hide Columns
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-48 p-2">
