@@ -18,3 +18,11 @@ const TOGGLEABLE = COLUMNS.filter((c) => !c.fixed);
 const DEFAULT_VISIBLE = COLUMNS
   .filter((c) => c.defaultVisible)
   .map((c) => c.key as ColumnKey);
+
+export function ColumnToggle() {
+  const { data: prefs } = usePreferences();
+  const { mutate } = useUpdatePreferences();
+  const [open, setOpen] = useState(false);
+  // draft holds checkbox state while the popover is open; committed to server on close.
+  const [draft, setDraft] = useState<ColumnKey[]>([]);
+}
