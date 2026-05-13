@@ -37,7 +37,7 @@ const PRIORITY_ORDER: Record<string, number> = {
   Urgent: 3,
 };
 
-const DEFAULT_FILTERS: JobFilters = { role: "", status: "", priority: "" };
+const DEFAULT_FILTERS: JobFilters = { role: "", status: "", priority: "", location: "", workMode: "" };
 
 export function useJobFilters(jobs: Job[]) {
   const [sortField, setSortField] = useState<SortField | null>(null);
