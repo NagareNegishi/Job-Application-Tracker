@@ -20,7 +20,7 @@ import { MaintenanceError } from "@/lib/api";
 import { COLUMNS } from "@/lib/columns";
 import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
-import { JobStatus, Priority } from "@/types/enums";
+import { JobStatus, Priority, WorkMode } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
@@ -203,6 +203,9 @@ export function JobTable() {
     (c) => c.fixed || visibleColumns.includes(c.key as ColumnKey)
   );
   const totalWidth = visibleCols.reduce((sum, c) => sum + widths[c.key as ColumnKey], 0);
+
+  // Helper to check column visibility without repeating the scan at every call site.
+  const isVisible = (key: ColumnKey) => visibleCols.some((c) => c.key === key);
 
   const [activeTab, setActiveTab] = useState<"active" | "closing-soon" | "all" | "rejected">("active");
 
