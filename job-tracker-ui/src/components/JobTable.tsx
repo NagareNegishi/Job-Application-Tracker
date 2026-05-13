@@ -20,7 +20,7 @@ import { MaintenanceError } from "@/lib/api";
 import { COLUMNS } from "@/lib/columns";
 import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
-import { JobStatus, Priority, formatEnumLabel } from "@/types/enums";
+import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
@@ -180,6 +180,8 @@ function SortableHead({
 
 const STATUS_OPTIONS = Object.values(JobStatus);
 const PRIORITY_OPTIONS = Object.values(Priority);
+// Derived from enum so it stays in sync if WorkMode values change.
+const WORK_MODE_OPTIONS = Object.values(WorkMode).map(formatEnumLabel);
 
 const TAB_STYLES = {
   "active":       { tab: "!bg-blue-50 !text-blue-800 border-blue-300",    table: "bg-blue-50",   rowHover: "hover:bg-blue-100" },
