@@ -25,4 +25,21 @@ export function ColumnToggle() {
   const [open, setOpen] = useState(false);
   // draft holds checkbox state while the popover is open; committed to server on close.
   const [draft, setDraft] = useState<ColumnKey[]>([]);
+
+  function handleOpenChange(next: boolean) {
+    if (next) {
+      // Snapshot on open so draft always starts from the latest saved value, not a stale one.
+      setDraft(prefs?.visibleColumns ?? DEFAULT_VISIBLE);
+    } else {
+      mutate({ visibleColumns: draft });
+    }
+    setOpen(next);
+  }
+
+  // Immutable toggle: remove if present, append if not.
+  function toggle(key: ColumnKey) {
+    setDraft((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  }
 }
