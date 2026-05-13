@@ -57,14 +57,14 @@ All fields below added together in a single migration.
 
   **Future (Settings page):** Let users save and reset their default column combination — the same `/api/account/preferences` endpoint will be used.
 
-  **Future (Sort + filter for new columns):** Per-column decisions:
+  **Sort + filter for new columns:** Complete.
   - Location — filter only (unique values dropdown, same pattern as Role)
-  - Work Mode — filter only (fixed options: Remote, Hybrid, On-site)
-  - Salary — no sort, no filter (range field makes both awkward)
+  - Work Mode — filter only (display labels via `formatEnumLabel`; stored as label string in filter state)
+  - Salary — no sort, no filter
   - Interview Date — sort only, no filter
   - Job URL — no sort, no filter
 
-  Changes needed: extend `SortField` in `useJobFilters.ts` with `"interviewAt"` only; add sort case + filter state for location/workMode; in `JobTable.tsx` replace InterviewDate plain `<TableHead>` with `<SortableHead>`, add `<FilterPopover>` to Location and WorkMode headers. Salary and Job URL headers stay as plain `<TableHead>`.
+  Also added `formatEnumLabel` to `enums.ts` — single function for all enum display conversions; register new overrides in `ENUM_DISPLAY_OVERRIDES` when needed.
 - **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
   - Pipeline funnel — count per status; shows pipeline health
   - Response rate — % of applied jobs that moved past Applied; signals resume/outreach effectiveness

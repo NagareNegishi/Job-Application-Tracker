@@ -39,3 +39,14 @@ export const WorkMode = {
 
 export type WorkMode = typeof WorkMode[keyof typeof WorkMode];
 
+// If a new enum value needs a different display label, add it here.
+const ENUM_DISPLAY_OVERRIDES: Record<string, string> = {
+  OnSite: "On-site",
+  CoverLetter: "Cover Letter",
+  ReferenceLetter: "Reference Letter",
+};
+
+export function formatEnumLabel(value: string): string {
+  return ENUM_DISPLAY_OVERRIDES[value] ?? value;
+}
+

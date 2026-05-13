@@ -20,7 +20,7 @@ import { MaintenanceError } from "@/lib/api";
 import { COLUMNS } from "@/lib/columns";
 import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
-import { JobStatus, Priority, WorkMode } from "@/types/enums";
+import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
@@ -156,7 +156,7 @@ function SortableHead({
   }
 
   return (
-    <TableHead className={className}>
+    <TableHead className={cn(className, isActive && "border-b-2 border-primary")}>
       {/* group: hovering filter icon also highlights sort text, and vice versa */}
       <div className="flex items-center gap-1 group">
         <button
@@ -180,6 +180,8 @@ function SortableHead({
 
 const STATUS_OPTIONS = Object.values(JobStatus);
 const PRIORITY_OPTIONS = Object.values(Priority);
+// Derived from enum so it stays in sync if WorkMode values change.
+const WORK_MODE_OPTIONS = Object.values(WorkMode).map(formatEnumLabel);
 
 const TAB_STYLES = {
   "active":       { tab: "!bg-blue-50 !text-blue-800 border-blue-300",    table: "bg-blue-50",   rowHover: "hover:bg-blue-100" },
@@ -241,6 +243,7 @@ export function JobTable() {
     filters,
     setFilters,
     availableRoles,
+    availableLocations,
     isFiltered,
   } = useJobFilters(tabFilteredJobs);
 
@@ -324,7 +327,7 @@ export function JobTable() {
           </TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="relative overflow-visible">
+              <TableHead className={cn("relative overflow-visible", sortProps.activeField === "company" && "border-b-2 border-primary")}>
                 <div className="flex items-center gap-1 group">
                   <button
                     onClick={() => sortProps.onSort("company")}
@@ -406,11 +409,31 @@ export function JobTable() {
               {isVisible("closedAt") && (
                 <SortableHead field="closedAt" label="Closed At" {...sortProps} />
               )}
-              {isVisible("location") && <TableHead>Location</TableHead>}
-              {isVisible("workMode") && <TableHead>Work Mode</TableHead>}
-              {isVisible("salary") && <TableHead>Salary</TableHead>}
-              {isVisible("interviewAt") && <TableHead>Interview Date</TableHead>}
-              {isVisible("jobUrl") && <TableHead>Job URL</TableHead>}
+              {isVisible("location") && (
+                <TableHead>
+                  <FilterPopover
+                    label="Location"
+                    options={availableLocations}
+                    value={filters.location}
+                    onChange={(v) => setFilters((f) => ({ ...f, location: v }))}
+                  />
+                </TableHead>
+              )}
+              {isVisible("workMode") && (
+                <TableHead>
+                  <FilterPopover
+                    label="Work Mode"
+                    options={WORK_MODE_OPTIONS}
+                    value={filters.workMode}
+                    onChange={(v) => setFilters((f) => ({ ...f, workMode: v }))}
+                  />
+                </TableHead>
+              )}
+              {isVisible("salary") && <TableHead><span className="px-1 text-sm text-muted-foreground">Salary</span></TableHead>}
+              {isVisible("interviewAt") && (
+                <SortableHead field="interviewAt" label="Interview Date" {...sortProps} />
+              )}
+              {isVisible("jobUrl") && <TableHead><span className="px-1 text-sm text-muted-foreground">Job URL</span></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -450,7 +473,7 @@ export function JobTable() {
                 {isVisible("workMode") && (
                   <TableCell>
                     {job.workMode
-                      ? job.workMode === WorkMode.OnSite ? "On-site" : job.workMode
+                      ? formatEnumLabel(job.workMode)
                       : "—"}
                   </TableCell>
                 )}

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { useDeleteDocument, useDownloadDocument, usePatchDocument } from "@/hooks/documentQuery";
 import { ApiError } from "@/lib/api";
-import type { DocumentType } from "@/types/enums";
+import { formatEnumLabel, type DocumentType } from "@/types/enums";
 import type { JobDocument } from "@/types/jobDocument";
 import { Check, Download, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
@@ -79,7 +79,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
         ) : (
           <>
             <p className="font-medium">{document.name}</p>
-            <p className="text-sm text-muted-foreground">{document.type}</p>
+            <p className="text-sm text-muted-foreground">{formatEnumLabel(document.type)}</p>
           </>
         )}
       </div>

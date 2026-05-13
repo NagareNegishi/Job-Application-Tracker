@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Priority, JobStatus } from "@/types/enums";
+import { Priority, JobStatus, formatEnumLabel } from "@/types/enums";
 import type { Job } from "@/types/job";
 
 export type SortField =
@@ -7,7 +7,8 @@ export type SortField =
   | "status"
   | "priority"
   | "appliedAt"
-  | "closedAt";
+  | "closedAt"
+  | "interviewAt";
 
 export type SortDir = "asc" | "desc";
 
@@ -15,6 +16,8 @@ export interface JobFilters {
   role: string;
   status: JobStatus | "";
   priority: Priority | "";
+  location: string;
+  workMode: string;
 }
 
 // Logical sort order for status and priority (not alphabetical)
@@ -34,7 +37,7 @@ const PRIORITY_ORDER: Record<string, number> = {
   Urgent: 3,
 };
 
-const DEFAULT_FILTERS: JobFilters = { role: "", status: "", priority: "" };
+const DEFAULT_FILTERS: JobFilters = { role: "", status: "", priority: "", location: "", workMode: "" };
 
 export function useJobFilters(jobs: Job[]) {
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -61,6 +64,11 @@ export function useJobFilters(jobs: Job[]) {
     [jobs]
   );
 
+  const availableLocations = useMemo(
+    () => [...new Set(jobs.map((j) => j.location).filter(Boolean))].sort(),
+    [jobs]
+  );
+
   // Apply filters then sort — recomputes only when inputs change
   const filteredJobs = useMemo(() => {
     let result = jobs;
@@ -68,6 +76,11 @@ export function useJobFilters(jobs: Job[]) {
     if (filters.role) result = result.filter((j) => j.role === filters.role);
     if (filters.status) result = result.filter((j) => j.status === filters.status);
     if (filters.priority) result = result.filter((j) => j.priority === filters.priority);
+    if (filters.location) result = result.filter((j) => j.location === filters.location);
+    if (filters.workMode)
+      result = result.filter(
+        (j) => j.workMode != null && formatEnumLabel(j.workMode) === filters.workMode
+      );
 
     if (!sortField) return result;
 
@@ -89,13 +102,17 @@ export function useJobFilters(jobs: Job[]) {
         case "closedAt":
           cmp = (a.closedAt ?? "").localeCompare(b.closedAt ?? "");
           break;
+        case "interviewAt":
+          cmp = (a.interviewAt ?? "").localeCompare(b.interviewAt ?? "");
+          break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
   }, [jobs, filters, sortField, sortDir]);
 
   const isFiltered =
-    filters.role !== "" || filters.status !== "" || filters.priority !== "";
+    filters.role !== "" || filters.status !== "" || filters.priority !== "" ||
+    filters.location !== "" || filters.workMode !== "";
 
   return {
     filteredJobs,
@@ -106,6 +123,7 @@ export function useJobFilters(jobs: Job[]) {
     setFilters,
     clearFilters,
     availableRoles,
+    availableLocations,
     isFiltered,
   };
 }
