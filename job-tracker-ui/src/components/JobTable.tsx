@@ -310,6 +310,7 @@ export function JobTable() {
           No jobs registered yet. Click "Add New Job" to create your first job application.
         </p>
       ) : (
+        <div className="overflow-x-auto">
         <Table style={{ width: totalWidth, tableLayout: "fixed" }}>
           <colgroup>
             {visibleCols.map((c) => (
@@ -486,6 +487,7 @@ export function JobTable() {
             ))}
           </TableBody>
         </Table>
+        </div>
       )}
       </div>
 
