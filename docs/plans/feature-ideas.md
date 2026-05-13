@@ -57,7 +57,14 @@ All fields below added together in a single migration.
 
   **Future (Settings page):** Let users save and reset their default column combination — the same `/api/account/preferences` endpoint will be used.
 
-  **Future (Sorting for new columns):** New columns (Location, Work Mode, Salary, Interview Date, Job URL) currently have no sort. Two changes needed: extend `SortField` in `useJobFilters.ts` with the 5 new keys + add sort cases (strings: `localeCompare` with `?? ""`; salary: `salaryMin ?? salaryMax ?? 0` numeric); replace plain `<TableHead>` with `<SortableHead>` in `JobTable.tsx`. ISO date strings sort correctly as plain strings — no `Date` parsing needed.
+  **Future (Sort + filter for new columns):** Per-column decisions:
+  - Location — filter only (unique values dropdown, same pattern as Role)
+  - Work Mode — filter only (fixed options: Remote, Hybrid, On-site)
+  - Salary — no sort, no filter (range field makes both awkward)
+  - Interview Date — sort only, no filter
+  - Job URL — no sort, no filter
+
+  Changes needed: extend `SortField` in `useJobFilters.ts` with `"interviewAt"` only; add sort case + filter state for location/workMode; in `JobTable.tsx` replace InterviewDate plain `<TableHead>` with `<SortableHead>`, add `<FilterPopover>` to Location and WorkMode headers. Salary and Job URL headers stay as plain `<TableHead>`.
 - **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
   - Pipeline funnel — count per status; shows pipeline health
   - Response rate — % of applied jobs that moved past Applied; signals resume/outreach effectiveness
