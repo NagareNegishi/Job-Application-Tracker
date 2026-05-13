@@ -409,7 +409,16 @@ export function JobTable() {
               {isVisible("closedAt") && (
                 <SortableHead field="closedAt" label="Closed At" {...sortProps} />
               )}
-              {isVisible("location") && <TableHead>Location</TableHead>}
+              {isVisible("location") && (
+                <TableHead>
+                  <FilterPopover
+                    label="Location"
+                    options={availableLocations}
+                    value={filters.location}
+                    onChange={(v) => setFilters((f) => ({ ...f, location: v }))}
+                  />
+                </TableHead>
+              )}
               {isVisible("workMode") && <TableHead>Work Mode</TableHead>}
               {isVisible("salary") && <TableHead>Salary</TableHead>}
               {isVisible("interviewAt") && <TableHead>Interview Date</TableHead>}
