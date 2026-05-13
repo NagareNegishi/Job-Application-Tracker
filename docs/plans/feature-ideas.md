@@ -56,6 +56,8 @@ All fields below added together in a single migration.
   - `src/components/JobTable.tsx` — `useColWidths` rekeyed by `ColumnKey` (widths survive toggle); toolbar row added; conditional headers/cells via `isVisible` helper; renderers for Location, Work Mode, Salary, Interview Date, Job URL
 
   **Future (Settings page):** Let users save and reset their default column combination — the same `/api/account/preferences` endpoint will be used.
+
+  **Future (Sorting for new columns):** New columns (Location, Work Mode, Salary, Interview Date, Job URL) currently have no sort. Two changes needed: extend `SortField` in `useJobFilters.ts` with the 5 new keys + add sort cases (strings: `localeCompare` with `?? ""`; salary: `salaryMin ?? salaryMax ?? 0` numeric); replace plain `<TableHead>` with `<SortableHead>` in `JobTable.tsx`. ISO date strings sort correctly as plain strings — no `Date` parsing needed.
 - **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
   - Pipeline funnel — count per status; shows pipeline health
   - Response rate — % of applied jobs that moved past Applied; signals resume/outreach effectiveness
