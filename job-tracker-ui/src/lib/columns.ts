@@ -19,9 +19,9 @@ export const COLUMNS = [
   { key: "appliedAt",     label: "Applied At",     defaultWidth: 110, defaultVisible: true,  fixed: false },
   { key: "closedAt",      label: "Closed At",      defaultWidth: 110, defaultVisible: true,  fixed: false },
   { key: "location",      label: "Location",       defaultWidth: 110, defaultVisible: false, fixed: false },
-  { key: "workMode",      label: "Work Mode",      defaultWidth: 110, defaultVisible: false, fixed: false },
-  { key: "salary",        label: "Salary",         defaultWidth: 130, defaultVisible: false, fixed: false },
-  { key: "interviewAt",   label: "Interview Date", defaultWidth: 120, defaultVisible: false, fixed: false },
+  { key: "workMode",      label: "Work Mode",      defaultWidth: 130, defaultVisible: false, fixed: false },
+  { key: "salary",        label: "Salary",         defaultWidth: 150, defaultVisible: false, fixed: false },
+  { key: "interviewAt",   label: "Interview Date", defaultWidth: 150, defaultVisible: false, fixed: false },
   { key: "jobUrl",        label: "Job URL",        defaultWidth: 150, defaultVisible: false, fixed: false },
 ] as const satisfies readonly ColumnDef[];
 
