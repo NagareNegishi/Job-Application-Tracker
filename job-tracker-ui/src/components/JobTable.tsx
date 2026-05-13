@@ -20,7 +20,7 @@ import { MaintenanceError } from "@/lib/api";
 import { COLUMNS } from "@/lib/columns";
 import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
-import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums";
+import { JobStatus, Priority, formatEnumLabel } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
