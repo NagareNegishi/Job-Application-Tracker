@@ -354,7 +354,7 @@ export function JobTable() {
                   onChange={(v) => setFilters((f) => ({ ...f, role: v }))}
                 />
                 <div
-                  onMouseDown={startResize(1)}
+                  onMouseDown={startResize("role" as ColumnKey)}
                   className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                 />
               </TableHead>
