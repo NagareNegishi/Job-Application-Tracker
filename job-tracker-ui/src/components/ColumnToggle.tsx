@@ -42,4 +42,31 @@ export function ColumnToggle() {
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
     );
   }
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="shadow-xs hover:bg-secondary">
+          <Columns2 className="mr-2 h-4 w-4" />
+          Columns
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-48 p-2">
+        <div className="flex flex-col gap-1">
+          {TOGGLEABLE.map((col) => (
+            <label
+              key={col.key}
+              className="flex items-center gap-2 rounded px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
+            >
+              <Checkbox
+                checked={draft.includes(col.key as ColumnKey)}
+                onCheckedChange={() => toggle(col.key as ColumnKey)}
+              />
+              {col.label}
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
