@@ -120,6 +120,7 @@ export function useJobFilters(jobs: Job[]) {
     setFilters,
     clearFilters,
     availableRoles,
+    availableLocations,
     isFiltered,
   };
 }
