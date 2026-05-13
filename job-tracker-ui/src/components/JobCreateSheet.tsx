@@ -32,7 +32,7 @@ import {
   MAX_ROLE_LENGTH,
   MAX_SOURCE_LENGTH,
 } from "@/lib/validationConstants"
-import { JobStatus, Priority, WorkMode } from "@/types/enums"
+import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
 import { useEffect, useState } from "react"
 
 // FormState represents the internal state of the job edit form
@@ -282,7 +282,7 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
             </SelectTrigger>
             <SelectContent>
               {Object.values(WorkMode).map(m => (
-                <SelectItem key={m} value={m}>{m === "OnSite" ? "On-site" : m}</SelectItem>
+                <SelectItem key={m} value={m}>{formatEnumLabel(m)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
