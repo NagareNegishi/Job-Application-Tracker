@@ -76,6 +76,8 @@ export function useJobFilters(jobs: Job[]) {
     if (filters.role) result = result.filter((j) => j.role === filters.role);
     if (filters.status) result = result.filter((j) => j.status === filters.status);
     if (filters.priority) result = result.filter((j) => j.priority === filters.priority);
+    if (filters.location) result = result.filter((j) => j.location === filters.location);
+    if (filters.workMode) result = result.filter((j) => j.workMode === filters.workMode);
 
     if (!sortField) return result;
 
