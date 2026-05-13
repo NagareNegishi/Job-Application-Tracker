@@ -156,7 +156,7 @@ function SortableHead({
   }
 
   return (
-    <TableHead className={className}>
+    <TableHead className={cn(className, isActive && "border-b-2 border-primary")}>
       {/* group: hovering filter icon also highlights sort text, and vice versa */}
       <div className="flex items-center gap-1 group">
         <button
@@ -327,7 +327,7 @@ export function JobTable() {
           </TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="relative overflow-visible">
+              <TableHead className={cn("relative overflow-visible", sortProps.activeField === "company" && "border-b-2 border-primary")}>
                 <div className="flex items-center gap-1 group">
                   <button
                     onClick={() => sortProps.onSort("company")}
