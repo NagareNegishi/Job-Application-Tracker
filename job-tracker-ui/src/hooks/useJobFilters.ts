@@ -7,7 +7,8 @@ export type SortField =
   | "status"
   | "priority"
   | "appliedAt"
-  | "closedAt";
+  | "closedAt"
+  | "interviewAt";
 
 export type SortDir = "asc" | "desc";
 
