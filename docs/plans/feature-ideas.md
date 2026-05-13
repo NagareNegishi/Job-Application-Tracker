@@ -47,12 +47,16 @@ All fields below added together in a single migration.
   - GET/PUT `/api/account/preferences` — shape: `{ "visibleColumns": ["status", "priority", ...] }`; GET returns default set (`status`, `priority`, `appliedAt`, `closedAt`) if no preference saved
   - Reason for `ApplicationUser` over a separate table: cascade deletes are automatic, no upsert logic needed, preferences are user data and belong on the user row
 
-  **Frontend (pending):**
-  - Define column config — `{ key, label, defaultVisible, fixed }` array; single source of truth
-  - `preferencesService.ts` — GET/PUT fetch wrappers
-  - `usePreferences` hook — TanStack Query fetch + mutation
-  - `ColumnToggle` component — "Columns" button + checkbox dropdown
-  - Update `JobTable` — toolbar row, rekey `useColWidths` by column ID, conditional headers/cells, new column renderers
+  **Frontend:**
+
+  Complete:
+  - `src/lib/columns.ts` — `ColumnDef` type, `COLUMNS` array (`as const satisfies`), `ColumnKey` derived union
+  - `src/services/preferencesService.ts` — `Preferences` type, `getPreferences`, `updatePreferences`
+  - `src/hooks/preferencesQuery.ts` — `usePreferences`, `useUpdatePreferences`
+
+  Pending:
+  - `ColumnToggle` component — "Columns" button + checkbox dropdown; self-contained (owns both hooks); TQ dedup means `JobTable` can also call `usePreferences` without an extra fetch; styled button + `Check` icon for checkbox UI (no shadcn `Checkbox` exists)
+  - Update `JobTable` — toolbar row, rekey `useColWidths` by column key, conditional headers/cells, new column renderers
 
   **Future (Settings page):** Let users save and reset their default column combination — the same `/api/account/preferences` endpoint will be used.
 - **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
