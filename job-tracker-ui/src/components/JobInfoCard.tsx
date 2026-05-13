@@ -1,4 +1,5 @@
 import type { Job } from "@/types/job";
+import { formatEnumLabel } from "@/types/enums";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
 
@@ -41,7 +42,7 @@ export function JobInfoCard({ job }: { job: Job }) {
           {job.workMode && (
             <span className="flex items-baseline gap-1.5">
               <span className="text-xs uppercase tracking-wider text-muted-foreground">Work mode</span>
-              <span className="text-sm font-medium">{job.workMode === "OnSite" ? "On-site" : job.workMode}</span>
+              <span className="text-sm font-medium">{formatEnumLabel(job.workMode)}</span>
             </span>
           )}
         </div>
