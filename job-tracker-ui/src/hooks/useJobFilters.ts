@@ -99,13 +99,17 @@ export function useJobFilters(jobs: Job[]) {
         case "closedAt":
           cmp = (a.closedAt ?? "").localeCompare(b.closedAt ?? "");
           break;
+        case "interviewAt":
+          cmp = (a.interviewAt ?? "").localeCompare(b.interviewAt ?? "");
+          break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
   }, [jobs, filters, sortField, sortDir]);
 
   const isFiltered =
-    filters.role !== "" || filters.status !== "" || filters.priority !== "";
+    filters.role !== "" || filters.status !== "" || filters.priority !== "" ||
+    filters.location !== "" || filters.workMode !== "";
 
   return {
     filteredJobs,
