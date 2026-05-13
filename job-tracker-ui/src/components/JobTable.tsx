@@ -192,10 +192,17 @@ export function JobTable() {
   const { data: jobs, isPending, isError, error } = useJobs();
   const [addOpen, setAddOpen] = useState(false);
   const navigate = useNavigate();
-  const { widths, startResize, totalWidth } = useColWidths([
-    COL_WIDTH_COMPANY, COL_WIDTH_ROLE,
-    COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED,
-  ]);
+  // visibleColumns from prefs; fall back to defaults while loading.
+  const { data: prefs } = usePreferences();
+  const visibleColumns = prefs?.visibleColumns ?? DEFAULT_VISIBLE;
+
+  const { widths, startResize } = useColWidths();
+
+  // Fixed columns always shown; user-toggled columns shown when in visibleColumns.
+  const visibleCols = COLUMNS.filter(
+    (c) => c.fixed || visibleColumns.includes(c.key as ColumnKey)
+  );
+  const totalWidth = visibleCols.reduce((sum, c) => sum + widths[c.key as ColumnKey], 0);
 
   const [activeTab, setActiveTab] = useState<"active" | "closing-soon" | "all" | "rejected">("active");
 
