@@ -312,7 +312,9 @@ export function JobTable() {
       ) : (
         <Table style={{ width: totalWidth, tableLayout: "fixed" }}>
           <colgroup>
-            {widths.map((w, i) => <col key={i} style={{ width: w }} />)}
+            {visibleCols.map((c) => (
+              <col key={c.key} style={{ width: widths[c.key as ColumnKey] }} />
+            ))}
           </colgroup>
           <TableCaption>
             Showing {filteredJobs.length}
@@ -340,7 +342,7 @@ export function JobTable() {
                   </button>
                 </div>
                 <div
-                  onMouseDown={startResize(0)}
+                  onMouseDown={startResize("company" as ColumnKey)}
                   className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                 />
               </TableHead>
