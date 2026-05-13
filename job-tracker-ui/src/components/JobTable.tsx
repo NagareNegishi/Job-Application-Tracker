@@ -24,6 +24,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react"
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ColumnToggle } from "./ColumnToggle";
 import { JobCreateSheet } from "./JobCreateSheet";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
@@ -249,6 +250,11 @@ export function JobTable() {
         </Button>
       </div>
       <hr className="border-t border-border" />
+
+      {/* Toolbar */}
+      <div className="flex items-center px-2">
+        <ColumnToggle />
+      </div>
 
       {/* Tab nav */}
       <div className={cn("flex flex-col", TAB_STYLES[activeTab].table)}>
