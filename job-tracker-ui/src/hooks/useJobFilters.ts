@@ -64,6 +64,11 @@ export function useJobFilters(jobs: Job[]) {
     [jobs]
   );
 
+  const availableLocations = useMemo(
+    () => [...new Set(jobs.map((j) => j.location).filter(Boolean))].sort(),
+    [jobs]
+  );
+
   // Apply filters then sort — recomputes only when inputs change
   const filteredJobs = useMemo(() => {
     let result = jobs;
