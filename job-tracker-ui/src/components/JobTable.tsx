@@ -430,7 +430,9 @@ export function JobTable() {
                 </TableHead>
               )}
               {isVisible("salary") && <TableHead>Salary</TableHead>}
-              {isVisible("interviewAt") && <TableHead>Interview Date</TableHead>}
+              {isVisible("interviewAt") && (
+                <SortableHead field="interviewAt" label="Interview Date" {...sortProps} />
+              )}
               {isVisible("jobUrl") && <TableHead>Job URL</TableHead>}
             </TableRow>
           </TableHeader>
