@@ -421,24 +421,67 @@ export function JobTable() {
               >
                 <TableCell className="font-medium overflow-hidden text-ellipsis">{job.company}</TableCell>
                 <TableCell className="overflow-hidden text-ellipsis">{job.role}</TableCell>
-                <TableCell className="text-center">
-                  <StatusBadge status={job.status} />
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex justify-center">
-                    <PriorityDot priority={job.priority} />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {job.appliedAt
-                    ? new Date(job.appliedAt).toLocaleDateString()
-                    : "—"}
-                </TableCell>
-                <TableCell>
-                  {job.closedAt
-                    ? new Date(job.closedAt).toLocaleDateString()
-                    : "—"}
-                </TableCell>
+                {isVisible("status") && (
+                  <TableCell className="text-center">
+                    <StatusBadge status={job.status} />
+                  </TableCell>
+                )}
+                {isVisible("priority") && (
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <PriorityDot priority={job.priority} />
+                    </div>
+                  </TableCell>
+                )}
+                {isVisible("appliedAt") && (
+                  <TableCell>
+                    {job.appliedAt ? new Date(job.appliedAt).toLocaleDateString() : "—"}
+                  </TableCell>
+                )}
+                {isVisible("closedAt") && (
+                  <TableCell>
+                    {job.closedAt ? new Date(job.closedAt).toLocaleDateString() : "—"}
+                  </TableCell>
+                )}
+                {isVisible("location") && (
+                  <TableCell>{job.location ?? "—"}</TableCell>
+                )}
+                {isVisible("workMode") && (
+                  <TableCell>
+                    {job.workMode
+                      ? job.workMode === WorkMode.OnSite ? "On-site" : job.workMode
+                      : "—"}
+                  </TableCell>
+                )}
+                {isVisible("salary") && (
+                  <TableCell>
+                    {job.salaryMin != null || job.salaryMax != null
+                      ? job.salaryMin != null && job.salaryMax != null && job.salaryMin !== job.salaryMax
+                        ? `$${job.salaryMin.toLocaleString()} – $${job.salaryMax.toLocaleString()}`
+                        : `$${(job.salaryMin ?? job.salaryMax)!.toLocaleString()}`
+                      : "—"}
+                  </TableCell>
+                )}
+                {isVisible("interviewDate") && (
+                  <TableCell>
+                    {job.interviewAt ? new Date(job.interviewAt).toLocaleDateString() : "—"}
+                  </TableCell>
+                )}
+                {isVisible("jobUrl") && (
+                  <TableCell className="overflow-hidden">
+                    {job.jobUrl
+                      ? <a
+                          href={job.jobUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-primary underline underline-offset-2 hover:text-primary/80 truncate block"
+                        >
+                          {new URL(job.jobUrl).hostname}
+                        </a>
+                      : "—"}
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
