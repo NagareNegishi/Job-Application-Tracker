@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { useJobs } from "@/hooks/jobQuery";
 import { useJobFilters, type SortField } from "@/hooks/useJobFilters";
+import { usePreferences } from "@/hooks/preferencesQuery";
 import { MaintenanceError } from "@/lib/api";
 import { COLUMNS } from "@/lib/columns";
 import type { ColumnKey } from "@/lib/columns";
@@ -31,6 +32,11 @@ import { StatusBadge } from "./ui/StatusBadge";
 
 const COL_RESIZE_MIN = 80;
 const COL_RESIZE_MAX = 550;
+
+// Fallback visible set used before preferences load.
+const DEFAULT_VISIBLE = COLUMNS
+  .filter((c) => c.defaultVisible)
+  .map((c) => c.key as ColumnKey);
 
 // Manages column widths keyed by column key so widths survive column toggling.
 function useColWidths() {
