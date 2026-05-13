@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Priority, JobStatus, WorkMode } from "@/types/enums";
+import { Priority, JobStatus, formatEnumLabel } from "@/types/enums";
 import type { Job } from "@/types/job";
 
 export type SortField =
@@ -17,7 +17,7 @@ export interface JobFilters {
   status: JobStatus | "";
   priority: Priority | "";
   location: string;
-  workMode: WorkMode | "";
+  workMode: string;
 }
 
 // Logical sort order for status and priority (not alphabetical)
@@ -77,7 +77,10 @@ export function useJobFilters(jobs: Job[]) {
     if (filters.status) result = result.filter((j) => j.status === filters.status);
     if (filters.priority) result = result.filter((j) => j.priority === filters.priority);
     if (filters.location) result = result.filter((j) => j.location === filters.location);
-    if (filters.workMode) result = result.filter((j) => j.workMode === filters.workMode);
+    if (filters.workMode)
+      result = result.filter(
+        (j) => j.workMode != null && formatEnumLabel(j.workMode) === filters.workMode
+      );
 
     if (!sortField) return result;
 
