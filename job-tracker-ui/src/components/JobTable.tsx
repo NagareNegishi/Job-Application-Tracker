@@ -408,7 +408,7 @@ export function JobTable() {
               {isVisible("location") && <TableHead>Location</TableHead>}
               {isVisible("workMode") && <TableHead>Work Mode</TableHead>}
               {isVisible("salary") && <TableHead>Salary</TableHead>}
-              {isVisible("interviewDate") && <TableHead>Interview Date</TableHead>}
+              {isVisible("interviewAt") && <TableHead>Interview Date</TableHead>}
               {isVisible("jobUrl") && <TableHead>Job URL</TableHead>}
             </TableRow>
           </TableHeader>
@@ -462,7 +462,7 @@ export function JobTable() {
                       : "—"}
                   </TableCell>
                 )}
-                {isVisible("interviewDate") && (
+                {isVisible("interviewAt") && (
                   <TableCell>
                     {job.interviewAt ? new Date(job.interviewAt).toLocaleDateString() : "—"}
                   </TableCell>
