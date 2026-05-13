@@ -358,45 +358,58 @@ export function JobTable() {
                   className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                 />
               </TableHead>
-              <SortableHead
-                field="status"
-                label="Status"
-                className="text-center"
-                showControls={showControls}
-                {...sortProps}
-                filter={
-                  <FilterPopover
-                    options={STATUS_OPTIONS}
-                    value={filters.status}
-                    onChange={(v) =>
-                      setFilters((f) => ({
-                        ...f,
-                        status: v as typeof filters.status,
-                      }))
-                    }
-                  />
-                }
-              />
-              <SortableHead
-                field="priority"
-                label="Priority"
-                className="text-center"
-                {...sortProps}
-                filter={
-                  <FilterPopover
-                    options={PRIORITY_OPTIONS}
-                    value={filters.priority}
-                    onChange={(v) =>
-                      setFilters((f) => ({
-                        ...f,
-                        priority: v as typeof filters.priority,
-                      }))
-                    }
-                  />
-                }
-              />
-              <SortableHead field="appliedAt" label="Applied At" {...sortProps} />
-              <SortableHead field="closedAt" label="Closed At" {...sortProps} />
+              {isVisible("status") && (
+                <SortableHead
+                  field="status"
+                  label="Status"
+                  className="text-center"
+                  showControls={showControls}
+                  {...sortProps}
+                  filter={
+                    <FilterPopover
+                      options={STATUS_OPTIONS}
+                      value={filters.status}
+                      onChange={(v) =>
+                        setFilters((f) => ({
+                          ...f,
+                          status: v as typeof filters.status,
+                        }))
+                      }
+                    />
+                  }
+                />
+              )}
+              {isVisible("priority") && (
+                <SortableHead
+                  field="priority"
+                  label="Priority"
+                  className="text-center"
+                  {...sortProps}
+                  filter={
+                    <FilterPopover
+                      options={PRIORITY_OPTIONS}
+                      value={filters.priority}
+                      onChange={(v) =>
+                        setFilters((f) => ({
+                          ...f,
+                          priority: v as typeof filters.priority,
+                        }))
+                      }
+                    />
+                  }
+                />
+              )}
+              {isVisible("appliedAt") && (
+                <SortableHead field="appliedAt" label="Applied At" {...sortProps} />
+              )}
+              {isVisible("closedAt") && (
+                <SortableHead field="closedAt" label="Closed At" {...sortProps} />
+              )}
+              {isVisible("location") && <TableHead>Location</TableHead>}
+              {isVisible("workMode") && <TableHead>Work Mode</TableHead>}
+              {isVisible("salary") && <TableHead>Salary</TableHead>}
+              {isVisible("interviewDate") && <TableHead>Interview Date</TableHead>}
+              {isVisible("jobUrl") && <TableHead>Job URL</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
