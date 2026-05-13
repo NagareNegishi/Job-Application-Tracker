@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Priority, JobStatus } from "@/types/enums";
+import { Priority, JobStatus, WorkMode } from "@/types/enums";
 import type { Job } from "@/types/job";
 
 export type SortField =
@@ -16,6 +16,8 @@ export interface JobFilters {
   role: string;
   status: JobStatus | "";
   priority: Priority | "";
+  location: string;
+  workMode: WorkMode | "";
 }
 
 // Logical sort order for status and priority (not alphabetical)
