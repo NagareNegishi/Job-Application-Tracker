@@ -16,6 +16,8 @@ import {
 import { useJobs } from "@/hooks/jobQuery";
 import { useJobFilters, type SortField } from "@/hooks/useJobFilters";
 import { MaintenanceError } from "@/lib/api";
+import { COLUMNS } from "@/lib/columns";
+import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
 import { JobStatus, Priority } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
@@ -28,25 +30,23 @@ import { StatusBadge } from "./ui/StatusBadge";
 
 const COL_RESIZE_MIN = 80;
 const COL_RESIZE_MAX = 550;
-const COL_WIDTH_COMPANY = 200;
-const COL_WIDTH_ROLE = 200;
-const COL_WIDTH_FIXED = 110;
 
-// Manages column widths and resizing logic for the job table.
-function useColWidths(initial: number[]) {
-  const [widths, setWidths] = useState(initial);
+// Manages column widths keyed by column key so widths survive column toggling.
+function useColWidths() {
+  const [widths, setWidths] = useState<Record<ColumnKey, number>>(
+    () => Object.fromEntries(COLUMNS.map((c) => [c.key, c.defaultWidth])) as Record<ColumnKey, number>
+  );
 
-  function startResize(colIndex: number) {
+  function startResize(key: ColumnKey) {
     return (e: React.MouseEvent) => {
       e.preventDefault();
       const startX = e.clientX;
-      const startW = widths[colIndex];
+      const startW = widths[key];
       const onMove = (ev: MouseEvent) => {
-        setWidths((prev) => {
-          const next = [...prev];
-          next[colIndex] = Math.min(COL_RESIZE_MAX, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX));
-          return next;
-        });
+        setWidths((prev) => ({
+          ...prev,
+          [key]: Math.min(COL_RESIZE_MAX, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX)),
+        }));
       };
       const onUp = () => {
         document.removeEventListener("mousemove", onMove);
@@ -57,8 +57,7 @@ function useColWidths(initial: number[]) {
     };
   }
 
-  const totalWidth = widths.reduce((a, b) => a + b, 0);
-  return { widths, startResize, totalWidth };
+  return { widths, startResize };
 }
 
 // Filter popover for a single column.
