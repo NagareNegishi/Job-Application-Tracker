@@ -12,7 +12,7 @@ using Moq;
 
 public class AccountControllerTests : IDisposable
 {
-    private readonly Mock<UserManager<IdentityUser>> _userManagerMock;
+    private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
     private readonly JobTrackerContext _context;
     private readonly AccountController _controller;
     private const string TestUserId = "test-user-id";
@@ -20,12 +20,12 @@ public class AccountControllerTests : IDisposable
 
     public AccountControllerTests()
     {
-        // In production, ASP.NET Identity registers UserManager<IdentityUser> into the DI container.
+        // In production, ASP.NET Identity registers UserManager<ApplicationUser> into the DI container.
         // Its constructor takes the database layer as an IUserStore, in production that's EF Core.
         // In tests, we don't need a real database, so we mock it.
         // All other constructor args (password hasher, validators, logger, etc.) can be null
-        var store = new Mock<IUserStore<IdentityUser>>();
-        _userManagerMock = new Mock<UserManager<IdentityUser>>(
+        var store = new Mock<IUserStore<ApplicationUser>>();
+        _userManagerMock = new Mock<UserManager<ApplicationUser>>(
             store.Object, null, null, null, null, null, null, null, null);
 
         // unique DB name per test class — parallel runs can't share state
@@ -56,6 +56,118 @@ public class AccountControllerTests : IDisposable
         {
             HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
         };
+    }
+
+    [Fact]
+    public async Task GetPreferences_ReturnsUnauthorized_WhenUserNotFound()
+    {
+        // Arrange: userId from JWT has no matching account
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        // Act
+        var result = await _controller.GetPreferences();
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
+    [Fact]
+    public async Task GetPreferences_ReturnsDefault_WhenNoPreferencesSaved()
+    {
+        // Arrange: user exists but has never saved preferences
+        var user = new ApplicationUser { Id = TestUserId, Preferences = null };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _controller.GetPreferences();
+
+        // Assert: default set returned
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<UserPreferencesDto>(ok.Value);
+        Assert.Equal(["status", "priority", "appliedAt", "closedAt"], dto.VisibleColumns);
+    }
+
+    [Fact]
+    public async Task GetPreferences_ReturnsSaved_WhenPreferencesExist()
+    {
+        // Arrange: user has previously saved a custom column set
+        // JSON is PascalCase — matches JsonSerializer default (no camelCase options applied)
+        var user = new ApplicationUser
+        {
+            Id = TestUserId,
+            Preferences = "{\"VisibleColumns\":[\"status\",\"location\"]}"
+        };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _controller.GetPreferences();
+
+        // Assert: saved columns returned, not the default
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<UserPreferencesDto>(ok.Value);
+        Assert.Equal(["status", "location"], dto.VisibleColumns);
+    }
+
+    [Fact]
+    public async Task UpdatePreferences_ReturnsUnauthorized_WhenUserNotFound()
+    {
+        // Arrange
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        // Act
+        var result = await _controller.UpdatePreferences(
+            new UserPreferencesDto { VisibleColumns = ["status"] });
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
+    [Fact]
+    public async Task UpdatePreferences_ReturnsBadRequest_WhenInvalidColumnKey()
+    {
+        // Arrange: one valid key + one unknown key
+        var user = new ApplicationUser { Id = TestUserId };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _controller.UpdatePreferences(
+            new UserPreferencesDto { VisibleColumns = ["status", "invalidKey"] });
+
+        // Assert: rejected before reaching UpdateAsync
+        Assert.IsType<BadRequestObjectResult>(result);
+        _userManagerMock.Verify(m => m.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdatePreferences_SavesPreferences_WhenValid()
+    {
+        // Arrange
+        var user = new ApplicationUser { Id = TestUserId };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.UpdateAsync(user))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var dto = new UserPreferencesDto { VisibleColumns = ["status", "location"] };
+
+        // Act
+        var result = await _controller.UpdatePreferences(dto);
+
+        // Assert: 200 returned and UpdateAsync was called exactly once
+        Assert.IsType<OkObjectResult>(result);
+        _userManagerMock.Verify(m => m.UpdateAsync(user), Times.Once);
     }
 
     // Demo user is blocked before any Identity call — password changes are not allowed in demo mode
@@ -108,7 +220,7 @@ public class AccountControllerTests : IDisposable
         // Arrange: FindByIdAsync returns null — userId in token has no matching account
         _userManagerMock
             .Setup(m => m.FindByIdAsync(TestUserId))
-            .ReturnsAsync((IdentityUser?)null);
+            .ReturnsAsync((ApplicationUser?)null);
 
         var dto = new ChangePasswordDTO
         {
@@ -129,7 +241,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_WrongCurrentPassword_ReturnsBadRequest()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByIdAsync(TestUserId))
             .ReturnsAsync(user);
@@ -157,7 +269,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_Success_ReturnsOk()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock
             .Setup(m => m.FindByIdAsync(TestUserId))
             .ReturnsAsync(user);
@@ -185,7 +297,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_Success_RevokesAllActiveRefreshTokensForUser()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
         _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
             .ReturnsAsync(IdentityResult.Success);
@@ -216,7 +328,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_Success_DoesNotRevokeOtherUsersTokens()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
         _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
             .ReturnsAsync(IdentityResult.Success);
@@ -247,7 +359,7 @@ public class AccountControllerTests : IDisposable
     public async Task ChangePassword_Success_PreservesAlreadyRevokedTokenTimestamp()
     {
         // Arrange
-        var user = new IdentityUser { Id = TestUserId, Email = TestUserEmail };
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
         _userManagerMock.Setup(m => m.FindByIdAsync(TestUserId)).ReturnsAsync(user);
         _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldPass1!", "NewPass1!"))
             .ReturnsAsync(IdentityResult.Success);

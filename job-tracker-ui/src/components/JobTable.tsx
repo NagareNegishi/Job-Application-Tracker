@@ -15,38 +15,45 @@ import {
 } from "@/components/ui/table";
 import { useJobs } from "@/hooks/jobQuery";
 import { useJobFilters, type SortField } from "@/hooks/useJobFilters";
+import { usePreferences } from "@/hooks/preferencesQuery";
 import { MaintenanceError } from "@/lib/api";
+import { COLUMNS } from "@/lib/columns";
+import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
-import { JobStatus, Priority } from "@/types/enums";
+import { JobStatus, Priority, WorkMode } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ColumnToggle } from "./ColumnToggle";
 import { JobCreateSheet } from "./JobCreateSheet";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
 
 const COL_RESIZE_MIN = 80;
 const COL_RESIZE_MAX = 550;
-const COL_WIDTH_COMPANY = 200;
-const COL_WIDTH_ROLE = 200;
-const COL_WIDTH_FIXED = 110;
 
-// Manages column widths and resizing logic for the job table.
-function useColWidths(initial: number[]) {
-  const [widths, setWidths] = useState(initial);
+// Fallback visible set used before preferences load.
+const DEFAULT_VISIBLE = COLUMNS
+  .filter((c) => c.defaultVisible)
+  .map((c) => c.key as ColumnKey);
 
-  function startResize(colIndex: number) {
+// Manages column widths keyed by column key so widths survive column toggling.
+function useColWidths() {
+  const [widths, setWidths] = useState<Record<ColumnKey, number>>(
+    () => Object.fromEntries(COLUMNS.map((c) => [c.key, c.defaultWidth])) as Record<ColumnKey, number>
+  );
+
+  function startResize(key: ColumnKey) {
     return (e: React.MouseEvent) => {
       e.preventDefault();
       const startX = e.clientX;
-      const startW = widths[colIndex];
+      const startW = widths[key];
       const onMove = (ev: MouseEvent) => {
-        setWidths((prev) => {
-          const next = [...prev];
-          next[colIndex] = Math.min(COL_RESIZE_MAX, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX));
-          return next;
-        });
+        setWidths((prev) => ({
+          ...prev,
+          [key]: Math.min(COL_RESIZE_MAX, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX)),
+        }));
       };
       const onUp = () => {
         document.removeEventListener("mousemove", onMove);
@@ -57,8 +64,7 @@ function useColWidths(initial: number[]) {
     };
   }
 
-  const totalWidth = widths.reduce((a, b) => a + b, 0);
-  return { widths, startResize, totalWidth };
+  return { widths, startResize };
 }
 
 // Filter popover for a single column.
@@ -186,10 +192,20 @@ export function JobTable() {
   const { data: jobs, isPending, isError, error } = useJobs();
   const [addOpen, setAddOpen] = useState(false);
   const navigate = useNavigate();
-  const { widths, startResize, totalWidth } = useColWidths([
-    COL_WIDTH_COMPANY, COL_WIDTH_ROLE,
-    COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED, COL_WIDTH_FIXED,
-  ]);
+  // visibleColumns from prefs; fall back to defaults while loading.
+  const { data: prefs } = usePreferences();
+  const visibleColumns = prefs?.visibleColumns ?? DEFAULT_VISIBLE;
+
+  const { widths, startResize } = useColWidths();
+
+  // Fixed columns always shown; user-toggled columns shown when in visibleColumns.
+  const visibleCols = COLUMNS.filter(
+    (c) => c.fixed || visibleColumns.includes(c.key as ColumnKey)
+  );
+  const totalWidth = visibleCols.reduce((sum, c) => sum + widths[c.key as ColumnKey], 0);
+
+  // Helper to check column visibility without repeating the scan at every call site.
+  const isVisible = (key: ColumnKey) => visibleCols.some((c) => c.key === key);
 
   const [activeTab, setActiveTab] = useState<"active" | "closing-soon" | "all" | "rejected">("active");
 
@@ -251,6 +267,11 @@ export function JobTable() {
       </div>
       <hr className="border-t border-border" />
 
+      {/* Toolbar */}
+      <div className="flex items-center px-2">
+        <ColumnToggle />
+      </div>
+
       {/* Tab nav */}
       <div className={cn("flex flex-col", TAB_STYLES[activeTab].table)}>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
@@ -289,9 +310,12 @@ export function JobTable() {
           No jobs registered yet. Click "Add New Job" to create your first job application.
         </p>
       ) : (
+        <div className="overflow-x-auto">
         <Table style={{ width: totalWidth, tableLayout: "fixed" }}>
           <colgroup>
-            {widths.map((w, i) => <col key={i} style={{ width: w }} />)}
+            {visibleCols.map((c) => (
+              <col key={c.key} style={{ width: widths[c.key as ColumnKey] }} />
+            ))}
           </colgroup>
           <TableCaption>
             Showing {filteredJobs.length}
@@ -319,7 +343,7 @@ export function JobTable() {
                   </button>
                 </div>
                 <div
-                  onMouseDown={startResize(0)}
+                  onMouseDown={startResize("company" as ColumnKey)}
                   className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                 />
               </TableHead>
@@ -331,49 +355,62 @@ export function JobTable() {
                   onChange={(v) => setFilters((f) => ({ ...f, role: v }))}
                 />
                 <div
-                  onMouseDown={startResize(1)}
+                  onMouseDown={startResize("role" as ColumnKey)}
                   className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                 />
               </TableHead>
-              <SortableHead
-                field="status"
-                label="Status"
-                className="text-center"
-                showControls={showControls}
-                {...sortProps}
-                filter={
-                  <FilterPopover
-                    options={STATUS_OPTIONS}
-                    value={filters.status}
-                    onChange={(v) =>
-                      setFilters((f) => ({
-                        ...f,
-                        status: v as typeof filters.status,
-                      }))
-                    }
-                  />
-                }
-              />
-              <SortableHead
-                field="priority"
-                label="Priority"
-                className="text-center"
-                {...sortProps}
-                filter={
-                  <FilterPopover
-                    options={PRIORITY_OPTIONS}
-                    value={filters.priority}
-                    onChange={(v) =>
-                      setFilters((f) => ({
-                        ...f,
-                        priority: v as typeof filters.priority,
-                      }))
-                    }
-                  />
-                }
-              />
-              <SortableHead field="appliedAt" label="Applied At" {...sortProps} />
-              <SortableHead field="closedAt" label="Closed At" {...sortProps} />
+              {isVisible("status") && (
+                <SortableHead
+                  field="status"
+                  label="Status"
+                  className="text-center"
+                  showControls={showControls}
+                  {...sortProps}
+                  filter={
+                    <FilterPopover
+                      options={STATUS_OPTIONS}
+                      value={filters.status}
+                      onChange={(v) =>
+                        setFilters((f) => ({
+                          ...f,
+                          status: v as typeof filters.status,
+                        }))
+                      }
+                    />
+                  }
+                />
+              )}
+              {isVisible("priority") && (
+                <SortableHead
+                  field="priority"
+                  label="Priority"
+                  className="text-center"
+                  {...sortProps}
+                  filter={
+                    <FilterPopover
+                      options={PRIORITY_OPTIONS}
+                      value={filters.priority}
+                      onChange={(v) =>
+                        setFilters((f) => ({
+                          ...f,
+                          priority: v as typeof filters.priority,
+                        }))
+                      }
+                    />
+                  }
+                />
+              )}
+              {isVisible("appliedAt") && (
+                <SortableHead field="appliedAt" label="Applied At" {...sortProps} />
+              )}
+              {isVisible("closedAt") && (
+                <SortableHead field="closedAt" label="Closed At" {...sortProps} />
+              )}
+              {isVisible("location") && <TableHead>Location</TableHead>}
+              {isVisible("workMode") && <TableHead>Work Mode</TableHead>}
+              {isVisible("salary") && <TableHead>Salary</TableHead>}
+              {isVisible("interviewAt") && <TableHead>Interview Date</TableHead>}
+              {isVisible("jobUrl") && <TableHead>Job URL</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -385,28 +422,72 @@ export function JobTable() {
               >
                 <TableCell className="font-medium overflow-hidden text-ellipsis">{job.company}</TableCell>
                 <TableCell className="overflow-hidden text-ellipsis">{job.role}</TableCell>
-                <TableCell className="text-center">
-                  <StatusBadge status={job.status} />
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex justify-center">
-                    <PriorityDot priority={job.priority} />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {job.appliedAt
-                    ? new Date(job.appliedAt).toLocaleDateString()
-                    : "—"}
-                </TableCell>
-                <TableCell>
-                  {job.closedAt
-                    ? new Date(job.closedAt).toLocaleDateString()
-                    : "—"}
-                </TableCell>
+                {isVisible("status") && (
+                  <TableCell className="text-center">
+                    <StatusBadge status={job.status} />
+                  </TableCell>
+                )}
+                {isVisible("priority") && (
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <PriorityDot priority={job.priority} />
+                    </div>
+                  </TableCell>
+                )}
+                {isVisible("appliedAt") && (
+                  <TableCell>
+                    {job.appliedAt ? new Date(job.appliedAt).toLocaleDateString() : "—"}
+                  </TableCell>
+                )}
+                {isVisible("closedAt") && (
+                  <TableCell>
+                    {job.closedAt ? new Date(job.closedAt).toLocaleDateString() : "—"}
+                  </TableCell>
+                )}
+                {isVisible("location") && (
+                  <TableCell>{job.location ?? "—"}</TableCell>
+                )}
+                {isVisible("workMode") && (
+                  <TableCell>
+                    {job.workMode
+                      ? job.workMode === WorkMode.OnSite ? "On-site" : job.workMode
+                      : "—"}
+                  </TableCell>
+                )}
+                {isVisible("salary") && (
+                  <TableCell>
+                    {job.salaryMin != null || job.salaryMax != null
+                      ? job.salaryMin != null && job.salaryMax != null && job.salaryMin !== job.salaryMax
+                        ? `$${job.salaryMin.toLocaleString()} – $${job.salaryMax.toLocaleString()}`
+                        : `$${(job.salaryMin ?? job.salaryMax)!.toLocaleString()}`
+                      : "—"}
+                  </TableCell>
+                )}
+                {isVisible("interviewAt") && (
+                  <TableCell>
+                    {job.interviewAt ? new Date(job.interviewAt).toLocaleDateString() : "—"}
+                  </TableCell>
+                )}
+                {isVisible("jobUrl") && (
+                  <TableCell className="overflow-hidden">
+                    {job.jobUrl
+                      ? <a
+                          href={job.jobUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-primary underline underline-offset-2 hover:text-primary/80 truncate block"
+                        >
+                          {new URL(job.jobUrl).hostname}
+                        </a>
+                      : "—"}
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        </div>
       )}
       </div>
 

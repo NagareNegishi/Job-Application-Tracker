@@ -21,7 +21,7 @@ namespace JobTrackerApi.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _config;
     private readonly JobTrackerContext _context;
     private readonly IWebHostEnvironment _env;
@@ -30,7 +30,7 @@ public class AuthController : ControllerBase
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
-        UserManager<IdentityUser> userManager,
+        UserManager<ApplicationUser> userManager,
         IConfiguration config,
         JobTrackerContext context,
         IWebHostEnvironment env,
@@ -119,7 +119,7 @@ public class AuthController : ControllerBase
         if (existing != null && !existing.EmailConfirmed && existing.Email != DemoUser.Email)
             await _userManager.DeleteAsync(existing);
 
-        var user = new IdentityUser { UserName = dto.Email, Email = dto.Email };
+        var user = new ApplicationUser { UserName = dto.Email, Email = dto.Email };
         var result = await _userManager.CreateAsync(user, dto.Password);
 
         if (!result.Succeeded)
@@ -214,7 +214,7 @@ public class AuthController : ControllerBase
     {
         // Handle wrong email/password together to prevent attacker guessing
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        var passwordValid = await _userManager.CheckPasswordAsync(user ?? new IdentityUser(), dto.Password);
+        var passwordValid = await _userManager.CheckPasswordAsync(user ?? new ApplicationUser(), dto.Password);
         if (user == null || !passwordValid)
         {
             _logger.LogWarning("Login failed for email {Email}", dto.Email);
@@ -375,7 +375,7 @@ public class AuthController : ControllerBase
     }
 
     // Helper method to generate Access token
-    private string GenerateAccessToken(IdentityUser user)
+    private string GenerateAccessToken(ApplicationUser user)
     {
         var claims = new[]
         {

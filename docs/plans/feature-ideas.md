@@ -26,7 +26,45 @@ All fields below added together in a single migration.
 
 ## UI features
 
-- **Customizable table columns** — default view stays unchanged (Company, Role, Status, Priority, Applied At, Closed At); Company and Role are fixed; all other existing columns and all new fields above are user-toggleable; `Source` excluded from table entirely
+- **Customizable table columns**
+
+  **Status: Complete.**
+
+  Default visible columns are unchanged: Company, Role, Status, Priority, Applied At, Closed At.
+  Company and Role are always visible (fixed). Source is excluded from the table entirely.
+
+  **Toggleable columns:**
+  - Existing: Status, Priority, Applied At, Closed At
+  - New fields: Location, Work Mode, Salary, Interview Date, Job URL
+
+  **UI:**
+  - "Columns" button with a checkbox dropdown
+  - Button lives in a dedicated toolbar row between the page header and the tabs (keeps "Add New Job" prominent)
+
+  **Storage (complete):**
+  - Introduced `ApplicationUser : IdentityUser`; updated all references (`Program.cs`, `AuthController`, `AccountController`, `JobTrackerContext`); migration `AddApplicationUser` applied
+  - `Preferences` JSON column (`string?`) on `ApplicationUser`; deserialized only in `AccountController`
+  - GET/PUT `/api/account/preferences` — shape: `{ "visibleColumns": ["status", "priority", ...] }`; GET returns default set (`status`, `priority`, `appliedAt`, `closedAt`) if no preference saved
+  - Reason for `ApplicationUser` over a separate table: cascade deletes are automatic, no upsert logic needed, preferences are user data and belong on the user row
+
+  **Frontend (complete):**
+  - `src/lib/columns.ts` — `ColumnDef` type, `COLUMNS` array (`as const satisfies`), `ColumnKey` derived union
+  - `src/services/preferencesService.ts` — `Preferences` type, `getPreferences`, `updatePreferences`
+  - `src/hooks/preferencesQuery.ts` — `usePreferences`, `useUpdatePreferences`
+  - `src/components/ui/checkbox.tsx` — shadcn Checkbox added (backed by `radix-ui` already in project)
+  - `src/components/ColumnToggle.tsx` — "Columns" button + checkbox dropdown; buffers changes in local draft state, commits single PUT on popover close; TQ dedup means `JobTable` calling `usePreferences` adds no extra fetch
+  - `src/components/JobTable.tsx` — `useColWidths` rekeyed by `ColumnKey` (widths survive toggle); toolbar row added; conditional headers/cells via `isVisible` helper; renderers for Location, Work Mode, Salary, Interview Date, Job URL
+
+  **Future (Settings page):** Let users save and reset their default column combination — the same `/api/account/preferences` endpoint will be used.
+
+  **Future (Sort + filter for new columns):** Per-column decisions:
+  - Location — filter only (unique values dropdown, same pattern as Role)
+  - Work Mode — filter only (fixed options: Remote, Hybrid, On-site)
+  - Salary — no sort, no filter (range field makes both awkward)
+  - Interview Date — sort only, no filter
+  - Job URL — no sort, no filter
+
+  Changes needed: extend `SortField` in `useJobFilters.ts` with `"interviewAt"` only; add sort case + filter state for location/workMode; in `JobTable.tsx` replace InterviewDate plain `<TableHead>` with `<SortableHead>`, add `<FilterPopover>` to Location and WorkMode headers. Salary and Job URL headers stay as plain `<TableHead>`.
 - **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
   - Pipeline funnel — count per status; shows pipeline health
   - Response rate — % of applied jobs that moved past Applied; signals resume/outreach effectiveness

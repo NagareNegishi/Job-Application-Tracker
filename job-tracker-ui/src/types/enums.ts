@@ -32,9 +32,9 @@ export const DocumentType = {
 export type DocumentType = typeof DocumentType[keyof typeof DocumentType];
 
 export const WorkMode = {
+  OnSite: "OnSite",
   Remote: "Remote",
   Hybrid: "Hybrid",
-  OnSite: "OnSite",
 } as const;
 
 export type WorkMode = typeof WorkMode[keyof typeof WorkMode];

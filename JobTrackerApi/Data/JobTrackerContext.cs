@@ -1,10 +1,9 @@
 using JobTrackerApi.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 namespace JobTrackerApi.Data;
 
-public class JobTrackerContext : IdentityDbContext<IdentityUser>
+public class JobTrackerContext : IdentityDbContext<ApplicationUser>
 {
     public JobTrackerContext(DbContextOptions<JobTrackerContext> options)
         : base(options)
