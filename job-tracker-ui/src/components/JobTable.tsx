@@ -243,6 +243,7 @@ export function JobTable() {
     filters,
     setFilters,
     availableRoles,
+    availableLocations,
     isFiltered,
   } = useJobFilters(tabFilteredJobs);
 
