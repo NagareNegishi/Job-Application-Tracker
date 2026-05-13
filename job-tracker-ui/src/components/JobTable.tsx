@@ -419,7 +419,16 @@ export function JobTable() {
                   />
                 </TableHead>
               )}
-              {isVisible("workMode") && <TableHead>Work Mode</TableHead>}
+              {isVisible("workMode") && (
+                <TableHead>
+                  <FilterPopover
+                    label="Work Mode"
+                    options={WORK_MODE_OPTIONS}
+                    value={filters.workMode}
+                    onChange={(v) => setFilters((f) => ({ ...f, workMode: v }))}
+                  />
+                </TableHead>
+              )}
               {isVisible("salary") && <TableHead>Salary</TableHead>}
               {isVisible("interviewAt") && <TableHead>Interview Date</TableHead>}
               {isVisible("jobUrl") && <TableHead>Job URL</TableHead>}
