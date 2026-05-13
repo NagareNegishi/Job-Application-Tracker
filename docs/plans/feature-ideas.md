@@ -28,7 +28,7 @@ All fields below added together in a single migration.
 
 - **Customizable table columns**
 
-  **Status: In progress — backend complete, frontend pending.**
+  **Status: Complete.**
 
   Default visible columns are unchanged: Company, Role, Status, Priority, Applied At, Closed At.
   Company and Role are always visible (fixed). Source is excluded from the table entirely.
@@ -47,16 +47,13 @@ All fields below added together in a single migration.
   - GET/PUT `/api/account/preferences` — shape: `{ "visibleColumns": ["status", "priority", ...] }`; GET returns default set (`status`, `priority`, `appliedAt`, `closedAt`) if no preference saved
   - Reason for `ApplicationUser` over a separate table: cascade deletes are automatic, no upsert logic needed, preferences are user data and belong on the user row
 
-  **Frontend:**
-
-  Complete:
+  **Frontend (complete):**
   - `src/lib/columns.ts` — `ColumnDef` type, `COLUMNS` array (`as const satisfies`), `ColumnKey` derived union
   - `src/services/preferencesService.ts` — `Preferences` type, `getPreferences`, `updatePreferences`
   - `src/hooks/preferencesQuery.ts` — `usePreferences`, `useUpdatePreferences`
-
-  Pending:
-  - `ColumnToggle` component — "Columns" button + checkbox dropdown; self-contained (owns both hooks); TQ dedup means `JobTable` can also call `usePreferences` without an extra fetch; styled button + `Check` icon for checkbox UI (no shadcn `Checkbox` exists)
-  - Update `JobTable` — toolbar row, rekey `useColWidths` by column key, conditional headers/cells, new column renderers
+  - `src/components/ui/checkbox.tsx` — shadcn Checkbox added (backed by `radix-ui` already in project)
+  - `src/components/ColumnToggle.tsx` — "Columns" button + checkbox dropdown; buffers changes in local draft state, commits single PUT on popover close; TQ dedup means `JobTable` calling `usePreferences` adds no extra fetch
+  - `src/components/JobTable.tsx` — `useColWidths` rekeyed by `ColumnKey` (widths survive toggle); toolbar row added; conditional headers/cells via `isVisible` helper; renderers for Location, Work Mode, Salary, Interview Date, Job URL
 
   **Future (Settings page):** Let users save and reset their default column combination — the same `/api/account/preferences` endpoint will be used.
 - **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
