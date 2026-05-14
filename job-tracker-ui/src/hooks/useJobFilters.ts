@@ -65,7 +65,7 @@ export function useJobFilters(jobs: Job[]) {
   );
 
   const availableLocations = useMemo(
-    () => [...new Set(jobs.map((j) => j.location).filter(Boolean))].sort(),
+    () => [...new Set(jobs.map((j) => j.location).filter((l): l is string => Boolean(l)))].sort(),
     [jobs]
   );
 
