@@ -47,7 +47,8 @@
 		// Increase Node.js memory limit for Claude Code
 		"NODE_OPTIONS": "--max-old-space-size=4096",
 		// Tell Claude Code where to find its config
-		"CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
+		"CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+		"TZ": "Pacific/Auckland"
 	},
 
 	// Use 'remoteEnv' to set environment variables in the container. (for VS Code remote session)
