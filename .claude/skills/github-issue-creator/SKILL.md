@@ -5,7 +5,13 @@ description: Use this skill whenever the user wants to create a GitHub issue, wr
 
 # GitHub Issue Creator
 
-Produce a GitHub issue from conversation context or rough input. Output must be copy-paste-ready.
+Produce a GitHub issue draft from conversation context or rough input. This skill drafts only, it never posts to GitHub.
+
+## Output
+ 
+Write the draft to `.github/drafts/issue-draft.md`, overwriting any existing file at that path. Create the `.github/drafts/` directory if it does not exist. Always use this exact path and filename.
+ 
+After writing the file, show the rendered draft in chat so the user can review without opening the file, and tell them the file path so they know where to copy from.
 
 ## Example output — follow this format exactly
 
