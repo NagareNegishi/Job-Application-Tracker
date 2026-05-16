@@ -6,6 +6,30 @@ Add a view toggle to the job list page (Table / Kanban). Kanban mode shows all j
 
 ---
 
+## Library Decision
+
+| Consideration | Detail |
+|---|---|
+| Chosen package | `@dnd-kit/core` v6.3.1 |
+| Label on docs | "Legacy" — maintainer is building a new API (`@dnd-kit/react`), not a deprecation |
+| React 19 | Fully compatible |
+| Community adoption | Used by Linear, Vercel; the standard for React kanban boards in 2026 |
+| Why not `@dnd-kit/react` | v0.4.0 beta — API may break between minor versions; sparse docs; not production-ready |
+| Why not Pragmatic DnD | React 19 compatibility gaps in optional packages; designed for Jira scale, not needed here |
+| Future migration risk | When `@dnd-kit/react` reaches v1.0, a refactor will be required. Migration guide: [dndkit.com/react/guides/migration/](https://dndkit.com/react/guides/migration/) |
+
+### Refactor marker convention
+
+All files that touch dnd-kit APIs must include this comment at the top of the file:
+
+```ts
+// [dnd-kit-legacy] migrate to @dnd-kit/react when v1.0 is stable
+```
+
+Grep target for future refactor: `[dnd-kit-legacy]`
+
+---
+
 ## Design Decisions
 
 | Decision | Reasoning |
@@ -33,10 +57,10 @@ Add a view toggle to the job list page (Table / Kanban). Kanban mode shows all j
 ## Dependencies
 
 ### @dnd-kit/core
-Core drag-and-drop primitives. Provides `DndContext`, `useDraggable`, `useDroppable`, and sensors.
+Core drag-and-drop primitives (legacy stable API, v6.3.1). Provides `DndContext`, `useDraggable`, `useDroppable`, and sensors.
 
 ### @dnd-kit/utilities
-Helper utilities. Provides `CSS.Translate.toString(transform)` to convert the transform object from `useDraggable` into a CSS string.
+Helper utilities (legacy stable API). Provides `CSS.Translate.toString(transform)` to convert the transform object from `useDraggable` into a CSS string.
 
 ---
 
@@ -72,18 +96,19 @@ Attach to a drop target column.
 | `isOver` | `true` when a draggable is hovering over this column |
 
 **Sources:**
-- [Overview](https://docs.dndkit.com/)
-- [DndContext](https://docs.dndkit.com/api-documentation/context-provider)
-- [useDraggable](https://docs.dndkit.com/api-documentation/draggable/usedraggable)
-- [useDroppable](https://docs.dndkit.com/api-documentation/droppable/usedroppable)
-- [Sensors](https://docs.dndkit.com/api-documentation/sensors)
+- [Getting Started](https://dndkit.com/legacy/introduction/getting-started/)
+- [DndContext](https://dndkit.com/legacy/api-documentation/context-provider/dnd-context/)
+- [useDraggable](https://dndkit.com/legacy/api-documentation/draggable/use-draggable/)
+- [useDroppable](https://dndkit.com/legacy/api-documentation/droppable/use-droppable)
+- [Sensors](https://dndkit.com/legacy/api-documentation/sensors/)
 
 ---
 
 ## Step 1 — Install Dependencies
 
 ```
-npm install @dnd-kit/core @dnd-kit/utilities
+npm install @dnd-kit/core
+npm install @dnd-kit/utilities
 ```
 
 ---
