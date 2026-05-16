@@ -47,7 +47,7 @@ Grep target for future refactor: `[dnd-kit-legacy]`
 
 | Step | Item | Status |
 |---|---|---|
-| 1 | Install @dnd-kit/core + @dnd-kit/utilities | Pending |
+| 1 | Install @dnd-kit/core | Pending |
 | 2 | Add viewMode toggle to JobTable toolbar | Pending |
 | 3 | Create KanbanBoard component (layout) | Pending |
 | 4 | Add drag-and-drop + status patch on drop | Pending |
@@ -59,8 +59,8 @@ Grep target for future refactor: `[dnd-kit-legacy]`
 ### @dnd-kit/core
 Core drag-and-drop primitives (legacy stable API, v6.3.1). Provides `DndContext`, `useDraggable`, `useDroppable`, and sensors.
 
-### @dnd-kit/utilities
-Helper utilities (legacy stable API). Provides `CSS.Translate.toString(transform)` to convert the transform object from `useDraggable` into a CSS string.
+### @dnd-kit/utilities — not installed
+Dropped. Its only use here is converting the drag transform to a CSS string, which is a one-liner inline (`transform ? \`translate3d(${transform.x}px, ${transform.y}px, 0)\` : undefined`). No other feature in the current plan or foreseeable enhancements requires it. If `@dnd-kit/sortable` is added later it pulls utilities in automatically as a peer dependency.
 
 ---
 
@@ -85,7 +85,7 @@ Attach to the element being dragged.
 | `setNodeRef` | Attach to the DOM element to track position |
 | `listeners` | Spread onto the drag handle to activate dragging |
 | `attributes` | ARIA attributes (role, tabIndex, aria-describedby) |
-| `transform` | `{ x, y, scaleX, scaleY }` — offset while dragging; convert with `CSS.Translate.toString(transform)` |
+| `transform` | `{ x, y, scaleX, scaleY }` — offset while dragging; apply inline: `transform ? \`translate3d(${transform.x}px, ${transform.y}px, 0)\` : undefined` |
 
 ### useDroppable
 Attach to a drop target column.
@@ -108,7 +108,6 @@ Attach to a drop target column.
 
 ```
 npm install @dnd-kit/core
-npm install @dnd-kit/utilities
 ```
 
 ---
