@@ -37,9 +37,9 @@ Grep target for future refactor: `[dnd-kit-legacy]`
 | @dnd-kit/core over alternatives | React 19 compatible; actively maintained; mouse/touch/keyboard out of the box |
 | Server-round-trip on drop, not optimistic | `usePatchJob` + TQ invalidation already handles it; saves complexity |
 | All statuses shown in Kanban, no tab filtering | Tabs are a table concept; Kanban already shows all statuses as columns |
-| Hide tabs in Kanban mode | Tabs don't apply; showing them would be confusing |
-| `viewMode` state in `JobTable`, not a new page | Toggle is a view preference, not a route change |
-| `KanbanBoard` as a separate component | Keeps `JobTable` manageable; DnD logic stays contained |
+| `viewMode` state in `JobPage`, not `JobTable` | `JobTable` and `KanbanBoard` are sibling views; `JobPage` decides which to render |
+| `KanbanBoard` as a sibling of `JobTable` | Each calls `useJobs()` independently; TQ cache is shared so no duplicate backend call on view switch |
+| "Add New Job" button stays in `JobTable` | Add flow is table-specific; naturally absent in kanban mode because `JobTable` is not rendered |
 
 ---
 
@@ -47,8 +47,8 @@ Grep target for future refactor: `[dnd-kit-legacy]`
 
 | Step | Item | Status |
 |---|---|---|
-| 1 | Install @dnd-kit/core | Pending |
-| 2 | Add viewMode toggle to JobTable toolbar | Pending |
+| 1 | Install @dnd-kit/core | Done |
+| 2 | Add viewMode toggle to JobPage; render JobTable or KanbanBoard as siblings | Pending |
 | 3 | Create KanbanBoard component (layout) | Pending |
 | 4 | Add drag-and-drop + status patch on drop | Pending |
 
@@ -101,6 +101,8 @@ Attach to a drop target column.
 - [useDraggable](https://dndkit.com/legacy/api-documentation/draggable/use-draggable/)
 - [useDroppable](https://dndkit.com/legacy/api-documentation/droppable/use-droppable)
 - [Sensors](https://dndkit.com/legacy/api-documentation/sensors/)
+- [React Drag & Drop Made Easy with @dnd-kit](https://www.youtube.com/watch?v=ZALLXGVc_HU)
+
 
 ---
 
@@ -115,14 +117,14 @@ npm install @dnd-kit/core
 ## Step 2 — View Toggle
 
 **Files:**
-- `job-tracker-ui/src/components/JobTable.tsx` — add `viewMode` state; Table/Kanban icon buttons in toolbar; hide tabs when `viewMode === "kanban"`
+- `job-tracker-ui/src/pages/JobPage.tsx` — add `viewMode` state; Table/Kanban icon buttons; conditionally renders `<JobTable />` or `<KanbanBoard />`
 
 ---
 
 ## Step 3 — KanbanBoard Layout
 
 **Files:**
-- `job-tracker-ui/src/components/KanbanBoard.tsx` — new component; six columns (one per `JobStatus`); each column lists its jobs as cards; no DnD yet
+- `job-tracker-ui/src/components/KanbanBoard.tsx` — new component; six columns (one per `JobStatus`); each column lists its jobs as cards; no DnD yet; calls `useJobs()` independently (TQ cache shared, no extra backend call); no "Add New Job" button
 
 ---
 
