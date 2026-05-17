@@ -28,7 +28,7 @@ function KanbanCard({ job }: { job: Job }) {
 
 function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
   return (
-    <div className="flex flex-col gap-2 w-56">
+    <div className="flex flex-col gap-2 w-44">
       <div className="flex items-center justify-between px-1">
         <StatusBadge status={status} />
         <span className="text-xs text-muted-foreground">{jobs.length}</span>
