@@ -37,7 +37,7 @@ function JobPage() {
         </div>
 
         <div className="bg-card rounded-lg shadow-sm p-6">
-          <JobTable />
+          {viewMode === 'table' ? <JobTable /> : <KanbanBoard />}
         </div>
       </div>
     </div>
