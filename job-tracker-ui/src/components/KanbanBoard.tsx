@@ -51,12 +51,17 @@ function KanbanCard({ job }: { job: Job }) {
 }
 
 function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
+  const { setNodeRef, isOver } = useDroppable({ id: status })
+
   return (
     <div className="flex flex-col gap-2 w-44">
       <div className="flex justify-center px-1">
         <StatusBadge status={status} className="text-sm px-6 py-1" />
       </div>
-      <div className={`${COLUMN_BG[status]} rounded-md p-2 flex flex-col gap-2 min-h-[120px]`}>
+      <div
+        ref={setNodeRef}
+        className={`${COLUMN_BG[status]} rounded-md p-2 flex flex-col gap-2 min-h-[120px] ${isOver ? 'ring-2 ring-inset ring-primary/40' : ''}`}
+      >
         {jobs.map((job) => (
           <KanbanCard key={job.id} job={job} />
         ))}
