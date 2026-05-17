@@ -26,6 +26,22 @@ function KanbanCard({ job }: { job: Job }) {
   )
 }
 
+function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
+  return (
+    <div className="flex flex-col gap-2 w-56">
+      <div className="flex items-center justify-between px-1">
+        <StatusBadge status={status} />
+        <span className="text-xs text-muted-foreground">{jobs.length}</span>
+      </div>
+      <div className="bg-muted rounded-md p-2 flex flex-col gap-2 min-h-[120px]">
+        {jobs.map((job) => (
+          <KanbanCard key={job.id} job={job} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function KanbanBoard() {
   return (
     <div className="p-4 text-muted-foreground">Kanban board — coming soon</div>
