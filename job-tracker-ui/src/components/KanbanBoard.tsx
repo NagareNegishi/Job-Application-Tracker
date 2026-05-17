@@ -10,6 +10,15 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 
 const COLUMNS = Object.values(JobStatus)
 
+const COLUMN_BG: Record<JobStatus, string> = {
+  Wishlist:  'bg-slate-50',
+  Applied:   'bg-blue-50',
+  Screening: 'bg-yellow-50',
+  Interview: 'bg-purple-50',
+  Offered:   'bg-green-50',
+  Rejected:  'bg-red-50',
+}
+
 function KanbanCard({ job }: { job: Job }) {
   const navigate = useNavigate()
   return (
