@@ -132,3 +132,29 @@ npm install @dnd-kit/core
 
 **Files:**
 - `job-tracker-ui/src/components/KanbanBoard.tsx` — wrap with `DndContext`; `useDraggable` on cards; `useDroppable` on columns; `onDragEnd` calls `usePatchJob`
+
+---
+
+## Feature Idea — Group By Toggle
+
+Add a **Status | Priority** toggle inside the Kanban view. Columns, filtering, and the drag patch operation all switch based on the selection.
+
+**Not yet started.**
+
+### Design Decisions
+
+| Decision | Reasoning |
+|---|---|
+| `groupBy` state lives inside `KanbanBoard` | Kanban-specific concern; `JobPage` doesn't need it |
+| Column config object `{ id, label, bgClass }` | Decouples `KanbanColumn` from the dimension; same component renders both |
+| `handleDragEnd` uses `groupBy` to pick patch path | Status grouping → `path: '/status'`; Priority grouping → `path: '/priority'` |
+
+### Steps
+
+| # | Item | Status |
+|---|---|---|
+| 1 | Add `groupBy` state + toggle UI in `KanbanBoard` | — |
+| 2 | Add `PRIORITY_BG` color map | — |
+| 3 | Build `getColumns()` — returns `{ id, label, bgClass }[]` for active dimension | — |
+| 4 | Generalize `KanbanColumn` to accept config object instead of `status: JobStatus` | — |
+| 5 | Update `handleDragEnd` to patch the right field based on `groupBy` | — |
