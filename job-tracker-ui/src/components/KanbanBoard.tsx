@@ -11,12 +11,12 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 const COLUMNS = Object.values(JobStatus)
 
 const COLUMN_BG: Record<JobStatus, string> = {
-  Wishlist:  'bg-slate-50',
-  Applied:   'bg-blue-50',
-  Screening: 'bg-yellow-50',
-  Interview: 'bg-purple-50',
-  Offered:   'bg-green-50',
-  Rejected:  'bg-red-50',
+  Wishlist:  'bg-slate-50/70',
+  Applied:   'bg-blue-50/70',
+  Screening: 'bg-yellow-50/70',
+  Interview: 'bg-purple-50/70',
+  Offered:   'bg-green-50/70',
+  Rejected:  'bg-red-50/70',
 }
 
 function KanbanCard({ job }: { job: Job }) {
@@ -41,7 +41,7 @@ function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
       <div className="flex justify-center px-1">
         <StatusBadge status={status} className="text-sm px-3 py-1" />
       </div>
-      <div className="bg-muted rounded-md p-2 flex flex-col gap-2 min-h-[120px]">
+      <div className={`${COLUMN_BG[status]} rounded-md p-2 flex flex-col gap-2 min-h-[120px]`}>
         {jobs.map((job) => (
           <KanbanCard key={job.id} job={job} />
         ))}
