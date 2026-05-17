@@ -43,7 +43,22 @@ function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
 }
 
 export function KanbanBoard() {
+  const { data: jobs, isPending, isError, error } = useJobs()
+
+  if (isPending) return <p>Loading...</p>
+  if (isError) return <p>{error instanceof MaintenanceError ? error.message : 'Something went wrong.'}</p>
+
   return (
-    <div className="p-4 text-muted-foreground">Kanban board — coming soon</div>
+    <div className="overflow-x-auto">
+      <div className="flex gap-4 min-w-max pb-4">
+        {COLUMNS.map((status) => (
+          <KanbanColumn
+            key={status}
+            status={status}
+            jobs={jobs.filter((j) => j.status === status)}
+          />
+        ))}
+      </div>
+    </div>
   )
 }
