@@ -48,8 +48,8 @@ Grep target for future refactor: `[dnd-kit-legacy]`
 | Step | Item | Status |
 |---|---|---|
 | 1 | Install @dnd-kit/core | Done |
-| 2 | Add viewMode toggle to JobPage; render JobTable or KanbanBoard as siblings | Pending |
-| 3 | Create KanbanBoard component (layout) | Pending |
+| 2 | Add viewMode toggle to JobPage; render JobTable or KanbanBoard as siblings | Done |
+| 3 | Create KanbanBoard component (layout) | Done |
 | 4 | Add drag-and-drop + status patch on drop | Pending |
 
 ---
