@@ -72,3 +72,24 @@ All fields below added together in a single migration.
   - Stale applications — jobs in Applied/Screening for 14+ days with no update; surfaces follow-up candidates
   - Upcoming interviews — only relevant once `InterviewAt` field is added
 - **Kanban board view** — toggle on job list between table and Kanban grouped by `JobStatus`; drag card to change status
+
+## Auto-fill Job Details (AI Parsing)
+
+Reduce manual entry when adding a job. A "Parse" button in the Add Job sheet sends job text to Claude API and pre-fills the form fields. User reviews before saving.
+
+**Implementation plan: two phases.**
+
+### Phase 1 — Copy-paste (implement first)
+
+User copies listing text from any job page, pastes into a textarea in the Add Job sheet, clicks "Parse". Backend sends raw text to Claude API, returns a partial `JobDTO`, pre-fills the form.
+
+**Why first:** Works for every site including LinkedIn and Indeed (NZ's primary job boards), no scraping, no ToS risk, reliable.
+
+**Backend:** `POST /api/jobs/parse-listing` — `{ text: string }` → Claude extraction → partial `JobDTO`  
+**Frontend:** Textarea + "Parse" button in Add Job sheet; on success pre-fills fields; user reviews and saves
+
+### Phase 2 — URL fetch (future consideration)
+
+User pastes a URL → backend fetches the page → Claude parses HTML → pre-fills form. Falls back to Phase 1 paste UI if fetch fails.
+
+**Why deferred:** LinkedIn and Indeed (dominant in NZ) block server-side fetches. Greenhouse/Lever/Workable/Ashby pages are fetchable but less common in NZ market. Revisit when there is demand.
