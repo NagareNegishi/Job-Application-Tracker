@@ -72,21 +72,32 @@ function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
 
 export function KanbanBoard() {
   const { data: jobs, isPending, isError, error } = useJobs()
+  const { mutate: patchJob } = usePatchJob()
+  const sensors = useSensors(useSensor(PointerSensor))
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    // Skip if dropped outside a column or back onto its own column.
+    if (!over || active.data.current?.status === over.id) return
+    patchJob({ id: Number(active.id), operations: [{ op: 'replace', path: '/status', value: over.id as JobStatus }] })
+  }
 
   if (isPending) return <p>Loading...</p>
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : 'Something went wrong.'}</p>
 
   return (
-    <div className="overflow-x-auto">
-      <div className="flex gap-4 min-w-max pb-4">
-        {COLUMNS.map((status) => (
-          <KanbanColumn
-            key={status}
-            status={status}
-            jobs={jobs.filter((j) => j.status === status)}
-          />
-        ))}
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="overflow-x-auto">
+        <div className="flex gap-4 min-w-max pb-4">
+          {COLUMNS.map((status) => (
+            <KanbanColumn
+              key={status}
+              status={status}
+              jobs={jobs.filter((j) => j.status === status)}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </DndContext>
   )
 }
