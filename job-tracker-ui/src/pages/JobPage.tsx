@@ -19,19 +19,17 @@ function JobPage() {
           <div className="flex gap-1 bg-card rounded-md p-1 shadow-sm">
             <Button
               variant={viewMode === 'table' ? 'secondary' : 'ghost'}
-              size="icon"
               onClick={() => setViewMode('table')}
-              aria-label="Table view"
             >
               <LayoutList className="h-4 w-4" />
+              Table View
             </Button>
             <Button
               variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-              size="icon"
               onClick={() => setViewMode('kanban')}
-              aria-label="Kanban view"
             >
               <Kanban className="h-4 w-4" />
+              Kanban View
             </Button>
           </div>
         </div>
