@@ -1,7 +1,9 @@
 // [dnd-kit-legacy] migrate to @dnd-kit/react when v1.0 is stable
 
+import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
 import { useNavigate } from 'react-router'
-import { useJobs } from '@/hooks/jobQuery'
+import { useJobs, usePatchJob } from '@/hooks/jobQuery'
 import { MaintenanceError } from '@/lib/api'
 import { JobStatus } from '@/types/enums'
 import type { Job } from '@/types/job'
@@ -21,10 +23,23 @@ const COLUMN_BG: Record<JobStatus, string> = {
 
 function KanbanCard({ job }: { job: Job }) {
   const navigate = useNavigate()
+  const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({
+    id: job.id,
+    data: { status: job.status },
+  })
+
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined
+
   return (
     <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
       onClick={() => navigate(`/jobs/${job.id}`)}
-      className="bg-card border border-border rounded-md p-3 cursor-pointer hover:shadow-sm transition-shadow"
+      className={`bg-card border border-border rounded-md p-3 cursor-grab hover:shadow-sm transition-shadow ${isDragging ? 'opacity-50' : ''}`}
     >
       <p className="font-medium text-sm truncate">{job.company}</p>
       <p className="text-xs text-muted-foreground truncate">{job.role}</p>
@@ -39,7 +54,7 @@ function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
   return (
     <div className="flex flex-col gap-2 w-44">
       <div className="flex justify-center px-1">
-        <StatusBadge status={status} className="text-sm px-3 py-1" />
+        <StatusBadge status={status} className="text-sm px-6 py-1" />
       </div>
       <div className={`${COLUMN_BG[status]} rounded-md p-2 flex flex-col gap-2 min-h-[120px]`}>
         {jobs.map((job) => (
