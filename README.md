@@ -1,10 +1,9 @@
 # Job Application Tracker
 
-Keeping track of dozens of job applications in a spreadsheet gets messy fast.
+Keeping track of dozens of job applications in a spreadsheet gets messy fast.<br>
 Job Application Tracker is a web app that gives you a single place to manage your entire job search,
 log every application, track where it stands, attach your CV and cover letters,
-record contacts and conversations, and get a clear view of what needs attention next.
-
+record contacts and conversations, and get a clear view of what needs attention next.<br>
 Switch between a table view and a Kanban board, filter by location or work mode, and set priorities so nothing slips through the cracks.
 
 ## Tech Stack
