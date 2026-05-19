@@ -32,7 +32,7 @@ Content-Type: application/json
 { "text": "<raw job listing text>" }
 ```
 
-Fields never parsed (set by app defaults, not listing content): `status` (always `Wishlist`), `priority` (always `Low`), `appliedAt` (not applied yet at parse time).
+Fields never parsed: `status` (always `Wishlist`), `priority` (always `Low`), `appliedAt` (not applied yet), `notes` (always empty at parse time).
 
 ### Response — full extraction
 ```json
@@ -82,6 +82,21 @@ System prompt instructs Claude to extract these fields from raw listing text: `c
 | 5 | Add collapsible textarea + "Parse" button to Add Job sheet | — |
 | 6 | Call endpoint on Parse click; show loading and error state | — |
 | 7 | Merge response into form state (empty fields only) | — |
+
+---
+
+## Logging
+
+`ClaudeParsingService` logs warnings via `ILogger` for contract violations — not surfaced to the user, used to tune the prompt over time.
+
+| Condition | Log level | Detail |
+|---|---|---|
+| Response contains text outside JSON (before or after) | Warning | log the raw response so the wrapper text is visible |
+| Response includes a key not in the expected schema | Warning | log the unexpected key name |
+| A parsed field is `null` (Claude returned the key but with null value) | Warning | log the field name |
+| Claude returns an empty object `{}` | Warning | log so low-extraction rate is visible |
+
+Strip surrounding text and attempt JSON parse regardless — log the anomaly but still return whatever was extractable.
 
 ---
 
