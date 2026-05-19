@@ -19,6 +19,7 @@ CV integration is deferred — analysis uses profile text only.
 | One profile per user (unique FK to `ApplicationUser`) | Cascade deletes automatic; no orphan cleanup needed |
 | `IAnalysisService` / `ClaudeAnalysisService` in `Services/` | Follows existing service abstraction pattern; mockable in tests |
 | `JobAnalysisController` — separate from `JobsController` | Five endpoints with their own route prefix keep `JobsController` clean |
+| PUT creates, PATCH updates (separate endpoints) | Avoids re-sending and re-validating the full profile on every edit; only changed fields sent and validated on PATCH |
 | Return 400 if profile not set | Analysis has no input without a profile; clear error, not a silent empty response |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
 | `claude-haiku-4-5` model | Fast and cheap; each call is a single focused extraction, not reasoning |
@@ -56,15 +57,20 @@ CV integration is deferred — analysis uses profile text only.
 ### API Shape
 
 ```
-GET  /api/account/profile
-PUT  /api/account/profile
+GET    /api/account/profile
+PUT    /api/account/profile
+PATCH  /api/account/profile
 Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-GET returns empty object `{}` if no profile saved yet (not 404).
+**GET** — returns the profile, or empty object `{}` if not yet created (not 404).
 
-PUT body:
+**PUT** — creates the profile on first save. Returns 409 if a profile already exists. Frontend uses this only once (when GET returned empty).
+
+**PATCH** — partial update on an existing profile; only fields included in the body are updated, omitted fields are left unchanged (merge patch, not JSON Patch spec). Returns 404 if no profile exists yet. Use for all edits after initial creation.
+
+PUT body (full profile):
 ```json
 {
   "targetRoles": ["Senior Full-Stack Engineer", "Engineering Lead"],
@@ -93,6 +99,11 @@ PUT body:
     }
   ]
 }
+```
+
+PATCH body (partial — only changed fields):
+```json
+{ "skills": ["TypeScript", "React", "C#", "PostgreSQL", "Docker"] }
 ```
 
 ---
@@ -159,7 +170,7 @@ Score is 1–5. `reasoning` is one sentence.
 | 1 | Add `UserProfile` entity + migration | — |
 | 2 | Add `ProfileDTO` (request) + `ProfileResponseDto` (response) | — |
 | 3 | Add `GET /api/account/profile` + `PUT /api/account/profile` to `AccountController` | — |
-| 4 | Add `/profile` page to frontend with form for all four fields | — |
+| 4 | Add `/profile` page to frontend — tags input for `TargetRoles` and `Skills`; repeating entry forms for `WorkHistory` and `Education` (add/remove entries) | — |
 | 5 | Add Profile nav link | — |
 
 ### Analysis
