@@ -32,16 +32,24 @@ Content-Type: application/json
 { "text": "<raw job listing text>" }
 ```
 
-### Response
+### Response — full extraction
 ```json
 {
   "company": "Acme Corp",
   "role": "Senior Engineer",
-  "jobUrl": "https://...",
+  "jobUrl": "https://boards.greenhouse.io/acme/jobs/123",
   "location": "Auckland",
   "workMode": "Hybrid",
   "salaryMin": 120000,
   "salaryMax": 150000
+}
+```
+
+### Response — partial extraction (fields not found are omitted)
+```json
+{
+  "company": "Acme Corp",
+  "role": "Senior Engineer"
 }
 ```
 
