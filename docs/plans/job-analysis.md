@@ -34,8 +34,20 @@ CV integration is deferred — analysis uses profile text only.
 |---|---|---|
 | `TargetRoles` | `string[]` | Roles the user is targeting — stored as JSON array |
 | `Skills` | `string[]` | Skills as a tag list — stored as JSON array |
+| `Certifications` | `string[]` | e.g. "AWS Certified Developer", "PMP" — stored as JSON array |
+| `Languages` | `string[]` | Spoken languages, free text tags — stored as JSON array |
+| `WorkingRight` | `WorkingRight?` | Work authorisation status — single nullable enum |
 | `WorkHistory` | `WorkHistoryEntry[]` | Structured work experience entries — stored as JSON array |
 | `Education` | `EducationEntry[]` | Structured education entries — stored as JSON array |
+
+**WorkingRight enum:**
+| Value | Meaning |
+|---|---|
+| `Citizen` | NZ / AU citizen — unrestricted |
+| `PermanentResident` | NZ / AU resident visa — unrestricted |
+| `WorkVisa` | Current work visa — right exists but time-limited |
+| `RequiresSponsorship` | No current right; needs employer sponsorship |
+| `Other` | Has working rights through another arrangement |
 
 **WorkHistoryEntry:**
 | Sub-field | Type | Notes |
@@ -75,6 +87,9 @@ PUT body (full profile):
 {
   "targetRoles": ["Senior Full-Stack Engineer", "Engineering Lead"],
   "skills": ["TypeScript", "React", "C#", "PostgreSQL"],
+  "certifications": ["AWS Certified Developer", "PMP"],
+  "languages": ["English", "Japanese"],
+  "workingRight": "PermanentResident",
   "workHistory": [
     {
       "title": "Frontend Developer",
