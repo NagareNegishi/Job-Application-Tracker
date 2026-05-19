@@ -34,6 +34,14 @@ Content-Type: application/json
 
 Fields never parsed: `status` (always `Wishlist`), `priority` (always `Low`), `appliedAt` (not applied yet), `notes` (always empty at parse time).
 
+### Validation (backend only — no frontend check needed)
+
+| Condition | Response |
+|---|---|
+| Empty or whitespace-only | 400 Bad Request |
+| Over 8,000 characters | 400 Bad Request |
+| Contains HTML tags (`<[a-zA-Z/]`) | 400 Bad Request |
+
 ### Response — full extraction
 ```json
 {
@@ -59,7 +67,7 @@ Fields never parsed: `status` (always `Wishlist`), `priority` (always `Low`), `a
 }
 ```
 
-Fields not found are omitted (not null) — frontend skips them in the merge step. `description` is always present (the sanitized pasted text).
+Fields not found are omitted (not null) — frontend skips them in the merge step. `description` is always present (the pasted text).
 
 ---
 
@@ -67,7 +75,7 @@ Fields not found are omitted (not null) — frontend skips them in the merge ste
 
 System prompt instructs Claude to extract these fields from raw listing text: `company`, `role`, `jobUrl`, `location`, `workMode` (`Remote` / `Hybrid` / `OnSite`), `salaryMin`, `salaryMax` (integers, NZD assumed), `closedAt` (ISO date if closing date mentioned), `source` (infer from URL pattern or text style — e.g. LinkedIn, Seek, Indeed). Return valid JSON only, no prose. Omit fields not found.
 
-`description` is not extracted by Claude — the backend passes through the sanitized input text directly.
+`description` is not extracted by Claude — the backend passes through the input text directly.
 
 ---
 
@@ -77,7 +85,7 @@ System prompt instructs Claude to extract these fields from raw listing text: `c
 |---|---|---|
 | 1 | Add `Anthropic:ApiKey` to config + fail-fast validation in `Program.cs` | — |
 | 2 | Add `IParsingService` + `ClaudeParsingService` in `Services/` | — |
-| 3 | Add `ParseListingRequest` DTO + `POST /api/jobs/parse-listing` in `JobsController` | — |
+| 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse-listing` in `JobsController` | — |
 | 4 | Register `ClaudeParsingService` in `Program.cs` | — |
 | 5 | Add collapsible textarea + "Parse" button to Add Job sheet | — |
 | 6 | Call endpoint on Parse click; show loading and error state | — |
@@ -109,5 +117,5 @@ Official C# NuGet package for the Claude API.
 
 ## Notes
 
-- `description` is the pasted text passed through directly (not Claude-extracted), but must be sanitized on the backend before storing — raw HTML/script tags in pasted text would become stored XSS if the frontend ever renders description as HTML. Strip or encode tags on ingest.
+- `description` is the pasted text passed through directly (not Claude-extracted). No sanitization needed — HTML tags are rejected at validation (400). A browser textarea strips HTML on paste, so HTML in the request body signals a crafted/attacker request, not a real user.
 - Tests: mock `IParsingService` in controller tests; no live Claude calls in CI.
