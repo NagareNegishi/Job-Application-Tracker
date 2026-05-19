@@ -18,6 +18,7 @@ A "Parse" button in the Add Job sheet. User pastes raw listing text → backend 
 | Collapsible textarea in Add Job sheet | Keeps the form clean for users who don't need parsing; expands on demand |
 | Fail-fast on missing `Anthropic:ApiKey` | Matches existing JWT config validation pattern in `Program.cs` |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
+| 2 requests per minute per IP via `[EnableRateLimiting("parse")]` | Each call costs money; 2 covers the paste-correction case (wrong paste → fix → retry); reuses existing rate limiter pattern |
 
 ---
 
@@ -85,8 +86,8 @@ System prompt instructs Claude to extract these fields from raw listing text: `c
 |---|---|---|
 | 1 | Add `Anthropic:ApiKey` to config + fail-fast validation in `Program.cs` | — |
 | 2 | Add `IParsingService` + `ClaudeParsingService` in `Services/` | — |
-| 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse-listing` in `JobsController` | — |
-| 4 | Register `ClaudeParsingService` in `Program.cs` | — |
+| 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse-listing` with `[EnableRateLimiting("parse")]` in `JobsController` | — |
+| 4 | Register `ClaudeParsingService` + add `"parse"` rate limit policy (2 per minute per IP) in `Program.cs` | — |
 | 5 | Add collapsible textarea + "Parse" button to Add Job sheet | — |
 | 6 | Call endpoint on Parse click; show loading and error state | — |
 | 7 | Merge response into form state (empty fields only) | — |
