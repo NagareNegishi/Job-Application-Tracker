@@ -32,6 +32,8 @@ Content-Type: application/json
 { "text": "<raw job listing text>" }
 ```
 
+Fields never parsed (set by app defaults, not listing content): `status` (always `Wishlist`), `priority` (always `Low`), `appliedAt` (not applied yet at parse time).
+
 ### Response — full extraction
 ```json
 {
@@ -41,7 +43,10 @@ Content-Type: application/json
   "location": "Auckland",
   "workMode": "Hybrid",
   "salaryMin": 120000,
-  "salaryMax": 150000
+  "salaryMax": 150000,
+  "closedAt": "2026-06-30",
+  "source": "LinkedIn",
+  "description": "We are looking for a Senior Engineer to join..."
 }
 ```
 
@@ -49,17 +54,20 @@ Content-Type: application/json
 ```json
 {
   "company": "Acme Corp",
-  "role": "Senior Engineer"
+  "role": "Senior Engineer",
+  "description": "We are looking for a Senior Engineer to join..."
 }
 ```
 
-Fields not found are omitted (not null) — frontend skips them in the merge step.
+Fields not found are omitted (not null) — frontend skips them in the merge step. `description` is always present (the sanitized pasted text).
 
 ---
 
 ## Prompt Design
 
-System prompt instructs Claude to extract these fields from raw listing text: `company`, `role`, `jobUrl`, `location`, `workMode` (`Remote` / `Hybrid` / `OnSite`), `salaryMin`, `salaryMax` (integers, NZD assumed). Return valid JSON only, no prose. Omit fields not found.
+System prompt instructs Claude to extract these fields from raw listing text: `company`, `role`, `jobUrl`, `location`, `workMode` (`Remote` / `Hybrid` / `OnSite`), `salaryMin`, `salaryMax` (integers, NZD assumed), `closedAt` (ISO date if closing date mentioned), `source` (infer from URL pattern or text style — e.g. LinkedIn, Seek, Indeed). Return valid JSON only, no prose. Omit fields not found.
+
+`description` is not extracted by Claude — the backend passes through the sanitized input text directly.
 
 ---
 
@@ -86,5 +94,5 @@ Official C# NuGet package for the Claude API.
 
 ## Notes
 
-- `Source` field is intentionally excluded from parsing — it describes where the user found the listing, not data within the listing itself.
+- `description` is the pasted text passed through directly (not Claude-extracted), but must be sanitized on the backend before storing — raw HTML/script tags in pasted text would become stored XSS if the frontend ever renders description as HTML. Strip or encode tags on ingest.
 - Tests: mock `IParsingService` in controller tests; no live Claude calls in CI.
