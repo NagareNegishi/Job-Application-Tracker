@@ -31,10 +31,27 @@ CV integration is deferred — analysis uses profile text only.
 
 | Field | Type | Purpose |
 |---|---|---|
-| `TargetRoles` | `string[]` | Roles the user is targeting — used across all analysis types; stored as JSON column |
-| `Skills` | `string?` | Free text list — most important for gap analysis |
-| `ExperienceSummary` | `string?` | Work history paragraph — context for interview questions |
-| `Education` | `string?` | Degree / field — relevant for some roles |
+| `TargetRoles` | `string[]` | Roles the user is targeting — stored as JSON array |
+| `Skills` | `string[]` | Skills as a tag list — stored as JSON array |
+| `WorkHistory` | `WorkHistoryEntry[]` | Structured work experience entries — stored as JSON array |
+| `Education` | `EducationEntry[]` | Structured education entries — stored as JSON array |
+
+**WorkHistoryEntry:**
+| Sub-field | Type | Notes |
+|---|---|---|
+| `title` | `string` | Job title |
+| `company` | `string` | Employer |
+| `from` | `string` | Start date (`"YYYY-MM"`) |
+| `to` | `string?` | End date (`"YYYY-MM"`); `null` = current role |
+| `description` | `string` | Responsibilities and achievements |
+
+**EducationEntry:**
+| Sub-field | Type | Notes |
+|---|---|---|
+| `institution` | `string` | University or school |
+| `degree` | `string` | Degree and field |
+| `from` | `int` | Year started |
+| `to` | `int?` | Year graduated; `null` = currently enrolled |
 
 ### API Shape
 
@@ -51,9 +68,30 @@ PUT body:
 ```json
 {
   "targetRoles": ["Senior Full-Stack Engineer", "Engineering Lead"],
-  "skills": "TypeScript, React, C#, PostgreSQL",
-  "experienceSummary": "3 years building SaaS products...",
-  "education": "BSc Computer Science, University of Auckland"
+  "skills": ["TypeScript", "React", "C#", "PostgreSQL"],
+  "workHistory": [
+    {
+      "title": "Frontend Developer",
+      "company": "Acme Corp",
+      "from": "2023-01",
+      "to": null,
+      "description": "Built React dashboards, led migration to TypeScript..."
+    }
+  ],
+  "education": [
+    {
+      "institution": "University of Auckland",
+      "degree": "BSc Computer Science",
+      "from": 2019,
+      "to": 2022
+    },
+    {
+      "institution": "MIT",
+      "degree": "MSc Machine Learning",
+      "from": 2024,
+      "to": null
+    }
+  ]
 }
 ```
 
