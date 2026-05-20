@@ -149,4 +149,20 @@ public class AdminControllerTests
         var message = bad.Value!.GetType().GetProperty("message")?.GetValue(bad.Value) as string;
         Assert.Equal("Cannot modify your own AI access.", message);
     }
+
+    // Unconfirmed users cannot receive AI access — consistent with the verified-only principle
+    [Fact]
+    public async Task UpdateAiAccess_UnconfirmedUser_ReturnsBadRequest()
+    {
+        var unconfirmed = new ApplicationUser { Id = OtherUserId, Email = "regular@test.com", EmailConfirmed = false };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(OtherUserId))
+            .ReturnsAsync(unconfirmed);
+
+        var result = await _controller.UpdateAiAccess(OtherUserId, new UpdateAiAccessDto { Enabled = true });
+
+        var bad = Assert.IsType<BadRequestObjectResult>(result);
+        var message = bad.Value!.GetType().GetProperty("message")?.GetValue(bad.Value) as string;
+        Assert.Equal("User has not confirmed their email.", message);
+    }
 }
