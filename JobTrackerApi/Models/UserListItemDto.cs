@@ -9,4 +9,5 @@ public class UserListItemDto
     public required string Email { get; set; }
     public bool IsAiUser { get; set; }
     public bool IsAdmin { get; set; }
+    public bool IsEmailConfirmed { get; set; }
 }
