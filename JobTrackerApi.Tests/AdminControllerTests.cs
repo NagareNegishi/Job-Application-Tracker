@@ -118,5 +118,17 @@ public class AdminControllerTests
         Assert.False(regularDto.IsAiUser);
     }
 
+    // Very unlikely — userId always comes from GetUsers() in normal UI flow;
+    // only reachable if an admin intentionally crafts a raw request with a non-existent ID
+    [Fact]
+    public async Task UpdateAiAccess_UserNotFound_ReturnsNotFound()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(OtherUserId))
+            .ReturnsAsync((ApplicationUser?)null);
 
+        var result = await _controller.UpdateAiAccess(OtherUserId, new UpdateAiAccessDto { Enabled = true });
+
+        Assert.IsType<NotFoundResult>(result);
+    }
 }
