@@ -10,11 +10,16 @@ export default function AdminPage() {
   if (isLoading) return <div className="min-h-screen bg-muted" />
   if (isError) return <div className="min-h-screen bg-muted flex items-center justify-center text-muted-foreground">Failed to load users.</div>
 
+  // Split into two groups — unverified accounts shown separately, excluded from AI toggle
+  const verified   = users?.filter(u => u.isEmailConfirmed) ?? []
+  const unverified = users?.filter(u => !u.isEmailConfirmed) ?? []
+
   return (
     <div className="min-h-screen bg-muted">
       <NavBar />
       <main className="max-w-3xl mx-auto p-6">
         <h1 className="text-xl font-semibold mb-6">User Management</h1>
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -24,7 +29,7 @@ export default function AdminPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users?.map(user => (
+            {verified.map(user => (
               <TableRow key={user.id}>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.isAdmin ? "Admin" : "User"}</TableCell>
@@ -42,6 +47,26 @@ export default function AdminPage() {
             ))}
           </TableBody>
         </Table>
+
+        {unverified.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-sm font-semibold text-muted-foreground mb-3">Unverified Accounts</h2>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {unverified.map(user => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.email}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </main>
     </div>
   )
