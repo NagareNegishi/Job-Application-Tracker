@@ -9,3 +9,9 @@ export type UserListItem = {
   isAiUser: boolean
   isAdmin: boolean
 }
+
+// Fetch all users with their role flags — Admin only.
+export async function getUsers(): Promise<UserListItem[]> {
+  const response = await apiFetch(`${BASE_URL}/admin/users`)
+  return handleResponse<UserListItem[]>(response)
+}
