@@ -970,4 +970,23 @@ public class AuthControllerTests : IDisposable
         _userManagerMock.Verify(m => m.AddToRoleAsync(user, Roles.Admin),  Times.Once);
         _userManagerMock.Verify(m => m.AddToRoleAsync(user, Roles.AiUser), Times.Once);
     }
+
+    // Regular user confirms email — email doesn't match Admin:Email, no roles assigned
+    [Fact]
+    public async Task ConfirmEmail_NonAdminEmail_DoesNotGrantRoles()
+    {
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ConfirmEmailAsync(user, "valid-token"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var controller = BuildControllerWithAdminEmail();
+        var result = await controller.ConfirmEmail(TestUserId, "valid-token");
+
+        Assert.IsType<OkObjectResult>(result);
+        _userManagerMock.Verify(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
+    }
 }
