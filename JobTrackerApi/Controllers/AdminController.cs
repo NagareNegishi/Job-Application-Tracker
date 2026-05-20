@@ -23,7 +23,7 @@ public class AdminController : ControllerBase
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers()
     {
-        var users   = await _userManager.Users.ToListAsync();
+        var users   = await _userManager.Users.OrderBy(u => u.Email).ToListAsync();
         var aiUsers = await _userManager.GetUsersInRoleAsync(Roles.AiUser);
         var admins  = await _userManager.GetUsersInRoleAsync(Roles.Admin);
 

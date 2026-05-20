@@ -74,7 +74,7 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 - `Admin:Email` set in `appsettings.Development.json` and production environment variables. Use a placeholder (`admin@example.com`) in any checked-in config files.
 - Startup seeding is idempotent — creates roles and promotes an existing confirmed admin user; does not create users; logs and continues if admin not found.
 - Tests: seed roles and users directly in the in-memory DB; no startup seeding logic needed in tests.
-- **Confirmed**: `ClaimTypes.Role` serializes as `"role"` in the JWT payload via `JwtSecurityTokenHandler.OutboundClaimTypeMap`. Frontend reads `payload.role` — correct, no change needed.
+- **Confirmed**: `ClaimTypes.Role` serializes as the full URI (`http://schemas.microsoft.com/ws/2008/06/identity/claims/role`) in the JWT payload — the `OutboundClaimTypeMap` does not apply in .NET 10. Backend uses `new Claim("role", role)` explicitly so the frontend can read `payload.role`. The `InboundClaimTypeMap` maps `"role"` → `ClaimTypes.Role` on parse, so `RequireRole()` policies are unaffected.
 
 ---
 
