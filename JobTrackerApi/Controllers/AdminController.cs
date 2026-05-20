@@ -27,7 +27,7 @@ public class AdminController : ControllerBase
         var aiUsers = await _userManager.GetUsersInRoleAsync(Roles.AiUser);
         var admins  = await _userManager.GetUsersInRoleAsync(Roles.Admin);
 
-        // HashSet for O(1) lookup when mapping N users against role lists
+        // HashSet for O(1) lookup
         var aiUserIds = aiUsers.Select(u => u.Id).ToHashSet();
         var adminIds  = admins.Select(u => u.Id).ToHashSet();
 
@@ -49,7 +49,7 @@ public class AdminController : ControllerBase
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null) return NotFound();
 
-        // Block toggling own access — prevents self-lockout
+        // Block toggling own access
         var callerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (user.Id == callerId) return BadRequest(new { message = "Cannot modify your own AI access." });
 

@@ -19,6 +19,10 @@ Roles-based access control for AI features using ASP.NET Core Identity roles. Tw
 | `"Admin"` role assigned at `ConfirmEmail`, not at registration | Prevents unconfirmed accounts from holding the role; no cleanup needed for abandoned registrations |
 | `AiUser` toggle in `AdminController` requires `EmailConfirmed == true` | Only verified users can receive AI access; consistent with the verified-only principle |
 | Admin cannot remove their own `"Admin"` role or AI access via the API | Prevents accidental self-lockout |
+| `AdminController` fetches all users + `GetUsersInRoleAsync` per role (3 queries total) instead of `IsInRoleAsync` per user (N×2 queries) | Flat query count regardless of user count |
+| Response DTOs named `UserListItemDto` and `UpdateAiAccessDto` | Matches existing naming pattern: response DTOs describe shape, request DTOs describe action |
+| Frontend reads roles by decoding JWT payload — no extra API call or state | Token is already in memory; roles in the token stay in sync with backend automatically via token refresh |
+| Admin page at `/admin` — separate route, no nav link shown to non-admins | Keeps admin surface invisible to regular users without disrupting existing components |
 
 ---
 
@@ -33,8 +37,8 @@ Authorization: Bearer <token> (Admin role required)
 Response:
 ```json
 [
-  { "id": "abc123", "email": "user@example.com", "isAiUser": true },
-  { "id": "def456", "email": "other@example.com", "isAiUser": false }
+  { "id": "abc123", "email": "user@example.com", "isAiUser": true, "isAdmin": true },
+  { "id": "def456", "email": "other@example.com", "isAiUser": false, "isAdmin": false }
 ]
 ```
 
@@ -60,8 +64,8 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 | 3 | Add `Admin:Email` to config + fail-fast validation + seed roles on startup; assign `"Admin"` to existing confirmed user if found; assign `"Admin"` in `ConfirmEmail` for new admin registrations | done |
 | 4 | Include roles as claims in JWT at login in `AuthController` | done |
 | 5 | Register `"AiEnabled"` and `"Admin"` policies in `Program.cs` | done |
-| 6 | Add `AdminController` — `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access` | — |
-| 7 | Frontend admin page — user table with `IsAiUser` toggle per row | — |
+| 6 | Add `AdminController` — `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access` | done |
+| 7 | Frontend: `getRoles()`/`hasRole()` in `auth.ts`; `AdminRoute` component; `/admin` route in `App.tsx`; `adminService.ts`; TanStack Query hooks; `AdminPage` with user table and `IsAiUser` toggle | — |
 
 ---
 
@@ -70,6 +74,7 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 - `Admin:Email` set in `appsettings.Development.json` and production environment variables. Use a placeholder (`admin@example.com`) in any checked-in config files.
 - Startup seeding is idempotent — creates roles and promotes an existing confirmed admin user; does not create users; logs and continues if admin not found.
 - Tests: seed roles and users directly in the in-memory DB; no startup seeding logic needed in tests.
+- **Unverified**: JWT claim name for roles — `ClaimTypes.Role` is written to the token via `GenerateAccessToken`; whether it serializes as `"role"` or the full URI in .NET 10 needs confirmation by decoding an actual login token at runtime. Frontend reads `payload.role`; if wrong, change backend to `new Claim("role", role)` explicitly.
 
 ---
 
