@@ -87,4 +87,36 @@ public class AdminControllerTests
         public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(inner.MoveNext());
         public ValueTask DisposeAsync() { inner.Dispose(); return ValueTask.CompletedTask; }
     }
+
+    // Happy path — two users returned; admin has both flags set, regular user has neither
+    [Fact]
+    public async Task GetUsers_ReturnsUsersWithCorrectRoleFlags()
+    {
+        _userManagerMock
+            .Setup(m => m.Users)
+            .Returns(new TestAsyncEnumerable<ApplicationUser>(new[] { _adminUser, _regularUser }));
+        _userManagerMock
+            .Setup(m => m.GetUsersInRoleAsync(Roles.Admin))
+            .ReturnsAsync(new List<ApplicationUser> { _adminUser });
+        _userManagerMock
+            .Setup(m => m.GetUsersInRoleAsync(Roles.AiUser))
+            .ReturnsAsync(new List<ApplicationUser> { _adminUser });
+
+        var result = await _controller.GetUsers();
+
+        var ok    = Assert.IsType<OkObjectResult>(result);
+        var items = Assert.IsAssignableFrom<IEnumerable<UserListItemDto>>(ok.Value).ToList();
+
+        Assert.Equal(2, items.Count);
+
+        var adminDto   = items.First(u => u.Id == TestCallerId);
+        var regularDto = items.First(u => u.Id == OtherUserId);
+
+        Assert.True(adminDto.IsAdmin);
+        Assert.True(adminDto.IsAiUser);
+        Assert.False(regularDto.IsAdmin);
+        Assert.False(regularDto.IsAiUser);
+    }
+
+
 }
