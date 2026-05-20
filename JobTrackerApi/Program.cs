@@ -372,9 +372,14 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
 
     var admin = await userManager.FindByEmailAsync(adminEmail);
-    // Pattern match: null-safe + confirmed check in one expression — unconfirmed accounts never receive the role
-    if (admin is { EmailConfirmed: true } && !await userManager.IsInRoleAsync(admin, Roles.Admin))
-        await userManager.AddToRoleAsync(admin, Roles.Admin);
+    // Admin promotion — assigns both Admin and AiUser; idempotent checks prevent duplicate role entries
+    if (admin is { EmailConfirmed: true })
+    {
+        if (!await userManager.IsInRoleAsync(admin, Roles.Admin))
+            await userManager.AddToRoleAsync(admin, Roles.Admin);
+        if (!await userManager.IsInRoleAsync(admin, Roles.AiUser))
+            await userManager.AddToRoleAsync(admin, Roles.AiUser);
+    }
 }
 
 app.Run();
