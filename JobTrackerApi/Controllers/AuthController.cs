@@ -375,15 +375,21 @@ public class AuthController : ControllerBase
     }
 
     // Helper method to generate Access token
-    private string GenerateAccessToken(ApplicationUser user)
+    private async Task<string> GenerateAccessToken(ApplicationUser user)
     {
-        var claims = new[]
+        var roles = await _userManager.GetRolesAsync(user);
+
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(JwtRegisteredClaimNames.Email, user.Email!),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim("stamp", user.SecurityStamp!) // SecurityStamp come from AspNet, not JWT standard claim names
         };
+
+        // Roles added as ClaimTypes.Role — evaluated by authorization policies without a DB hit
+        foreach (var role in roles)
+            claims.Add(new Claim(ClaimTypes.Role, role));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var token = new JwtSecurityToken(
