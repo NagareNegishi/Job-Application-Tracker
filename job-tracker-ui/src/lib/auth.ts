@@ -29,3 +29,19 @@ export function getEmail(): string | null {
     return null
   }
 }
+
+// Decode the JWT payload to read the role claim.
+// .NET serializes one role as a string, multiple as an array; normalize to string[] either way.
+export function getRoles(): string[] {
+  if (!accessToken) return []
+  try {
+    const b64 = accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(b64))
+    const role = payload.role
+    if (!role) return []
+    // Single role → string, multiple → string[]; always return string[]
+    return Array.isArray(role) ? role : [role]
+  } catch {
+    return []
+  }
+}
