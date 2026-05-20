@@ -194,6 +194,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Named policies — reusable on any endpoint via [Authorize(Policy = "...")]
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole(Roles.Admin));
+    options.AddPolicy("AiEnabled", policy => policy.RequireRole(Roles.AiUser));
+});
 
 // Rate limiting — fixed window per IP, applied to auth endpoints only via [EnableRateLimiting("auth")]
 builder.Services.AddRateLimiter(options =>
