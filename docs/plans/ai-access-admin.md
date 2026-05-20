@@ -66,6 +66,8 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 | 5 | Register `"AiEnabled"` and `"Admin"` policies in `Program.cs` | done |
 | 6 | Add `AdminController` — `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access` | done |
 | 7 | Frontend: `getRoles()`/`hasRole()` in `auth.ts`; `AdminRoute` component; `/admin` route in `App.tsx`; `adminService.ts`; TanStack Query hooks; `AdminPage` with user table and `IsAiUser` toggle | done |
+| 8 | Unit tests — `AdminControllerTests.cs` (6 tests: `GetUsers`, `UpdateAiAccess`); 3 `ConfirmEmail` admin promotion tests added to `AuthControllerTests.cs` | done |
+| 9 | Production config — add `Admin__Email: ${ADMIN_EMAIL}` to backend `environment` in `compose.prod.yml`; add `ADMIN_EMAIL=admin@example.com` placeholder to `.env.example`; add `export ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}"` to deploy job SSH session in `.github/workflows/deploy.yml`; add `ADMIN_EMAIL` as a GitHub Actions secret | todo |
 
 ---
 
@@ -73,7 +75,7 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 
 - `Admin:Email` set in `appsettings.Development.json` and production environment variables. Use a placeholder (`admin@example.com`) in any checked-in config files.
 - Startup seeding is idempotent — creates roles and promotes an existing confirmed admin user; does not create users; logs and continues if admin not found.
-- Tests: seed roles and users directly in the in-memory DB; no startup seeding logic needed in tests.
+- Tests: `AdminControllerTests` mocks `UserManager` directly — no `DbContext` needed. `TestAsyncEnumerable` helpers copied from `AuthControllerTests` (needed for `Users.OrderBy().ToListAsync()`). Startup seeding in `Program.cs` is not unit-testable — requires `WebApplicationFactory` (integration test); skipped by design.
 - **Confirmed**: `ClaimTypes.Role` serializes as the full URI (`http://schemas.microsoft.com/ws/2008/06/identity/claims/role`) in the JWT payload — the `OutboundClaimTypeMap` does not apply in .NET 10. Backend uses `new Claim("role", role)` explicitly so the frontend can read `payload.role`. The `InboundClaimTypeMap` maps `"role"` → `ClaimTypes.Role` on parse, so `RequireRole()` policies are unaffected.
 
 ---
