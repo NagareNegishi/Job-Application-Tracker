@@ -5,3 +5,14 @@ import { getUsers, updateAiAccess } from "@/services/adminService"
 export function useAdminUsers() {
   return useQuery({ queryKey: ["adminUsers"], queryFn: getUsers })
 }
+
+// Mutate AI access for a single user — invalidates the user list on success so the table stays in sync.
+export function useUpdateAiAccess() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, enabled }: { userId: string; enabled: boolean }) =>
+      updateAiAccess(userId, enabled),
+    // Invalidate so useAdminUsers re-fetches automatically — no manual state update needed
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["adminUsers"] }),
+  })
+}
