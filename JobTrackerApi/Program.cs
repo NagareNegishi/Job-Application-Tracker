@@ -355,4 +355,20 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// Seed Identity roles and promote admin — idempotent, logs and continues if admin not found
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    foreach (var role in new[] { Roles.Admin, Roles.AiUser })
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+
+    var admin = await userManager.FindByEmailAsync(adminEmail);
+    // Pattern match: null-safe + confirmed check in one expression — unconfirmed accounts never receive the role
+    if (admin is { EmailConfirmed: true } && !await userManager.IsInRoleAsync(admin, Roles.Admin))
+        await userManager.AddToRoleAsync(admin, Roles.Admin);
+}
+
 app.Run();
