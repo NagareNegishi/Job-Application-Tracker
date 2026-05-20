@@ -65,7 +65,7 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 | 4 | Include roles as claims in JWT at login in `AuthController` | done |
 | 5 | Register `"AiEnabled"` and `"Admin"` policies in `Program.cs` | done |
 | 6 | Add `AdminController` — `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access` | done |
-| 7 | Frontend: `getRoles()`/`hasRole()` in `auth.ts`; `AdminRoute` component; `/admin` route in `App.tsx`; `adminService.ts`; TanStack Query hooks; `AdminPage` with user table and `IsAiUser` toggle | — |
+| 7 | Frontend: `getRoles()`/`hasRole()` in `auth.ts`; `AdminRoute` component; `/admin` route in `App.tsx`; `adminService.ts`; TanStack Query hooks; `AdminPage` with user table and `IsAiUser` toggle | done |
 
 ---
 
