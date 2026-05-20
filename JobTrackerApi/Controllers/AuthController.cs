@@ -204,12 +204,16 @@ public class AuthController : ControllerBase
 
         _logger.LogInformation("Email confirmed for user {UserId}", userId);
 
-        // Promote to admin on confirmation if this is the configured admin email
+        // Admin promotion — assigns both Admin and AiUser; idempotent checks prevent duplicate role entries
         var configAdminEmail = _config["Admin:Email"];
         if (configAdminEmail != null &&
-            string.Equals(user.Email, configAdminEmail, StringComparison.OrdinalIgnoreCase) &&
-            !await _userManager.IsInRoleAsync(user, Roles.Admin))
-            await _userManager.AddToRoleAsync(user, Roles.Admin);
+            string.Equals(user.Email, configAdminEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!await _userManager.IsInRoleAsync(user, Roles.Admin))
+                await _userManager.AddToRoleAsync(user, Roles.Admin);
+            if (!await _userManager.IsInRoleAsync(user, Roles.AiUser))
+                await _userManager.AddToRoleAsync(user, Roles.AiUser);
+        }
 
         return Ok(new { message = "Email confirmed. You can now log in." });
     }
