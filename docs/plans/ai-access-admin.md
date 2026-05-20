@@ -55,9 +55,9 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Add `.AddRoles<IdentityRole>()` to Identity setup in `Program.cs` + migration for role tables | — |
-| 2 | Add static `Roles` class with `Admin` and `AiUser` constants | — |
-| 3 | Add `Admin:Email` to config + fail-fast validation + seed roles on startup; assign `"Admin"` to existing confirmed user if found; assign `"Admin"` in `ConfirmEmail` for new admin registrations | — |
+| 1 | Add `.AddRoles<IdentityRole>()` to Identity setup in `Program.cs` + migration for role tables | done |
+| 2 | Add static `Roles` class with `Admin` and `AiUser` constants | done |
+| 3 | Add `Admin:Email` to config + fail-fast validation + seed roles on startup; assign `"Admin"` to existing confirmed user if found; assign `"Admin"` in `ConfirmEmail` for new admin registrations | done |
 | 4 | Include roles as claims in JWT at login in `AuthController` | — |
 | 5 | Register `"AiEnabled"` and `"Admin"` policies in `Program.cs` | — |
 | 6 | Add `AdminController` — `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access` | — |
