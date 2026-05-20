@@ -59,7 +59,7 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 | 2 | Add static `Roles` class with `Admin` and `AiUser` constants | done |
 | 3 | Add `Admin:Email` to config + fail-fast validation + seed roles on startup; assign `"Admin"` to existing confirmed user if found; assign `"Admin"` in `ConfirmEmail` for new admin registrations | done |
 | 4 | Include roles as claims in JWT at login in `AuthController` | done |
-| 5 | Register `"AiEnabled"` and `"Admin"` policies in `Program.cs` | — |
+| 5 | Register `"AiEnabled"` and `"Admin"` policies in `Program.cs` | done |
 | 6 | Add `AdminController` — `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access` | — |
 | 7 | Frontend admin page — user table with `IsAiUser` toggle per row | — |
 
