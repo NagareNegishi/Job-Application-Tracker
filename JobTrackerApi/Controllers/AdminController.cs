@@ -33,10 +33,11 @@ public class AdminController : ControllerBase
 
         var result = users.Select(u => new UserListItemDto
         {
-            Id       = u.Id,
-            Email    = u.Email!,
-            IsAiUser = aiUserIds.Contains(u.Id),
-            IsAdmin  = adminIds.Contains(u.Id)
+            Id               = u.Id,
+            Email            = u.Email!,
+            IsAiUser         = aiUserIds.Contains(u.Id),
+            IsAdmin          = adminIds.Contains(u.Id),
+            IsEmailConfirmed = u.EmailConfirmed
         });
 
         return Ok(result);
