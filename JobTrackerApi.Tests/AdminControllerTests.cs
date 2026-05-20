@@ -165,4 +165,38 @@ public class AdminControllerTests
         var message = bad.Value!.GetType().GetProperty("message")?.GetValue(bad.Value) as string;
         Assert.Equal("User has not confirmed their email.", message);
     }
+
+    // Enabling AI access on a confirmed user — AddToRoleAsync called, 200 returned
+    [Fact]
+    public async Task UpdateAiAccess_Enable_AddsRoleAndReturnsOk()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(OtherUserId))
+            .ReturnsAsync(_regularUser);
+        _userManagerMock
+            .Setup(m => m.AddToRoleAsync(_regularUser, Roles.AiUser))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var result = await _controller.UpdateAiAccess(OtherUserId, new UpdateAiAccessDto { Enabled = true });
+
+        Assert.IsType<OkResult>(result);
+        _userManagerMock.Verify(m => m.AddToRoleAsync(_regularUser, Roles.AiUser), Times.Once);
+    }
+
+    // Revoking AI access from a confirmed user — RemoveFromRoleAsync called, 200 returned
+    [Fact]
+    public async Task UpdateAiAccess_Disable_RemovesRoleAndReturnsOk()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(OtherUserId))
+            .ReturnsAsync(_regularUser);
+        _userManagerMock
+            .Setup(m => m.RemoveFromRoleAsync(_regularUser, Roles.AiUser))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var result = await _controller.UpdateAiAccess(OtherUserId, new UpdateAiAccessDto { Enabled = false });
+
+        Assert.IsType<OkResult>(result);
+        _userManagerMock.Verify(m => m.RemoveFromRoleAsync(_regularUser, Roles.AiUser), Times.Once);
+    }
 }
