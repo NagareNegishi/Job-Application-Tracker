@@ -989,4 +989,29 @@ public class AuthControllerTests : IDisposable
         Assert.IsType<OkObjectResult>(result);
         _userManagerMock.Verify(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
     }
+
+    // Admin already holds both roles — idempotent, no duplicate role assignment
+    [Fact]
+    public async Task ConfirmEmail_AdminEmail_AlreadyInRoles_DoesNotAddDuplicate()
+    {
+        var user = new ApplicationUser { Id = TestUserId, Email = AdminEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ConfirmEmailAsync(user, "valid-token"))
+            .ReturnsAsync(IdentityResult.Success);
+        _userManagerMock
+            .Setup(m => m.IsInRoleAsync(user, Roles.Admin))
+            .ReturnsAsync(true);
+        _userManagerMock
+            .Setup(m => m.IsInRoleAsync(user, Roles.AiUser))
+            .ReturnsAsync(true);
+
+        var controller = BuildControllerWithAdminEmail();
+        var result = await controller.ConfirmEmail(TestUserId, "valid-token");
+
+        Assert.IsType<OkObjectResult>(result);
+        _userManagerMock.Verify(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
+    }
 }
