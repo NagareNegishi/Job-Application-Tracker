@@ -109,6 +109,13 @@ if (!builder.Environment.IsDevelopment())
         ?? throw new InvalidOperationException("Resend:ApiKey is not configured. Set RESEND_API_KEY environment variable.");
 }
 
+var adminEmail = builder.Configuration["Admin:Email"]
+    ?? throw new InvalidOperationException(
+        builder.Environment.IsDevelopment()
+            ? "Admin:Email is not configured. Add it to appsettings.Development.json."
+            : "Admin:Email is not configured. Set ADMIN_EMAIL environment variable."
+    );
+
 // Npgsql Entity Framework
 // https://www.npgsql.org/efcore/index.html?tabs=aspnet
 // No AddDbContextPool for safety and simplicity
