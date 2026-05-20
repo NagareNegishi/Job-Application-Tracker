@@ -8,6 +8,7 @@ export type UserListItem = {
   email: string
   isAiUser: boolean
   isAdmin: boolean
+  isEmailConfirmed: boolean
 }
 
 // Fetch all users with their role flags — Admin only.
