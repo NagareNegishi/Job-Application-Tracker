@@ -36,6 +36,7 @@ public class AuthControllerTests : IDisposable
     private const string JwtIssuer       = "test-issuer";
     private const string JwtAudience     = "test-audience";
     private const string FrontendBaseUrl = "http://localhost:5173";
+    private const string AdminEmail      = "admin@test.com";
 
     // Expected error messages — pinned so both ResetPassword failure paths are caught together
     private const string GenericResetErrorMessage = "Invalid or expired reset link.";
@@ -156,6 +157,40 @@ public class AuthControllerTests : IDisposable
         _context.Jobs.Add(job);
         await _context.SaveChangesAsync();
         return job;
+    }
+
+    // Builds a controller with Admin:Email in config — reuses all existing mocks
+    private AuthController BuildControllerWithAdminEmail()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Demo:ResetKey"]         = TestResetKey,
+                ["Jwt:Key"]               = JwtKey,
+                ["Jwt:Issuer"]            = JwtIssuer,
+                ["Jwt:Audience"]          = JwtAudience,
+                ["Jwt:ExpiryMinutes"]     = "60",
+                ["Jwt:RefreshExpiryDays"] = "7",
+                ["App:FrontendBaseUrl"]   = FrontendBaseUrl,
+                ["Admin:Email"]           = AdminEmail
+            })
+            .Build();
+
+        var controller = new AuthController(
+            _userManagerMock.Object,
+            config,
+            _context,
+            _envMock.Object,
+            _storageMock.Object,
+            _emailMock.Object,
+            _loggerMock.Object);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+
+        return controller;
     }
 
     // Happy path — demo user exists, missing seed jobs are added, tokens issued
