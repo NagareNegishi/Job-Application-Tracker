@@ -71,7 +71,7 @@ public class AuthController : ControllerBase
             await _context.SaveChangesAsync();
         }
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
@@ -225,7 +225,7 @@ public class AuthController : ControllerBase
         if (!user.EmailConfirmed)
             return StatusCode(403, new { message = "Email not verified." });
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
         // the refresh token is set in cookie not for JS
@@ -253,7 +253,7 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByIdAsync(existing.UserId);
         if (user == null) return Unauthorized();
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessToken(user);
         var newRefreshToken = await CreateRefreshTokenAsync(user.Id);
 
         SetRefreshTokenCookie(newRefreshToken.Token, newRefreshToken.ExpiresAt);
