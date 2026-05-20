@@ -15,8 +15,8 @@ Roles-based access control for AI features using ASP.NET Core Identity roles. Tw
 | `"Admin"` role gates admin controller via `[Authorize(Policy = "Admin")]` | Same reusable pattern |
 | Static `Roles` class for role name constants | Prevents typo bugs when referencing role names across controllers and seeding |
 | `Admin:Email` read from config; fail-fast if missing | Not hardcoded in source — config value set per environment; matches existing JWT fail-fast pattern |
-| Seeding assigns `"Admin"` role to existing confirmed user only; no user creation | Account creation belongs to `AuthController`; only verified users should hold the role |
-| `"Admin"` role assigned at `ConfirmEmail`, not at registration | Prevents unconfirmed accounts from holding the role; no cleanup needed for abandoned registrations |
+| Seeding assigns `"Admin"` and `"AiUser"` to existing confirmed user only; no user creation | Account creation belongs to `AuthController`; only verified users should hold the role; admin always gets AI access since they can't self-assign |
+| `"Admin"` and `"AiUser"` assigned together at `ConfirmEmail` and startup seed | Admins can't self-assign `AiUser` via the toggle (self-modification blocked); assigning both at promotion is the only reliable path |
 | `AiUser` toggle in `AdminController` requires `EmailConfirmed == true` | Only verified users can receive AI access; consistent with the verified-only principle |
 | Admin cannot remove their own `"Admin"` role or AI access via the API | Prevents accidental self-lockout |
 | `AdminController` fetches all users + `GetUsersInRoleAsync` per role (3 queries total) instead of `IsInRoleAsync` per user (N×2 queries) | Flat query count regardless of user count |
@@ -74,7 +74,7 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 - `Admin:Email` set in `appsettings.Development.json` and production environment variables. Use a placeholder (`admin@example.com`) in any checked-in config files.
 - Startup seeding is idempotent — creates roles and promotes an existing confirmed admin user; does not create users; logs and continues if admin not found.
 - Tests: seed roles and users directly in the in-memory DB; no startup seeding logic needed in tests.
-- **Unverified**: JWT claim name for roles — `ClaimTypes.Role` is written to the token via `GenerateAccessToken`; whether it serializes as `"role"` or the full URI in .NET 10 needs confirmation by decoding an actual login token at runtime. Frontend reads `payload.role`; if wrong, change backend to `new Claim("role", role)` explicitly.
+- **Confirmed**: `ClaimTypes.Role` serializes as `"role"` in the JWT payload via `JwtSecurityTokenHandler.OutboundClaimTypeMap`. Frontend reads `payload.role` — correct, no change needed.
 
 ---
 
