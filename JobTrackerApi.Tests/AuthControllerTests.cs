@@ -941,4 +941,33 @@ public class AuthControllerTests : IDisposable
         var statusResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(503, statusResult.StatusCode);
     }
+
+    // Admin email confirmed — both Admin and AiUser roles assigned on first confirmation
+    [Fact]
+    public async Task ConfirmEmail_AdminEmail_GrantsAdminAndAiUserRoles()
+    {
+        var user = new ApplicationUser { Id = TestUserId, Email = AdminEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ConfirmEmailAsync(user, "valid-token"))
+            .ReturnsAsync(IdentityResult.Success);
+        _userManagerMock
+            .Setup(m => m.IsInRoleAsync(user, Roles.Admin))
+            .ReturnsAsync(false);
+        _userManagerMock
+            .Setup(m => m.IsInRoleAsync(user, Roles.AiUser))
+            .ReturnsAsync(false);
+        _userManagerMock
+            .Setup(m => m.AddToRoleAsync(user, It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var controller = BuildControllerWithAdminEmail();
+        var result = await controller.ConfirmEmail(TestUserId, "valid-token");
+
+        Assert.IsType<OkObjectResult>(result);
+        _userManagerMock.Verify(m => m.AddToRoleAsync(user, Roles.Admin),  Times.Once);
+        _userManagerMock.Verify(m => m.AddToRoleAsync(user, Roles.AiUser), Times.Once);
+    }
 }
