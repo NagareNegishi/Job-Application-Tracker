@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using JobTrackerApi.Models;
 
 namespace JobTrackerApi.Controllers;
@@ -44,6 +46,21 @@ public class AdminController : ControllerBase
     [HttpPatch("users/{userId}/ai-access")]
     public async Task<IActionResult> UpdateAiAccess(string userId, [FromBody] UpdateAiAccessDto dto)
     {
-        throw new NotImplementedException();
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return NotFound();
+
+        // Block toggling own access — prevents self-lockout
+        var callerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (user.Id == callerId) return BadRequest(new { message = "Cannot modify your own AI access." });
+
+        // Only confirmed accounts can receive AI access
+        if (!user.EmailConfirmed) return BadRequest(new { message = "User has not confirmed their email." });
+
+        if (dto.Enabled)
+            await _userManager.AddToRoleAsync(user, Roles.AiUser);
+        else
+            await _userManager.RemoveFromRoleAsync(user, Roles.AiUser);
+
+        return Ok();
     }
 }
