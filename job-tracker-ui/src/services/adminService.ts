@@ -15,3 +15,13 @@ export async function getUsers(): Promise<UserListItem[]> {
   const response = await apiFetch(`${BASE_URL}/admin/users`)
   return handleResponse<UserListItem[]>(response)
 }
+
+// Toggle AI access for a user — Admin only, cannot target self.
+export async function updateAiAccess(userId: string, enabled: boolean): Promise<void> {
+  const response = await apiFetch(`${BASE_URL}/admin/users/${userId}/ai-access`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled }),
+  })
+  return handleEmptyResponse(response)
+}
