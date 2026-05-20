@@ -399,9 +399,10 @@ public class AuthController : ControllerBase
             new Claim("stamp", user.SecurityStamp!) // SecurityStamp come from AspNet, not JWT standard claim names
         };
 
-        // Roles added as ClaimTypes.Role — evaluated by authorization policies without a DB hit
+        // "role" written explicitly — ClaimTypes.Role serializes as the full URI, not "role", breaking frontend JWT decoding.
+        // InboundClaimTypeMap maps "role" → ClaimTypes.Role on parse, so RequireRole() policies still work.
         foreach (var role in roles)
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            claims.Add(new Claim("role", role));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var token = new JwtSecurityToken(
