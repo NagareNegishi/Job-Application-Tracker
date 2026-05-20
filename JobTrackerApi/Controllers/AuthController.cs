@@ -203,6 +203,14 @@ public class AuthController : ControllerBase
         }
 
         _logger.LogInformation("Email confirmed for user {UserId}", userId);
+
+        // Promote to admin on confirmation if this is the configured admin email
+        var configAdminEmail = _config["Admin:Email"];
+        if (configAdminEmail != null &&
+            string.Equals(user.Email, configAdminEmail, StringComparison.OrdinalIgnoreCase) &&
+            !await _userManager.IsInRoleAsync(user, Roles.Admin))
+            await _userManager.AddToRoleAsync(user, Roles.Admin);
+
         return Ok(new { message = "Email confirmed. You can now log in." });
     }
 
