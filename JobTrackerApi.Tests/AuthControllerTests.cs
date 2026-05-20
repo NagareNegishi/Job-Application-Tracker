@@ -36,6 +36,7 @@ public class AuthControllerTests : IDisposable
     private const string JwtIssuer       = "test-issuer";
     private const string JwtAudience     = "test-audience";
     private const string FrontendBaseUrl = "http://localhost:5173";
+    private const string AdminEmail      = "admin@test.com";
 
     // Expected error messages — pinned so both ResetPassword failure paths are caught together
     private const string GenericResetErrorMessage = "Invalid or expired reset link.";
@@ -80,6 +81,12 @@ public class AuthControllerTests : IDisposable
         // default mock behaviour returns a completed Task, which is what we want
         _emailMock = new Mock<IEmailService>();
         _loggerMock = new Mock<ILogger<AuthController>>();
+
+        // GetRolesAsync is called by GenerateAccessToken; return empty list by default —
+        // tests that need specific roles override this setup individually
+        _userManagerMock
+            .Setup(m => m.GetRolesAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync(new List<string>());
 
         _controller = new AuthController(
             _userManagerMock.Object,
@@ -150,6 +157,40 @@ public class AuthControllerTests : IDisposable
         _context.Jobs.Add(job);
         await _context.SaveChangesAsync();
         return job;
+    }
+
+    // Builds a controller with Admin:Email in config — reuses all existing mocks
+    private AuthController BuildControllerWithAdminEmail()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Demo:ResetKey"]         = TestResetKey,
+                ["Jwt:Key"]               = JwtKey,
+                ["Jwt:Issuer"]            = JwtIssuer,
+                ["Jwt:Audience"]          = JwtAudience,
+                ["Jwt:ExpiryMinutes"]     = "60",
+                ["Jwt:RefreshExpiryDays"] = "7",
+                ["App:FrontendBaseUrl"]   = FrontendBaseUrl,
+                ["Admin:Email"]           = AdminEmail
+            })
+            .Build();
+
+        var controller = new AuthController(
+            _userManagerMock.Object,
+            config,
+            _context,
+            _envMock.Object,
+            _storageMock.Object,
+            _emailMock.Object,
+            _loggerMock.Object);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+
+        return controller;
     }
 
     // Happy path — demo user exists, missing seed jobs are added, tokens issued
@@ -899,5 +940,78 @@ public class AuthControllerTests : IDisposable
         // Assert
         var statusResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(503, statusResult.StatusCode);
+    }
+
+    // Admin email confirmed — both Admin and AiUser roles assigned on first confirmation
+    [Fact]
+    public async Task ConfirmEmail_AdminEmail_GrantsAdminAndAiUserRoles()
+    {
+        var user = new ApplicationUser { Id = TestUserId, Email = AdminEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ConfirmEmailAsync(user, "valid-token"))
+            .ReturnsAsync(IdentityResult.Success);
+        _userManagerMock
+            .Setup(m => m.IsInRoleAsync(user, Roles.Admin))
+            .ReturnsAsync(false);
+        _userManagerMock
+            .Setup(m => m.IsInRoleAsync(user, Roles.AiUser))
+            .ReturnsAsync(false);
+        _userManagerMock
+            .Setup(m => m.AddToRoleAsync(user, It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var controller = BuildControllerWithAdminEmail();
+        var result = await controller.ConfirmEmail(TestUserId, "valid-token");
+
+        Assert.IsType<OkObjectResult>(result);
+        _userManagerMock.Verify(m => m.AddToRoleAsync(user, Roles.Admin),  Times.Once);
+        _userManagerMock.Verify(m => m.AddToRoleAsync(user, Roles.AiUser), Times.Once);
+    }
+
+    // Regular user confirms email — email doesn't match Admin:Email, no roles assigned
+    [Fact]
+    public async Task ConfirmEmail_NonAdminEmail_DoesNotGrantRoles()
+    {
+        var user = new ApplicationUser { Id = TestUserId, Email = TestUserEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ConfirmEmailAsync(user, "valid-token"))
+            .ReturnsAsync(IdentityResult.Success);
+
+        var controller = BuildControllerWithAdminEmail();
+        var result = await controller.ConfirmEmail(TestUserId, "valid-token");
+
+        Assert.IsType<OkObjectResult>(result);
+        _userManagerMock.Verify(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
+    }
+
+    // Admin already holds both roles — idempotent, no duplicate role assignment
+    [Fact]
+    public async Task ConfirmEmail_AdminEmail_AlreadyInRoles_DoesNotAddDuplicate()
+    {
+        var user = new ApplicationUser { Id = TestUserId, Email = AdminEmail };
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestUserId))
+            .ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ConfirmEmailAsync(user, "valid-token"))
+            .ReturnsAsync(IdentityResult.Success);
+        _userManagerMock
+            .Setup(m => m.IsInRoleAsync(user, Roles.Admin))
+            .ReturnsAsync(true);
+        _userManagerMock
+            .Setup(m => m.IsInRoleAsync(user, Roles.AiUser))
+            .ReturnsAsync(true);
+
+        var controller = BuildControllerWithAdminEmail();
+        var result = await controller.ConfirmEmail(TestUserId, "valid-token");
+
+        Assert.IsType<OkObjectResult>(result);
+        _userManagerMock.Verify(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
     }
 }

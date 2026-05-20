@@ -177,6 +177,7 @@ jobs:
             export DEMO_RESET_KEY="${{ secrets.DEMO_RESET_KEY }}"
             export EMAIL_FROM_ADDRESS="${{ secrets.EMAIL_FROM_ADDRESS }}"
             export RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}"
+            export ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}"
 
             docker compose -f compose.prod.yml up --no-build -d
           EOF

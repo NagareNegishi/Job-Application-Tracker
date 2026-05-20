@@ -2,6 +2,8 @@ import { Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Navigate, Route, Routes } from "react-router"
 import ProtectedRoute from "./components/ProtectedRoute"
+import AdminRoute from "./components/AdminRoute"
+import AdminPage from "./pages/AdminPage"
 import { silentRefresh } from "./lib/api"
 import JobDetailPage from "./pages/JobDetailPage"
 import JobPage from "./pages/JobPage"
@@ -40,6 +42,7 @@ function App() {
       <Route path="/jobs" element={<ProtectedRoute><JobPage /></ProtectedRoute>} />
       <Route path="/jobs/:id" element={<ProtectedRoute><JobDetailPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
     </Routes>
   )
 }

@@ -1,6 +1,10 @@
 # Job Application Tracker
 
-Full-stack job application tracking system built with ASP.NET Core and React.
+Keeping track of dozens of job applications in a spreadsheet gets messy fast.<br>
+Job Application Tracker is a web app that gives you a single place to manage your entire job search,
+log every application, track where it stands, attach your CV and cover letters,
+record contacts and conversations, and get a clear view of what needs attention next.<br>
+Switch between a table view and a Kanban board, filter by location or work mode, and set priorities so nothing slips through the cracks.
 
 ## Tech Stack
 
@@ -15,6 +19,9 @@ Full-stack job application tracking system built with ASP.NET Core and React.
 
 - Track job applications through a status pipeline (Wishlist → Applied → Screening → Interview → Offer / Rejected)
 - Tab views on the job table: Active, Closing Soon, All, Rejected
+- Kanban board view — toggle from the table; drag cards across Low / Medium / High priority columns
+- Customisable table columns — show or hide columns; preferences saved per user
+- Sorting and filtering — sort by any column; filter by location or work mode
 - Attach documents (CV, cover letter) per application
 - Contact and correspondence history per application
 - JWT authentication with httpOnly refresh token rotation
@@ -42,10 +49,6 @@ Click **Try Demo** on the login page — no account required. The demo account i
 To get the full experience (documents, password change), [register a free account](https://jobtracker.nagarenegishi.com/register).
 
 ---
-
-## Problem
-
-Tracking 50-200+ job applications requires structured data management.
 
 ## Project Goals
 

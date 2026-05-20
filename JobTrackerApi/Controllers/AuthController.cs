@@ -71,7 +71,7 @@ public class AuthController : ControllerBase
             await _context.SaveChangesAsync();
         }
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
@@ -203,6 +203,18 @@ public class AuthController : ControllerBase
         }
 
         _logger.LogInformation("Email confirmed for user {UserId}", userId);
+
+        // Admin promotion — assigns both Admin and AiUser; idempotent checks prevent duplicate role entries
+        var configAdminEmail = _config["Admin:Email"];
+        if (configAdminEmail != null &&
+            string.Equals(user.Email, configAdminEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!await _userManager.IsInRoleAsync(user, Roles.Admin))
+                await _userManager.AddToRoleAsync(user, Roles.Admin);
+            if (!await _userManager.IsInRoleAsync(user, Roles.AiUser))
+                await _userManager.AddToRoleAsync(user, Roles.AiUser);
+        }
+
         return Ok(new { message = "Email confirmed. You can now log in." });
     }
 
@@ -225,7 +237,7 @@ public class AuthController : ControllerBase
         if (!user.EmailConfirmed)
             return StatusCode(403, new { message = "Email not verified." });
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
         // the refresh token is set in cookie not for JS
@@ -253,7 +265,7 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByIdAsync(existing.UserId);
         if (user == null) return Unauthorized();
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessToken(user);
         var newRefreshToken = await CreateRefreshTokenAsync(user.Id);
 
         SetRefreshTokenCookie(newRefreshToken.Token, newRefreshToken.ExpiresAt);
@@ -375,15 +387,22 @@ public class AuthController : ControllerBase
     }
 
     // Helper method to generate Access token
-    private string GenerateAccessToken(ApplicationUser user)
+    private async Task<string> GenerateAccessToken(ApplicationUser user)
     {
-        var claims = new[]
+        var roles = await _userManager.GetRolesAsync(user);
+
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(JwtRegisteredClaimNames.Email, user.Email!),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim("stamp", user.SecurityStamp!) // SecurityStamp come from AspNet, not JWT standard claim names
         };
+
+        // "role" written explicitly — ClaimTypes.Role serializes as the full URI, not "role", breaking frontend JWT decoding.
+        // InboundClaimTypeMap maps "role" → ClaimTypes.Role on parse, so RequireRole() policies still work.
+        foreach (var role in roles)
+            claims.Add(new Claim("role", role));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var token = new JwtSecurityToken(

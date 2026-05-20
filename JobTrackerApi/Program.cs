@@ -109,6 +109,13 @@ if (!builder.Environment.IsDevelopment())
         ?? throw new InvalidOperationException("Resend:ApiKey is not configured. Set RESEND_API_KEY environment variable.");
 }
 
+var adminEmail = builder.Configuration["Admin:Email"]
+    ?? throw new InvalidOperationException(
+        builder.Environment.IsDevelopment()
+            ? "Admin:Email is not configured. Add it to appsettings.Development.json."
+            : "Admin:Email is not configured. Set ADMIN_EMAIL environment variable."
+    );
+
 // Npgsql Entity Framework
 // https://www.npgsql.org/efcore/index.html?tabs=aspnet
 // No AddDbContextPool for safety and simplicity
@@ -140,6 +147,7 @@ else
 
 // Registers Identity's core services
 builder.Services.AddIdentityCore<ApplicationUser>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<JobTrackerContext>()
     .AddDefaultTokenProviders(); // Registers the "Default" token provider — Identity's token generation (email confirmation, password reset) won't work without it
 
@@ -186,6 +194,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Named policies — reusable on any endpoint via [Authorize(Policy = "...")]
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole(Roles.Admin));
+    options.AddPolicy("AiEnabled", policy => policy.RequireRole(Roles.AiUser));
+});
 
 // Rate limiting — fixed window per IP, applied to auth endpoints only via [EnableRateLimiting("auth")]
 builder.Services.AddRateLimiter(options =>
@@ -344,6 +358,27 @@ using (var scope = app.Services.CreateScope())
         // Password is never used — demo endpoint bypasses auth entirely.
         // Random GUID + fixed suffix satisfies Identity's complexity rules (upper, digit, special char).
         await userManager.CreateAsync(demo, Guid.NewGuid().ToString() + "Aa1!");
+    }
+}
+
+// Seed Identity roles and promote admin — idempotent, logs and continues if admin not found
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    foreach (var role in new[] { Roles.Admin, Roles.AiUser })
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+
+    var admin = await userManager.FindByEmailAsync(adminEmail);
+    // Admin promotion — assigns both Admin and AiUser; idempotent checks prevent duplicate role entries
+    if (admin is { EmailConfirmed: true })
+    {
+        if (!await userManager.IsInRoleAsync(admin, Roles.Admin))
+            await userManager.AddToRoleAsync(admin, Roles.Admin);
+        if (!await userManager.IsInRoleAsync(admin, Roles.AiUser))
+            await userManager.AddToRoleAsync(admin, Roles.AiUser);
     }
 }
 
