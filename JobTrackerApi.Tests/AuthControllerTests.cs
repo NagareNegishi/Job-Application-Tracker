@@ -81,6 +81,12 @@ public class AuthControllerTests : IDisposable
         _emailMock = new Mock<IEmailService>();
         _loggerMock = new Mock<ILogger<AuthController>>();
 
+        // GetRolesAsync is called by GenerateAccessToken; return empty list by default —
+        // tests that need specific roles override this setup individually
+        _userManagerMock
+            .Setup(m => m.GetRolesAsync(It.IsAny<ApplicationUser>()))
+            .ReturnsAsync(new List<string>());
+
         _controller = new AuthController(
             _userManagerMock.Object,
             _config,
