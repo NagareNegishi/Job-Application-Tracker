@@ -140,6 +140,7 @@ else
 
 // Registers Identity's core services
 builder.Services.AddIdentityCore<ApplicationUser>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<JobTrackerContext>()
     .AddDefaultTokenProviders(); // Registers the "Default" token provider — Identity's token generation (email confirmation, password reset) won't work without it
 
