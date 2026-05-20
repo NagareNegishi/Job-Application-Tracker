@@ -14,12 +14,17 @@ public class AdminControllerTests
 {
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
     private readonly AdminController _controller;
+    private readonly ApplicationUser _adminUser;
+    private readonly ApplicationUser _regularUser;
 
     private const string TestCallerId = "caller-id";
     private const string OtherUserId  = "other-user-id";
 
     public AdminControllerTests()
     {
+        _adminUser   = new ApplicationUser { Id = TestCallerId, Email = "admin@test.com",   EmailConfirmed = true };
+        _regularUser = new ApplicationUser { Id = OtherUserId,  Email = "regular@test.com", EmailConfirmed = true };
+
         var store = new Mock<IUserStore<ApplicationUser>>();
         _userManagerMock = new Mock<UserManager<ApplicationUser>>(
             store.Object, null, null, null, null, null, null, null, null);
