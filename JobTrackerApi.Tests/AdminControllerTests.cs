@@ -131,4 +131,22 @@ public class AdminControllerTests
 
         Assert.IsType<NotFoundResult>(result);
     }
+
+    // The tests below only occur when an admin intentionally bypasses the frontend —
+    // the UI prevents all of these cases in normal flow
+
+    // Admin cannot modify their own AI access — prevents accidental self-lockout
+    [Fact]
+    public async Task UpdateAiAccess_SelfModification_ReturnsBadRequest()
+    {
+        _userManagerMock
+            .Setup(m => m.FindByIdAsync(TestCallerId))
+            .ReturnsAsync(_adminUser);
+
+        var result = await _controller.UpdateAiAccess(TestCallerId, new UpdateAiAccessDto { Enabled = false });
+
+        var bad = Assert.IsType<BadRequestObjectResult>(result);
+        var message = bad.Value!.GetType().GetProperty("message")?.GetValue(bad.Value) as string;
+        Assert.Equal("Cannot modify your own AI access.", message);
+    }
 }
