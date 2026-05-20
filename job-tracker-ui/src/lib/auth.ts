@@ -45,3 +45,8 @@ export function getRoles(): string[] {
     return []
   }
 }
+
+// Wrapper for getRoles, reads naturally at call sites: hasRole("Admin").
+export function hasRole(role: string): boolean {
+  return getRoles().includes(role)
+}
