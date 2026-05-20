@@ -2,7 +2,7 @@
 
 ## Overview
 
-Roles-based access control for AI features using ASP.NET Core Identity roles. Two roles: `"Admin"` (manages users) and `"AiUser"` (accesses AI features). Admin bootstrapped from config on startup. Admin controller exposes a user list and AI access toggle.
+Roles-based access control for AI features using ASP.NET Core Identity roles. Two roles: `"Admin"` (manages users) and `"AiUser"` (accesses AI features). Seeding creates roles and promotes an existing confirmed user to admin on startup; new admin registrations are promoted at email confirmation. Admin controller exposes a user list and AI access toggle.
 
 ---
 
@@ -14,8 +14,10 @@ Roles-based access control for AI features using ASP.NET Core Identity roles. Tw
 | `"AiUser"` role gates all AI features via `[Authorize(Policy = "AiEnabled")]` | Policy is reusable — any future AI endpoint adds one attribute |
 | `"Admin"` role gates admin controller via `[Authorize(Policy = "Admin")]` | Same reusable pattern |
 | Static `Roles` class for role name constants | Prevents typo bugs when referencing role names across controllers and seeding |
-| Initial admin bootstrapped from `Admin:Email` config on startup | Not hardcoded in source — config value set per environment; idempotent on every startup |
-| Fail-fast on missing `Admin:Email` | Matches existing JWT config validation pattern in `Program.cs` |
+| `Admin:Email` read from config; fail-fast if missing | Not hardcoded in source — config value set per environment; matches existing JWT fail-fast pattern |
+| Seeding assigns `"Admin"` role to existing confirmed user only; no user creation | Account creation belongs to `AuthController`; only verified users should hold the role |
+| `"Admin"` role assigned at `ConfirmEmail`, not at registration | Prevents unconfirmed accounts from holding the role; no cleanup needed for abandoned registrations |
+| `AiUser` toggle in `AdminController` requires `EmailConfirmed == true` | Only verified users can receive AI access; consistent with the verified-only principle |
 | Admin cannot remove their own `"Admin"` role or AI access via the API | Prevents accidental self-lockout |
 
 ---
@@ -55,7 +57,7 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 |---|---|---|
 | 1 | Add `.AddRoles<IdentityRole>()` to Identity setup in `Program.cs` + migration for role tables | — |
 | 2 | Add static `Roles` class with `Admin` and `AiUser` constants | — |
-| 3 | Add `Admin:Email` to config + fail-fast validation + seed roles and assign `"Admin"` on startup in `Program.cs` | — |
+| 3 | Add `Admin:Email` to config + fail-fast validation + seed roles on startup; assign `"Admin"` to existing confirmed user if found; assign `"Admin"` in `ConfirmEmail` for new admin registrations | — |
 | 4 | Include roles as claims in JWT at login in `AuthController` | — |
 | 5 | Register `"AiEnabled"` and `"Admin"` policies in `Program.cs` | — |
 | 6 | Add `AdminController` — `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access` | — |
@@ -66,7 +68,7 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 ## Notes
 
 - `Admin:Email` set in `appsettings.Development.json` and production environment variables. Use a placeholder (`admin@example.com`) in any checked-in config files.
-- Startup seeding is idempotent — roles and admin assignment are skipped if already present.
+- Startup seeding is idempotent — creates roles and promotes an existing confirmed admin user; does not create users; logs and continues if admin not found.
 - Tests: seed roles and users directly in the in-memory DB; no startup seeding logic needed in tests.
 
 ---
