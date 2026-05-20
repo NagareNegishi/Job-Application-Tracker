@@ -21,7 +21,23 @@ public class AdminController : ControllerBase
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers()
     {
-        throw new NotImplementedException();
+        var users   = await _userManager.Users.ToListAsync();
+        var aiUsers = await _userManager.GetUsersInRoleAsync(Roles.AiUser);
+        var admins  = await _userManager.GetUsersInRoleAsync(Roles.Admin);
+
+        // HashSet for O(1) lookup when mapping N users against role lists
+        var aiUserIds = aiUsers.Select(u => u.Id).ToHashSet();
+        var adminIds  = admins.Select(u => u.Id).ToHashSet();
+
+        var result = users.Select(u => new UserListItemDto
+        {
+            Id       = u.Id,
+            Email    = u.Email!,
+            IsAiUser = aiUserIds.Contains(u.Id),
+            IsAdmin  = adminIds.Contains(u.Id)
+        });
+
+        return Ok(result);
     }
 
     // PATCH /api/admin/users/{userId}/ai-access
