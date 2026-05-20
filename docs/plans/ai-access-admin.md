@@ -67,7 +67,7 @@ Response: 200 on success, 404 if user not found, 400 if toggling own access.
 | 6 | Add `AdminController` — `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access` | done |
 | 7 | Frontend: `getRoles()`/`hasRole()` in `auth.ts`; `AdminRoute` component; `/admin` route in `App.tsx`; `adminService.ts`; TanStack Query hooks; `AdminPage` with user table and `IsAiUser` toggle | done |
 | 8 | Unit tests — `AdminControllerTests.cs` (6 tests: `GetUsers`, `UpdateAiAccess`); 3 `ConfirmEmail` admin promotion tests added to `AuthControllerTests.cs` | done |
-| 9 | Production config — add `Admin__Email: ${ADMIN_EMAIL}` to backend `environment` in `compose.prod.yml`; add `ADMIN_EMAIL=admin@example.com` placeholder to `.env.example`; add `export ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}"` to deploy job SSH session in `.github/workflows/deploy.yml`; add `ADMIN_EMAIL` as a GitHub Actions secret | todo |
+| 9 | Production config — add `Admin__Email: ${ADMIN_EMAIL}` to backend `environment` in `compose.prod.yml`; add `ADMIN_EMAIL=admin@example.com` placeholder to `.env.example`; add `export ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}"` to deploy job SSH session in `.github/workflows/deploy.yml`; add `ADMIN_EMAIL` as a GitHub Actions secret | merged, unverified |
 
 ---
 
