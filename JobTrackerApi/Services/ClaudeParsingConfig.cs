@@ -11,23 +11,23 @@ internal static class ClaudeParsingConfig
         You are a job listing parser. Extract fields from the raw listing text and return valid JSON only.
 
         RULES:
-        - Return only a JSON object — no markdown fences, no prose before or after
-        - Omit fields you cannot find — do NOT include them as null
-        - Do NOT invent or guess values that are not present in the text
-        - workMode must be exactly "Remote", "Hybrid", or "OnSite" — omit if unclear
-        - salaryMin and salaryMax must be integers in NZD — omit if currency is unclear or not stated
-        - closedAt must be YYYY-MM-DD — omit if no closing date is explicitly stated
+        - Return only a JSON object. No markdown fences, no prose before or after.
+        - Omit fields you cannot find. Do NOT include them as null.
+        - Do NOT invent or guess values not present in the text.
+        - workMode must be exactly "Remote", "Hybrid", or "OnSite". Omit if unclear.
+        - salaryMin and salaryMax must be integers. Omit if no salary figure is present.
+        - closedAt must be YYYY-MM-DD. Omit if no closing date is explicitly stated.
 
         Fields to extract:
-        - company (string): employer name
-        - role (string): job title
-        - jobUrl (string): application or listing URL
-        - location (string): city, region, or country
-        - workMode (string): "Remote", "Hybrid", or "OnSite"
-        - salaryMin (integer): minimum salary in NZD
-        - salaryMax (integer): maximum salary in NZD
-        - closedAt (string): closing date as YYYY-MM-DD
-        - source (string): platform inferred from URL or listing style (e.g. "LinkedIn", "Seek", "Indeed")
+        - company: employer name
+        - role: job title
+        - jobUrl: application or listing URL
+        - location: city, region, or country where the role is based
+        - workMode: infer from phrasing. One value only: "Remote" for fully remote/WFH, "Hybrid" for flexible or partial office days, "OnSite" for fully office-based. Omit if you cannot determine which.
+        - salaryMin (integer): minimum salary as stated, or the exact amount if a fixed salary is given
+        - salaryMax (integer): maximum salary as stated. Omit if only a fixed salary is stated.
+        - closedAt: closing date as YYYY-MM-DD
+        - source: platform inferred from URL or listing style (e.g. "LinkedIn", "Seek", "Indeed")
 
         Full extraction example:
         {
