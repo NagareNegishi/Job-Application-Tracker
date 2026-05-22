@@ -3,9 +3,9 @@ namespace JobTrackerApi.Services;
 internal static class ClaudeParsingConfig
 {
     // claude-haiku-4-5-20251001: chosen 2026-05-23 — fastest/cheapest; extraction doesn't need reasoning depth; latency matters in form UX. Pinned ID (not alias) to prevent silent behavior changes.
-    public const string Model       = "claude-haiku-4-5-20251001";
-    public const int    MaxTokens   = 512;
-    public const float  Temperature = 0.0f;
+    public const string Model     = "claude-haiku-4-5-20251001";
+    public const int    MaxTokens = 512;
+    // Temperature not set — see plan Design Decisions
 
     public const string SystemPrompt = """
         You are a job listing parser. Extract fields from the raw listing text and return valid JSON only.

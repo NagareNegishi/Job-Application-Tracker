@@ -21,6 +21,7 @@ A "Parse" button in the Add Job sheet. User pastes raw listing text → backend 
 | `[Authorize(Policy = "AiEnabled")]` on the endpoint | Restricts parsing to users with `"AiUser"` role — policy defined in `ai-access-admin` plan |
 | 2 requests per minute per IP via `[EnableRateLimiting("parse")]` | Each call costs money; 2 covers the paste-correction case (wrong paste → fix → retry); reuses existing rate limiter pattern |
 | `MaxRetries = 0` on `AnthropicClient` | Auto-retry on traffic failures adds 10–30 s of backoff with no benefit — fail fast and surface the error to the user |
+| `Temperature` not set in `MessageCreateParams` | `Temperature` is `[Obsolete]` in SDK v12.x — models after Opus 4.6 reject non-1.0 values with 400. Haiku 4.5 predates Opus 4.6 by version number but the risk isn't worth taking. If the model changes, revisit. Prompt design (explicit rules + examples) enforces deterministic extraction without it. |
 
 ---
 
@@ -96,7 +97,7 @@ Key decisions:
 | # | Item | Status |
 |---|---|---|
 | 1 | Add `Anthropic:ApiKey` to config + fail-fast validation in `Program.cs` | ✅ |
-| 2 | Add `ParsedJobFields` model + `IParsingService` + `ClaudeParsingService` stub in `Services/` (`ParseListingAsync` throws `NotImplementedException` — prompt + implementation pending) | ✅ stub |
+| 2 | Add `ParsedJobFields` model + `IParsingService` + `ClaudeParsingService` stub + `ClaudeParsingConfig` | ✅ config; impl pending |
 | 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse-listing` with `[Authorize(Policy = "AiEnabled")]` + `[EnableRateLimiting("parse")]` in `JobsController` | — |
 | 4 | Register `ClaudeParsingService` + add `"parse"` rate limit policy (2 per minute per IP) in `Program.cs` | — |
 | 5 | Add collapsible textarea + "Parse" button to Add Job sheet | — |
