@@ -116,6 +116,13 @@ var adminEmail = builder.Configuration["Admin:Email"]
             : "Admin:Email is not configured. Set ADMIN_EMAIL environment variable."
     );
 
+var anthropicApiKey = builder.Configuration["Anthropic:ApiKey"]
+    ?? throw new InvalidOperationException(
+        builder.Environment.IsDevelopment()
+            ? "Anthropic:ApiKey is not configured. Add it to appsettings.Development.json."
+            : "Anthropic:ApiKey is not configured. Set ANTHROPIC_API_KEY environment variable."
+    );
+
 // Npgsql Entity Framework
 // https://www.npgsql.org/efcore/index.html?tabs=aspnet
 // No AddDbContextPool for safety and simplicity
