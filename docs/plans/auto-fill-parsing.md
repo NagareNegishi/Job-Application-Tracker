@@ -88,8 +88,8 @@ System prompt instructs Claude to extract these fields from raw listing text: `c
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Add `Anthropic:ApiKey` to config + fail-fast validation in `Program.cs` | — |
-| 2 | Add `IParsingService` + `ClaudeParsingService` in `Services/` | — |
+| 1 | Add `Anthropic:ApiKey` to config + fail-fast validation in `Program.cs` | ✅ |
+| 2 | Add `ParsedJobFields` model + `IParsingService` + `ClaudeParsingService` stub in `Services/` (`ParseListingAsync` throws `NotImplementedException` — prompt + implementation pending) | ✅ stub |
 | 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse-listing` with `[Authorize(Policy = "AiEnabled")]` + `[EnableRateLimiting("parse")]` in `JobsController` | — |
 | 4 | Register `ClaudeParsingService` + add `"parse"` rate limit policy (2 per minute per IP) in `Program.cs` | — |
 | 5 | Add collapsible textarea + "Parse" button to Add Job sheet | — |
@@ -116,11 +116,20 @@ Strip surrounding text and attempt JSON parse regardless — log the anomaly but
 ## Dependencies
 
 ### Anthropic
-Official C# NuGet package from Anthropic (v10+). Install: `dotnet add package Anthropic`.
+Official C# NuGet package from Anthropic. Installed: v12.23.0. Install: `dotnet add package Anthropic`.
+
+Confirmed SDK API shape (v12.23.0):
+- Client: `new AnthropicClient(apiKey: apiKey, maxRetries: 0)`
+- Send: `await client.Messages.Create(new MessageCreateParams { ... })`
+- Role enum: `Role.User` (namespace `Anthropic.Models.Messages`)
+- Read response: `response.Content.OfType<TextBlock>().FirstOrDefault()?.Text`
+
+Chosen over the community `Anthropic.SDK` (tghamm): only basic message creation is needed here — the official package covers it, avoids a third-party maintenance dependency, and includes `IChatClient` integration for future provider abstraction.
 
 ---
 
 ## Notes
 
 - `description` is the pasted text passed through directly (not Claude-extracted). No sanitization needed — HTML tags are rejected at validation (400). A browser textarea strips HTML on paste, so HTML in the request body signals a crafted/attacker request, not a real user.
+- `ParsedJobFields.ClosedAt` uses `DateOnly?` (not `DateTime?`) — serializes as `"YYYY-MM-DD"`, which works directly with frontend date inputs. `DateTime?` would produce `"T00:00:00"` suffix that breaks the input value.
 - Tests: mock `IParsingService` in controller tests; no live Claude calls in CI.
