@@ -20,6 +20,7 @@ A "Parse" button in the Add Job sheet. User pastes raw listing text → backend 
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
 | `[Authorize(Policy = "AiEnabled")]` on the endpoint | Restricts parsing to users with `"AiUser"` role — policy defined in `ai-access-admin` plan |
 | 2 requests per minute per IP via `[EnableRateLimiting("parse")]` | Each call costs money; 2 covers the paste-correction case (wrong paste → fix → retry); reuses existing rate limiter pattern |
+| `MaxRetries = 0` on `AnthropicClient` | Auto-retry on traffic failures adds 10–30 s of backoff with no benefit — fail fast and surface the error to the user |
 
 ---
 
@@ -114,8 +115,8 @@ Strip surrounding text and attempt JSON parse regardless — log the anomaly but
 
 ## Dependencies
 
-### Anthropic.SDK
-Official C# NuGet package for the Claude API.
+### Anthropic
+Official C# NuGet package from Anthropic (v10+). Install: `dotnet add package Anthropic`.
 
 ---
 
