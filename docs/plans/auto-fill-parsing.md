@@ -76,9 +76,16 @@ Fields not found are omitted (not null) — frontend skips them in the merge ste
 
 ## Prompt Design
 
-System prompt instructs Claude to extract these fields from raw listing text: `company`, `role`, `jobUrl`, `location`, `workMode` (`Remote` / `Hybrid` / `OnSite`), `salaryMin`, `salaryMax` (integers, NZD assumed), `closedAt` (ISO date if closing date mentioned), `source` (infer from URL pattern or text style — e.g. LinkedIn, Seek, Indeed). Return valid JSON only, no prose. Omit fields not found.
+System prompt uses a RULES section + Fields section + two examples (full and partial extraction).
 
-`description` is not extracted by Claude — the backend passes through the input text directly.
+Key decisions:
+- workMode: inferred from phrasing, not keyword matched. One value only; omit if unclear.
+- salaryMin/salaryMax: integers, no currency assumption. Fixed salary → salaryMin only; salaryMax omitted.
+- location: "where the role is based" — avoids matching eligibility or visa text.
+- Fields not found are omitted (not null) — matches `[JsonIgnore(WhenWritingNull)]` on the model.
+- Full extraction example included so Claude knows the exact expected shape.
+
+`description` is not extracted by Claude — the backend passes the input text through directly.
 
 ---
 
