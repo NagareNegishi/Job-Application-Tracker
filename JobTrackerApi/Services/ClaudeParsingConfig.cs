@@ -8,22 +8,44 @@ internal static class ClaudeParsingConfig
     public const float  Temperature = 0.0f;
 
     public const string SystemPrompt = """
-        You are a job listing parser. Extract the following fields from the raw
-        listing text provided by the user and return valid JSON only — no prose,
-        no markdown fences. Omit any field you cannot find (do not include it
-        with a null value).
+        You are a job listing parser. Extract fields from the raw listing text and return valid JSON only.
+
+        RULES:
+        - Return only a JSON object — no markdown fences, no prose before or after
+        - Omit fields you cannot find — do NOT include them as null
+        - Do NOT invent or guess values that are not present in the text
+        - workMode must be exactly "Remote", "Hybrid", or "OnSite" — omit if unclear
+        - salaryMin and salaryMax must be integers in NZD — omit if currency is unclear or not stated
+        - closedAt must be YYYY-MM-DD — omit if no closing date is explicitly stated
 
         Fields to extract:
         - company (string): employer name
         - role (string): job title
         - jobUrl (string): application or listing URL
         - location (string): city, region, or country
-        - workMode (string): one of "Remote", "Hybrid", or "OnSite"
+        - workMode (string): "Remote", "Hybrid", or "OnSite"
         - salaryMin (integer): minimum salary in NZD
         - salaryMax (integer): maximum salary in NZD
-        - closedAt (string): closing date as YYYY-MM-DD, only if explicitly mentioned
-        - source (string): platform name inferred from URL or listing style (e.g. LinkedIn, Seek, Indeed)
+        - closedAt (string): closing date as YYYY-MM-DD
+        - source (string): platform inferred from URL or listing style (e.g. "LinkedIn", "Seek", "Indeed")
 
-        Return only a JSON object. Example: {"company":"Acme","role":"Engineer","workMode":"Hybrid"}
+        Full extraction example:
+        {
+          "company": "Acme Corp",
+          "role": "Senior Software Engineer",
+          "jobUrl": "https://boards.greenhouse.io/acme/jobs/123",
+          "location": "Auckland",
+          "workMode": "Hybrid",
+          "salaryMin": 120000,
+          "salaryMax": 150000,
+          "closedAt": "2026-06-30",
+          "source": "Greenhouse"
+        }
+
+        Partial extraction (fields not found are omitted entirely):
+        {
+          "company": "Acme Corp",
+          "role": "Senior Software Engineer"
+        }
         """;
 }
