@@ -134,11 +134,12 @@ Community C# NuGet package. Install: `dotnet add package Anthropic.SDK`.
 
 **Switched from official `Anthropic` package (v12.23.0).** Official package is auto-generated from the API spec (Stainless) — not human-maintained C#. Auto-generated code does not follow C# conventions: response types use a discriminated union with no ergonomic helpers; `OfType<TextBlock>()` silently returns empty (CA2021). "Actively maintained" means API-spec-synchronized only, not C# experience maintained. tghamm uses standard C# inheritance — idiomatic, documented, maintainable. Extra dependency is the correct tradeoff when the official package harms maintainability.
 
-**SDK API shape — verified from tghamm README 2026-05-24:**
-- Client: `new AnthropicClient(apiKey)` — plain HttpClient, no retries by default
+**SDK API shape — verified from tghamm README + build 2026-05-24:**
+- Namespace: `Anthropic.SDK.Messaging` (not `Anthropic.SDK.Messages` as README implies)
+- Client: `new AnthropicClient(apiKey, new HttpClient())` — explicit no-retry HttpClient; fail fast by design
 - Send: `await client.Messages.GetClaudeMessageAsync(new MessageParameters { ... })`
 - Role: `RoleType.User`; Message param: `new Message(RoleType.User, text)`
-- Read response: `response.Content.OfType<TextContent>().First().Text` ✅
+- Read response: `response.Content.OfType<TextContent>().FirstOrDefault()?.Text ?? string.Empty` ✅
 
 ---
 
