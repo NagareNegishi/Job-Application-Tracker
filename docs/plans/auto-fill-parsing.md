@@ -114,7 +114,7 @@ Key decisions:
 | 7 | Add `autoFillEnabled: boolean` to frontend `Preferences` type in `preferencesService.ts` | — |
 | 8 | Add AI-only `autoFillEnabled` toggle to `SettingsPage` | — |
 | 9 | Revert collapsible section from `JobCreateSheet`; add optional `initialData?: Partial<FormState>` prop | — |
-| 10 | New `ParseListingDialog` — textarea, "Fill fields" (calls `/api/jobs/parse`, loading + error state, passes result to sheet), "Fill manually" (opens sheet empty), Cancel | — |
+| 10 | New `ParseListingDialog` — textarea, "Fill fields" (calls `/api/jobs/parse`, loading + error state, passes result to sheet), "Fill manually" (opens sheet empty), Cancel | `parseService.ts` done; open decision: export `FormState` from `JobCreateSheet.tsx` (Option A, simpler) or move to a shared types file (Option B) — decide before building dialog |
 | 11 | Wire "Add job" in `JobPage` — check `hasRole("AiUser")` + `autoFillEnabled` → dialog or sheet | — |
 
 ---
