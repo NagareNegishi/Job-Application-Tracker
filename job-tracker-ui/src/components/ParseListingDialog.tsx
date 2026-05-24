@@ -67,11 +67,11 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg flex flex-col max-h-[85vh]">
         <DialogHeader>
           <DialogTitle>Auto-fill job details</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
           <p className="text-sm text-muted-foreground">
             Paste the job listing text below and Claude will extract the details for you.
           </p>
