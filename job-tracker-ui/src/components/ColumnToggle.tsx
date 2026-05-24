@@ -31,7 +31,9 @@ export function ColumnToggle() {
       // Snapshot on open so draft always starts from the latest saved value, not a stale one.
       setDraft(prefs?.visibleColumns ?? DEFAULT_VISIBLE);
     } else {
-      mutate({ visibleColumns: draft });
+      // Spread prefs to preserve all other preference fields — PUT replaces the whole object.
+      // TODO: switch to PATCH so each component only sends the fields it owns (see docs/plans/preferences-patch-refactor.md)
+      mutate({ ...prefs!, visibleColumns: draft });
     }
     setOpen(next);
   }
