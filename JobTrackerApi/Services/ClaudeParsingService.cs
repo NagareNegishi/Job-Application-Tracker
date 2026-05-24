@@ -49,7 +49,7 @@ public class ClaudeParsingService : IParsingService
 
         var raw  = response.Content.OfType<TextBlock>().FirstOrDefault()?.Text ?? string.Empty;
         var json = ExtractJson(raw);
-        // TODO: LogContractIssues(json);
+        LogContractIssues(json);
 
         try
         {
@@ -64,8 +64,8 @@ public class ClaudeParsingService : IParsingService
         }
     }
 
-    // Strips surrounding prose from Claude's response and returns the first { } block.
-    // Logs if text outside JSON was found or no JSON object exists at all.
+    // Claude may return prose around the JSON despite instructions — extract the first { } block.
+    // Falls back to "{}" so deserialization always yields a safe empty result rather than throwing.
     private string ExtractJson(string raw)
     {
         var trimmed = raw.Trim();
@@ -84,5 +84,31 @@ public class ClaudeParsingService : IParsingService
             _logger.LogWarning("Parse response contains text outside JSON. Raw: {Raw}", raw);
 
         return json;
+    }
+
+    // Logs contract violations to tune the system prompt over time — not surfaced to the user.
+    // JsonException is swallowed: if JSON is malformed, ParseListingAsync logs and handles it.
+    private void LogContractIssues(string json)
+    {
+        try
+        {
+            using var doc   = JsonDocument.Parse(json);
+            var       props = doc.RootElement.EnumerateObject().ToList();
+
+            if (props.Count == 0)
+            {
+                _logger.LogWarning("Parse response is an empty object.");
+                return;
+            }
+
+            foreach (var prop in props)
+            {
+                if (!_knownKeys.Contains(prop.Name))
+                    _logger.LogWarning("Unexpected key in parse response: {Key}", prop.Name);
+                else if (prop.Value.ValueKind == JsonValueKind.Null)
+                    _logger.LogWarning("Parsed field is null: {Field}", prop.Name);
+            }
+        }
+        catch (JsonException) { }
     }
 }
