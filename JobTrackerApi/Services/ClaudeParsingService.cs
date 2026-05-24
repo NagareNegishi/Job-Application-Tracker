@@ -1,6 +1,5 @@
-using Anthropic;
-using Anthropic.Core;
-using Anthropic.Models.Messages;
+using Anthropic.SDK;
+using Anthropic.SDK.Messages;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -33,19 +32,18 @@ public class ClaudeParsingService : IParsingService
         var apiKey = configuration["Anthropic:ApiKey"]
             ?? throw new InvalidOperationException("Anthropic:ApiKey is not configured.");
 
-        // MaxRetries = 0: auto-retry adds 10–30 s of backoff with no benefit in a form UX — fail fast instead.
-        _client = new AnthropicClient(new ClientOptions { ApiKey = apiKey, MaxRetries = 0 });
+        _client = new AnthropicClient(apiKey);
         _logger = logger;
     }
 
     public async Task<ParsedJobFields> ParseListingAsync(string text)
     {
-        var response = await _client.Messages.Create(new MessageCreateParams
+        var response = await _client.Messages.GetClaudeMessageAsync(new MessageParameters
         {
             Model = ClaudeParsingConfig.Model,
             MaxTokens = ClaudeParsingConfig.MaxTokens,
-            System = ClaudeParsingConfig.SystemPrompt,
-            Messages = [new MessageParam { Role = Role.User, Content = text }]
+            System = [new SystemMessage(ClaudeParsingConfig.SystemPrompt)],
+            Messages = [new Message(RoleType.User, text)]
         });
 
         var raw = response.Content.OfType<TextBlock>().FirstOrDefault()?.Text ?? string.Empty;
