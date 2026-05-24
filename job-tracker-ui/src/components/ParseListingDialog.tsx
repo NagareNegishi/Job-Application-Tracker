@@ -60,7 +60,10 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
   }
 
   // Closes the dialog then tells the parent to open the sheet empty
-  function handleFillManually() {}
+  function handleFillManually() {
+    handleOpenChange(false)
+    onFillManually()
+  }
 
   return <></>
 }
