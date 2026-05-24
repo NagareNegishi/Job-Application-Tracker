@@ -1,5 +1,5 @@
 using Anthropic.SDK;
-using Anthropic.SDK.Messages;
+using Anthropic.SDK.Messaging;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,7 +32,8 @@ public class ClaudeParsingService : IParsingService
         var apiKey = configuration["Anthropic:ApiKey"]
             ?? throw new InvalidOperationException("Anthropic:ApiKey is not configured.");
 
-        _client = new AnthropicClient(apiKey);
+        // No retry policy, auto-retry adds 10–30s of backoff with no benefit in a form UX.
+        _client = new AnthropicClient(apiKey, new HttpClient());
         _logger = logger;
     }
 
@@ -46,7 +47,7 @@ public class ClaudeParsingService : IParsingService
             Messages = [new Message(RoleType.User, text)]
         });
 
-        var raw = response.Content.OfType<TextBlock>().FirstOrDefault()?.Text ?? string.Empty;
+        var raw = response.Content.OfType<TextContent>().FirstOrDefault()?.Text ?? string.Empty;
         var json = ExtractJson(raw);
         LogContractIssues(json);
 
