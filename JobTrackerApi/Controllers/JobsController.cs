@@ -213,11 +213,16 @@ public class JobsController : ControllerBase
         return NoContent();
     }
 
-    // Returns true if the current request is authenticated as the demo account
-    private bool IsDemo() =>
-        User.FindFirstValue(ClaimTypes.Email) == DemoUser.Email;
+    [HttpPost("parse")]
+    [Authorize(Policy = "AiEnabled")]
+    [EnableRateLimiting("parse")]
+    public async Task<ActionResult<ParsedJobFields>> ParseListing([FromBody] ParseListingRequest request)
+    {
+        return Ok(await _parsing.ParseListingAsync(request.Text));
+    }
 
-    // Helper method to check if a job exists by ID
+    // Helper methods
+    // Check if a job exists by ID
     private bool JobsExists(int id)
     {
         return _context.Jobs.Any(e => e.Id == id);
