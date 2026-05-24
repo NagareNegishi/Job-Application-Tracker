@@ -33,6 +33,7 @@ import {
   MAX_SOURCE_LENGTH,
 } from "@/lib/validationConstants"
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
+import { ChevronDown } from "lucide-react"
 import { useEffect, useState } from "react"
 
 // FormState represents the internal state of the job edit form
@@ -90,12 +91,16 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
   const [form, setForm] = useState<FormState>(defaultForm)
   const { mutate: createJob, isPending } = useCreateJob()
   const [errors, setErrors] = useState<{ company?: string; role?: string; jobUrl?: string; salary?: string }>({})
+  const [pasteOpen, setPasteOpen] = useState(false)
+  const [listingText, setListingText] = useState("")
 
   // Reset form when sheet opens with default values
   useEffect(() => {
     if (open) {
       setForm(defaultForm)
       setErrors({})
+      setPasteOpen(false)
+      setListingText("")
     }
   }, [open])
 
