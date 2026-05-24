@@ -1,3 +1,5 @@
+using JobTrackerApi.Models;
+
 namespace JobTrackerApi.Services;
 
 /// <summary>Abstraction for parsing raw job listing text into structured fields.</summary>
