@@ -25,8 +25,11 @@ import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react"
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { hasRole } from "@/lib/auth";
+import type { FormState } from "@/types/formTypes";
 import { ColumnToggle } from "./ColumnToggle";
 import { JobCreateSheet } from "./JobCreateSheet";
+import { ParseListingDialog } from "./ParseListingDialog";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
 
@@ -192,7 +195,10 @@ const TAB_STYLES = {
 
 export function JobTable() {
   const { data: jobs, isPending, isError, error } = useJobs();
-  const [addOpen, setAddOpen] = useState(false);
+  // AI users see ParseListingDialog first; parsed fields flow into the sheet via initialData
+  const [parseOpen, setParseOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [initialData, setInitialData] = useState<Partial<FormState> | undefined>(undefined);
   const navigate = useNavigate();
   // visibleColumns from prefs; fall back to defaults while loading.
   const { data: prefs } = usePreferences();
