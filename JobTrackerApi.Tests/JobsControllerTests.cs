@@ -444,4 +444,20 @@ public class JobsControllerTests: IDisposable
         var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
         Assert.Empty(jobs);
     }
+
+    // Test for ParseListingRequest with empty text
+    [Fact]
+    public async Task ParseListingRequest_EmptyText_FailsValidation()
+    {
+        // Arrange
+        var request = new ParseListingRequest { Text = "" };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
 }
