@@ -156,6 +156,32 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
 
         {/* form fields go here */}
 
+        {/* Paste listing — collapsible; expands to reveal textarea and Parse button */}
+        <div className="space-y-1.5">
+          <button
+            type="button"
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            onClick={() => setPasteOpen(v => !v)}
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${pasteOpen ? "rotate-180" : ""}`} />
+            Paste job listing
+          </button>
+          {pasteOpen && (
+            <div className="space-y-2">
+              <Textarea
+                value={listingText}
+                onChange={e => setListingText(e.target.value)}
+                placeholder="Paste the raw job listing text here..."
+                rows={5}
+                maxLength={8000}
+              />
+              <Button type="button" variant="secondary" size="sm">
+                Parse
+              </Button>
+            </div>
+          )}
+        </div>
+
         {/* Edit Company */}
         <div className="space-y-1.5">
           <Label htmlFor="company">Company</Label>
