@@ -25,8 +25,11 @@ import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react"
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { hasRole } from "@/lib/auth";
+import type { FormState } from "@/types/formTypes";
 import { ColumnToggle } from "./ColumnToggle";
 import { JobCreateSheet } from "./JobCreateSheet";
+import { ParseListingDialog } from "./ParseListingDialog";
 import { PriorityDot } from "./ui/PriorityDot";
 import { StatusBadge } from "./ui/StatusBadge";
 
@@ -192,7 +195,10 @@ const TAB_STYLES = {
 
 export function JobTable() {
   const { data: jobs, isPending, isError, error } = useJobs();
-  const [addOpen, setAddOpen] = useState(false);
+  // AI users see ParseListingDialog first, non-AI sers see JobCreateSheet directly
+  const [parseOpen, setParseOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [initialData, setInitialData] = useState<Partial<FormState> | undefined>(undefined);
   const navigate = useNavigate();
   // visibleColumns from prefs; fall back to defaults while loading.
   const { data: prefs } = usePreferences();
@@ -250,6 +256,26 @@ export function JobTable() {
   if (isPending) return <p>Loading...</p>;
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Something went wrong."}</p>;
 
+  // Opens dialog for AI users with auto-fill on; otherwise opens sheet directly
+  function handleAddJob() {
+    if (hasRole("AiUser") && (prefs?.autoFillEnabled ?? true)) {
+      setParseOpen(true);
+    } else {
+      setInitialData(undefined);
+      setSheetOpen(true);
+    }
+  }
+
+  function handleFill(data: Partial<FormState>) {
+    setInitialData(data);
+    setSheetOpen(true);
+  }
+
+  function handleFillManually() {
+    setInitialData(undefined);
+    setSheetOpen(true);
+  }
+
   const sortProps = { activeField: sortField, dir: sortDir, onSort: setSort };
   const showControls = activeTab !== "rejected";
 
@@ -262,7 +288,7 @@ export function JobTable() {
         <Button
           variant="outline"
           className="shadow-xs hover:bg-secondary"
-          onClick={() => setAddOpen(true)}
+          onClick={handleAddJob}
         >
           <Plus className="mr-2 h-4 w-4" />
           Add New Job
@@ -514,7 +540,13 @@ export function JobTable() {
       )}
       </div>
 
-      <JobCreateSheet open={addOpen} onOpenChange={setAddOpen} />
+      <ParseListingDialog
+        open={parseOpen}
+        onOpenChange={setParseOpen}
+        onFill={handleFill}
+        onFillManually={handleFillManually}
+      />
+      <JobCreateSheet open={sheetOpen} onOpenChange={setSheetOpen} initialData={initialData} />
     </div>
   );
 }

@@ -116,6 +116,13 @@ var adminEmail = builder.Configuration["Admin:Email"]
             : "Admin:Email is not configured. Set ADMIN_EMAIL environment variable."
     );
 
+var anthropicApiKey = builder.Configuration["Anthropic:ApiKey"]
+    ?? throw new InvalidOperationException(
+        builder.Environment.IsDevelopment()
+            ? "Anthropic:ApiKey is not configured. Add it to appsettings.Development.json."
+            : "Anthropic:ApiKey is not configured. Set ANTHROPIC_API_KEY environment variable."
+    );
+
 // Npgsql Entity Framework
 // https://www.npgsql.org/efcore/index.html?tabs=aspnet
 // No AddDbContextPool for safety and simplicity
@@ -144,6 +151,9 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddScoped<IEmailService, LogEmailService>();
 else
     builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
+
+// AI parsing: extracts job fields from pasted listing text via Claude API
+builder.Services.AddScoped<IParsingService, ClaudeParsingService>();
 
 // Registers Identity's core services
 builder.Services.AddIdentityCore<ApplicationUser>()
@@ -219,6 +229,15 @@ builder.Services.AddRateLimiter(options =>
     {
         config.Window = TimeSpan.FromHours(1);    // counter resets every 1 hour
         config.PermitLimit = 3;                   // max 3 resends per hour per IP
+        config.QueueLimit = 0;
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
+
+    // Tight limit for parse — each request hits the Claude API
+    options.AddFixedWindowLimiter("parse", config =>
+    {
+        config.Window = TimeSpan.FromMinutes(1);
+        config.PermitLimit = 2;
         config.QueueLimit = 0;
         config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
     });

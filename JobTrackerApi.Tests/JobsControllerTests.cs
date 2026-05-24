@@ -14,6 +14,7 @@ public class JobsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;
     private readonly Mock<IStorageService> _storageMock;
+    private readonly Mock<IParsingService> _parsingMock;
     private readonly JobsController _controller;
     private const string TestUserId = "test-user-id";
 
@@ -25,10 +26,11 @@ public class JobsControllerTests: IDisposable
             .Options; // .Options extracts the built configuration object
 
         _storageMock = new Mock<IStorageService>();
+        _parsingMock = new Mock<IParsingService>();
 
         // create context and controller directly
         _context = new JobTrackerContext(options);
-        _controller = new JobsController(_context, _storageMock.Object);
+        _controller = new JobsController(_context, _storageMock.Object, _parsingMock.Object);
         SetUser();
     }
 
@@ -441,5 +443,76 @@ public class JobsControllerTests: IDisposable
 
         var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
         Assert.Empty(jobs);
+    }
+
+    // Test for ParseListingRequest with empty text
+    [Fact]
+    public async Task ParseListingRequest_EmptyText_FailsValidation()
+    {
+        // Arrange
+        var request = new ParseListingRequest { Text = "" };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
+
+    // Test for ParseListingRequest with text over 8000 characters
+    [Fact]
+    public async Task ParseListingRequest_TextOverLimit_FailsValidation()
+    {
+        // Arrange
+        var request = new ParseListingRequest { Text = new string('x', 8001) };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
+
+    // Test for ParseListingRequest with HTML input
+    [Fact]
+    public async Task ParseListingRequest_HtmlInput_FailsValidation()
+    {
+        // Arrange
+        var request = new ParseListingRequest { Text = "<div>job listing</div>" };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
+
+    // Test for ParseListing with a partial result
+    [Fact]
+    public async Task ParseListing_ReturnsOk_WithParsedFields()
+    {
+        // Arrange
+        var text = "Senior Engineer at Acme Corp.";
+        var parsed = new ParsedJobFields { Company = "Acme Corp", Role = "Senior Engineer", Description = text };
+        _parsingMock
+            .Setup(s => s.ParseListingAsync(text))
+            .ReturnsAsync(parsed);
+        var request = new ParseListingRequest { Text = text };
+
+        // Act
+        var result = await _controller.ParseListing(request);
+
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var fields = Assert.IsType<ParsedJobFields>(ok.Value);
+        Assert.Equal("Acme Corp", fields.Company);
+        Assert.Equal("Senior Engineer", fields.Role);
+        Assert.Equal(text, fields.Description);
     }
 }

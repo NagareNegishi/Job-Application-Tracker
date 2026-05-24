@@ -1,8 +1,11 @@
 import NavBar from "@/components/NavBar"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { usePreferences, useUpdatePreferences } from "@/hooks/preferencesQuery"
 import { ApiError } from "@/lib/api"
+import { hasRole } from "@/lib/auth"
 import { changePassword } from "@/services/authService"
 import { useState } from "react"
 import { useLocation, useNavigate } from "react-router"
@@ -14,6 +17,9 @@ export default function SettingsPage() {
   const navigate = useNavigate()
   // Use the path UserMenu passed via router state; fall back to /jobs on direct URL load
   const from: string = location.state?.from ?? "/jobs"
+
+  const { data: prefs, isLoading: isLoadingPrefs } = usePreferences()
+  const { mutate: mutatePrefs } = useUpdatePreferences()
 
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -86,6 +92,26 @@ export default function SettingsPage() {
               </Button>
             </form>
           </section>
+
+          {hasRole("AiUser") && (
+            <section className="mt-6 pt-6 border-t">
+              <h2 className="text-sm font-medium text-muted-foreground mb-4">AI Features</h2>
+              {isLoadingPrefs ? (
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="autoFill"
+                    checked={prefs?.autoFillEnabled ?? true}
+                    onCheckedChange={checked =>
+                      mutatePrefs({ ...prefs!, autoFillEnabled: checked === true })
+                    }
+                  />
+                  <Label htmlFor="autoFill">Show auto-fill dialog when adding a job</Label>
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </div>
