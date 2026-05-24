@@ -54,6 +54,8 @@ public class AccountController : ControllerBase
         return Ok(prefs ?? new UserPreferencesDto { VisibleColumns = DefaultColumns });
     }
 
+    // PUT replaces the entire preferences blob — partial updates require spreading on the frontend.
+    // TODO: refactor to PATCH with merge semantics so callers only send fields they own (see docs/plans/preferences-patch-refactor.md)
     [HttpPut("preferences")]
     public async Task<IActionResult> UpdatePreferences(UserPreferencesDto dto)
     {

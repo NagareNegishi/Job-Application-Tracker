@@ -116,6 +116,7 @@ Key decisions:
 | 9 | Revert collapsible section from `JobCreateSheet`; add optional `initialData?: Partial<FormState>` prop | ✅ |
 | 10 | New `ParseListingDialog` — textarea, "Fill fields" (calls `/api/jobs/parse`, loading + error state, passes result to sheet), "Fill manually" (opens sheet empty); `FormState` moved to `src/types/formTypes.ts` (Option B) | ✅ |
 | 11 | Wire "Add job" in `JobTable` — check `hasRole("AiUser")` + `autoFillEnabled` → dialog or sheet | ✅ |
+| 12 | Wire `ANTHROPIC_API_KEY` into production pipeline — export in `deploy.yml`, inject via `compose.prod.yml`, document in `deployment-setup.md` and `.env.example` | ✅ |
 
 ---
 

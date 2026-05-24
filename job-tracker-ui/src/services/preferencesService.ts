@@ -26,6 +26,8 @@ export async function getPreferences(): Promise<Preferences> {
  * @returns A promise that resolves when the preferences are successfully saved.
  * @throws An error if the fetch operation fails.
  */
+// PUT replaces the full Preferences object — callers must spread existing prefs before overriding fields.
+// TODO: switch to PATCH so callers only send the fields they own (see docs/plans/preferences-patch-refactor.md)
 export async function updatePreferences(prefs: Preferences): Promise<void> {
   const response = await apiFetch(`${BASE_URL}/account/preferences`, {
     method: "PUT",
