@@ -22,6 +22,8 @@ A "Parse" button in the Add Job sheet. User pastes raw listing text → backend 
 | 2 requests per minute per IP via `[EnableRateLimiting("parse")]` | Each call costs money; 2 covers the paste-correction case (wrong paste → fix → retry); reuses existing rate limiter pattern |
 | `MaxRetries = 0` on `AnthropicClient` | Auto-retry on traffic failures adds 10–30 s of backoff with no benefit — fail fast and surface the error to the user |
 | `Temperature` not set in `MessageCreateParams` | `Temperature` is `[Obsolete]` in SDK v12.x — models after Opus 4.6 reject non-1.0 values with 400. Haiku 4.5 predates Opus 4.6 by version number but the risk isn't worth taking. If the model changes, revisit. Prompt design (explicit rules + examples) enforces deterministic extraction without it. |
+| `[JsonPropertyName("company")]` attributes on `ParsedJobFields`; no `PropertyNameCaseInsensitive` | Explicit contract — JSON key mapping is visible in the model. Wrong casing from Claude is treated as a contract violation: logged as unexpected key, value dropped. Keeps the schema strict and predictable. |
+| Known keys for logging derived from `[JsonPropertyName]` attributes via reflection (`static readonly HashSet<string>`) | Single source of truth — model is the contract. Adding a field to `ParsedJobFields` automatically includes it in the known keys set. Hardcoded list risks silently going stale. Computed once at class load (`static readonly`) so reflection cost is paid once. |
 
 ---
 
