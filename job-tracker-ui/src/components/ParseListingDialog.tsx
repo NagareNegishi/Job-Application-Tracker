@@ -23,5 +23,14 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Clears transient state when the dialog closes (X, Escape, backdrop)
+  function handleOpenChange(nextOpen: boolean) {}
+
+  // Calls the parse API and hands the converted result to the parent
+  async function handleFill() {}
+
+  // Closes the dialog then tells the parent to open the sheet empty
+  function handleFillManually() {}
+
   return <></>
 }
