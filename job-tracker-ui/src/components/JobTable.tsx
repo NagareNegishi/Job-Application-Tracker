@@ -195,7 +195,7 @@ const TAB_STYLES = {
 
 export function JobTable() {
   const { data: jobs, isPending, isError, error } = useJobs();
-  // AI users see ParseListingDialog first; parsed fields flow into the sheet via initialData
+  // AI users see ParseListingDialog first, non-AI sers see JobCreateSheet directly
   const [parseOpen, setParseOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [initialData, setInitialData] = useState<Partial<FormState> | undefined>(undefined);
@@ -255,6 +255,26 @@ export function JobTable() {
 
   if (isPending) return <p>Loading...</p>;
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Something went wrong."}</p>;
+
+  // Opens dialog for AI users with auto-fill on; otherwise opens sheet directly
+  function handleAddJob() {
+    if (hasRole("AiUser") && (prefs?.autoFillEnabled ?? true)) {
+      setParseOpen(true);
+    } else {
+      setInitialData(undefined);
+      setSheetOpen(true);
+    }
+  }
+
+  function handleFill(data: Partial<FormState>) {
+    setInitialData(data);
+    setSheetOpen(true);
+  }
+
+  function handleFillManually() {
+    setInitialData(undefined);
+    setSheetOpen(true);
+  }
 
   const sortProps = { activeField: sortField, dir: sortDir, onSort: setSort };
   const showControls = activeTab !== "rejected";
