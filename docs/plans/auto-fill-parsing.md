@@ -2,7 +2,7 @@
 
 ## Overview
 
-A "Parse" button in the Add Job sheet. User pastes raw listing text → backend sends it to Claude API → returns a partial `JobDTO` → form fields pre-filled. User reviews and saves. Phase 1 only (copy-paste). Phase 2 (URL fetch) deferred.
+AI users get a `ParseListingDialog` before the Add Job sheet. User pastes raw listing text → backend sends it to Claude API → returns a partial `JobDTO` → create sheet opens pre-filled. User reviews and saves. Non-AI users go straight to the create sheet. AI users can opt out via a settings toggle. Phase 1 only (copy-paste). Phase 2 (URL fetch) deferred.
 
 ---
 
@@ -14,8 +14,12 @@ A "Parse" button in the Add Job sheet. User pastes raw listing text → backend 
 | `claude-haiku-4-5` model | Fastest and cheapest; extraction task doesn't need reasoning depth; latency matters in a form UX |
 | Structured JSON prompt (system prompt defines schema) | More reliable field extraction than free-text; Claude returns valid JSON consistently with a tight schema |
 | `POST /api/jobs/parse` returns partial `JobDTO` shape | Frontend already knows the `JobDTO` shape; no new types needed |
-| Merge strategy: only fill empty fields | Prevents overwriting data the user typed manually before hitting Parse |
-| Collapsible textarea in Add Job sheet | Keeps the form clean for users who don't need parsing; expands on demand |
+| `ParseListingDialog` as a separate entry point before `JobCreateSheet` | Enforces auto-fill → adjust flow; avoids mid-form mode switching and the confusion of switching from manual to auto partway through |
+| `JobCreateSheet` accepts optional `initialData` prop | Dialog passes parsed fields to the sheet; sheet stays self-contained and reusable for the manual flow |
+| No retry in `ParseListingDialog` | Same text → same result (deterministic extraction); wrong text → re-paste. Retry UI implies non-determinism that doesn't exist |
+| `autoFillEnabled` stored in existing `Preferences` JSON blob on `ApplicationUser` | No migration needed — existing string column already holds JSON; adding a field to `UserPreferencesDto` with `= true` default covers users who have never saved this preference |
+| `autoFillEnabled` defaults to `true` for AI users | Dialog-first is the intended flow; users who prefer manual can opt out in settings |
+| Toggle only shown in Settings for AI users | Non-AI users never see the dialog, so the toggle is irrelevant to them |
 | Fail-fast on missing `Anthropic:ApiKey` | Matches existing JWT config validation pattern in `Program.cs` |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
 | `[Authorize(Policy = "AiEnabled")]` on the endpoint | Restricts parsing to users with `"AiUser"` role — policy defined in `ai-access-admin` plan |
@@ -105,10 +109,13 @@ Key decisions:
 | 2 | Add `ParsedJobFields` model + `IParsingService` + `ClaudeParsingService` (full impl) + `ClaudeParsingConfig` | ✅ |
 | 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse` with `[Authorize(Policy = "AiEnabled")]` + `[EnableRateLimiting("parse")]` in `JobsController` | ✅ |
 | 4 | Register `ClaudeParsingService` + add `"parse"` rate limit policy (2 per minute per IP) in `Program.cs` | ✅ |
-| 5 | Add controller tests for `POST /api/jobs/parse` — mock `IParsingService`; cover: 200 with partial result, 400 empty input, 400 over 8000 chars, 400 HTML input, 401 unauthenticated, 403 missing `AiEnabled` policy | — |
-| 6 | Add collapsible textarea + "Parse" button to Add Job sheet | — |
-| 7 | Call endpoint on Parse click; show loading and error state | — |
-| 8 | Merge response into form state (empty fields only) | — |
+| 5 | Add controller tests for `POST /api/jobs/parse` — mock `IParsingService`; cover: 200 with partial result, 400 empty input, 400 over 8000 chars, 400 HTML input | ✅ |
+| 6 | Add `bool AutoFillEnabled { get; set; } = true` to `UserPreferencesDto` | — |
+| 7 | Add `autoFillEnabled: boolean` to frontend `Preferences` type in `preferencesService.ts` | — |
+| 8 | Add AI-only `autoFillEnabled` toggle to `SettingsPage` | — |
+| 9 | Revert collapsible section from `JobCreateSheet`; add optional `initialData?: Partial<FormState>` prop | — |
+| 10 | New `ParseListingDialog` — textarea, "Fill fields" (calls `/api/jobs/parse`, loading + error state, passes result to sheet), "Fill manually" (opens sheet empty), Cancel | — |
+| 11 | Wire "Add job" in `JobPage` — check `hasRole("AiUser")` + `autoFillEnabled` → dialog or sheet | — |
 
 ---
 
