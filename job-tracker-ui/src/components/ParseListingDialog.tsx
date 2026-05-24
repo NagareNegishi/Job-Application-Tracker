@@ -41,7 +41,23 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
   }
 
   // Calls the parse API and hands the converted result to the parent
-  async function handleFill() {}
+  async function handleFill() {
+    setError(null)
+    setLoading(true)
+    try {
+      const fields = await parseListing(text)
+      const initialData: Partial<FormState> = {
+        ...fields,
+        closedAt: fields.closedAt ? parseDateOnly(fields.closedAt) : undefined,
+      }
+      onFill(initialData)
+      handleOpenChange(false)
+    } catch {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Closes the dialog then tells the parent to open the sheet empty
   function handleFillManually() {}
