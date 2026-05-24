@@ -110,12 +110,12 @@ Key decisions:
 | 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse` with `[Authorize(Policy = "AiEnabled")]` + `[EnableRateLimiting("parse")]` in `JobsController` | ✅ |
 | 4 | Register `ClaudeParsingService` + add `"parse"` rate limit policy (2 per minute per IP) in `Program.cs` | ✅ |
 | 5 | Add controller tests for `POST /api/jobs/parse` — mock `IParsingService`; cover: 200 with partial result, 400 empty input, 400 over 8000 chars, 400 HTML input | ✅ |
-| 6 | Add `bool AutoFillEnabled { get; set; } = true` to `UserPreferencesDto` | — |
-| 7 | Add `autoFillEnabled: boolean` to frontend `Preferences` type in `preferencesService.ts` | — |
-| 8 | Add AI-only `autoFillEnabled` toggle to `SettingsPage` | — |
-| 9 | Revert collapsible section from `JobCreateSheet`; add optional `initialData?: Partial<FormState>` prop | — |
-| 10 | New `ParseListingDialog` — textarea, "Fill fields" (calls `/api/jobs/parse`, loading + error state, passes result to sheet), "Fill manually" (opens sheet empty), Cancel | `parseService.ts` done; open decision: export `FormState` from `JobCreateSheet.tsx` (Option A, simpler) or move to a shared types file (Option B) — decide before building dialog |
-| 11 | Wire "Add job" in `JobPage` — check `hasRole("AiUser")` + `autoFillEnabled` → dialog or sheet | — |
+| 6 | Add `bool AutoFillEnabled { get; set; } = true` to `UserPreferencesDto` | ✅ |
+| 7 | Add `autoFillEnabled: boolean` to frontend `Preferences` type in `preferencesService.ts` | ✅ |
+| 8 | Add AI-only `autoFillEnabled` toggle to `SettingsPage` | ✅ |
+| 9 | Revert collapsible section from `JobCreateSheet`; add optional `initialData?: Partial<FormState>` prop | ✅ |
+| 10 | New `ParseListingDialog` — textarea, "Fill fields" (calls `/api/jobs/parse`, loading + error state, passes result to sheet), "Fill manually" (opens sheet empty); `FormState` moved to `src/types/formTypes.ts` (Option B) | ✅ |
+| 11 | Wire "Add job" in `JobTable` — check `hasRole("AiUser")` + `autoFillEnabled` → dialog or sheet | ✅ |
 
 ---
 
