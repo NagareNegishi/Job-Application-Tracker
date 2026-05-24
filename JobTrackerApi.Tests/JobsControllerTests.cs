@@ -476,4 +476,20 @@ public class JobsControllerTests: IDisposable
         // Assert: Check that validation fails
         Assert.False(isValid);
     }
+
+    // Test for ParseListingRequest with HTML input
+    [Fact]
+    public async Task ParseListingRequest_HtmlInput_FailsValidation()
+    {
+        // Arrange
+        var request = new ParseListingRequest { Text = "<div>job listing</div>" };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
 }
