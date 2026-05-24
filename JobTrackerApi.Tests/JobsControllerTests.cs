@@ -492,4 +492,27 @@ public class JobsControllerTests: IDisposable
         // Assert: Check that validation fails
         Assert.False(isValid);
     }
+
+    // Test for ParseListing with a partial result
+    [Fact]
+    public async Task ParseListing_ReturnsOk_WithParsedFields()
+    {
+        // Arrange
+        var text = "Senior Engineer at Acme Corp.";
+        var parsed = new ParsedJobFields { Company = "Acme Corp", Role = "Senior Engineer", Description = text };
+        _parsingMock
+            .Setup(s => s.ParseListingAsync(text))
+            .ReturnsAsync(parsed);
+        var request = new ParseListingRequest { Text = text };
+
+        // Act
+        var result = await _controller.ParseListing(request);
+
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var fields = Assert.IsType<ParsedJobFields>(ok.Value);
+        Assert.Equal("Acme Corp", fields.Company);
+        Assert.Equal("Senior Engineer", fields.Role);
+        Assert.Equal(text, fields.Description);
+    }
 }
