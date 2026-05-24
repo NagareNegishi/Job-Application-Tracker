@@ -152,6 +152,9 @@ if (builder.Environment.IsDevelopment())
 else
     builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
 
+// AI parsing: extracts job fields from pasted listing text via Claude API
+builder.Services.AddScoped<IParsingService, ClaudeParsingService>();
+
 // Registers Identity's core services
 builder.Services.AddIdentityCore<ApplicationUser>()
     .AddRoles<IdentityRole>()
