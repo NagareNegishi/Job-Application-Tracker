@@ -24,7 +24,13 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
   const [error, setError] = useState<string | null>(null)
 
   // Clears transient state when the dialog closes (X, Escape, backdrop)
-  function handleOpenChange(nextOpen: boolean) {}
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setText("")
+      setError(null)
+    }
+    onOpenChange(nextOpen)
+  }
 
   // Calls the parse API and hands the converted result to the parent
   async function handleFill() {}
