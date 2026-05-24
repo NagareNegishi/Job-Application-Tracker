@@ -1,4 +1,5 @@
 using Anthropic;
+using Anthropic.Core;
 using Anthropic.Models.Messages;
 using System.Reflection;
 using System.Text.Json;
@@ -33,7 +34,7 @@ public class ClaudeParsingService : IParsingService
             ?? throw new InvalidOperationException("Anthropic:ApiKey is not configured.");
 
         // MaxRetries = 0: auto-retry adds 10–30 s of backoff with no benefit in a form UX — fail fast instead.
-        _client = new AnthropicClient(apiKey: apiKey, maxRetries: 0);
+        _client = new AnthropicClient(new ClientOptions { ApiKey = apiKey, MaxRetries = 0 });
         _logger = logger;
     }
 
