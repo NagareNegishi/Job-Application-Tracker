@@ -102,12 +102,13 @@ Key decisions:
 | # | Item | Status |
 |---|---|---|
 | 1 | Add `Anthropic:ApiKey` to config + fail-fast validation in `Program.cs` | ✅ |
-| 2 | Add `ParsedJobFields` model + `IParsingService` + `ClaudeParsingService` stub + `ClaudeParsingConfig` | ✅ config; impl pending |
-| 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse` with `[Authorize(Policy = "AiEnabled")]` + `[EnableRateLimiting("parse")]` in `JobsController` | — |
-| 4 | Register `ClaudeParsingService` + add `"parse"` rate limit policy (2 per minute per IP) in `Program.cs` | — |
-| 5 | Add collapsible textarea + "Parse" button to Add Job sheet | — |
-| 6 | Call endpoint on Parse click; show loading and error state | — |
-| 7 | Merge response into form state (empty fields only) | — |
+| 2 | Add `ParsedJobFields` model + `IParsingService` + `ClaudeParsingService` (full impl) + `ClaudeParsingConfig` | ✅ |
+| 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse` with `[Authorize(Policy = "AiEnabled")]` + `[EnableRateLimiting("parse")]` in `JobsController` | ✅ |
+| 4 | Register `ClaudeParsingService` + add `"parse"` rate limit policy (2 per minute per IP) in `Program.cs` | ✅ |
+| 5 | Add controller tests for `POST /api/jobs/parse` — mock `IParsingService`; cover: 200 with partial result, 400 empty input, 400 over 8000 chars, 400 HTML input, 401 unauthenticated, 403 missing `AiEnabled` policy | — |
+| 6 | Add collapsible textarea + "Parse" button to Add Job sheet | — |
+| 7 | Call endpoint on Parse click; show loading and error state | — |
+| 8 | Merge response into form state (empty fields only) | — |
 
 ---
 

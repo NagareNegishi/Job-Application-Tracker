@@ -233,7 +233,7 @@ builder.Services.AddRateLimiter(options =>
         config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
     });
 
-    // Tight limit for parse — each request hits the Claude API; 2 per minute covers the paste-correction case
+    // Tight limit for parse — each request hits the Claude API
     options.AddFixedWindowLimiter("parse", config =>
     {
         config.Window = TimeSpan.FromMinutes(1);
