@@ -41,13 +41,13 @@ public class ClaudeParsingService : IParsingService
     {
         var response = await _client.Messages.Create(new MessageCreateParams
         {
-            Model     = ClaudeParsingConfig.Model,
+            Model = ClaudeParsingConfig.Model,
             MaxTokens = ClaudeParsingConfig.MaxTokens,
-            System    = ClaudeParsingConfig.SystemPrompt,
-            Messages  = [new MessageParam { Role = Role.User, Content = text }]
+            System = ClaudeParsingConfig.SystemPrompt,
+            Messages = [new MessageParam { Role = Role.User, Content = text }]
         });
 
-        var raw  = response.Content.OfType<TextBlock>().FirstOrDefault()?.Text ?? string.Empty;
+        var raw = response.Content.OfType<TextBlock>().FirstOrDefault()?.Text ?? string.Empty;
         var json = ExtractJson(raw);
         LogContractIssues(json);
 
@@ -69,8 +69,8 @@ public class ClaudeParsingService : IParsingService
     private string ExtractJson(string raw)
     {
         var trimmed = raw.Trim();
-        var start   = trimmed.IndexOf('{');
-        var end     = trimmed.LastIndexOf('}');
+        var start = trimmed.IndexOf('{');
+        var end = trimmed.LastIndexOf('}');
 
         if (start == -1 || end == -1 || end < start)
         {
@@ -92,8 +92,8 @@ public class ClaudeParsingService : IParsingService
     {
         try
         {
-            using var doc   = JsonDocument.Parse(json);
-            var       props = doc.RootElement.EnumerateObject().ToList();
+            using var doc = JsonDocument.Parse(json);
+            var props = doc.RootElement.EnumerateObject().ToList();
 
             if (props.Count == 0)
             {

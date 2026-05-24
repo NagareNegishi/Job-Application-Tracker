@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 // https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-10.0
 
@@ -17,11 +18,13 @@ public class JobsController : ControllerBase
 {
     private readonly JobTrackerContext _context; // Assigned once, never changes
     private readonly IStorageService _storage;
+    private readonly IParsingService _parsing;
 
-    public JobsController(JobTrackerContext context, IStorageService storage)
+    public JobsController(JobTrackerContext context, IStorageService storage, IParsingService parsing)
     {
         _context = context;
         _storage = storage;
+        _parsing = parsing;
     }
 
     //NOTE: with UserId, Every action needs two things:
