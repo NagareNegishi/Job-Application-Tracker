@@ -65,5 +65,37 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
     onFillManually()
   }
 
-  return <></>
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Auto-fill job details</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Paste the job listing text below and Claude will extract the details for you.
+          </p>
+          <Textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Paste job listing here..."
+            rows={8}
+            disabled={loading}
+          />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={loading}>
+            Cancel
+          </Button>
+          <Button variant="outline" onClick={handleFillManually} disabled={loading}>
+            Fill manually
+          </Button>
+          <Button onClick={handleFill} disabled={loading || !text.trim()}>
+            {loading ? "Filling..." : "Fill fields"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
