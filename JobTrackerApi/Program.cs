@@ -232,6 +232,15 @@ builder.Services.AddRateLimiter(options =>
         config.QueueLimit = 0;
         config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
     });
+
+    // Tight limit for parse — each request hits the Claude API; 2 per minute covers the paste-correction case
+    options.AddFixedWindowLimiter("parse", config =>
+    {
+        config.Window = TimeSpan.FromMinutes(1);
+        config.PermitLimit = 2;
+        config.QueueLimit = 0;
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
 });
 
 // CORS only needed in dev — in production, Nginx proxies /api/* so frontend and backend share one origin
