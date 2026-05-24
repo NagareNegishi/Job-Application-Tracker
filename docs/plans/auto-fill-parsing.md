@@ -132,11 +132,16 @@ Strip surrounding text and attempt JSON parse regardless — log the anomaly but
 ### Anthropic
 Official C# NuGet package from Anthropic. Installed: v12.23.0. Install: `dotnet add package Anthropic`.
 
-Confirmed SDK API shape (v12.23.0):
-- Client: `new AnthropicClient(apiKey: apiKey, maxRetries: 0)`
+**SDK API shape — v12.23.0 — PARTIALLY WRONG. Build errors found 2026-05-24:**
+
+| Line | Error | Detail |
+|---|---|---|
+| 36 | `CS1739` | `AnthropicClient` has no named parameter `apiKey`. `new AnthropicClient(apiKey: apiKey, maxRetries: 0)` does not compile. Correct constructor signature is unknown — must be derived from local NuGet cache inspection, not official docs. Related to `ClientOptions.cs` in the SDK. |
+| 50 | `CA2021` | `ContentBlock` and `TextBlock` are incompatible types; `response.Content.OfType<TextBlock>()` always returns empty. The plan's documented response-reading API is wrong. |
+
+Known-good (not implicated by build errors):
 - Send: `await client.Messages.Create(new MessageCreateParams { ... })`
 - Role enum: `Role.User` (namespace `Anthropic.Models.Messages`)
-- Read response: `response.Content.OfType<TextBlock>().FirstOrDefault()?.Text`
 
 Chosen over the community `Anthropic.SDK` (tghamm): only basic message creation is needed here — the official package covers it, avoids a third-party maintenance dependency, and includes `IChatClient` integration for future provider abstraction.
 
