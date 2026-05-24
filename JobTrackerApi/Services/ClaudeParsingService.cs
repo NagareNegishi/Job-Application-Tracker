@@ -10,14 +10,15 @@ namespace JobTrackerApi.Services;
 /// <summary>Production implementation — parses job listings via the Claude API.</summary>
 public class ClaudeParsingService : IParsingService
 {
-    // Derived from [JsonPropertyName] on ParsedJobFields via reflection — single source of truth; computed once at class load.
+    // Derived from [JsonPropertyName] on ParsedJobFields via reflection
+    // Single source of truth, computed once at class load.
     private static readonly HashSet<string> _knownKeys = typeof(ParsedJobFields)
         .GetProperties()
         .Select(p => p.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name)
         .Where(name => name != null)
         .ToHashSet()!;
 
-    // JsonStringEnumConverter: required for Claude's string enum values (e.g. "Remote" → WorkMode).
+    // JsonStringEnumConverter: required for Claude's string enum values.
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         Converters = { new JsonStringEnumConverter() }
@@ -36,8 +37,49 @@ public class ClaudeParsingService : IParsingService
         _logger = logger;
     }
 
-    public Task<ParsedJobFields> ParseListingAsync(string text)
+    public async Task<ParsedJobFields> ParseListingAsync(string text)
     {
-        throw new NotImplementedException();
+        var response = await _client.Messages.Create(new MessageCreateParams
+        {
+            Model     = ClaudeParsingConfig.Model,
+            MaxTokens = ClaudeParsingConfig.MaxTokens,
+            System    = ClaudeParsingConfig.SystemPrompt,
+            Messages  = [new MessageParam { Role = Role.User, Content = text }]
+        });
+
+        var raw  = response.Content.OfType<TextBlock>().FirstOrDefault()?.Text ?? string.Empty;
+        var json = ExtractJson(raw);
+        // TODO: LogContractIssues(json);
+
+        try
+        {
+            var result = JsonSerializer.Deserialize<ParsedJobFields>(json, _jsonOptions) ?? new ParsedJobFields();
+            result.Description = text;
+            return result;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Failed to deserialize parse response. Raw: {Raw}", raw);
+            return new ParsedJobFields { Description = text };
+        }
+    }
+
+    private string ExtractJson(string raw)
+    {
+        var trimmed = raw.Trim();
+        var start   = trimmed.IndexOf('{');
+        var end     = trimmed.LastIndexOf('}');
+
+        if (start == -1 || end == -1 || end < start)
+            // TODO: log warning — no JSON object found
+            return "{}";
+
+        var json = trimmed[start..(end + 1)];
+
+        if (start > 0 || end < trimmed.Length - 1)
+            // TODO: log warning — surrounding text present
+            ;
+
+        return json;
     }
 }
