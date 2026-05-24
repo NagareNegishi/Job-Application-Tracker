@@ -156,7 +156,7 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
 
         {/* form fields go here */}
 
-        {/* Paste listing — collapsible; expands to reveal textarea and Parse button */}
+        {/* Auto-fill section*/}
         <div className="space-y-1.5">
           <button
             type="button"
@@ -164,19 +164,19 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
             onClick={() => setPasteOpen(v => !v)}
           >
             <ChevronDown className={`h-4 w-4 transition-transform ${pasteOpen ? "rotate-180" : ""}`} />
-            Paste job listing
+            Auto-fill job details
           </button>
           {pasteOpen && (
             <div className="space-y-2">
               <Textarea
                 value={listingText}
                 onChange={e => setListingText(e.target.value)}
-                placeholder="Paste the raw job listing text here..."
+                placeholder="Paste the job description here..."
                 rows={5}
                 maxLength={8000}
               />
               <Button type="button" variant="secondary" size="sm">
-                Parse
+                Fill fields
               </Button>
             </div>
           )}
