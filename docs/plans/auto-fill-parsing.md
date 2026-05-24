@@ -13,7 +13,7 @@ A "Parse" button in the Add Job sheet. User pastes raw listing text → backend 
 | `IParsingService` / `ClaudeParsingService` in `Services/` | Follows existing service abstraction pattern (`IStorageService`, `IEmailService`); mockable in tests |
 | `claude-haiku-4-5` model | Fastest and cheapest; extraction task doesn't need reasoning depth; latency matters in a form UX |
 | Structured JSON prompt (system prompt defines schema) | More reliable field extraction than free-text; Claude returns valid JSON consistently with a tight schema |
-| `POST /api/jobs/parse-listing` returns partial `JobDTO` shape | Frontend already knows the `JobDTO` shape; no new types needed |
+| `POST /api/jobs/parse` returns partial `JobDTO` shape | Frontend already knows the `JobDTO` shape; no new types needed |
 | Merge strategy: only fill empty fields | Prevents overwriting data the user typed manually before hitting Parse |
 | Collapsible textarea in Add Job sheet | Keeps the form clean for users who don't need parsing; expands on demand |
 | Fail-fast on missing `Anthropic:ApiKey` | Matches existing JWT config validation pattern in `Program.cs` |
@@ -24,6 +24,9 @@ A "Parse" button in the Add Job sheet. User pastes raw listing text → backend 
 | `Temperature` not set in `MessageCreateParams` | `Temperature` is `[Obsolete]` in SDK v12.x — models after Opus 4.6 reject non-1.0 values with 400. Haiku 4.5 predates Opus 4.6 by version number but the risk isn't worth taking. If the model changes, revisit. Prompt design (explicit rules + examples) enforces deterministic extraction without it. |
 | `[JsonPropertyName("company")]` attributes on `ParsedJobFields`; no `PropertyNameCaseInsensitive` | Explicit contract — JSON key mapping is visible in the model. Wrong casing from Claude is treated as a contract violation: logged as unexpected key, value dropped. Keeps the schema strict and predictable. |
 | Known keys for logging derived from `[JsonPropertyName]` attributes via reflection (`static readonly HashSet<string>`) | Single source of truth — model is the contract. Adding a field to `ParsedJobFields` automatically includes it in the known keys set. Hardcoded list risks silently going stale. Computed once at class load (`static readonly`) so reflection cost is paid once. |
+| `IValidatableObject` for HTML detection in `ParseListingRequest`; not `[RegularExpression]` | `[RegularExpression]` validates that a value matches a pattern — inverting it (must NOT contain HTML) requires a confusing negative lookahead. `IValidatableObject` keeps the rule readable and matches `JobDTO`'s cross-field validation pattern. |
+| HTML validation error is `"Invalid request."` — generic, no detail | Only a crafted API request triggers this rule — a real user pasting into a textarea never produces HTML in the body. A descriptive message would tell the attacker exactly what to remove. |
+| No `IsDemo()` check on the parse endpoint | `[Authorize(Policy = "AiEnabled")]` already blocks the demo user — demo account is never granted `"AiUser"` role. An explicit `IsDemo()` guard would be redundant and misleading (implies it's the actual guard when it isn't). |
 
 ---
 
@@ -31,7 +34,7 @@ A "Parse" button in the Add Job sheet. User pastes raw listing text → backend 
 
 ### Request
 ```
-POST /api/jobs/parse-listing
+POST /api/jobs/parse
 Authorization: Bearer <token>
 Content-Type: application/json
 
@@ -100,7 +103,7 @@ Key decisions:
 |---|---|---|
 | 1 | Add `Anthropic:ApiKey` to config + fail-fast validation in `Program.cs` | ✅ |
 | 2 | Add `ParsedJobFields` model + `IParsingService` + `ClaudeParsingService` stub + `ClaudeParsingConfig` | ✅ config; impl pending |
-| 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse-listing` with `[Authorize(Policy = "AiEnabled")]` + `[EnableRateLimiting("parse")]` in `JobsController` | — |
+| 3 | Add `ParseListingRequest` DTO + input validation + `POST /api/jobs/parse` with `[Authorize(Policy = "AiEnabled")]` + `[EnableRateLimiting("parse")]` in `JobsController` | — |
 | 4 | Register `ClaudeParsingService` + add `"parse"` rate limit policy (2 per minute per IP) in `Program.cs` | — |
 | 5 | Add collapsible textarea + "Parse" button to Add Job sheet | — |
 | 6 | Call endpoint on Parse click; show loading and error state | — |
