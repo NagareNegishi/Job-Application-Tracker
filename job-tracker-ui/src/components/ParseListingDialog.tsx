@@ -9,6 +9,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { parseListing } from "@/services/parseService"
 import type { FormState } from "@/types/formTypes"
+import { Sparkles } from "lucide-react"
 import { useState } from "react"
 
 interface ParseListingDialogProps {
@@ -69,11 +70,14 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg flex flex-col max-h-[85vh]">
         <DialogHeader>
-          <DialogTitle>Auto-fill job details</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            Auto-fill job details
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
           <p className="text-sm text-muted-foreground">
-            Paste the job listing text below and Claude will extract the details for you.
+            Paste the job listing text below and the details will be extracted automatically.
           </p>
           <Textarea
             value={text}
