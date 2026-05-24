@@ -85,9 +85,6 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={loading}>
-            Cancel
-          </Button>
           <Button variant="outline" onClick={handleFillManually} disabled={loading}>
             Fill manually
           </Button>

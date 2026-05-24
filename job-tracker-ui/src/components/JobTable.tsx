@@ -540,7 +540,12 @@ export function JobTable() {
       )}
       </div>
 
-      <ParseListingDialog open={parseOpen} onOpenChange={setParseOpen} onFill={handleFill} onFillManually={handleFillManually} />
+      <ParseListingDialog
+        open={parseOpen}
+        onOpenChange={setParseOpen}
+        onFill={handleFill}
+        onFillManually={handleFillManually}
+      />
       <JobCreateSheet open={sheetOpen} onOpenChange={setSheetOpen} initialData={initialData} />
     </div>
   );
