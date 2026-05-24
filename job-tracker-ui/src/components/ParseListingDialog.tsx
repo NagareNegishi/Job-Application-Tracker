@@ -18,6 +18,14 @@ interface ParseListingDialogProps {
   onFillManually: () => void
 }
 
+// Parse endpoint returns DateOnly ("YYYY-MM-DD"), which new Date() treats as UTC midnight —
+// shifting the date backwards in UTC+ time zones. The 3-arg constructor always uses local time.
+// JS Date months are 0-indexed (0 = Jan); DateOnly strings are 1-indexed, hence m - 1.
+function parseDateOnly(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number)
+  return new Date(y, m - 1, d)
+}
+
 export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually }: ParseListingDialogProps) {
   const [text, setText] = useState("")
   const [loading, setLoading] = useState(false)
