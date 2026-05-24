@@ -33,7 +33,6 @@ import {
   MAX_SOURCE_LENGTH,
 } from "@/lib/validationConstants"
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
-import { ChevronDown } from "lucide-react"
 import { useEffect, useState } from "react"
 
 // FormState represents the internal state of the job edit form
@@ -80,27 +79,24 @@ const defaultForm: FormState = {
 interface JobCreateSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialData?: Partial<FormState>
 }
 
 /**
  * JobCreateSheet component provides a form for editing job details.
  * It uses a Sheet component for the UI and manages form state internally.
  */
-export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
+export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateSheetProps) {
 
   const [form, setForm] = useState<FormState>(defaultForm)
   const { mutate: createJob, isPending } = useCreateJob()
   const [errors, setErrors] = useState<{ company?: string; role?: string; jobUrl?: string; salary?: string }>({})
-  const [pasteOpen, setPasteOpen] = useState(false)
-  const [listingText, setListingText] = useState("")
 
-  // Reset form when sheet opens with default values
+  // Reset merges defaultForm with initialData so parsed fields pre-fill the form
   useEffect(() => {
     if (open) {
-      setForm(defaultForm)
+      setForm({ ...defaultForm, ...initialData })
       setErrors({})
-      setPasteOpen(false)
-      setListingText("")
     }
   }, [open])
 
@@ -155,32 +151,6 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
         </SheetHeader>
 
         {/* form fields go here */}
-
-        {/* Auto-fill section*/}
-        <div className="space-y-1.5">
-          <button
-            type="button"
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-            onClick={() => setPasteOpen(v => !v)}
-          >
-            <ChevronDown className={`h-4 w-4 transition-transform ${pasteOpen ? "rotate-180" : ""}`} />
-            Auto-fill job details
-          </button>
-          {pasteOpen && (
-            <div className="space-y-2">
-              <Textarea
-                value={listingText}
-                onChange={e => setListingText(e.target.value)}
-                placeholder="Paste the job description here..."
-                rows={5}
-                maxLength={8000}
-              />
-              <Button type="button" variant="secondary" size="sm">
-                Fill fields
-              </Button>
-            </div>
-          )}
-        </div>
 
         {/* Edit Company */}
         <div className="space-y-1.5">
