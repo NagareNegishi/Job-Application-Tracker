@@ -33,25 +33,8 @@ import {
   MAX_SOURCE_LENGTH,
 } from "@/lib/validationConstants"
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
+import type { FormState } from "@/types/formTypes"
 import { useEffect, useState } from "react"
-
-// FormState represents the internal state of the job edit form
-interface FormState {
-  company: string
-  role: string
-  status: JobStatus
-  priority: Priority
-  appliedAt: Date | undefined
-  closedAt: Date | undefined
-  description: string
-  notes: string
-  jobUrl: string
-  source: string
-  salaryMin: number | ""
-  salaryMax: number | ""
-  location: string
-  workMode: WorkMode | ""
-}
 
 
 // Default form state for creating a new job, with empty fields and default status/priority

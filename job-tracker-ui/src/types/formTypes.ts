@@ -1,6 +1,6 @@
 import type { JobStatus, Priority, WorkMode } from "@/types/enums"
 
-// FormState represents the internal state of the job create/edit form
+// FormState represents the internal state of the job create form
 export interface FormState {
   company: string
   role: string
