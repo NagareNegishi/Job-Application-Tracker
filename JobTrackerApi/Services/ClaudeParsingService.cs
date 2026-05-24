@@ -64,6 +64,8 @@ public class ClaudeParsingService : IParsingService
         }
     }
 
+    // Strips surrounding prose from Claude's response and returns the first { } block.
+    // Logs if text outside JSON was found or no JSON object exists at all.
     private string ExtractJson(string raw)
     {
         var trimmed = raw.Trim();
@@ -71,14 +73,15 @@ public class ClaudeParsingService : IParsingService
         var end     = trimmed.LastIndexOf('}');
 
         if (start == -1 || end == -1 || end < start)
-            // TODO: log warning — no JSON object found
+        {
+            _logger.LogWarning("Parse response contains no JSON object. Raw: {Raw}", raw);
             return "{}";
+        }
 
         var json = trimmed[start..(end + 1)];
 
         if (start > 0 || end < trimmed.Length - 1)
-            // TODO: log warning — surrounding text present
-            ;
+            _logger.LogWarning("Parse response contains text outside JSON. Raw: {Raw}", raw);
 
         return json;
     }
