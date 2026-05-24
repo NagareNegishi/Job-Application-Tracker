@@ -129,21 +129,16 @@ Strip surrounding text and attempt JSON parse regardless — log the anomaly but
 
 ## Dependencies
 
-### Anthropic
-Official C# NuGet package from Anthropic. Installed: v12.23.0. Install: `dotnet add package Anthropic`.
+### Anthropic.SDK (tghamm)
+Community C# NuGet package. Install: `dotnet add package Anthropic.SDK`.
 
-**SDK API shape — v12.23.0 — PARTIALLY WRONG. Build errors found 2026-05-24:**
+**Switched from official `Anthropic` package (v12.23.0).** Official package is auto-generated from the API spec (Stainless) — not human-maintained C#. Auto-generated code does not follow C# conventions: response types use a discriminated union with no ergonomic helpers; `OfType<TextBlock>()` silently returns empty (CA2021). "Actively maintained" means API-spec-synchronized only, not C# experience maintained. tghamm uses standard C# inheritance — idiomatic, documented, maintainable. Extra dependency is the correct tradeoff when the official package harms maintainability.
 
-| Line | Error | Detail |
-|---|---|---|
-| 36 | `CS1739` | `AnthropicClient` has no named parameter `apiKey`. `new AnthropicClient(apiKey: apiKey, maxRetries: 0)` does not compile. Correct constructor signature is unknown — must be derived from local NuGet cache inspection, not official docs. Related to `ClientOptions.cs` in the SDK. |
-| 50 | `CA2021` | `ContentBlock` and `TextBlock` are incompatible types; `response.Content.OfType<TextBlock>()` always returns empty. The plan's documented response-reading API is wrong. |
-
-Known-good (not implicated by build errors):
-- Send: `await client.Messages.Create(new MessageCreateParams { ... })`
-- Role enum: `Role.User` (namespace `Anthropic.Models.Messages`)
-
-Chosen over the community `Anthropic.SDK` (tghamm): only basic message creation is needed here — the official package covers it, avoids a third-party maintenance dependency, and includes `IChatClient` integration for future provider abstraction.
+**SDK API shape — verified from tghamm README 2026-05-24:**
+- Client: `new AnthropicClient(apiKey)` — plain HttpClient, no retries by default
+- Send: `await client.Messages.GetClaudeMessageAsync(new MessageParameters { ... })`
+- Role: `RoleType.User`; Message param: `new Message(RoleType.User, text)`
+- Read response: `response.Content.OfType<TextContent>().First().Text` ✅
 
 ---
 
