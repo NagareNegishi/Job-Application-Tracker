@@ -14,6 +14,7 @@ public class JobsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;
     private readonly Mock<IStorageService> _storageMock;
+    private readonly Mock<IParsingService> _parsingMock;
     private readonly JobsController _controller;
     private const string TestUserId = "test-user-id";
 
@@ -25,10 +26,11 @@ public class JobsControllerTests: IDisposable
             .Options; // .Options extracts the built configuration object
 
         _storageMock = new Mock<IStorageService>();
+        _parsingMock = new Mock<IParsingService>();
 
         // create context and controller directly
         _context = new JobTrackerContext(options);
-        _controller = new JobsController(_context, _storageMock.Object);
+        _controller = new JobsController(_context, _storageMock.Object, _parsingMock.Object);
         SetUser();
     }
 
