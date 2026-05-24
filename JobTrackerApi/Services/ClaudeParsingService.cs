@@ -87,7 +87,6 @@ public class ClaudeParsingService : IParsingService
     }
 
     // Logs contract violations to tune the system prompt over time — not surfaced to the user.
-    // JsonException is swallowed: if JSON is malformed, ParseListingAsync logs and handles it.
     private void LogContractIssues(string json)
     {
         try
@@ -109,6 +108,7 @@ public class ClaudeParsingService : IParsingService
                     _logger.LogWarning("Parsed field is null: {Field}", prop.Name);
             }
         }
+        // ParseListingAsync logs and handles it
         catch (JsonException) { }
     }
 }

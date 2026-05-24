@@ -213,6 +213,10 @@ public class JobsController : ControllerBase
         return NoContent();
     }
 
+    // Returns true if the current request is authenticated as the demo account
+    private bool IsDemo() =>
+        User.FindFirstValue(ClaimTypes.Email) == DemoUser.Email;
+
     // Helper method to check if a job exists by ID
     private bool JobsExists(int id)
     {
