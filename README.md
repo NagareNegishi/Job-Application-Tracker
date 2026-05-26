@@ -19,7 +19,7 @@ Switch between a table view and a Kanban board, filter by location or work mode,
 
 - Track job applications through a status pipeline (Wishlist → Applied → Screening → Interview → Offer / Rejected)
 - Tab views on the job table: Active, Closing Soon, All, Rejected
-- Kanban board view — toggle from the table; drag cards across Low / Medium / High priority columns
+- Kanban board view — toggle from the table; drag cards to move jobs between stages (Wishlist → Applied → Offer…)
 - Customisable table columns — show or hide columns; preferences saved per user
 - Sorting and filtering — sort by any column; filter by location or work mode
 - Attach documents (CV, cover letter) per application
@@ -28,6 +28,7 @@ Switch between a table view and a Kanban board, filter by location or work mode,
 - Email verification on registration; forgot / reset password flow
 - Change password from the Settings page
 - Demo mode — try the app without registering
+- AI auto-fill — paste a job listing and the fields are extracted automatically; available to AI-enabled accounts
 
 ## Demo
 
@@ -38,6 +39,10 @@ Click **Try Demo** on the login page — no account required. The demo account i
 **Demo limitations:**
 - Document upload and delete are disabled — upload UI is visible but actions return a clear message
 - Password changes are blocked
+
+**AI features:**
+AI-powered auto-fill is available but limited to approved accounts — open access would expose the API key to unlimited use.
+To try it, leave a comment on this repo or reach out directly and I'll enable it for your account.
 
 **Data reset:**
 - On every demo login, any missing sample jobs are automatically restored — visitor deletions come back, visitor additions are left alone
