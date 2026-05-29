@@ -1,6 +1,6 @@
 # Company Verification API — Planning Doc
 
-**Status:** Early planning. The architecture (abstract contract + per-country adapters + fallback) is decided. The exact contract signatures, the normalized status enum, whether/when to expose an MCP server, and the open-source/community governance are **not finalized** (flagged inline as `[NOT FINALIZED]`).
+**Status:** Early planning. The architecture, contract method signature, normalized status enum, and deployment are decided. Whether/when to expose an MCP server and the open-source/community governance are **not finalized** (flagged inline as `[NOT FINALIZED]`).
 
 **Relationship to other docs:** This is a **standalone, reusable component**. Its first consumer is the Job Application Rating API (see `job-application-rating-api.md`), but it is deliberately not coupled to it — any product needing "is this a real, active company in country X" could use it.
 
@@ -45,25 +45,47 @@ Registry "active" status means the entity is **legally alive** (and for Australi
 
 ### The contract — design rules
 
-1. **Lowest-common-denominator required surface.** Every adapter (native, community, and the fallback wrapper) must satisfy the interface, so the *required* output is only what is universal:
-   - company exists (yes/no)
-   - normalized status
-   - canonical registry id
-   - source reference (so any result traces back to the government record)
-2. **Richer data is optional + capability-flagged.** Officers, beneficial owners, financials, etc. must never be required, or the first adapter that can't supply them can't conform.
-3. **Each adapter declares its capabilities** (e.g. `supportsChangeNotification`, `supportsMonitoring`, `supportsOfficers`). The platform reads these to decide whether it can do a cheap recheck or must re-query. (This mirrors the `list_jurisdictions` capability-matrix idea from existing tools.)
-4. **The fallback is optional and swappable** — configured per deployment, never hard-coded, so the core markets don't depend on a third party and the fallback slot can be replaced.
-5. **A conformance test suite gates every adapter** (including the fallback wrapper and all community adapters).
+**Method:** `Search(name, country)` — the single operation every adapter must implement.
 
-`[NOT FINALIZED]` — concrete method signatures. Direction agreed (something like `Verify(identifier, country)` plus `CheckStatus(canonicalId)` returning a normalized result), but not drafted.
+**Input:** company name string, country code.
+
+**Output:** `List<CompanyCandidate>` where each candidate contains:
+- Registry-native ID (format is registry-specific — NZBN is 13-digit, ABN is 11-digit, etc.)
+- Company name
+- Country
+- Additional fields as a key-value collection — what goes in here is the adapter's responsibility
+
+**Empty list `[]` means not found.** No active company matched the name in that registry. This is a valid result, not an error. What the consuming application does with a not-found result (block a submission, show an error) is outside this service's concern.
+
+**Adapter filtering rules (enforced, not optional):**
+- Filter out non-active statuses before returning — only legally alive entities appear in results.
+- Filter out non-company entity types before returning — sole traders, partnerships, trusts, and similar are excluded. The purpose is company verification; these types are unlikely to be posting jobs.
+- What counts as "active" and what counts as a "company type" is the adapter's decision, but it must be explicitly declared in the adapter's conformance declaration (see Conformance suite below).
+
+**Other design rules:**
+- Richer data (officers, financials, etc.) must never be required by the contract — it belongs in the key-value additional fields only.
+- The fallback is optional and swappable — configured per deployment, never hard-coded.
+- A conformance test suite and declaration file gate every adapter.
 
 ### Normalized status enum
 
-`[NOT FINALIZED]` — to be reconciled against each registry's actual status vocabulary (especially NZBN's published status list).
+Reconciled against the actual status vocabularies of NZ, AU, and UK registries. The enum is confirmed:
 
-Working set: `ACTIVE`, `CANCELLED` (a.k.a. inactive), `REMOVED` (dissolved/struck off), `IN_LIQUIDATION`, `UNKNOWN`.
+`ACTIVE`, `CANCELLED`, `REMOVED`, `IN_LIQUIDATION`, `UNKNOWN`
 
-Each adapter maps its registry's native status strings into this enum so the rest of the system is jurisdiction-agnostic.
+**Registry mappings (for reference and adapter declaration use):**
+
+| Enum value | NZ (NZBN) | AU (ABR) | UK (Companies House) |
+|---|---|---|---|
+| `ACTIVE` | `Registered` | `Active` | `active`, `registered` |
+| `CANCELLED` | — | `Cancelled`, `Not Active` | `voluntary-arrangement` |
+| `REMOVED` | `Removed`, `Deregistered` | — | `dissolved`, `removed`, `converted-closed` |
+| `IN_LIQUIDATION` | — | — | `liquidation`, `receivership`, `administration` |
+| `UNKNOWN` | anything else | anything else | anything else |
+
+UK is included for future reference — it is not MVP scope. Each adapter's YAML declaration must explicitly state its own mapping using the registry's exact status strings.
+
+Note: the normalized enum is used for the re-check/monitoring layer. The `Search` contract does not return the enum — it filters by it internally (only `ACTIVE` entities are returned). The enum surfaces in stored records and monitoring logic.
 
 ### Data sources
 
@@ -113,14 +135,29 @@ Keep every front door a **thin wrapper over the core** — no business logic in 
 
 ### Conformance suite
 
-The mechanism that makes community contribution safe without hand-auditing each adapter. A standard battery every adapter must pass:
+Two gates every adapter must pass before merging to main:
 
-- a known **active** company returns `ACTIVE`
-- a known **dissolved/cancelled** company returns the correct status
-- a **missing** company returns not-found
-- an **upstream outage** surfaces a clean, structured error
+**1. YAML conformance declaration (required artefact)**
 
-Fixtures (recorded registry responses) so adapters are testable **offline** — a contributor in another country can't run NZ's live tests and vice versa.
+Every adapter ships a YAML declaration file alongside its code. No declaration = merge blocked. Incomplete declaration = merge blocked. A reviewer verifies the declaration against the registry's published documentation without reading the full adapter code.
+
+Required fields in the declaration:
+- Registry name and source URL
+- Status values included (map to `ACTIVE`) using the registry's exact strings
+- Status values excluded, using the registry's exact strings
+- Entity types included as "company", using the registry's exact type strings
+- Entity types excluded, using the registry's exact type strings
+
+**2. Conformance test suite (automated)**
+
+A standard battery every adapter must pass:
+- A known active company name returns a non-empty list containing that company
+- A known dissolved/cancelled company name returns `[]`
+- A known sole trader or non-company entity name returns `[]`
+- A name that does not exist in the registry returns `[]`
+- An upstream outage surfaces a clean, structured error
+
+Fixtures (recorded registry responses) so adapters are testable **offline** — a contributor in another country cannot run NZ's live tests and vice versa.
 
 ### Tech & repo
 
@@ -145,10 +182,9 @@ Zero-cost hosting. Cold start is a known, accepted tradeoff — documented here,
 
 ## Open decisions (summary)
 
-- Concrete contract method signatures not drafted (direction agreed).
-- Normalized status enum values not reconciled against NZBN's real status list.
 - Whether to build a native AU/ABN adapter now or rely on the fallback.
 - Fallback provider not locked: OpenRegistry is the candidate — ToS verified (wrapping permitted), closed-source, lists NZ but NZ implementation is undocumented. Still swappable.
 - Whether/when to expose this service as an MCP server.
 - **Open-source + community governance:** whether to publish open-source (a real differentiator, since OpenRegistry is closed and not extensible), and when to open to outside contributions vs. keeping NZ/AU first-party during MVP.
 - Config/secrets contract for per-deployment adapter credentials — direction agreed, details undrafted.
+- YAML declaration schema — structure agreed, formal schema not yet written.
