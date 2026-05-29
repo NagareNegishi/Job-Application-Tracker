@@ -1,6 +1,6 @@
 # Company Verification API — Planning Doc
 
-**Status:** Early planning. The architecture, contract method signature, normalized status enum, and deployment are decided. Whether/when to expose an MCP server and the open-source/community governance are **not finalized** (flagged inline as `[NOT FINALIZED]`).
+**Status:** Early planning. The architecture, contract method signature, normalized status enum, deployment, and licence are decided. Whether/when to expose an MCP server is **not finalized** (flagged inline as `[NOT FINALIZED]`).
 
 **Relationship to other docs:** This is a **standalone, reusable component**. Its first consumer is the Job Application Rating API (see `job-application-rating-api.md`), but it is deliberately not coupled to it — any product needing "is this a real, active company in country X" could use it.
 
@@ -163,6 +163,8 @@ Fixtures (recorded registry responses) so adapters are testable **offline** — 
 
 - **Stack:** C# / .NET 10. Confirmed choice — matches the consuming product and the team's learning direction. .NET 10 is LTS, supported until November 2028. Because the boundary is a package/HTTP/MCP contract, the verification service *could* even be a different language than its consumers — an option, not a plan.
 - **Repo:** MVP as a sibling directory in the monorepo; designed to be cleanly extractable into its own repo later (e.g. `git subtree split`) if/when opened to the public.
+- **Licence:** AGPL 3.0. Free for non-commercial use. Commercial use (using this in a product or service that generates revenue) requires a separate commercial licence from the project owner. AGPL's copyleft clause means anyone running a modified version as a network service must publish their source — this creates natural pressure for commercial users to seek a paid licence rather than building on it silently. `LICENSE` file goes in the repo root before the first commit.
+- **CLA (Contributor License Agreement):** Required from all external contributors before their code is merged. Grants the project owner the right to relicense contributions, preserving the option to move to a commercial or dual licence later. Set up `CLA.md` and CLA Assistant (GitHub App) before the first external pull request — not before coding starts.
 
 ### Deployment architecture
 
@@ -185,6 +187,5 @@ Zero-cost hosting. Cold start is a known, accepted tradeoff — documented here,
 - Whether to build a native AU/ABN adapter now or rely on the fallback.
 - Fallback provider not locked: OpenRegistry is the candidate — ToS verified (wrapping permitted), closed-source, lists NZ but NZ implementation is undocumented. Still swappable.
 - Whether/when to expose this service as an MCP server.
-- **Open-source + community governance:** whether to publish open-source (a real differentiator, since OpenRegistry is closed and not extensible), and when to open to outside contributions vs. keeping NZ/AU first-party during MVP.
 - Config/secrets contract for per-deployment adapter credentials — direction agreed, details undrafted.
 - YAML declaration schema — structure agreed, formal schema not yet written.
