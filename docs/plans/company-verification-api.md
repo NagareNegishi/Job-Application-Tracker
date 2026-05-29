@@ -31,7 +31,7 @@ This gives day-one breadth (via fallback), high quality where it matters (native
 
 ### MVP scope
 
-- **New Zealand** → native NZBN adapter. **Must build** — NZ is the primary market and is *not* covered by the chosen fallback.
+- **New Zealand** → native NZBN adapter. **Must build** — NZ is the primary market. OpenRegistry lists NZ Companies Office as a covered jurisdiction, but their NZ implementation is undocumented (no upstream source published, unlike every other jurisdiction they cover), making it a black box for the primary market. The native NZBN adapter gives known scope, ETag recheck support, and watchlist monitoring that OpenRegistry's NZ coverage cannot be verified to provide.
 - **Australia** → covered for free by the fallback (its registry, ABR, is in the fallback's coverage). A native ABN adapter is optional, added later only for freshness/monitoring control.
 - **Everything else** → fallback where covered, otherwise "unsupported."
 
@@ -79,12 +79,15 @@ Each adapter maps its registry's native status strings into this enum so the res
 - Limitations: no director/officer data (would need ASIC for that); trading names not updated since 2012 — match on legal name.
 
 **Fallback — OpenRegistry (candidate, with caveats)**
-- An MCP-native hosted service proxying ~27 national registries live (verbatim government data, no cache). Covers **Australia (ABR)** but **not New Zealand**.
+- An MCP-native hosted service proxying ~27 national registries live (verbatim government data, no cache). Covers **Australia (ABR)**. Lists **New Zealand (NZ Companies Office)** as a covered jurisdiction, but their NZ implementation is undocumented — the upstream source they call is not published, unlike every other jurisdiction they cover. Treat NZ via OpenRegistry as an unverified backstop only, not a substitute for the native NZBN adapter.
 - Pricing: free tiers (anonymous 20 req/min per IP; signed-in 30/min), then Pro $9/mo, Max $29/mo, Enterprise by contact. Auth via OAuth 2.1 (no API keys).
-- **`[NOT FINALIZED]` / caveats:**
-  - It is **closed-source** (the public repo is documentation only) — so it can only be *consumed*, not extended. You cannot contribute a NZ adapter to it.
-  - **Check its Terms of Service** before shipping it as a default provider inside a redistributed product. Not yet verified.
-  - Because this project may be run by others, the fallback's **auth/credentials must be per-deployment configurable** — you cannot bundle shared credentials. Each deployment uses its own tier/limits.
+- **ToS verified (2026-05-16).** Wrapping OpenRegistry as a configurable fallback is permitted. Specific restrictions that apply:
+  - Do not redistribute its responses as a commercial dataset-for-sale.
+  - Do not use it to build a competing general-purpose registry proxy.
+  - Per-deployment credentials are required by design — shared credentials cannot be bundled.
+  - Governed by the laws of England and Wales (jurisdiction mismatch for a NZ-primary project — minor but noted).
+- **Remaining caveats:**
+  - It is **closed-source** (the public repo is documentation only) — so it can only be *consumed*, not extended.
   - Treat it as *a* configurable fallback, swappable for OpenCorporates or another provider.
 
 **Note on calling the fallback:** the verification service calling OpenRegistry is a plain MCP client reading JSON — **no LLM, no token cost.** Token cost only arises if *this* service is later exposed as an MCP server that an AI agent calls.
@@ -121,8 +124,22 @@ Fixtures (recorded registry responses) so adapters are testable **offline** — 
 
 ### Tech & repo
 
-- **Stack:** C# / .NET 10 (matches the consuming product). `[NOT FINALIZED]` as a hard commitment but the working choice. Because the boundary is a package/HTTP/MCP contract, the verification service *could* even be a different language than its consumers — an option, not a plan.
+- **Stack:** C# / .NET 10. Confirmed choice — matches the consuming product and the team's learning direction. .NET 10 is LTS, supported until November 2028. Because the boundary is a package/HTTP/MCP contract, the verification service *could* even be a different language than its consumers — an option, not a plan.
 - **Repo:** MVP as a sibling directory in the monorepo; designed to be cleanly extractable into its own repo later (e.g. `git subtree split`) if/when opened to the public.
+
+### Deployment architecture
+
+Zero-cost hosting. Cold start is a known, accepted tradeoff — documented here, not treated as a bug.
+
+- **App hosting:** Render free tier. Sleeps after 15 minutes of inactivity; first request after idle takes up to ~30 seconds. Acceptable because the verify step is an explicit user-triggered gate (spinner shown), not a background call.
+- **Database:** Neon free tier (serverless PostgreSQL). Compute auto-pauses and resumes transparently on connection; adds ~100–300ms to the first query after idle. 0.5 GB storage. Chosen over Supabase because Supabase pauses the entire project after 1 week of inactivity and requires manual intervention to unpause — incompatible with low-traffic early stage.
+- **CI/CD:** GitHub Actions (free for public repos). Deploys to Render via deploy hook on push to main.
+- **Local development:** Dev container with .NET 10 SDK + PostgreSQL via Docker Compose.
+
+**Known limitations to document:**
+- Render free tier: 750 instance-hours/month; no custom domain (`.onrender.com` URL).
+- Neon free tier: 0.5 GB storage cap.
+- Upgrade path: move to Render paid tier ($7/month, no sleep) if the project gains traction. Architecture does not need to change — tier only.
 
 ---
 
@@ -131,7 +148,7 @@ Fixtures (recorded registry responses) so adapters are testable **offline** — 
 - Concrete contract method signatures not drafted (direction agreed).
 - Normalized status enum values not reconciled against NZBN's real status list.
 - Whether to build a native AU/ABN adapter now or rely on the fallback.
-- Fallback provider not locked: OpenRegistry is the candidate but is closed-source, lacks NZ, and its Terms of Service for wrapping/redistribution are **unverified**.
+- Fallback provider not locked: OpenRegistry is the candidate — ToS verified (wrapping permitted), closed-source, lists NZ but NZ implementation is undocumented. Still swappable.
 - Whether/when to expose this service as an MCP server.
 - **Open-source + community governance:** whether to publish open-source (a real differentiator, since OpenRegistry is closed and not extensible), and when to open to outside contributions vs. keeping NZ/AU first-party during MVP.
 - Config/secrets contract for per-deployment adapter credentials — direction agreed, details undrafted.
