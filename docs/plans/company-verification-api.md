@@ -91,6 +91,7 @@ Note: the normalized enum is used for the re-check/monitoring layer. The `Search
 
 **New Zealand — NZBN API (native, MVP)**
 - Free; requires a free subscription key (read-only) or OAuth2 for writes.
+- Base URL: `https://api.business.govt.nz/gateway/nzbn/v5/` — same host for sandbox and production; subscription key type is what differs. Verified May 2026.
 - Returns company status; covers companies, other entity types, and registered sole traders/partnerships/trusts.
 - Recheck features: **ETags** (send `If-None-Match`; a `304` means unchanged — cheap rechecks) and a **watchlist** capability for monitoring a set of businesses. Monthly bulk download (JSON/CSV) for initial load.
 - Note: Australian companies operating in NZ sit on a separate Overseas Register with distinct identifiers.
@@ -101,6 +102,7 @@ Note: the normalized enum is used for the re-check/monitoring layer. The `Search
 - Limitations: no director/officer data (would need ASIC for that); trading names not updated since 2012 — match on legal name.
 
 **Fallback — OpenRegistry (candidate, with caveats)**
+- Base URL: `https://openregistry.sophymarine.com` — all endpoints (MCP, auth, jurisdictions) use this single host. Verified May 2026.
 - An MCP-native hosted service proxying ~27 national registries live (verbatim government data, no cache). Covers **Australia (ABR)**. Lists **New Zealand (NZ Companies Office)** as a covered jurisdiction, but their NZ implementation is undocumented — the upstream source they call is not published, unlike every other jurisdiction they cover. Treat NZ via OpenRegistry as an unverified backstop only, not a substitute for the native NZBN adapter.
 - Pricing: free tiers (anonymous 20 req/min per IP; signed-in 30/min), then Pro $9/mo, Max $29/mo, Enterprise by contact. Auth via OAuth 2.1 (no API keys).
 - **ToS verified (2026-05-16).** Wrapping OpenRegistry as a configurable fallback is permitted. Specific restrictions that apply:
