@@ -124,6 +124,7 @@ Active status must be re-verified on a recurring basis, **at least every 6 month
 - **NZ:** use ETags (`If-None-Match`) and/or a watchlist for near-real-time change detection; the 6-month timer is just a backstop.
 - **AU:** no push mechanism — re-query on schedule and compare the returned status + status date. Daily-updated source allows more frequent polling if wanted.
 - Normalize each registry's status into the enum; cache last status + `last_checked` per company.
+- Storage is behind `IVerificationStore` (defined in Core). Dev and test use `InMemoryVerificationStore`. The production implementation (Neon/PostgreSQL) is added when re-check/monitoring is built. Whether an adapter uses the store at all is the adapter's decision — adapters with native re-check support (e.g. NZBN ETags) may not need it.
 
 ### Front doors (output interfaces)
 
@@ -163,7 +164,7 @@ Fixtures (recorded registry responses) so adapters are testable **offline** — 
 
 ### Tech & repo
 
-- **Solution shape:** `CompanyVerification.Core/` (class library — contract + adapters) + `CompanyVerification.Api/` (HTTP front door) + `CompanyVerification.Tests/` (xUnit). Monorepo MVP; designed for clean extraction.
+- **Solution shape:** `CompanyVerification.Core/` (class library — contract, adapters, `IVerificationStore`, `InMemoryVerificationStore`) + `CompanyVerification.Api/` (HTTP front door, future `NeonVerificationStore`) + `CompanyVerification.Tests/` (xUnit). Monorepo MVP; designed for clean extraction.
 - **Stack:** C# / .NET 10. Confirmed choice — matches the consuming product and the team's learning direction. .NET 10 is LTS, supported until November 2028. Because the boundary is a package/HTTP/MCP contract, the verification service *could* even be a different language than its consumers — an option, not a plan.
 - **Repo:** MVP as a sibling directory in the monorepo; designed to be cleanly extractable into its own repo later (e.g. `git subtree split`) if/when opened to the public.
 - **Licence:** AGPL 3.0. Free for non-commercial use. Commercial use (using this in a product or service that generates revenue) requires a separate commercial licence from the project owner. AGPL's copyleft clause means anyone running a modified version as a network service must publish their source — this creates natural pressure for commercial users to seek a paid licence rather than building on it silently. `LICENSE` file goes in the repo root before the first commit.
@@ -189,9 +190,9 @@ Set up the environment before any .NET code, so Claude Code is configured and co
 Zero-cost hosting. Cold start is a known, accepted tradeoff — documented here, not treated as a bug.
 
 - **App hosting:** Render free tier. Sleeps after 15 minutes of inactivity; first request after idle takes up to ~30 seconds. Acceptable because the verify step is an explicit user-triggered gate (spinner shown), not a background call.
-- **Database:** Neon free tier (serverless PostgreSQL). Compute auto-pauses and resumes transparently on connection; adds ~100–300ms to the first query after idle. 0.5 GB storage. Chosen over Supabase because Supabase pauses the entire project after 1 week of inactivity and requires manual intervention to unpause — incompatible with low-traffic early stage.
+- **Database:** Neon free tier (serverless PostgreSQL). Compute auto-pauses and resumes transparently on connection; adds ~100–300ms to the first query after idle. 0.5 GB storage. Chosen over Supabase because Supabase pauses the entire project after 1 week of inactivity and requires manual intervention to unpause — incompatible with low-traffic early stage. `[DEFERRED — not needed until IVerificationStore has a PostgreSQL implementation]`
 - **CI/CD:** GitHub Actions (free for public repos). Deploys to Render via deploy hook on push to main.
-- **Local development:** Dev container with .NET 10 SDK + PostgreSQL via Docker Compose.
+- **Local development:** Dev container with .NET 10 SDK only — no PostgreSQL service until the Neon/PostgreSQL store implementation is built.
 
 **Known limitations to document:**
 - Render free tier: 750 instance-hours/month; no custom domain (`.onrender.com` URL).
