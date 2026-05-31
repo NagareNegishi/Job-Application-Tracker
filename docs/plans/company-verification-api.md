@@ -163,10 +163,12 @@ Fixtures (recorded registry responses) so adapters are testable **offline** — 
 
 ### Tech & repo
 
+- **Solution shape:** `CompanyVerification.Core/` (class library — contract + adapters) + `CompanyVerification.Api/` (HTTP front door) + `CompanyVerification.Tests/` (xUnit). Monorepo MVP; designed for clean extraction.
 - **Stack:** C# / .NET 10. Confirmed choice — matches the consuming product and the team's learning direction. .NET 10 is LTS, supported until November 2028. Because the boundary is a package/HTTP/MCP contract, the verification service *could* even be a different language than its consumers — an option, not a plan.
 - **Repo:** MVP as a sibling directory in the monorepo; designed to be cleanly extractable into its own repo later (e.g. `git subtree split`) if/when opened to the public.
 - **Licence:** AGPL 3.0. Free for non-commercial use. Commercial use (using this in a product or service that generates revenue) requires a separate commercial licence from the project owner. AGPL's copyleft clause means anyone running a modified version as a network service must publish their source — this creates natural pressure for commercial users to seek a paid licence rather than building on it silently. `LICENSE` file goes in the repo root before the first commit.
 - **CLA (Contributor License Agreement):** Required from all external contributors before their code is merged. Grants the project owner the right to relicense contributions, preserving the option to move to a commercial or dual licence later. Set up `CLA.md` and CLA Assistant (GitHub App) before the first external pull request — not before coding starts.
+- **Adapter firewall rule:** every new adapter must add its registry hostname to `.devcontainer/project-firewall.sh` before dev container code can reach it. The script is the auditable list of all external registries this service calls.
 
 ### Deployment architecture
 
