@@ -169,6 +169,20 @@ Fixtures (recorded registry responses) so adapters are testable **offline** — 
 - **Licence:** AGPL 3.0. Free for non-commercial use. Commercial use (using this in a product or service that generates revenue) requires a separate commercial licence from the project owner. AGPL's copyleft clause means anyone running a modified version as a network service must publish their source — this creates natural pressure for commercial users to seek a paid licence rather than building on it silently. `LICENSE` file goes in the repo root before the first commit.
 - **CLA (Contributor License Agreement):** Required from all external contributors before their code is merged. Grants the project owner the right to relicense contributions, preserving the option to move to a commercial or dual licence later. Set up `CLA.md` and CLA Assistant (GitHub App) before the first external pull request — not before coding starts.
 - **Adapter firewall rule:** every new adapter must add its registry hostname to `.devcontainer/project-firewall.sh` before dev container code can reach it. The script is the auditable list of all external registries this service calls.
+- **HTTPS in dev:** HTTP only. Registry data is public; no user credentials or personal data in transit. Render handles TLS termination in prod — the app serves plain HTTP behind their reverse proxy.
+- **NuGet publishing threshold:** publish `0.1.0` when the NZ native adapter returns real NZBN results (not mocked). Declare `1.0.0` after the Rating API consumes it in production and the `Search()` signature has not changed for 4–6 weeks of real use.
+
+### Bootstrap order
+
+Set up the environment before any .NET code, so Claude Code is configured and constrained from the first commit:
+
+1. Create directory + `git init`
+2. `.devcontainer/` files (`Dockerfile`, `docker-compose.yml`, `devcontainer.json`, `.env`, `project-firewall.sh`)
+3. `.claude/` config (`settings.json` + `CLAUDE.md`)
+4. `LICENSE` (AGPL 3.0)
+5. Initial commit
+6. Open directory in its own VS Code dev container
+7. Scaffold .NET solution + projects from inside that container
 
 ### Deployment architecture
 
