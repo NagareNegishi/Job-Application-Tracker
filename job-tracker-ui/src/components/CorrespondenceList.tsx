@@ -33,11 +33,11 @@ export function CorrespondenceEntry({ entry, onEdit, onDelete, isPending }: Corr
   return (
     <div className="border rounded-lg p-3 space-y-1 w-full">
       {/* Top row: name + actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between min-w-0">
         <span className="text-sm text-muted-foreground w-24 shrink-0">
           {new Date(entry.date).toLocaleDateString()}
         </span>
-        <div className="flex gap-1">
+        <div className="flex gap-1 shrink-0">
           {/* Edit action */ }
           <Button variant="ghost" size="icon"
             onClick={() => onEdit(entry)}
@@ -55,7 +55,7 @@ export function CorrespondenceEntry({ entry, onEdit, onDelete, isPending }: Corr
         </div>
       </div>
       {/* Optional fields */}
-      {entry.note && <p className="text-sm">{entry.note}</p>}
+      {entry.note && <p className="text-sm break-words">{entry.note}</p>}
     </div>
   )
 }
