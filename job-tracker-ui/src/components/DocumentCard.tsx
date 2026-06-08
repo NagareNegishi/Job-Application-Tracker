@@ -53,10 +53,10 @@ export function DocumentCard({ document }: DocumentCardProps) {
   }
 
   return (
-    <div className="border rounded p-3 flex items-center justify-between">
+    <div className="border rounded p-3 flex items-center justify-between min-w-0">
 
       {/* Display document name and type, or input fields if in edit mode */}
-      <div className="flex items-center gap-2 flex-1">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
         {isEditing ? (
           <>
             <Input
@@ -78,14 +78,14 @@ export function DocumentCard({ document }: DocumentCardProps) {
           </>
         ) : (
           <>
-            <p className="font-medium">{document.name}</p>
+            <p className="font-medium truncate">{document.name}</p>
             <p className="text-sm text-muted-foreground">{formatEnumLabel(document.type)}</p>
           </>
         )}
       </div>
 
       {/* Action buttons: Edit (pencil), Download, Delete (trash) */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 shrink-0">
         
         {/* Edit actions */}
         {isEditing ? (
