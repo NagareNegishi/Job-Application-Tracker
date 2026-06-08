@@ -70,9 +70,9 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
         </div>
       )}
       {contact.phone && (
-        <div className="flex items-center gap-1.5 text-sm">
-          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-          <span>{contact.phone}</span>
+        <div className="flex items-center gap-1.5 text-sm min-w-0">
+          <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{contact.phone}</span>
         </div>
       )}
       {contact.notes && <p className="text-sm text-muted-foreground">{contact.notes}</p>}
