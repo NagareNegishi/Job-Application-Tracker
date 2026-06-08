@@ -145,7 +145,7 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
       { entries.length === 0
         ? <p className="text-muted-foreground">No correspondence.</p>
         // TODO: flex-col? or grid-cols-2
-        : <div className="grid grid-cols-4 gap-3">
+        : <div className="grid grid-cols-1 gap-3">
           {/* List of correspondences */}
           {entries.map((c, i) =>
             <CorrespondenceEntry

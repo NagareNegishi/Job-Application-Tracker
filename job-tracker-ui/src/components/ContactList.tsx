@@ -66,7 +66,9 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
       {contact.email && (
         <div className="flex items-center gap-1.5 text-sm min-w-0">
           <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span className="truncate">{contact.email}</span>
+          <a href={`mailto:${contact.email}`} className="truncate hover:underline">
+            {contact.email}
+          </a>
         </div>
       )}
       {contact.phone && (
