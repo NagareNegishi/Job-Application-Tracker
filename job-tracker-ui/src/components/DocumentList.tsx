@@ -38,7 +38,7 @@ export function DocumentList({ jobId }: DocumentListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-y-2">
         <h2 className="text-sm uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Documents</h2>
         <div className="flex items-center gap-2">
           <input

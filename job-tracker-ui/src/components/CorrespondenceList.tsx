@@ -137,7 +137,7 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
       />
 
       {/* Header with Add button */ }
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-y-2">
         <span className="text-sm uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Correspondence</span>
         <Button size="sm" variant="outline" onClick={handleAdd}><Plus className="h-4 w-4" />Add Correspondence</Button>
       </div>
