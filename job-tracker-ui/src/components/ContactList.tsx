@@ -64,9 +64,9 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
       {/* Optional fields */}
       {contact.role && <p className="text-sm text-muted-foreground">{contact.role}</p>}
       {contact.email && (
-        <div className="flex items-center gap-1.5 text-sm">
-          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-          <span>{contact.email}</span>
+        <div className="flex items-center gap-1.5 text-sm min-w-0">
+          <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{contact.email}</span>
         </div>
       )}
       {contact.phone && (
