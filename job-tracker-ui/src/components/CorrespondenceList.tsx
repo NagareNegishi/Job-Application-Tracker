@@ -49,6 +49,7 @@ export function CorrespondenceEntry({ entry, onEdit, onDelete, isPending }: Corr
           <Button variant="ghost" size="icon"
             onClick={() => onDelete(entry)}
             disabled={isPending}
+            className="text-destructive/70 hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
           </Button>

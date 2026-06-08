@@ -56,6 +56,7 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
           <Button variant="ghost" size="icon"
             onClick={() => onDelete(contact)}
             disabled={isPending}
+            className="text-destructive/70 hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
           </Button>

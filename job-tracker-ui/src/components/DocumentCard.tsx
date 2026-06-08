@@ -116,6 +116,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
 
         {/* Delete action */}
         <Button variant="ghost" size="icon"
+          className="text-destructive/70 hover:text-destructive"
           onClick={() => deleteDocument(
             { jobId: document.jobId, docId: document.docId },
             {
