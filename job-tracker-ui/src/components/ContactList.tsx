@@ -42,9 +42,9 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
   return (
     <div className="border rounded-lg p-3 space-y-1 w-full">
       {/* Top row: name + actions */}
-      <div className="flex items-center justify-between">
-        <p className="font-medium">{contact.name}</p>
-        <div className="flex gap-1">
+      <div className="flex items-center justify-between min-w-0">
+        <p className="font-medium min-w-0 break-words">{contact.name}</p>
+        <div className="flex gap-1 shrink-0">
           {/* Edit action */ }
           <Button variant="ghost" size="icon"
             onClick={() => onEdit(contact)}
