@@ -1,9 +1,11 @@
+import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { UnderlinedText } from "@/components/UnderlinedText";
 import { useDeleteJob } from "@/hooks/jobQuery";
 import type { Job } from "@/types/job";
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 
 /**
@@ -23,7 +25,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { mutate: deleteJob, isPending: isDeleting } = useDeleteJob()
-
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   return (
     <div className="mb-4">
