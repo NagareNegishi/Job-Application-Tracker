@@ -1,3 +1,4 @@
+import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -101,6 +102,8 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
   const [open, setOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined)
   const { mutate: patchJob, isPending } = usePatchJob()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null)  // queued for delete confirmation
 
   // Handlers for add, open dialog with empty form
   function handleAdd() {
@@ -139,16 +142,19 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
     )
   }
 
-  // Handlers for delete
+  // Opens confirmation dialog; actual delete happens in handleDeleteConfirm
   function handleDelete(contact: Contact) {
-    const index = contacts.indexOf(contact)
+    setContactToDelete(contact)
+    setDeleteOpen(true)
+  }
+
+  // Performs the delete after user confirms
+  function handleDeleteConfirm() {
+    const index = contacts.indexOf(contactToDelete!)
     const operations: JobPatchOperation[] = [
       { op: "remove", path: `/contacts/${index}` }
     ]
-
-    patchJob(
-      { id: jobId, operations },
-    )
+    patchJob({ id: jobId, operations })
   }
 
   return (

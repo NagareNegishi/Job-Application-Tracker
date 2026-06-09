@@ -45,7 +45,10 @@ export function DeleteConfirmDialog({
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="outline"
-            className="border-destructive/50 text-destructive/70 hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+            className={cn(
+              "border-destructive/50 text-destructive/70",
+              "hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+            )}
             onClick={onConfirm}
             disabled={isPending}
           >
