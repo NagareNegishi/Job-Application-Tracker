@@ -134,6 +134,16 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
   return (
     <div className="space-y-4">
 
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Correspondence?"
+        description="This entry will be permanently removed."
+        isPending={isPending}
+        onConfirm={handleDeleteConfirm}
+      />
+
       {/* Dialog for adding/editing correspondences */ }
       <CorrespondenceDialog
         open={open}
