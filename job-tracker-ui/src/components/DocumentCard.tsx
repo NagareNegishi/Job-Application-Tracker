@@ -47,6 +47,18 @@ export function DocumentCard({ document }: DocumentCardProps) {
     )
   }
 
+  // Opens confirmation dialog; actual delete happens in handleDeleteConfirm
+  function handleDeleteConfirm() {
+    deleteDocument(
+      { jobId: document.jobId, docId: document.docId },
+      {
+        onError: (err) => setDeleteError(
+          err instanceof ApiError ? err.message : "Failed to delete document."
+        )
+      }
+    )
+  }
+
   // Revert to original values if user cancels edit
   function handleCancel() {
     setEditName(baseName)
@@ -119,20 +131,23 @@ export function DocumentCard({ document }: DocumentCardProps) {
         {/* Delete action */}
         <Button variant="ghost" size="icon"
           className="text-destructive/70 hover:text-destructive"
-          onClick={() => deleteDocument(
-            { jobId: document.jobId, docId: document.docId },
-            {
-              onError: (err) => setDeleteError(
-                err instanceof ApiError ? err.message : "Failed to delete document."
-              )
-            }
-          )}
+          onClick={() => setDeleteOpen(true)}
           disabled={isBusy || isEditing}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
       {deleteError && <p className="text-sm text-red-600 mt-1">{deleteError}</p>}
+
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Document?"
+        description="This document will be permanently removed."
+        isPending={isDeleting}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }
