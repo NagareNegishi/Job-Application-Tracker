@@ -140,7 +140,6 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
         onOpenChange={setDeleteOpen}
         title="Delete Correspondence?"
         description="This entry will be permanently removed."
-        isPending={isPending}
         onConfirm={handleDeleteConfirm}
       />
 

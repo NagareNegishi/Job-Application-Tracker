@@ -166,7 +166,6 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
         onOpenChange={setDeleteOpen}
         title="Delete Contact?"
         description="This contact will be permanently removed."
-        isPending={isPending}
         onConfirm={handleDeleteConfirm}
       />
 

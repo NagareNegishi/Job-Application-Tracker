@@ -145,7 +145,6 @@ export function DocumentCard({ document }: DocumentCardProps) {
         onOpenChange={setDeleteOpen}
         title="Delete Document?"
         description="This document will be permanently removed."
-        isPending={isDeleting}
         onConfirm={handleDeleteConfirm}
       />
     </div>
