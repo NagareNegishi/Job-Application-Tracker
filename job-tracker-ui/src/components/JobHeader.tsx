@@ -95,7 +95,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
       open={deleteOpen}
       onOpenChange={setDeleteOpen}
       title="Delete Job?"
-      description="This action cannot be undone. All associated data will be permanently deleted."
+      description={<>This action cannot be undone.<br />All associated data will be permanently deleted.</>}
       isPending={isDeleting}
       onConfirm={() =>
         deleteJob(job.id, {

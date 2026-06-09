@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +15,7 @@ interface DeleteConfirmDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
-  description: string
+  description: ReactNode  // ReactNode allows JSX (e.g. <br />) for formatted messages
   onConfirm: () => void
   isPending?: boolean
 }
