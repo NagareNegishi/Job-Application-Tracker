@@ -28,6 +28,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   return (
+    <>
     <div className="mb-4">
       {/* Row 1: Back button */}
       <Button
@@ -79,16 +80,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
           <Button
             variant="outline"
             className="border-destructive/50 text-destructive/70 hover:bg-destructive/10 hover:text-destructive hover:border-destructive active:scale-95"
-            onClick={() => {
-              if (window.confirm("Are you sure you want to delete this job? This action cannot be undone.")) {
-                deleteJob(job.id, {
-                  onSuccess: () => {
-                    queryClient.invalidateQueries({ queryKey: ["jobs", job.id] })
-                    navigate("/jobs")
-                  }
-                })
-              }
-            }}
+            onClick={() => setDeleteOpen(true)}
             disabled={isDeleting}
           >
             <Trash2 className="h-4 w-4" />
@@ -97,5 +89,23 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
         </div>
       </div>
     </div>
+
+    {/* Delete confirmation dialog */}
+    <DeleteConfirmDialog
+      open={deleteOpen}
+      onOpenChange={setDeleteOpen}
+      title="Delete Job?"
+      description="This action cannot be undone. All associated data will be permanently deleted."
+      isPending={isDeleting}
+      onConfirm={() =>
+        deleteJob(job.id, {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["jobs", job.id] })
+            navigate("/jobs")
+          }
+        })
+      }
+    />
+    </>
   )
 }
