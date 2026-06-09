@@ -17,7 +17,6 @@ interface DeleteConfirmDialogProps {
   title: string
   description: ReactNode  // ReactNode allows JSX (e.g. <br />) for formatted messages
   onConfirm: () => void
-  isPending?: boolean
 }
 
 /**
@@ -29,7 +28,6 @@ export function DeleteConfirmDialog({
   title,
   description,
   onConfirm,
-  isPending,
 }: DeleteConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -41,7 +39,7 @@ export function DeleteConfirmDialog({
         </DialogHeader>
         {/* Cancel and confirm actions */}
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button
@@ -50,10 +48,9 @@ export function DeleteConfirmDialog({
               "border-destructive/50 text-destructive/70",
               "hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
             )}
-            onClick={() => { onConfirm(); onOpenChange(false) }}
-            disabled={isPending}
+            onClick={() => { onOpenChange(false); onConfirm() }}
           >
-            {isPending ? "Deleting..." : "Delete"}
+            Delete
           </Button>
         </DialogFooter>
       </DialogContent>
