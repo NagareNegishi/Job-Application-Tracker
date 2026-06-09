@@ -1,3 +1,4 @@
+import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/DatePicker";
 import {
@@ -33,11 +34,11 @@ export function CorrespondenceEntry({ entry, onEdit, onDelete, isPending }: Corr
   return (
     <div className="border rounded-lg p-3 space-y-1 w-full">
       {/* Top row: name + actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between min-w-0">
         <span className="text-sm text-muted-foreground w-24 shrink-0">
           {new Date(entry.date).toLocaleDateString()}
         </span>
-        <div className="flex gap-1">
+        <div className="flex gap-1 shrink-0">
           {/* Edit action */ }
           <Button variant="ghost" size="icon"
             onClick={() => onEdit(entry)}
@@ -49,13 +50,14 @@ export function CorrespondenceEntry({ entry, onEdit, onDelete, isPending }: Corr
           <Button variant="ghost" size="icon"
             onClick={() => onDelete(entry)}
             disabled={isPending}
+            className="text-destructive/70 hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
       {/* Optional fields */}
-      {entry.note && <p className="text-sm">{entry.note}</p>}
+      {entry.note && <p className="text-sm break-words">{entry.note}</p>}
     </div>
   )
 }
@@ -74,6 +76,8 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
   const [open, setOpen] = useState(false)
   const [selectedCorrespondence, setSelectedCorrespondence] = useState<Correspondence | undefined>(undefined)
   const { mutate: patchJob, isPending } = usePatchJob()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [entryToDelete, setEntryToDelete] = useState<Correspondence | null>(null)  // queued for delete confirmation
 
   // Handlers for add, open dialog with empty form
   function handleAdd() {
@@ -112,20 +116,32 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
     )
   }
 
-  // Handlers for delete
+  // Opens confirmation dialog; actual delete happens in handleDeleteConfirm
   function handleDelete(entry: Correspondence) {
-    const index = entries.indexOf(entry)
+    setEntryToDelete(entry)
+    setDeleteOpen(true)
+  }
+
+  // Performs the delete after user confirms
+  function handleDeleteConfirm() {
+    const index = entries.indexOf(entryToDelete!)
     const operations: JobPatchOperation[] = [
       { op: "remove", path: `/correspondences/${index}` }
     ]
-
-    patchJob(
-      { id: jobId, operations },
-    )
+    patchJob({ id: jobId, operations })
   }
 
   return (
     <div className="space-y-4">
+
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Correspondence?"
+        description="This entry will be permanently removed."
+        onConfirm={handleDeleteConfirm}
+      />
 
       {/* Dialog for adding/editing correspondences */ }
       <CorrespondenceDialog
@@ -137,7 +153,7 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
       />
 
       {/* Header with Add button */ }
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-y-2">
         <span className="text-sm uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Correspondence</span>
         <Button size="sm" variant="outline" onClick={handleAdd}><Plus className="h-4 w-4" />Add Correspondence</Button>
       </div>
@@ -145,7 +161,7 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
       { entries.length === 0
         ? <p className="text-muted-foreground">No correspondence.</p>
         // TODO: flex-col? or grid-cols-2
-        : <div className="grid grid-cols-4 gap-3">
+        : <div className="grid grid-cols-1 gap-3">
           {/* List of correspondences */}
           {entries.map((c, i) =>
             <CorrespondenceEntry

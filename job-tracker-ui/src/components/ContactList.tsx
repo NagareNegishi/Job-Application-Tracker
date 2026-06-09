@@ -1,3 +1,4 @@
+import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,9 +43,9 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
   return (
     <div className="border rounded-lg p-3 space-y-1 w-full">
       {/* Top row: name + actions */}
-      <div className="flex items-center justify-between">
-        <p className="font-medium">{contact.name}</p>
-        <div className="flex gap-1">
+      <div className="flex items-center justify-between min-w-0">
+        <p className="font-medium min-w-0 break-words">{contact.name}</p>
+        <div className="flex gap-1 shrink-0">
           {/* Edit action */ }
           <Button variant="ghost" size="icon"
             onClick={() => onEdit(contact)}
@@ -56,6 +57,7 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
           <Button variant="ghost" size="icon"
             onClick={() => onDelete(contact)}
             disabled={isPending}
+            className="text-destructive/70 hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -64,15 +66,17 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
       {/* Optional fields */}
       {contact.role && <p className="text-sm text-muted-foreground">{contact.role}</p>}
       {contact.email && (
-        <div className="flex items-center gap-1.5 text-sm">
-          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-          <span>{contact.email}</span>
+        <div className="flex items-center gap-1.5 text-sm min-w-0">
+          <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <a href={`mailto:${contact.email}`} className="truncate hover:underline">
+            {contact.email}
+          </a>
         </div>
       )}
       {contact.phone && (
-        <div className="flex items-center gap-1.5 text-sm">
-          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-          <span>{contact.phone}</span>
+        <div className="flex items-center gap-1.5 text-sm min-w-0">
+          <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{contact.phone}</span>
         </div>
       )}
       {contact.notes && <p className="text-sm text-muted-foreground">{contact.notes}</p>}
@@ -98,6 +102,8 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
   const [open, setOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined)
   const { mutate: patchJob, isPending } = usePatchJob()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null)  // queued for delete confirmation
 
   // Handlers for add, open dialog with empty form
   function handleAdd() {
@@ -136,20 +142,32 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
     )
   }
 
-  // Handlers for delete
+  // Opens confirmation dialog; actual delete happens in handleDeleteConfirm
   function handleDelete(contact: Contact) {
-    const index = contacts.indexOf(contact)
+    setContactToDelete(contact)
+    setDeleteOpen(true)
+  }
+
+  // Performs the delete after user confirms
+  function handleDeleteConfirm() {
+    const index = contacts.indexOf(contactToDelete!)
     const operations: JobPatchOperation[] = [
       { op: "remove", path: `/contacts/${index}` }
     ]
-
-    patchJob(
-      { id: jobId, operations },
-    )
+    patchJob({ id: jobId, operations })
   }
 
   return (
     <div className="space-y-4">
+
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Contact?"
+        description="This contact will be permanently removed."
+        onConfirm={handleDeleteConfirm}
+      />
 
       {/* Dialog for adding/editing contacts */ }
       <ContactDialog
@@ -169,7 +187,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
       { contacts.length === 0
         ? <p className="text-muted-foreground">No contacts.</p>
         // TODO: flex-col? or grid-cols-2
-        : <div className="grid grid-cols-4 gap-3">
+        : <div className="grid grid-cols-2 gap-6">
           {/* List of contacts */}
           {contacts.map((c, i) =>
             <ContactCard
