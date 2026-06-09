@@ -1,3 +1,4 @@
+import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +33,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editType, setEditType] = useState(document.type)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   // Confirm edits and send PATCH request to update document metadata
   function handleConfirm() {
