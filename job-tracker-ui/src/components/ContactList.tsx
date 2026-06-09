@@ -160,6 +160,16 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
   return (
     <div className="space-y-4">
 
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Contact?"
+        description="This contact will be permanently removed."
+        isPending={isPending}
+        onConfirm={handleDeleteConfirm}
+      />
+
       {/* Dialog for adding/editing contacts */ }
       <ContactDialog
         open={open}
