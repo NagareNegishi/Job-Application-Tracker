@@ -1,3 +1,4 @@
+import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/DatePicker";
 import {
@@ -75,6 +76,8 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
   const [open, setOpen] = useState(false)
   const [selectedCorrespondence, setSelectedCorrespondence] = useState<Correspondence | undefined>(undefined)
   const { mutate: patchJob, isPending } = usePatchJob()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [entryToDelete, setEntryToDelete] = useState<Correspondence | null>(null)  // queued for delete confirmation
 
   // Handlers for add, open dialog with empty form
   function handleAdd() {
@@ -113,16 +116,19 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
     )
   }
 
-  // Handlers for delete
+  // Opens confirmation dialog; actual delete happens in handleDeleteConfirm
   function handleDelete(entry: Correspondence) {
-    const index = entries.indexOf(entry)
+    setEntryToDelete(entry)
+    setDeleteOpen(true)
+  }
+
+  // Performs the delete after user confirms
+  function handleDeleteConfirm() {
+    const index = entries.indexOf(entryToDelete!)
     const operations: JobPatchOperation[] = [
       { op: "remove", path: `/correspondences/${index}` }
     ]
-
-    patchJob(
-      { id: jobId, operations },
-    )
+    patchJob({ id: jobId, operations })
   }
 
   return (
