@@ -86,7 +86,12 @@ Deviations from plan:
 - Dark mode primary L=0.60 — same −0.10 delta as existing dark mode foreground softening (0.985→0.88)
 
 Themes defined (CSS only, not yet wired to preferences or UI):
-- blue (H=250), red (H=15), yellow (H=95), pop (pending)
+- blue (H=250), red (H=15), yellow (H=95), pink (H=330, C=0.32)
+
+"Pop" theme deferred — needs research:
+- `filter: saturate()` on `html` had no visible effect
+- `.bg-primary` scoped `box-shadow` glow had no visible effect
+- Likely needs investigation into how Tailwind v4 generates class names at runtime and whether scoped descendant selectors on `html` work as expected
 
 ## Phase 2 — Custom color themes
 
