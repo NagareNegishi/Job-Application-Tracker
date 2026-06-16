@@ -104,11 +104,12 @@ All controllers except `AuthController` require `[Authorize]`. New controllers m
 
 - `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, and handles 401 silent refresh automatically; includes `authService.ts`; silent refresh logic in `src/lib/auth.ts`
 - `src/hooks/` — TanStack Query hooks
-- `src/pages/` — `JobPage` (list), `JobDetailPage` (detail), `LoginPage`, `RegisterPage`, `SettingsPage`, `CheckEmailPage`, `ConfirmEmailPage`, `ForgotPasswordPage`, `ResetPasswordPage`
-- `src/components/` — feature components; `src/components/ui/` — shadcn/ui primitives
+- `src/pages/` — `JobPage` (list), `JobDetailPage` (detail), `LoginPage`, `RegisterPage`, `SettingsPage`, `CheckEmailPage`, `ConfirmEmailPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `AdminPage`
+- `src/components/` — feature components including `KanbanBoard`, `ParseListingDialog`, `ColumnToggle`; `src/components/ui/` — shadcn/ui primitives
+- `src/services/` — includes `adminService.ts`, `preferencesService.ts`
 - `src/types/` — TypeScript types mirroring backend models; enums use `const` object pattern (`enum` keyword disallowed by `erasableSyntaxOnly`)
 
-**Routing**: React Router 7 — `/` → `/jobs`, `/jobs/:id`, `/login`, `/register`, `/settings`, `/check-email`, `/confirm-email`, `/forgot-password`, `/reset-password`. All job + account routes wrapped in `ProtectedRoute`.
+**Routing**: React Router 7 — `/` → `/jobs`, `/jobs/:id`, `/login`, `/register`, `/settings`, `/check-email`, `/confirm-email`, `/forgot-password`, `/reset-password`, `/admin`. All job + account routes wrapped in `ProtectedRoute`; `/admin` wrapped in `AdminRoute`.
 
 **Path alias**: `@/` resolves to `src/` (configured in `vite.config.ts`).
 
