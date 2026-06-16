@@ -208,6 +208,22 @@
     --color-ring: oklch(0.60 0.18 95);
 }
 
+.theme-pink {
+    --background: oklch(0.975 0.014 330);
+    --card: oklch(0.975 0.016 330);
+    --popover: oklch(0.975 0.016 330);
+    --primary: oklch(0.50 0.32 330);
+    --color-primary: oklch(0.50 0.32 330);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.92 0.06 330);
+    --muted: oklch(0.92 0.05 330);
+    --accent: oklch(0.90 0.08 330);
+    --border: oklch(0.86 0.055 330);
+    --input: oklch(0.86 0.055 330);
+    --ring: oklch(0.50 0.32 330);
+    --color-ring: oklch(0.50 0.32 330);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
