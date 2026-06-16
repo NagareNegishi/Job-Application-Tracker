@@ -54,6 +54,8 @@ Config in `appsettings.Development.json` or environment variables:
 - **`Jwt:Key`** / **`Jwt:Issuer`** / **`Jwt:Audience`** / **`Jwt:ExpiryMinutes`** / **`Jwt:RefreshExpiryDays`** — JWT config; app fails fast on startup if missing
 - **`Storage:UploadsPath`** — local upload directory (dev only); created automatically if missing
 - **`Cors:AllowedOrigins`** — e.g. `["http://localhost:5173"]`
+- **`Anthropic:ApiKey`** — required for AI parsing; app fails fast on startup if missing
+- **`Admin:Email`** — seeds admin role on startup; app fails fast if missing
 
 ### Frontend
 
