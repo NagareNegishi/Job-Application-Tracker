@@ -77,6 +77,17 @@ File: `src/hooks/useTheme.ts`
 
 ---
 
+## Phase 2 — In Progress
+
+Deviations from plan:
+- Used `--color-primary` and `--color-ring` alongside `--primary`/`--ring` — Tailwind v4 resolves `@theme inline` var() references at build time; `--color-*` prefix needed for utility classes to react at runtime
+- All `.dark` variables replicated with hue-tinted values — not just primary; covers background, card, secondary, muted, accent, border, input, ring
+- Yellow hue shifted H=85 → H=95 — H=85 resolved as olive/brown; H=95 gives vivid yellow
+- Dark mode primary L=0.60 — same −0.10 delta as existing dark mode foreground softening (0.985→0.88)
+
+Themes defined (CSS only, not yet wired to preferences or UI):
+- blue (H=250), red (H=15), yellow (H=95), pop (pending)
+
 ## Phase 2 — Custom color themes
 
 ### Approach
