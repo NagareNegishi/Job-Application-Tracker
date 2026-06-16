@@ -211,10 +211,9 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 
 | Plan | Item | Status |
 |---|---|---|
-| Closing date indicators | Visual badge on job table rows | Pending |
-| Closing date indicators | User-controlled auto-priority policy | Pending (future) |
-| Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Pending |
-| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Pending |
+| Dark mode / theme toggle | Phase 1: dark mode toggle + fix 4 hardcoded-color files; Phase 2: custom color themes | Next |
 | Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs, upcoming interviews | Pending |
+| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Pending |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
+| Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
