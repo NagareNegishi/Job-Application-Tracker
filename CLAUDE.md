@@ -77,6 +77,7 @@ All controllers except `AuthController` require `[Authorize]`. New controllers m
 **Services** (`Services/`):
 - `IStorageService` / `LocalStorageService` (dev) / `S3StorageService` (prod)
 - `IEmailService` / `LogEmailService` (dev) / `ResendEmailService` (prod)
+- `IParsingService` / `ClaudeParsingService` — AI job listing parser using `claude-haiku-4-5`; rate-limited to 2/min per IP (`"parse"` policy)
 
 **Models** (`Models/`):
 - `Job` / `Document` — EF Core entities with `ToResponseDto()` methods
