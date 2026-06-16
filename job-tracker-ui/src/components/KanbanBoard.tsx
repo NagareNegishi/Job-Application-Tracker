@@ -9,6 +9,7 @@ import { JobStatus } from '@/types/enums'
 import type { Job } from '@/types/job'
 import { PriorityDot } from '@/components/ui/PriorityDot'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { cn } from "@/lib/utils"
 
 const COLUMNS = Object.values(JobStatus)
 
@@ -39,7 +40,12 @@ function KanbanCard({ job }: { job: Job }) {
       {...listeners}
       {...attributes}
       onClick={() => navigate(`/jobs/${job.id}`)}
-      className={`bg-card border border-border rounded-md p-3 cursor-grab hover:shadow-sm transition-shadow ${isDragging ? 'opacity-50' : ''}`}
+      className={cn(
+        "bg-card border border-border rounded-md p-3 cursor-grab",
+        "hover:shadow-sm dark:hover:border-white/20",
+        "transition-shadow transition-colors",
+        isDragging && "opacity-50"
+      )}
     >
       <p className="font-medium text-sm truncate">{job.company}</p>
       <p className="text-xs text-muted-foreground truncate">{job.role}</p>
