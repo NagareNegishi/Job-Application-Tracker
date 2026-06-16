@@ -177,6 +177,22 @@
     --color-ring: oklch(0.60 0.18 15);
 }
 
+.theme-yellow {
+    --background: oklch(0.975 0.014 85);
+    --card: oklch(0.975 0.016 85);
+    --popover: oklch(0.975 0.016 85);
+    --primary: oklch(0.45 0.20 85);
+    --color-primary: oklch(0.45 0.20 85);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.92 0.04 85);
+    --muted: oklch(0.92 0.035 85);
+    --accent: oklch(0.90 0.055 85);
+    --border: oklch(0.86 0.045 85);
+    --input: oklch(0.86 0.045 85);
+    --ring: oklch(0.45 0.20 85);
+    --color-ring: oklch(0.45 0.20 85);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
