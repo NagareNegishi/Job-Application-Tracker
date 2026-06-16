@@ -86,9 +86,11 @@ All controllers except `AuthController` require `[Authorize]`. New controllers m
 - `Contact` / `Correspondence` — owned types, stored as JSON columns in `Jobs` table (not separate tables); `email` and `phone` must be sent as `undefined` not `""` to pass `[EmailAddress]`/`[Phone]` validation
 - `RefreshToken` — tracks issued refresh tokens for rotation/revocation
 - `AuthDTO` — `RegisterDTO`, `LoginDTO`, `ChangePasswordDTO`
+- `UserPreferencesDto` — visible column list + `autoFillEnabled`; stored as JSON on `ApplicationUser`
+- `ParseListingRequest` / `ParsedJobFields` — request/response DTOs for `POST /api/jobs/parse`
 - `DemoSeed` — static class; holds sample job keys + `CreateJobs(userId)` for demo data seeding
 - `ValidationConstants` — max lengths, file size, allowed extensions
-- Enums: `JobStatus`, `Priority`, `DocumentType` — serialized as strings
+- Enums: `JobStatus`, `Priority`, `DocumentType`, `WorkMode` — serialized as strings
 
 **Document storage**: Handled via `IStorageService` (dev: local filesystem at `Storage:UploadsPath`). Files stored with a GUID key (`StorageKey`); display name kept in `Document.Name`. No PUT — use DELETE + POST instead. Uploads use `FormData`, not JSON — don't set `Content-Type` manually.
 
