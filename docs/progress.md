@@ -194,9 +194,26 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 | 6 | Forgot password | Done |
 | 7 | Migrate email provider from SES to Resend | Done |
 
+## Additional Completed Features
+
+| Feature | Notes |
+|---|---|
+| Extra model fields | Job URL, salary range, location, work mode, interview date |
+| Customizable table columns | `Preferences` JSON on user; column toggle UI in toolbar |
+| Job table tabs | Active / Closing Soon / All / Rejected; frontend-only filtering |
+| Kanban board view | `@dnd-kit`; drag card patches job status via PATCH |
+| AI access admin | `Admin` + `AiUser` roles; `AdminController`; `/admin` page |
+| Auto-fill parsing | `ParseListingDialog`; Claude Haiku; `POST /api/jobs/parse`; 2/min rate limit |
+| RDS maintenance window | EventBridge stops DB 00:00–08:00 AEST; backend 503 on `DbException`; frontend `MaintenanceError` with time-aware message |
+| Company Verification API | External repo; live at `https://company-verification.onrender.com`; NZ + AU registries; not yet integrated into this project |
+
 ## Active / Upcoming Work
 
 | Plan | Item | Status |
 |---|---|---|
-| Closing date indicators | Visual badge on job table rows | Pending |
-| Closing date indicators | User-controlled auto-priority policy | Pending (future) |
+| Dark mode / theme toggle | Phase 1: dark mode toggle + fix 4 hardcoded-color files; Phase 2: custom color themes | Next |
+| Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs, upcoming interviews | Pending |
+| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Pending |
+| Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
+| Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |
+| Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
