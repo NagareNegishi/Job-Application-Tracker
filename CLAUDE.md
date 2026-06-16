@@ -64,10 +64,11 @@ API base URL is read from `VITE_API_BASE_URL` (`.env`).
 ### Backend
 
 **Controllers** (`Controllers/`) inject `JobTrackerContext` directly. Storage and email go through service abstractions (`Services/`) — no general repository layer.
-- `JobsController` — CRUD + JSON Patch at `/api/jobs`
+- `JobsController` — CRUD + JSON Patch at `/api/jobs`; `POST /api/jobs/parse` for AI auto-fill
 - `DocumentsController` — upload/download/delete at `/api/jobs/{jobId}/documents`; demo user blocked (403)
-- `AuthController` — unauthenticated flows at `/api/auth/`: register, login, refresh, logout, demo login, demo reset, email confirmation, resend confirmation, forgot password, reset password
-- `AccountController` — authenticated account management at `/api/account/`: change password
+- `AuthController` — unauthenticated flows at `/api/auth/`: register, login, refresh, logout, demo login, demo reset, email confirmation, resend confirmation, forgot password, reset password, cleanup unverified accounts
+- `AccountController` — authenticated account management at `/api/account/`: change password, `GET/PUT /api/account/preferences`
+- `AdminController` — requires `Admin` role; `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access`
 
 All controllers except `AuthController` require `[Authorize]`. New controllers must include it.
 
