@@ -188,22 +188,22 @@ const WORK_MODE_OPTIONS = Object.values(WorkMode).map(formatEnumLabel);
 
 const TAB_STYLES = {
   "active": {
-    tab:      ["!bg-blue-50 !text-blue-800 border-blue-300",   "dark:!bg-blue-900/30 dark:!text-blue-300 dark:border-blue-700"].join(" "),
+    tab:      ["!bg-blue-50 !text-blue-800 border-blue-300",   "dark:!bg-blue-900/30 dark:!text-blue-400 dark:border-blue-800"].join(" "),
     table:    ["bg-blue-50",                                    "dark:bg-blue-900/20"].join(" "),
     rowHover: ["hover:bg-blue-100",                             "dark:hover:bg-blue-900/30"].join(" "),
   },
   "closing-soon": {
-    tab:      ["!bg-amber-50 !text-amber-800 border-amber-300", "dark:!bg-amber-900/30 dark:!text-amber-300 dark:border-amber-700"].join(" "),
+    tab:      ["!bg-amber-50 !text-amber-800 border-amber-300", "dark:!bg-amber-900/30 dark:!text-amber-400 dark:border-amber-800"].join(" "),
     table:    ["bg-amber-50",                                   "dark:bg-amber-900/20"].join(" "),
     rowHover: ["hover:bg-amber-100",                            "dark:hover:bg-amber-900/30"].join(" "),
   },
   "all": {
-    tab:      ["!bg-slate-50 !text-slate-700 border-slate-300", "dark:!bg-slate-800/50 dark:!text-slate-300 dark:border-slate-600"].join(" "),
+    tab:      ["!bg-slate-50 !text-slate-700 border-slate-300", "dark:!bg-slate-800/50 dark:!text-slate-400 dark:border-slate-700"].join(" "),
     table:    ["bg-slate-50",                                   "dark:bg-slate-800/40"].join(" "),
     rowHover: ["hover:bg-slate-100",                            "dark:hover:bg-slate-800/60"].join(" "),
   },
   "rejected": {
-    tab:      ["!bg-rose-50 !text-rose-800 border-rose-300",    "dark:!bg-rose-900/30 dark:!text-rose-300 dark:border-rose-700"].join(" "),
+    tab:      ["!bg-rose-50 !text-rose-800 border-rose-300",    "dark:!bg-rose-900/30 dark:!text-rose-400 dark:border-rose-800"].join(" "),
     table:    ["bg-rose-50",                                    "dark:bg-rose-900/20"].join(" "),
     rowHover: ["hover:bg-rose-100",                             "dark:hover:bg-rose-900/30"].join(" "),
   },
