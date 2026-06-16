@@ -146,6 +146,22 @@
     --color-ring: oklch(0.60 0.18 250);
 }
 
+.theme-red {
+    --background: oklch(0.975 0.014 15);
+    --card: oklch(0.975 0.016 15);
+    --popover: oklch(0.975 0.016 15);
+    --primary: oklch(0.45 0.25 15);
+    --color-primary: oklch(0.45 0.25 15);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.92 0.04 15);
+    --muted: oklch(0.92 0.035 15);
+    --accent: oklch(0.90 0.055 15);
+    --border: oklch(0.86 0.045 15);
+    --input: oklch(0.86 0.045 15);
+    --ring: oklch(0.45 0.25 15);
+    --color-ring: oklch(0.45 0.25 15);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
