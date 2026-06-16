@@ -74,6 +74,8 @@ API base URL is read from `VITE_API_BASE_URL` (`.env`).
 
 All controllers except `AuthController` require `[Authorize]`. New controllers must include it.
 
+**Roles**: `Admin` and `AiUser` — defined as string constants; seeded on startup; included as JWT claims. Use `"Admin"` or `"AiEnabled"` policy names registered in `Program.cs`. Rate limit policies: `"auth"` (5/min per IP), `"resend-confirmation"` (3/hr per IP), `"parse"` (2/min per IP).
+
 **Services** (`Services/`):
 - `IStorageService` / `LocalStorageService` (dev) / `S3StorageService` (prod)
 - `IEmailService` / `LogEmailService` (dev) / `ResendEmailService` (prod)
@@ -102,11 +104,10 @@ All controllers except `AuthController` require `[Authorize]`. New controllers m
 
 **Data flow**: `pages/` → `hooks/` (TanStack Query) → `services/` (fetch wrappers) → API
 
-- `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, and handles 401 silent refresh automatically; includes `authService.ts`; silent refresh logic in `src/lib/auth.ts`
+- `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, handles 401 silent refresh, and throws `MaintenanceError` on 503 during scheduled window (midnight–8 AM Sydney); includes `authService.ts`, `adminService.ts`, `preferencesService.ts`; silent refresh logic in `src/lib/auth.ts`
 - `src/hooks/` — TanStack Query hooks
 - `src/pages/` — `JobPage` (list), `JobDetailPage` (detail), `LoginPage`, `RegisterPage`, `SettingsPage`, `CheckEmailPage`, `ConfirmEmailPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `AdminPage`
 - `src/components/` — feature components including `KanbanBoard`, `ParseListingDialog`, `ColumnToggle`; `src/components/ui/` — shadcn/ui primitives
-- `src/services/` — includes `adminService.ts`, `preferencesService.ts`
 - `src/types/` — TypeScript types mirroring backend models; enums use `const` object pattern (`enum` keyword disallowed by `erasableSyntaxOnly`)
 
 **Routing**: React Router 7 — `/` → `/jobs`, `/jobs/:id`, `/login`, `/register`, `/settings`, `/check-email`, `/confirm-email`, `/forgot-password`, `/reset-password`, `/admin`. All job + account routes wrapped in `ProtectedRoute`; `/admin` wrapped in `AdminRoute`.
