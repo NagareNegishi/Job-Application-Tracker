@@ -8,6 +8,12 @@ A full-stack job application tracker with:
 
 The dev environment runs in a Dev Container (`.devcontainer/`) with the PostgreSQL DB as a separate Docker service.
 
+## Docs
+
+- `docs/progress.md` — read at session start; update after each major feature completes.
+- `docs/plans/` — per-feature plan/decision files; read only the relevant file when working on a feature.
+- `docs/company-verification-api-reference.md` — contract for the external company verification API.
+
 ## Commands
 
 ### Backend (from `JobTrackerApi/`)
