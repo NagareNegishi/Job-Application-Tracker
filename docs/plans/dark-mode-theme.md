@@ -1,5 +1,13 @@
 # Dark Mode & Theme Plan
 
+## Phase 1 — Completed
+
+Deviations from plan:
+- `PriorityDot.tsx` — added dark variants after all: Low `dark:bg-slate-300`; Medium `dark:bg-yellow-500`; High `dark:bg-orange-500`; Urgent `dark:bg-red-600`
+- Status badges + tab styles — dark text toned down to `-400`, borders one step darker than planned
+- Kanban card hover — added `dark:hover:border-white/20` + `transition-colors` (shadow invisible on dark bg)
+- `index.css` `.dark` block — `--foreground`, `--card-foreground`, `--secondary-foreground` softened to `oklch(0.88 0 0)`; `scrollbar-color` added
+
 ## Current state
 
 - `index.css` already has a full `.dark` CSS variable block — all shadcn/ui components flip automatically

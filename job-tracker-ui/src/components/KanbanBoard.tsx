@@ -9,16 +9,17 @@ import { JobStatus } from '@/types/enums'
 import type { Job } from '@/types/job'
 import { PriorityDot } from '@/components/ui/PriorityDot'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { cn } from "@/lib/utils"
 
 const COLUMNS = Object.values(JobStatus)
 
 const COLUMN_BG: Record<JobStatus, string> = {
-  Wishlist:  'bg-slate-50/70',
-  Applied:   'bg-blue-50/70',
-  Screening: 'bg-yellow-50/70',
-  Interview: 'bg-purple-50/70',
-  Offered:   'bg-green-50/70',
-  Rejected:  'bg-red-50/70',
+  Wishlist:  ["bg-slate-50/70",  "dark:bg-slate-800/40"].join(" "),
+  Applied:   ["bg-blue-50/70",   "dark:bg-blue-900/20"].join(" "),
+  Screening: ["bg-yellow-50/70", "dark:bg-yellow-900/20"].join(" "),
+  Interview: ["bg-purple-50/70", "dark:bg-purple-900/20"].join(" "),
+  Offered:   ["bg-green-50/70",  "dark:bg-green-900/20"].join(" "),
+  Rejected:  ["bg-red-50/70",    "dark:bg-red-900/20"].join(" "),
 }
 
 function KanbanCard({ job }: { job: Job }) {
@@ -39,7 +40,12 @@ function KanbanCard({ job }: { job: Job }) {
       {...listeners}
       {...attributes}
       onClick={() => navigate(`/jobs/${job.id}`)}
-      className={`bg-card border border-border rounded-md p-3 cursor-grab hover:shadow-sm transition-shadow ${isDragging ? 'opacity-50' : ''}`}
+      className={cn(
+        "bg-card border border-border rounded-md p-3 cursor-grab",
+        "hover:shadow-sm dark:hover:border-white/20",
+        "transition-shadow transition-colors",
+        isDragging && "opacity-50"
+      )}
     >
       <p className="font-medium text-sm truncate">{job.company}</p>
       <p className="text-xs text-muted-foreground truncate">{job.role}</p>

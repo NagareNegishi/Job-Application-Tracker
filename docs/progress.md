@@ -211,7 +211,8 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 
 | Plan | Item | Status |
 |---|---|---|
-| Dark mode / theme toggle | Phase 1: dark mode toggle + fix 4 hardcoded-color files; Phase 2: custom color themes | Next |
+| Dark mode / theme toggle | Phase 1: dark mode toggle + fix hardcoded-color files | Done |
+| Dark mode / theme toggle | Phase 2: custom color themes | Next |
 | Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs, upcoming interviews | Pending |
 | Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Pending |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
