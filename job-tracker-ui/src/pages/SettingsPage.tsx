@@ -30,6 +30,7 @@ export default function SettingsPage() {
 
   const { data: prefs, isLoading: isLoadingPrefs } = usePreferences()
   const { mutate: mutatePrefs } = useUpdatePreferences()
+  const { colorTheme, setColorTheme } = useTheme()
 
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -101,6 +102,32 @@ export default function SettingsPage() {
                 {loading ? "Saving..." : "Change password"}
               </Button>
             </form>
+          </section>
+
+          <section className="mt-6 pt-6 border-t">
+            <h2 className="text-sm font-medium text-muted-foreground mb-4">Appearance</h2>
+            {isLoadingPrefs ? (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            ) : (
+              <div className="flex gap-3">
+                {THEME_OPTIONS.map(({ value, label, color }) => (
+                  <button
+                    key={value}
+                    onClick={() => {
+                      setColorTheme(value)
+                      mutatePrefs({ ...prefs!, theme: value })
+                    }}
+                    aria-label={label}
+                    title={label}
+                    className={`w-7 h-7 rounded-full ${color} transition-all ${
+                      colorTheme === value
+                        ? "ring-2 ring-offset-2 ring-foreground"
+                        : "hover:ring-2 hover:ring-offset-2 hover:ring-muted-foreground"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </section>
 
           {hasRole("AiUser") && (
