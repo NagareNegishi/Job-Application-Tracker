@@ -4,11 +4,21 @@ import { hasRole } from "@/lib/auth"
 import { Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "@/hooks/useTheme"
+import type { ColorTheme } from "@/hooks/useTheme"
+import { usePreferences } from "@/hooks/preferencesQuery"
+import { useEffect } from "react"
 
 // Thin layout shell — branding on the left, user menu on the right.
 // Account actions live in UserMenu to keep this component focused on layout.
 export default function NavBar() {
-  const { theme, toggleTheme } = useTheme()
+  const { theme, toggleTheme, setColorTheme } = useTheme()
+  const { data: prefs } = usePreferences()
+
+  useEffect(() => {
+    if (prefs === undefined) return
+    // prefs.theme is null for users with no saved theme, treat as "default"
+    setColorTheme((prefs.theme ?? "default") as ColorTheme)
+  }, [prefs?.theme])
 
   return (
     <div className="border-b bg-card px-6 py-3 flex items-center justify-between">

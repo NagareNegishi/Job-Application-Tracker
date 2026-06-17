@@ -206,13 +206,12 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 | Auto-fill parsing | `ParseListingDialog`; Claude Haiku; `POST /api/jobs/parse`; 2/min rate limit |
 | RDS maintenance window | EventBridge stops DB 00:00–08:00 AEST; backend 503 on `DbException`; frontend `MaintenanceError` with time-aware message |
 | Company Verification API | External repo; live at `https://company-verification.onrender.com`; NZ + AU registries; not yet integrated into this project |
+| Dark mode + custom themes | Dark/light toggle in NavBar; 4 color themes (blue, red, yellow, pink); applied via `.theme-*` on `<html>`; stored in `UserPreferences.theme` |
 
 ## Active / Upcoming Work
 
 | Plan | Item | Status |
 |---|---|---|
-| Dark mode / theme toggle | Phase 1: dark mode toggle + fix hardcoded-color files | Done |
-| Dark mode / theme toggle | Phase 2: custom color themes | Next |
 | Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs, upcoming interviews | Pending |
 | Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Pending |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
