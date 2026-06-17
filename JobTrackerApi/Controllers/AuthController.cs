@@ -100,6 +100,8 @@ public class AuthController : ControllerBase
             await _storageService.DeleteAsync(doc.StoredName);
 
         _context.Jobs.RemoveRange(jobs);
+        user.Preferences = null; // reset theme, columns, autoFill to defaults
+        await _userManager.UpdateAsync(user);
         await _context.SaveChangesAsync();
 
         _context.Jobs.AddRange(DemoSeed.CreateJobs(user.Id));
