@@ -77,36 +77,24 @@ File: `src/hooks/useTheme.ts`
 
 ---
 
-## Phase 2 — In Progress
+## Phase 2 — Done
 
 Deviations from plan:
 - Used `--color-primary` and `--color-ring` alongside `--primary`/`--ring` — Tailwind v4 resolves `@theme inline` var() references at build time; `--color-*` prefix needed for utility classes to react at runtime
 - All `.dark` variables replicated with hue-tinted values — not just primary; covers background, card, secondary, muted, accent, border, input, ring
 - Yellow hue shifted H=85 → H=95 — H=85 resolved as olive/brown; H=95 gives vivid yellow
 - Dark mode primary L=0.60 — same −0.10 delta as existing dark mode foreground softening (0.985→0.88)
+- `"default"` used as no-theme sentinel (not `null`) — named option so picker has an explicit "go back to default" choice
+- `COLOR_THEMES` const array is single source of truth; `ColorTheme` type derived via `typeof COLOR_THEMES[number]`
+- Color theme synced from API → `useTheme` in `NavBar` via `useEffect` watching `prefs?.theme`; backend `null` mapped to `"default"` at read point
 
-Themes defined (CSS only, not yet wired to preferences or UI):
+Themes defined and wired:
 - blue (H=250), red (H=15), yellow (H=95), pink (H=330, C=0.32)
+- Applied via `.theme-*` class on `<html>` alongside `.dark`
+- Stored in `UserPreferencesDto.Theme` (backend) + `Preferences.theme` (frontend); no migration needed
+- Picker: row of color swatches in `SettingsPage` Appearance section
 
 "Pop" theme deferred — needs research:
 - `filter: saturate()` on `html` had no visible effect
 - `.bg-primary` scoped `box-shadow` glow had no visible effect
 - Likely needs investigation into how Tailwind v4 generates class names at runtime and whether scoped descendant selectors on `html` work as expected
-
-## Phase 2 — Custom color themes
-
-### Approach
-
-- Define multiple named theme CSS variable sets in `index.css` (e.g. `.theme-blue`, `.theme-green`, `.theme-rose`) overriding accent/primary variables
-- Apply theme class alongside `.dark` on `<html>`
-- Store chosen theme in `UserPreferences` (new `theme` field) — persists across devices via existing preferences endpoint
-- Theme picker in `SettingsPage` — a row of color swatches
-
-### Backend changes
-
-- Add `Theme` string field to `UserPreferences` / `UserPreferencesDto`
-- No migration needed — stored in existing JSON column
-
-### Scope decision
-
-Phase 2 is independent of Phase 1. Complete Phase 1 first.
