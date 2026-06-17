@@ -4,11 +4,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { usePreferences, useUpdatePreferences } from "@/hooks/preferencesQuery"
+import { useTheme } from "@/hooks/useTheme"
+import type { ColorTheme } from "@/hooks/useTheme"
 import { ApiError } from "@/lib/api"
 import { hasRole } from "@/lib/auth"
 import { changePassword } from "@/services/authService"
 import { useState } from "react"
 import { useLocation, useNavigate } from "react-router"
+
+const THEME_OPTIONS: { value: ColorTheme; label: string; color: string }[] = [
+  { value: "default", label: "Default", color: "bg-slate-400" },
+  { value: "blue",    label: "Blue",    color: "bg-blue-600" },
+  { value: "red",     label: "Red",     color: "bg-red-600" },
+  { value: "yellow",  label: "Yellow",  color: "bg-yellow-500" },
+  { value: "pink",    label: "Pink",    color: "bg-pink-500" },
+]
 
 // Settings page — authenticated account management.
 // Currently holds change password only; add new sections here as features grow (e.g. email, notifications).
