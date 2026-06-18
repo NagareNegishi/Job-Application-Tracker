@@ -228,7 +228,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             </SelectTrigger>
             <SelectContent>
               {Object.values(JobStatus).map(s => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>{formatEnumLabel(s)}</SelectItem>
               ))}
             </SelectContent>
           </Select>

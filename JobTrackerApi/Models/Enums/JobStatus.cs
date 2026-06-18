@@ -8,5 +8,6 @@ public enum JobStatus
     Screening,
     Interview,
     Offered,
-    Rejected
+    Rejected,
+    NoResponse
 }

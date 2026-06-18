@@ -28,6 +28,7 @@ const STATUS_ORDER: Record<string, number> = {
   Interview: 3,
   Offered: 4,
   Rejected: 5,
+  NoResponse: 6,
 };
 
 const PRIORITY_ORDER: Record<string, number> = {

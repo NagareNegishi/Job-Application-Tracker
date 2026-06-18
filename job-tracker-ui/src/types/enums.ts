@@ -7,7 +7,8 @@ export const JobStatus = {
         Screening: 'Screening',
         Interview: 'Interview',
         Offered: 'Offered',
-        Rejected: 'Rejected'
+        Rejected: 'Rejected',
+        NoResponse: 'NoResponse'
 } as const;
 
 export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
@@ -44,6 +45,7 @@ const ENUM_DISPLAY_OVERRIDES: Record<string, string> = {
   OnSite: "On-site",
   CoverLetter: "Cover Letter",
   ReferenceLetter: "Reference Letter",
+  NoResponse: "No Response",
 };
 
 export function formatEnumLabel(value: string): string {
