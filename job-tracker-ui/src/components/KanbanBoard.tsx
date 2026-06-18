@@ -20,7 +20,7 @@ const COLUMN_BG: Record<JobStatus, string> = {
   Interview: ["bg-purple-50/70", "dark:bg-purple-900/20"].join(" "),
   Offered:   ["bg-green-50/70",  "dark:bg-green-900/20"].join(" "),
   Rejected:   ["bg-red-50/70",    "dark:bg-red-900/20"].join(" "),
-  NoResponse: ["bg-amber-50/70", "dark:bg-amber-900/20"].join(" "),
+  NoResponse: ["bg-orange-50/70", "dark:bg-orange-900/20"].join(" "),
 }
 
 function KanbanCard({ job }: { job: Job }) {

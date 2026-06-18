@@ -31,8 +31,8 @@ const statusStyles: Record<JobStatus, string> = {
     "dark:bg-red-900/50 dark:text-red-400 dark:border-red-800",
   ].join(" "),
   NoResponse: [
-    "bg-amber-100 text-amber-700 border border-amber-300",
-    "dark:bg-amber-900/50 dark:text-amber-400 dark:border-amber-800",
+    "bg-orange-100 text-orange-700 border border-orange-300",
+    "dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800",
   ].join(" "),
 }
 
