@@ -2,6 +2,7 @@
 
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent, Modifier } from '@dnd-kit/core'
+import { useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { useJobs, usePatchJob } from '@/hooks/jobQuery'
 import { MaintenanceError } from '@/lib/api'
@@ -94,7 +95,7 @@ function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
       </div>
       <div
         ref={setNodeRef}
-        className={`${COLUMN_BG[status]} rounded-md p-2 flex flex-col gap-2 min-h-[120px] ${isOver ? 'ring-2 ring-inset ring-primary/40' : ''}`}
+        className={`${COLUMN_BG[status]} rounded-md p-2 flex flex-col gap-2 min-h-[120px] flex-1 ${isOver ? 'ring-2 ring-inset ring-primary/40' : ''}`}
       >
         {jobs.map((job) => (
           <KanbanCard key={job.id} job={job} />
