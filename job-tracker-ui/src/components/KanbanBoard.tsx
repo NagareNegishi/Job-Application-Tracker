@@ -1,7 +1,7 @@
 // [dnd-kit-legacy] migrate to @dnd-kit/react when v1.0 is stable
 
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent } from '@dnd-kit/core'
+import type { DragEndEvent, Modifier } from '@dnd-kit/core'
 import { useNavigate } from 'react-router'
 import { useJobs, usePatchJob } from '@/hooks/jobQuery'
 import { MaintenanceError } from '@/lib/api'
@@ -21,6 +21,33 @@ const COLUMN_BG: Record<JobStatus, string> = {
   Offered:   ["bg-green-50/70",  "dark:bg-green-900/20"].join(" "),
   Rejected:   ["bg-red-50/70",    "dark:bg-red-900/20"].join(" "),
   NoResponse: ["bg-orange-50/70", "dark:bg-orange-900/20"].join(" "),
+}
+
+// Mirrors @dnd-kit/modifiers restrictToFirstScrollableAncestor, inlined to avoid adding the package.
+// Raw dnd-kit transforms are unconstrained; this clamps x/y so the card stays inside the overflow-x-auto container.
+// Source: https://github.com/clauderic/dnd-kit/blob/master/packages/modifiers/src/restrictToFirstScrollableAncestor.ts
+// https://github.com/clauderic/dnd-kit/blob/master/packages/modifiers/src/utilities/restrictToBoundingRect.ts
+const restrictToScrollContainer: Modifier = ({
+  draggingNodeRect,
+  transform,
+  scrollableAncestorRects
+}) => {
+  const containerRect = scrollableAncestorRects[0]
+  if (!draggingNodeRect || !containerRect) return transform
+
+  const value = { ...transform }
+
+  if (draggingNodeRect.top + transform.y <= containerRect.top)
+    value.y = containerRect.top - draggingNodeRect.top
+  else if (draggingNodeRect.bottom + transform.y >= containerRect.top + containerRect.height)
+    value.y = containerRect.top + containerRect.height - draggingNodeRect.bottom
+
+  if (draggingNodeRect.left + transform.x <= containerRect.left)
+    value.x = containerRect.left - draggingNodeRect.left
+  else if (draggingNodeRect.right + transform.x >= containerRect.left + containerRect.width)
+    value.x = containerRect.left + containerRect.width - draggingNodeRect.right
+
+  return value
 }
 
 function KanbanCard({ job }: { job: Job }) {
@@ -93,7 +120,7 @@ export function KanbanBoard() {
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : 'Something went wrong.'}</p>
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} modifiers={[restrictToScrollContainer]} onDragEnd={handleDragEnd}>
       <div className="overflow-x-auto">
         <div className="flex gap-4 min-w-max pb-4">
           {COLUMNS.filter((s) => s !== JobStatus.NoResponse).map((status) => (
