@@ -122,7 +122,7 @@ function FilterPopover({
               value === opt && "font-medium"
             )}
           >
-            {opt || "All"}
+            {opt ? formatEnumLabel(opt) : "All"}
           </button>
         ))}
       </PopoverContent>
