@@ -212,6 +212,7 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 
 | Plan | Item | Status |
 |---|---|---|
+| Kanban DragOverlay refactor | Drag card escapes board on auto-scroll; animation not smooth; fix requires `DragOverlay` portal approach | In Progress |
 | Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs, upcoming interviews | Pending |
 | Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Pending |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |

@@ -54,6 +54,27 @@ Grep target for future refactor: `[dnd-kit-legacy]`
 
 ---
 
+## Known Issues
+
+| Issue | Root Cause | Plan |
+|---|---|---|
+| Dragged card can scroll beyond board bounds | `restrictToScrollContainer` modifier clamps to scroll content height, not visible viewport; dnd-kit auto-scroll moves the page so the boundary shifts | Fix via `DragOverlay` refactor |
+| Drag animation not smooth | `useDraggable` transforms the original element in-place; no easing, no shadow, no scale | Fix via `DragOverlay` refactor — overlay renders a styled clone |
+
+### DragOverlay Refactor
+
+`DragOverlay` renders the dragging card as a portal on `<body>`, outside the board DOM entirely. The original card becomes a transparent placeholder. This solves both issues: the overlay is never clipped by any container, and it can have its own transition/shadow styles.
+
+| Change | Detail |
+|---|---|
+| `onDragStart` | Set `activeJob` state to the dragged job |
+| `onDragEnd` | Clear `activeJob`; patch status as before |
+| `DragOverlay` | Renders a `KanbanCard` clone for `activeJob`; add `transition` + `boxShadow` for smoothness |
+| Original card | Show as semi-transparent placeholder while `isDragging` |
+| `restrictToScrollContainer` modifier | Can be removed — portal overlay is not affected by scroll container bounds |
+
+---
+
 ## Dependencies
 
 ### @dnd-kit/core
