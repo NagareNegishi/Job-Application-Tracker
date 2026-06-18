@@ -24,33 +24,6 @@ const COLUMN_BG: Record<JobStatus, string> = {
   NoResponse: ["bg-orange-50/70", "dark:bg-orange-900/20"].join(" "),
 }
 
-// Mirrors @dnd-kit/modifiers restrictToFirstScrollableAncestor, inlined to avoid adding the package.
-// Raw dnd-kit transforms are unconstrained; this clamps x/y so the card stays inside the overflow-x-auto container.
-// Source: https://github.com/clauderic/dnd-kit/blob/master/packages/modifiers/src/restrictToFirstScrollableAncestor.ts
-// https://github.com/clauderic/dnd-kit/blob/master/packages/modifiers/src/utilities/restrictToBoundingRect.ts
-const restrictToScrollContainer: Modifier = ({
-  draggingNodeRect,
-  transform,
-  scrollableAncestorRects
-}) => {
-  const containerRect = scrollableAncestorRects[0]
-  if (!draggingNodeRect || !containerRect) return transform
-
-  const value = { ...transform }
-
-  if (draggingNodeRect.top + transform.y <= containerRect.top)
-    value.y = containerRect.top - draggingNodeRect.top
-  else if (draggingNodeRect.bottom + transform.y >= containerRect.top + containerRect.height)
-    value.y = containerRect.top + containerRect.height - draggingNodeRect.bottom
-
-  if (draggingNodeRect.left + transform.x <= containerRect.left)
-    value.x = containerRect.left - draggingNodeRect.left
-  else if (draggingNodeRect.right + transform.x >= containerRect.left + containerRect.width)
-    value.x = containerRect.left + containerRect.width - draggingNodeRect.right
-
-  return value
-}
-
 function KanbanCard({ job }: { job: Job }) {
   const navigate = useNavigate()
   const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({
@@ -109,6 +82,32 @@ export function KanbanBoard() {
   const { data: jobs, isPending, isError, error } = useJobs()
   const { mutate: patchJob } = usePatchJob()
   const sensors = useSensors(useSensor(PointerSensor))
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Reads live rect + scroll from the ref on every pointer move — avoids the
+  // viewport-clipping issue of scrollableAncestorRects[0].getBoundingClientRect().
+  const restrictToContainer = useCallback<Modifier>(({ draggingNodeRect, transform }) => {
+    const el = scrollRef.current
+    if (!draggingNodeRect || !el) return transform
+
+    const rect = el.getBoundingClientRect()
+    const value = { ...transform }
+
+    const contentLeft  = rect.left - el.scrollLeft
+    const contentRight = rect.left + el.scrollWidth - el.scrollLeft
+
+    if (draggingNodeRect.left + transform.x <= contentLeft)
+      value.x = contentLeft - draggingNodeRect.left
+    else if (draggingNodeRect.right + transform.x >= contentRight)
+      value.x = contentRight - draggingNodeRect.right
+
+    if (draggingNodeRect.top + transform.y <= rect.top)
+      value.y = rect.top - draggingNodeRect.top
+    else if (draggingNodeRect.bottom + transform.y >= rect.top + rect.height)
+      value.y = rect.top + rect.height - draggingNodeRect.bottom
+
+    return value
+  }, [])
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -121,8 +120,8 @@ export function KanbanBoard() {
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : 'Something went wrong.'}</p>
 
   return (
-    <DndContext sensors={sensors} modifiers={[restrictToScrollContainer]} onDragEnd={handleDragEnd}>
-      <div className="overflow-x-auto">
+    <DndContext sensors={sensors} modifiers={[restrictToContainer]} onDragEnd={handleDragEnd}>
+      <div ref={scrollRef} className="overflow-x-auto">
         <div className="flex gap-4 min-w-max pb-4">
           {COLUMNS.filter((s) => s !== JobStatus.NoResponse).map((status) => (
             <KanbanColumn
