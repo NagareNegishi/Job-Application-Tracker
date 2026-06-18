@@ -2,6 +2,7 @@
  * StatusBadge component to display job status with appropriate styling
  */
 import { Badge } from "@/components/ui/badge"
+import { formatEnumLabel } from "@/types/enums"
 import type { JobStatus } from "@/types/enums"
 
 const statusStyles: Record<JobStatus, string> = {
@@ -29,12 +30,16 @@ const statusStyles: Record<JobStatus, string> = {
     "bg-red-100 text-red-700 border border-red-300",
     "dark:bg-red-900/50 dark:text-red-400 dark:border-red-800",
   ].join(" "),
+  NoResponse: [
+    "bg-amber-100 text-amber-700 border border-amber-300",
+    "dark:bg-amber-900/50 dark:text-amber-400 dark:border-amber-800",
+  ].join(" "),
 }
 
 export function StatusBadge({ status, className = "" }: { status: JobStatus; className?: string }) {
   return (
     <Badge className={`${statusStyles[status]} ${className}`}>
-      {status}
+      {formatEnumLabel(status)}
     </Badge>
   )
 }
