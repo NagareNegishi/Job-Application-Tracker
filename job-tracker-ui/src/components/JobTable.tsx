@@ -243,7 +243,7 @@ export function JobTable() {
 
     switch (activeTab) {
       case "active":
-        return all.filter((j) => j.status !== JobStatus.Rejected);
+        return all.filter((j) => j.status !== JobStatus.Rejected && j.status !== JobStatus.NoResponse);
       case "closing-soon":
         return all.filter((j) => {
           if (j.status !== JobStatus.Wishlist || !j.closedAt) return false;
