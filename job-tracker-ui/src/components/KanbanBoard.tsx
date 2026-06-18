@@ -19,7 +19,8 @@ const COLUMN_BG: Record<JobStatus, string> = {
   Screening: ["bg-yellow-50/70", "dark:bg-yellow-900/20"].join(" "),
   Interview: ["bg-purple-50/70", "dark:bg-purple-900/20"].join(" "),
   Offered:   ["bg-green-50/70",  "dark:bg-green-900/20"].join(" "),
-  Rejected:  ["bg-red-50/70",    "dark:bg-red-900/20"].join(" "),
+  Rejected:   ["bg-red-50/70",    "dark:bg-red-900/20"].join(" "),
+  NoResponse: ["bg-amber-50/70", "dark:bg-amber-900/20"].join(" "),
 }
 
 function KanbanCard({ job }: { job: Job }) {
@@ -95,13 +96,19 @@ export function KanbanBoard() {
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="overflow-x-auto">
         <div className="flex gap-4 min-w-max pb-4">
-          {COLUMNS.map((status) => (
+          {COLUMNS.filter((s) => s !== JobStatus.NoResponse).map((status) => (
             <KanbanColumn
               key={status}
               status={status}
               jobs={jobs.filter((j) => j.status === status)}
             />
           ))}
+          {/* NoResponse is outside the normal application flow */}
+          <div className="w-px self-stretch bg-border mx-1" />
+          <KanbanColumn
+            status={JobStatus.NoResponse}
+            jobs={jobs.filter((j) => j.status === JobStatus.NoResponse)}
+          />
         </div>
       </div>
     </DndContext>
