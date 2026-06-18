@@ -202,7 +202,7 @@ const TAB_STYLES = {
     table:    ["bg-slate-50",                                   "dark:bg-slate-800/40"].join(" "),
     rowHover: ["hover:bg-slate-100",                            "dark:hover:bg-slate-800/60"].join(" "),
   },
-  "rejected": {
+  "closed": {
     tab:      ["!bg-rose-50 !text-rose-800 border-rose-300",    "dark:!bg-rose-900/30 dark:!text-rose-400 dark:border-rose-800"].join(" "),
     table:    ["bg-rose-50",                                    "dark:bg-rose-900/20"].join(" "),
     rowHover: ["hover:bg-rose-100",                             "dark:hover:bg-rose-900/30"].join(" "),
@@ -231,7 +231,7 @@ export function JobTable() {
   // Helper to check column visibility without repeating the scan at every call site.
   const isVisible = (key: ColumnKey) => visibleCols.some((c) => c.key === key);
 
-  const [activeTab, setActiveTab] = useState<"active" | "closing-soon" | "all" | "rejected">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "closing-soon" | "all" | "closed">("active");
 
   // Pre-filter by tab before column filters are applied
   const tabFilteredJobs = useMemo(() => {
@@ -250,8 +250,8 @@ export function JobTable() {
           const d = new Date(j.closedAt);
           return d >= today && d <= in7Days;
         });
-      case "rejected":
-        return all.filter((j) => j.status === JobStatus.Rejected);
+      case "closed":
+        return all.filter((j) => j.status === JobStatus.Rejected || j.status === JobStatus.NoResponse);
       default:
         return all;
     }
@@ -293,7 +293,7 @@ export function JobTable() {
   }
 
   const sortProps = { activeField: sortField, dir: sortDir, onSort: setSort };
-  const showControls = activeTab !== "rejected";
+  const showControls = activeTab !== "closed";
 
   return (
     <div className="flex flex-col gap-4">
@@ -326,7 +326,7 @@ export function JobTable() {
               { value: "active", label: "Active" },
               { value: "closing-soon", label: "Closing Soon" },
               { value: "all", label: "All" },
-              { value: "rejected", label: "Rejected" },
+              { value: "closed", label: "Closed" },
             ] as const
           ).map(({ value, label }) => (
             <TabsTrigger
