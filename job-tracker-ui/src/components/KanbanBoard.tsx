@@ -152,6 +152,17 @@ export function KanbanBoard() {
           />
         </div>
       </div>
+      <DragOverlay>
+        {activeJob ? (
+          <div className={cn(
+            "bg-card border border-border rounded-md p-3 cursor-grab",
+            "hover:shadow-sm dark:hover:border-white/20",
+            "transition-shadow transition-colors",
+          )}>
+            <KanbanCardPreview job={activeJob} />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 }
