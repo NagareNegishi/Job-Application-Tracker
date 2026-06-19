@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent, DragStartEvent, Modifier } from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { useNavigate } from 'react-router'
 import { useJobs, usePatchJob } from '@/hooks/jobQuery'
 import { MaintenanceError } from '@/lib/api'
@@ -24,28 +24,6 @@ const COLUMN_BG: Record<JobStatus, string> = {
   NoResponse: ["bg-orange-50/70", "dark:bg-orange-900/20"].join(" "),
 }
 
-// Mirrors @dnd-kit/modifiers restrictToFirstScrollableAncestor, inlined to avoid adding the package.
-// Raw dnd-kit transforms are unconstrained; this clamps x/y so the card stays inside the overflow-x-auto container.
-// Source: https://github.com/clauderic/dnd-kit/blob/master/packages/modifiers/src/restrictToFirstScrollableAncestor.ts
-// https://github.com/clauderic/dnd-kit/blob/master/packages/modifiers/src/utilities/restrictToBoundingRect.ts
-const restrictToScrollContainer: Modifier = ({ draggingNodeRect, transform, scrollableAncestorRects }) => {
-  const containerRect = scrollableAncestorRects[0]
-  if (!draggingNodeRect || !containerRect) return transform
-
-  const value = { ...transform }
-
-  if (draggingNodeRect.top + transform.y <= containerRect.top)
-    value.y = containerRect.top - draggingNodeRect.top
-  else if (draggingNodeRect.bottom + transform.y >= containerRect.top + containerRect.height)
-    value.y = containerRect.top + containerRect.height - draggingNodeRect.bottom
-
-  if (draggingNodeRect.left + transform.x <= containerRect.left)
-    value.x = containerRect.left - draggingNodeRect.left
-  else if (draggingNodeRect.right + transform.x >= containerRect.left + containerRect.width)
-    value.x = containerRect.left + containerRect.width - draggingNodeRect.right
-
-  return value
-}
 
 // Renders card visuals only, used by DragOverlay as the dragging clone.
 function KanbanCardPreview({ job }: { job: Job }) {
