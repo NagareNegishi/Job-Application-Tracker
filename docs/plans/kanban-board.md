@@ -51,6 +51,28 @@ Grep target for future refactor: `[dnd-kit-legacy]`
 | 2 | Add viewMode toggle to JobPage; render JobTable or KanbanBoard as siblings | Done |
 | 3 | Create KanbanBoard component (layout) | Done |
 | 4 | Add drag-and-drop + status patch on drop | Done |
+| 5 | DragOverlay refactor | Done |
+
+---
+
+## Known Issues
+
+| Issue | Root Cause | Fix |
+|---|---|---|
+| Dragged card escaped board bounds | `restrictToScrollContainer` clamps to scroll content height; auto-scroll shifted the boundary | `DragOverlay` portal on `<body>` — outside all containers; `restrictToScrollContainer` removed |
+| Drag animation not smooth | `useDraggable` transforms the original element in-place; no easing, no shadow | `DragOverlay` renders `KanbanCardPreview` clone with `shadow-lg`; original card fades via `isDragging` / `isBeingDragged` |
+
+### DragOverlay Refactor
+
+`DragOverlay` renders the dragging card as a portal on `<body>`, outside the board DOM entirely. The original card becomes a faded placeholder. This solves both issues: the overlay is never clipped by any container, and it carries its own shadow styles.
+
+| Change | Detail |
+|---|---|
+| `onDragStart` | Sets `activeJob` + `draggingId` state |
+| `onDragEnd` | Clears `activeJob`; clears `draggingId` via `onSettled` after mutation settles |
+| `DragOverlay` | Renders `KanbanCardPreview` clone with `shadow-lg` + `cursor-grabbing`; `dropAnimation={null}` |
+| Original card | `opacity-50` while `isDragging`; `opacity-0` while `isBeingDragged` after drop |
+| `restrictToScrollContainer` | Removed — portal overlay unaffected by scroll container bounds |
 
 ---
 
