@@ -107,6 +107,12 @@ export function KanbanBoard() {
   const sensors = useSensors(useSensor(PointerSensor))
   const [activeJob, setActiveJob] = useState<Job | null>(null)
 
+  function handleDragStart(event: DragStartEvent) {
+    // DragOverlay renders a full card clone, so we need the Job object not just the id.
+    const job = jobs.find((j) => j.id === Number(event.active.id))
+    if (job) setActiveJob(job)
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     // Skip if dropped outside a column or back onto its own column.
