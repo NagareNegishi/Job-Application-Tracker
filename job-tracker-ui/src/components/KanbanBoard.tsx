@@ -38,7 +38,7 @@ function KanbanCardPreview({ job }: { job: Job }) {
   )
 }
 
-function KanbanCard({ job }: { job: Job }) {
+function KanbanCard({ job, isBeingDragged }: { job: Job; isBeingDragged: boolean }) {
   const navigate = useNavigate()
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
     id: job.id,
@@ -55,7 +55,8 @@ function KanbanCard({ job }: { job: Job }) {
         "bg-card border border-border rounded-md p-3 cursor-grab",
         "hover:shadow-sm dark:hover:border-white/20",
         "transition-shadow transition-colors",
-        isDragging && "opacity-50"
+        isDragging && "opacity-50",
+        !isDragging && isBeingDragged && "opacity-0",
       )}
     >
       <KanbanCardPreview job={job} />
@@ -63,7 +64,7 @@ function KanbanCard({ job }: { job: Job }) {
   )
 }
 
-function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
+function KanbanColumn({ status, jobs, draggingId }: { status: JobStatus; jobs: Job[]; draggingId: number | null }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
   return (
@@ -76,7 +77,7 @@ function KanbanColumn({ status, jobs }: { status: JobStatus; jobs: Job[] }) {
         className={`${COLUMN_BG[status]} rounded-md p-2 flex flex-col gap-2 min-h-[120px] flex-1 ${isOver ? 'ring-2 ring-inset ring-primary/40' : ''}`}
       >
         {jobs.map((job) => (
-          <KanbanCard key={job.id} job={job} />
+          <KanbanCard key={job.id} job={job} isBeingDragged={job.id === draggingId} />
         ))}
       </div>
     </div>
@@ -88,19 +89,27 @@ export function KanbanBoard() {
   const { mutate: patchJob } = usePatchJob()
   const sensors = useSensors(useSensor(PointerSensor))
   const [activeJob, setActiveJob] = useState<Job | null>(null)
+  const [draggingId, setDraggingId] = useState<number | null>(null)
 
   function handleDragStart(event: DragStartEvent) {
     // DragOverlay renders a full card clone, so we need the Job object.
     const job = jobs?.find((j) => j.id === Number(event.active.id))
     if (job) setActiveJob(job)
+    setDraggingId(Number(event.active.id))
   }
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveJob(null)
     const { active, over } = event
     // Skip if dropped outside a column or back onto its own column.
-    if (!over || active.data.current?.status === over.id) return
-    patchJob({ id: Number(active.id), operations: [{ op: 'replace', path: '/status', value: over.id as JobStatus }] })
+    if (!over || active.data.current?.status === over.id) {
+      setDraggingId(null)
+      return
+    }
+    patchJob(
+      { id: Number(active.id), operations: [{ op: 'replace', path: '/status', value: over.id as JobStatus }] },
+      { onSettled: () => setDraggingId(null) }
+    )
   }
 
   if (isPending) return <p>Loading...</p>
@@ -115,6 +124,7 @@ export function KanbanBoard() {
               key={status}
               status={status}
               jobs={jobs.filter((j) => j.status === status)}
+              draggingId={draggingId}
             />
           ))}
           {/* NoResponse is outside the normal application flow */}
@@ -122,10 +132,11 @@ export function KanbanBoard() {
           <KanbanColumn
             status={JobStatus.NoResponse}
             jobs={jobs.filter((j) => j.status === JobStatus.NoResponse)}
+            draggingId={draggingId}
           />
         </div>
       </div>
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeJob ? (
           <div className={cn(
             "bg-card border border-border rounded-md p-3",
