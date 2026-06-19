@@ -1,7 +1,8 @@
 // [dnd-kit-legacy] migrate to @dnd-kit/react when v1.0 is stable
 
-import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent, Modifier } from '@dnd-kit/core'
+import { useState } from 'react'
+import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent, Modifier } from '@dnd-kit/core'
 import { useNavigate } from 'react-router'
 import { useJobs, usePatchJob } from '@/hooks/jobQuery'
 import { MaintenanceError } from '@/lib/api'
@@ -104,6 +105,7 @@ export function KanbanBoard() {
   const { data: jobs, isPending, isError, error } = useJobs()
   const { mutate: patchJob } = usePatchJob()
   const sensors = useSensors(useSensor(PointerSensor))
+  const [activeJob, setActiveJob] = useState<Job | null>(null)
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
