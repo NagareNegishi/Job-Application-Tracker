@@ -85,11 +85,7 @@ function KanbanCard({ job }: { job: Job }) {
         isDragging && "opacity-50"
       )}
     >
-      <p className="font-medium text-sm truncate">{job.company}</p>
-      <p className="text-xs text-muted-foreground truncate">{job.role}</p>
-      <div className="mt-2">
-        <PriorityDot priority={job.priority} dotSize="w-2 h-2" />
-      </div>
+      <KanbanCardPreview job={job} />
     </div>
   )
 }
