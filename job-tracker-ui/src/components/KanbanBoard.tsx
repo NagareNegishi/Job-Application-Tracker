@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent, Modifier } from '@dnd-kit/core'
 import { useNavigate } from 'react-router'
 import { useJobs, usePatchJob } from '@/hooks/jobQuery'
 import { MaintenanceError } from '@/lib/api'
@@ -24,6 +24,26 @@ const COLUMN_BG: Record<JobStatus, string> = {
   NoResponse: ["bg-orange-50/70", "dark:bg-orange-900/20"].join(" "),
 }
 
+// Mirrors @dnd-kit/modifiers restrictToWindowEdges, inlined to avoid adding the package.
+// DragOverlay portal is unconstrained; this clamps x/y so the overlay stays within the viewport.
+// Source: https://github.com/clauderic/dnd-kit/blob/master/packages/modifiers/src/restrictToWindowEdges.ts
+const restrictToWindowEdges: Modifier = ({ draggingNodeRect, transform, windowRect }) => {
+  if (!draggingNodeRect || !windowRect) return transform
+
+  const value = { ...transform }
+
+  if (draggingNodeRect.top + transform.y <= windowRect.top)
+    value.y = windowRect.top - draggingNodeRect.top
+  else if (draggingNodeRect.bottom + transform.y >= windowRect.top + windowRect.height)
+    value.y = windowRect.top + windowRect.height - draggingNodeRect.bottom
+
+  if (draggingNodeRect.left + transform.x <= windowRect.left)
+    value.x = windowRect.left - draggingNodeRect.left
+  else if (draggingNodeRect.right + transform.x >= windowRect.left + windowRect.width)
+    value.x = windowRect.left + windowRect.width - draggingNodeRect.right
+
+  return value
+}
 
 // Renders card visuals only, used by DragOverlay as the dragging clone.
 function KanbanCardPreview({ job }: { job: Job }) {
@@ -116,7 +136,7 @@ export function KanbanBoard() {
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : 'Something went wrong.'}</p>
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} modifiers={[restrictToWindowEdges]} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="overflow-x-auto">
         <div className="flex gap-4 min-w-max pb-4">
           {COLUMNS.filter((s) => s !== JobStatus.NoResponse).map((status) => (
