@@ -128,9 +128,8 @@ export function KanbanBoard() {
       <DragOverlay>
         {activeJob ? (
           <div className={cn(
-            "bg-card border border-border rounded-md p-3 cursor-grab",
-            "hover:shadow-sm dark:hover:border-white/20",
-            "transition-shadow transition-colors",
+            "bg-card border border-border rounded-md p-3",
+            "cursor-grabbing shadow-lg",
           )}>
             <KanbanCardPreview job={activeJob} />
           </div>
