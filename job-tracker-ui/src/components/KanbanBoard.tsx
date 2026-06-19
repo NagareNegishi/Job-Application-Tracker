@@ -47,6 +47,19 @@ const restrictToScrollContainer: Modifier = ({ draggingNodeRect, transform, scro
   return value
 }
 
+// Renders card visuals only, used by DragOverlay as the dragging clone.
+function KanbanCardPreview({ job }: { job: Job }) {
+  return (
+    <>
+      <p className="font-medium text-sm truncate">{job.company}</p>
+      <p className="text-xs text-muted-foreground truncate">{job.role}</p>
+      <div className="mt-2">
+        <PriorityDot priority={job.priority} dotSize="w-2 h-2" />
+      </div>
+    </>
+  )
+}
+
 function KanbanCard({ job }: { job: Job }) {
   const navigate = useNavigate()
   const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({
