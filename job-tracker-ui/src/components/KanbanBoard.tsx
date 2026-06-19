@@ -62,19 +62,14 @@ function KanbanCardPreview({ job }: { job: Job }) {
 
 function KanbanCard({ job }: { job: Job }) {
   const navigate = useNavigate()
-  const { setNodeRef, listeners, attributes, transform, isDragging } = useDraggable({
+  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
     id: job.id,
     data: { status: job.status },
   })
 
-  const style = transform
-    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined
-
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...listeners}
       {...attributes}
       onClick={() => navigate(`/jobs/${job.id}`)}
