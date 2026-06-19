@@ -125,7 +125,7 @@ export function KanbanBoard() {
   if (isError) return <p>{error instanceof MaintenanceError ? error.message : 'Something went wrong.'}</p>
 
   return (
-    <DndContext sensors={sensors} modifiers={[restrictToScrollContainer]} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} modifiers={[restrictToScrollContainer]} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="overflow-x-auto">
         <div className="flex gap-4 min-w-max pb-4">
           {COLUMNS.filter((s) => s !== JobStatus.NoResponse).map((status) => (
