@@ -45,15 +45,15 @@ Each entry maps a repo-relative path to the ISO-8601 timestamp it was last resol
 `{ "files": { "src/app/main.py": "2026-06-25T10:00:00Z" } }`
 
 - No entry: process the file.
-- Within 7 days: skip.
-- Older than 7 days: re-check.
+- Within 30 days: skip.
+- Older than 30 days: re-check.
 
 ## Flow
 
 1. Ensure the tracker exists.
 2. List in-scope source files. Sort by path ascending for stable, resumable order.
 3. Process one file at a time:
-   a. If resolved within 7 days, skip.
+   a. If resolved within 30 days, skip.
    b. Read only this file. Check it against the comment standard.
    c. If it already meets the standard, change nothing and stamp it.
    d. If comments are missing, propose additions for this file and wait for approval.
