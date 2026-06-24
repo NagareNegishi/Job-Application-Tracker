@@ -1,0 +1,19 @@
+{
+  "files": {
+    "JobTrackerApi.Tests/AccountControllerTests.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi.Tests/AdminControllerTests.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi.Tests/AuthControllerTests.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi.Tests/AuthDTOTests.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi.Tests/DocumentDTOTests.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi.Tests/DocumentsControllerTests.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi.Tests/JobDTOTests.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi.Tests/JobsControllerTests.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi/Controllers/AccountController.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi/Controllers/AdminController.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi/Controllers/AuthController.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi/Controllers/DocumentsController.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi/Controllers/JobsController.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi/Data/JobTrackerContext.cs": "2026-06-25T00:00:00Z",
+    "JobTrackerApi/Data/JobTrackerContextFactory.cs": "2026-06-25T00:00:00Z"
+  }
+}
