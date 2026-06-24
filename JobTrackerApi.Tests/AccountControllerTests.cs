@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using Moq;
 
+/// <summary>Tests for AccountController — preferences retrieval/update and password change flows.</summary>
 public class AccountControllerTests : IDisposable
 {
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;

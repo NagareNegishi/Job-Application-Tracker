@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Moq;
 
+/// <summary>Tests for JobsController ensuring correct job management behavior and ownership enforcement.</summary>
 public class JobsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;
