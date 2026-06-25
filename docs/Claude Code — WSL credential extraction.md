@@ -35,7 +35,7 @@ claude
 ```bash
 cat ~/.claude/.credentials.json
 ```
-Copy and save that JSON somewhere safe (password manager etc). This is a long-lived refresh token — treat it like a password.
+**Copy and save that JSON somewhere safe (password manager etc). This is a long-lived refresh token — treat it like a password.**
 
 ### Complete removal
 ```bash

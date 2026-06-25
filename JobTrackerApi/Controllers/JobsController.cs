@@ -11,8 +11,9 @@ using System.Security.Claims;
 
 namespace JobTrackerApi.Controllers;
 
+/// <summary>CRUD controller for job applications; patch endpoint uses JSON Patch for partial updates.</summary>
 [ApiController]
-[Route("api/[controller]")] 
+[Route("api/[controller]")]
 [Authorize]
 public class JobsController : ControllerBase
 {

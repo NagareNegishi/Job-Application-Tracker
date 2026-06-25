@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 namespace JobTrackerApi.Data;
 
+/// <summary>EF Core DbContext; configures Contacts and Correspondences as owned JSON columns rather than separate tables.</summary>
 public class JobTrackerContext : IdentityDbContext<ApplicationUser>
 {
     public JobTrackerContext(DbContextOptions<JobTrackerContext> options)

@@ -15,6 +15,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Query;
 
+/// <summary>Tests for AuthController — auth flows including login, registration, token refresh, and password reset.</summary>
 public class AuthControllerTests : IDisposable
 {
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;

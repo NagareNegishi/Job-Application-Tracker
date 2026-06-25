@@ -3,7 +3,9 @@
   "permissions": {
     "allow": [
       "Bash(git status)",
-      "Bash(git diff *)"
+      "Bash(git diff *)",
+      "Write(/.comment-audit/processed.json)",
+      "Edit(/.comment-audit/processed.json)"
     ],
     "ask": [
       "Bash(git add *)",

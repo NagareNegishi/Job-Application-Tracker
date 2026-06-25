@@ -1,5 +1,6 @@
 namespace JobTrackerApi.Services;
 
+/// <summary>Model and prompt configuration for the Claude-based job listing parser.</summary>
 internal static class ClaudeParsingConfig
 {
     // claude-haiku-4-5-20251001: chosen 2026-05-23 — fastest/cheapest; extraction doesn't need reasoning depth; latency matters in form UX. Pinned ID (not alias) to prevent silent behavior changes.

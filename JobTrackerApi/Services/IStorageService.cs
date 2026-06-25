@@ -1,5 +1,6 @@
 namespace JobTrackerApi.Services;
 
+/// <summary>Abstraction for file storage operations.</summary>
 public interface IStorageService
 {
     /// <summary>Saves a file and returns its storage key.</summary>

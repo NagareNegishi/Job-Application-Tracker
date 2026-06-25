@@ -3,6 +3,7 @@ using JobTrackerApi.Models;
 using Moq;
 using Microsoft.AspNetCore.Http;
 
+/// <summary>Validation and mapping tests for DocumentDTO.</summary>
 public class DocumentDTOTests
 {
     private static IFormFile CreateFakeFile(string fileName, long sizeInBytes = 1024)
