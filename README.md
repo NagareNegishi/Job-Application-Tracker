@@ -17,38 +17,38 @@ Switch between a table view and a Kanban board, filter by location or work mode,
 
 - Track job applications through a status pipeline (Wishlist → Applied → Screening → Interview → Offer / Rejected / No Response)
 - Tab views on the job table: Active, Closing Soon, All, Closed
-- Kanban board view — drag cards to move jobs between stages
-- Customisable table columns — show or hide columns; preferences saved per user
-- Dark mode and colour themes — four built-in palettes; preference saved per user
+- Kanban board view: drag cards to move jobs between stages
+- Customisable table columns: show or hide columns, preferences saved per user
+- Dark mode and colour themes: four built-in palettes, preference saved per user
 - Sort by any column and filter by location or work mode
 - Attach documents (CV, cover letter) per application
 - Contact and correspondence history per application
 - JWT authentication with httpOnly refresh token rotation
 - Email verification on registration, with forgot/reset password
 - Change password from the Settings page
-- Demo mode — try the app without registering
-- AI auto-fill — paste a job listing and fields fill in automatically (AI-enabled accounts only)
+- Demo mode: try the app without registering
+- AI auto-fill: paste a job listing and fields fill in automatically (AI-enabled accounts only)
 
 ## Demo
 
 Live demo at [jobtracker.nagarenegishi.com](https://jobtracker.nagarenegishi.com).
 
-Click **Try Demo** on the login page — no account required. The demo account has sample applications across all statuses and priorities.
+Click **Try Demo** on the login page. No account required. The demo account has sample applications across all statuses and priorities.
 
 **Demo limitations:**
-- Document upload and delete are disabled — upload UI is visible but actions return a clear message
+- Document upload and delete are disabled. The upload UI is visible but actions return a clear message.
 - Password changes are blocked
 
 **AI features:**
-AI auto-fill is limited to approved accounts — open access would expose the API key to unlimited use.
+AI auto-fill is limited to approved accounts. Open access would expose the API key to unlimited use.
 To try it, leave a comment on this repo or reach out directly and I'll enable it for your account.
 
 **Data reset:**
-- On every demo login, any missing sample jobs are automatically restored — visitor deletions come back, visitor additions are left alone
-- Full reset runs nightly via a scheduled GitHub Actions workflow — clears all data and re-seeds from scratch
+- On every demo login, any missing sample jobs are automatically restored. Visitor deletions come back; visitor additions are left alone.
+- Full reset runs nightly via a scheduled GitHub Actions workflow, clearing all data and re-seeding from scratch
 
 **Availability:**
-- Offline daily midnight–8 AM Sydney time — RDS stopped overnight to reduce demo hosting costs
+- Offline daily from midnight to 8 AM Sydney time. RDS stops overnight to reduce demo hosting costs.
 
 To get the full experience (documents, password change), [register a free account](https://jobtracker.nagarenegishi.com/register).
 
@@ -64,7 +64,7 @@ To get the full experience (documents, password change), [register a free accoun
 
 ## Local Development
 
-The project runs in a Dev Container (recommended — PostgreSQL runs as a separate Docker service).
+The project runs in a Dev Container (recommended). PostgreSQL runs as a separate Docker service.
 
 1. Open in VS Code with the Dev Containers extension
 2. Create `JobTrackerApi/appsettings.Development.json` (gitignored):
