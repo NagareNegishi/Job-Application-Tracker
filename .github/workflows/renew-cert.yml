@@ -3,11 +3,8 @@ name: Renew SSL Certificate
 on:
   schedule:
     # 1st of every month at 15:00 UTC = 01:00 AEST.
-    # RDS maintenance window is 00:00–08:00 AEST — site is already in maintenance
-    # mode during this window, so the brief container downtime has no user impact.
-    # Certbot only renews when the cert has ≤30 days remaining (Let's Encrypt certs
-    # expire at 90 days), so most months it exits without renewing. Containers
-    # restart either way — that's the only cost of running this monthly.
+    # RDS maintenance window is 00:00–08:00 AEST — site is already in maintenance mode during this window,
+    # so container downtime (if renewal is needed) has no user impact.
     - cron: '0 15 1 * *'
   workflow_dispatch:
 
@@ -22,8 +19,6 @@ jobs:
       # All commands run on EC2 via SSH using files already present there.
 
       # Identical SSH setup to deploy.yml.
-      # chmod 600 — SSH refuses keys readable by other users.
-      # ssh-keyscan pre-trusts EC2's host key so the connection is non-interactive.
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
@@ -36,32 +31,33 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
             cd /home/ubuntu/app
 
-            # Stop containers to free port 80 — certbot standalone mode requires it.
-            # The backend 503 is already showing (RDS is down); nginx going offline
-            # for ~30 seconds adds no meaningful extra downtime.
-            docker compose -f compose.prod.yml down
+            # Check if the cert expires within 30 days before stopping anything.
+            if ! openssl x509 -checkend $((30 * 86400)) -noout \
+                -in /etc/letsencrypt/live/jobtracker.nagarenegishi.com/fullchain.pem; then
 
-            # Renews only if cert has ≤30 days remaining; exits 0 either way.
-            sudo certbot renew
+              # Stop containers to free port 80 — certbot standalone mode requires it.
+              docker compose -f compose.prod.yml down
 
-            # Secrets injected by GitHub Actions (same as deploy.yml).
-            # ${{ }} is expanded before SSH sees the heredoc — safe inside 'EOF'.
-            # ECR_REGISTRY needed so compose can resolve the image reference;
-            # no ECR pull — images are already cached from the last deploy.
-            export ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
-            export DB_CONNECTION_STRING="${{ secrets.DB_CONNECTION_STRING }}"
-            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
-            export JWT_ISSUER="${{ secrets.JWT_ISSUER }}"
-            export JWT_AUDIENCE="${{ secrets.JWT_AUDIENCE }}"
-            export S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}"
-            export DEMO_RESET_KEY="${{ secrets.DEMO_RESET_KEY }}"
-            export EMAIL_FROM_ADDRESS="${{ secrets.EMAIL_FROM_ADDRESS }}"
-            export RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}"
-            export ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}"
-            export ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
+              sudo certbot renew
 
-            # --no-build uses locally cached images — no ECR login required.
-            # Nginx reads the fresh cert from /etc/letsencrypt/ on startup
-            # (mounted into the container via compose.prod.yml).
-            docker compose -f compose.prod.yml up --no-build -d
+              # Secrets injected by GitHub Actions (same as deploy.yml).
+              export ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+              export DB_CONNECTION_STRING="${{ secrets.DB_CONNECTION_STRING }}"
+              export JWT_SECRET="${{ secrets.JWT_SECRET }}"
+              export JWT_ISSUER="${{ secrets.JWT_ISSUER }}"
+              export JWT_AUDIENCE="${{ secrets.JWT_AUDIENCE }}"
+              export S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}"
+              export DEMO_RESET_KEY="${{ secrets.DEMO_RESET_KEY }}"
+              export EMAIL_FROM_ADDRESS="${{ secrets.EMAIL_FROM_ADDRESS }}"
+              export RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}"
+              export ADMIN_EMAIL="${{ secrets.ADMIN_EMAIL }}"
+              export ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
+
+              # --no-build uses locally cached images — no ECR login required.
+              # Nginx reads the fresh cert from /etc/letsencrypt/ on startup
+              docker compose -f compose.prod.yml up --no-build -d
+
+            else
+              echo "Cert has more than 30 days remaining — skipping renewal."
+            fi
           EOF
