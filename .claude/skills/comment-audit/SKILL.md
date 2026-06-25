@@ -15,7 +15,7 @@ Audit the repository for comment coverage and bring under-commented source up to
 
 Documentation format: use the language's native doc-comment convention (C# `///`, Java `/** */`, Python docstrings, JavaScript/TypeScript JSDoc/TSDoc, Go `// Name ...`, Rust `///`; otherwise that language's accepted standard).
 
-File header: a concise one or two line header stating what the file is in general. No implementation detail.
+File header: a concise one or two line header stating what the file is in general, by role or category. Do not enumerate the specific types or functions it contains; generalize instead. No implementation detail.
 
 Function comments: document every function with what it does, not how. Skip trivial, self-evident, or conventionally undocumented functions (getters, setters, obvious one-liners).
 
@@ -24,6 +24,8 @@ Inline comments: only where logic is complex or a decision is non-obvious. Expla
 Style: concise but meaningful, written for a human in natural language. No filler, narration, or AI-tell phrasing. Never add a comment that only states the obvious.
 
 Existing comments: do not modify or delete them. Adding is free. Changing an existing comment needs permission.
+
+Consistency: if processed.json lists previously processed files, read 1–2 of them as style references and match their phrasing, voice, and level of detail. If none exist yet, follow the comment standard as written and let your choices set the precedent.
 
 ## Scope
 
