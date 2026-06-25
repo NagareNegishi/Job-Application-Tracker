@@ -1,5 +1,6 @@
 namespace JobTrackerApi.Models;
 
+/// <summary>EF Core entity representing a job application.</summary>
 public class Job
 {
     // EF Core automatically recognizes Id as the primary key

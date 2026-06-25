@@ -1,5 +1,6 @@
 namespace JobTrackerApi.Models;
 
+/// <summary>EF Core entity tracking issued refresh tokens for rotation and revocation.</summary>
 public class RefreshToken
 {
     public int Id { get; set; }
