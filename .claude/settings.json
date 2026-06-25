@@ -4,8 +4,8 @@
     "allow": [
       "Bash(git status)",
       "Bash(git diff *)",
-      "Write(/.comment-audit/**)",
-      "Edit(/.comment-audit/**)"
+      "Write(/.comment-audit/processed.json)",
+      "Edit(/.comment-audit/processed.json)"
     ],
     "ask": [
       "Bash(git add *)",
