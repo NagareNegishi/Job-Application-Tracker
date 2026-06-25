@@ -39,7 +39,7 @@ Prefer the version-control tracked file list, then apply these skips.
 
 ## Tracker
 
-`.claude/skills/comment-audit/processed.json`. Create if missing: `{ "files": {} }`.
+`.comment-audit/processed.json`. Create if missing: `{ "files": {} }`.
 
 Each entry maps a repo-relative path to the ISO-8601 timestamp it was last resolved:
 `{ "files": { "src/app/main.py": "2026-06-25T10:00:00Z" } }`
