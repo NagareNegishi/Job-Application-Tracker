@@ -12,16 +12,34 @@ Route: `/dashboard`. No new backend model or endpoint required — computed from
 - **Frontend**: when user changes status to `Applied` and `appliedAt` is already set → show confirm dialog: *"Applied At is [date]. Reset to today?"* Yes adds `appliedAt` to the patch; No patches status only.
 - Covers Kanban drag and any inline status change.
 
+## Status classification
+
+Three-way split used across all widgets:
+
+| Group | Statuses |
+|---|---|
+| **Active** | Wishlist, Applied, Screening, Assessment, Interview |
+| **Won** | Offer |
+| **Closed** | Rejected, Withdrawn, No Response |
+
+New enum values to add: `Assessment`, `Withdrawn`. (`NoResponse` already exists.)
+
+Response rate formula:
+```
+(Screening + Assessment + Interview + Offer + Rejected) ÷ (Applied + Screening + Assessment + Interview + Offer + Rejected + No Response)
+```
+i.e. applications that got any human reply ÷ applications that could have gotten a reply (excludes Wishlist and Withdrawn).
+
 ## Widgets (v1)
 
 | Widget | What it shows | Data source |
 |---|---|---|
-| Summary bar | Total active / rejected / offers | Job status counts |
+| Summary bar | Active count / Offer count / Closed count | Status classification above |
 | Status funnel | Count per status + overall response rate | All jobs |
 | Weekly activity chart | Applications sent per week (bar chart) | `appliedAt` field |
-| Response rate | % of Applied that moved past Applied | Job status |
+| Response rate | % of applications that got any human reply | Formula above |
 | Upcoming interviews | Jobs with `interviewAt` in next 14 days | `interviewAt` field |
-| Stale applications | Jobs in Applied/Screening/Assessment/Interview for 14+ days with no update | `updatedAt` + status |
+| Stale applications | Active jobs (excl. Wishlist) with no update for 14+ days | `updatedAt` + status |
 
 ## Key decisions
 
@@ -30,4 +48,6 @@ Route: `/dashboard`. No new backend model or endpoint required — computed from
 - Upcoming interview window: 14 days
 - Source breakdown deferred — only useful when Source field is consistently filled in
 - Funnel shows counts per status + one top-level response rate metric; stage-to-stage conversion rates are not meaningful because Assessment and Interview can repeat and appear in any order
-- `Assessment` status added to `JobStatus` enum — sits between Screening and Interview in Kanban column order as a sensible default, but no fixed pipeline order is enforced
+- New enum values: `Assessment` (sits between Screening and Interview in Kanban column order), `Withdrawn`, `No Response` — no fixed pipeline order enforced
+- `Offer` is terminal positive (Won), not Active — once you have an offer the application is complete
+- `Accepted` not added — Offer is sufficient as the final win state; users don't need to track post-offer acceptance in a job tracker
