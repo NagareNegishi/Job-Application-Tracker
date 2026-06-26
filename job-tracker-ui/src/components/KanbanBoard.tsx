@@ -12,16 +12,28 @@ import { PriorityDot } from '@/components/ui/PriorityDot'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from "@/lib/utils"
 
-const COLUMNS = Object.values(JobStatus)
+const COLUMNS: JobStatus[] = [
+  JobStatus.Wishlist,
+  JobStatus.Applied,
+  JobStatus.Screening,
+  JobStatus.Assessment,
+  JobStatus.Interview,
+  JobStatus.Offered,
+  JobStatus.Rejected,
+  JobStatus.NoResponse,
+  JobStatus.Withdrawn,
+]
 
 const COLUMN_BG: Record<JobStatus, string> = {
-  Wishlist:  ["bg-slate-50/70",  "dark:bg-slate-800/40"].join(" "),
-  Applied:   ["bg-blue-50/70",   "dark:bg-blue-900/20"].join(" "),
-  Screening: ["bg-yellow-50/70", "dark:bg-yellow-900/20"].join(" "),
-  Interview: ["bg-purple-50/70", "dark:bg-purple-900/20"].join(" "),
-  Offered:   ["bg-green-50/70",  "dark:bg-green-900/20"].join(" "),
+  Wishlist:   ["bg-slate-50/70",  "dark:bg-slate-800/40"].join(" "),
+  Applied:    ["bg-blue-50/70",   "dark:bg-blue-900/20"].join(" "),
+  Screening:  ["bg-yellow-50/70", "dark:bg-yellow-900/20"].join(" "),
+  Assessment: ["bg-indigo-50/70", "dark:bg-indigo-900/20"].join(" "),
+  Interview:  ["bg-purple-50/70", "dark:bg-purple-900/20"].join(" "),
+  Offered:    ["bg-green-50/70",  "dark:bg-green-900/20"].join(" "),
   Rejected:   ["bg-red-50/70",    "dark:bg-red-900/20"].join(" "),
   NoResponse: ["bg-orange-50/70", "dark:bg-orange-900/20"].join(" "),
+  Withdrawn:  ["bg-gray-50/70",   "dark:bg-gray-800/40"].join(" "),
 }
 
 // Mirrors @dnd-kit/modifiers restrictToWindowEdges, inlined to avoid adding the package.
