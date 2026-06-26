@@ -183,6 +183,10 @@ public class JobsController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
         if (!TryValidateModel(jobToPatch)) return BadRequest(ModelState);
 
+        // Auto-fill AppliedAt the first time a job is moved to Applied
+        if (jobToPatch.Status == JobStatus.Applied && jobToPatch.AppliedAt == null)
+            jobToPatch.AppliedAt = DateTime.UtcNow;
+
         // Map back to the original job entity
         job.Company = jobToPatch.Company;
         job.Role = jobToPatch.Role;
