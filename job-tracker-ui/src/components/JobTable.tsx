@@ -22,7 +22,7 @@ import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums";
 import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasRole } from "@/lib/auth";
@@ -221,6 +221,19 @@ export function JobTable() {
   const visibleColumns = prefs?.visibleColumns ?? DEFAULT_VISIBLE;
 
   const { widths, startResize } = useColWidths();
+
+  const tableRef = useRef<HTMLDivElement>(null);
+  const stickyBarRef = useRef<HTMLDivElement>(null);
+
+  // Prevent infinite scroll loops: each handler only writes to the OTHER div.
+  function onTableScroll() {
+    if (stickyBarRef.current && tableRef.current)
+      stickyBarRef.current.scrollLeft = tableRef.current.scrollLeft;
+  }
+  function onBarScroll() {
+    if (tableRef.current && stickyBarRef.current)
+      tableRef.current.scrollLeft = stickyBarRef.current.scrollLeft;
+  }
 
   // Fixed columns always shown; user-toggled columns shown when in visibleColumns.
   const visibleCols = COLUMNS.filter(
