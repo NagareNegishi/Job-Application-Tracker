@@ -5,12 +5,12 @@ export const JobStatus = {
         Wishlist: "Wishlist",
         Applied: 'Applied',
         Screening: 'Screening',
+        Assessment: 'Assessment',
         Interview: 'Interview',
         Offered: 'Offered',
         Rejected: 'Rejected',
-        NoResponse: 'NoResponse',
-        Assessment: 'Assessment',
-        Withdrawn: 'Withdrawn'
+        Withdrawn: 'Withdrawn',
+        NoResponse: 'NoResponse'
 } as const;
 
 export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
