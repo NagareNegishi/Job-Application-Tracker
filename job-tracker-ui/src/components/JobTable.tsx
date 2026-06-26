@@ -4,8 +4,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Table } from "@/components/ui/table-plain";
 import {
-  Table,
   TableBody,
   TableCaption,
   TableCell,
@@ -375,7 +375,7 @@ export function JobTable() {
             {isFiltered && ` of ${jobs.length}`} application
             {filteredJobs.length !== 1 ? "s" : ""}
           </TableCaption>
-          <TableHeader>
+          <TableHeader className={cn("sticky top-0 z-10", TAB_STYLES[activeTab].table)}>
             <TableRow>
               <TableHead className={cn("relative overflow-visible", sortProps.activeField === "company" && "border-b-2 border-primary")}>
                 <div className="flex items-center gap-1 group">
