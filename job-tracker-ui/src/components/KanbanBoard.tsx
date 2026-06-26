@@ -20,8 +20,8 @@ const COLUMNS: JobStatus[] = [
   JobStatus.Interview,
   JobStatus.Offered,
   JobStatus.Rejected,
-  JobStatus.NoResponse,
   JobStatus.Withdrawn,
+  JobStatus.NoResponse,
 ]
 
 const COLUMN_BG: Record<JobStatus, string> = {
