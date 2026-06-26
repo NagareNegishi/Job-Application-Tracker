@@ -9,5 +9,7 @@ public enum JobStatus
     Interview,
     Offered,
     Rejected,
-    NoResponse
+    NoResponse,
+    Assessment,
+    Withdrawn
 }
