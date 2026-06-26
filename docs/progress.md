@@ -219,4 +219,4 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
-| Table scroll accessibility | Always-accessible horizontal scrollbar for `JobTable` + `KanbanBoard`; two sessions attempted and reverted; see `docs/plans/table-scroll-accessibility.md` | Pending |
+| Table scroll accessibility | Viewport-contained flex chain; `table-plain.tsx`; sticky `TableHeader`; see `docs/plans/table-scroll-accessibility.md` | Done |
