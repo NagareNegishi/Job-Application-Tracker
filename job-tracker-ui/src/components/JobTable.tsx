@@ -191,21 +191,25 @@ const TAB_STYLES = {
     tab:      ["!bg-blue-50 !text-blue-800 border-blue-300",   "dark:!bg-blue-900/30 dark:!text-blue-400 dark:border-blue-800"].join(" "),
     table:    ["bg-blue-50",                                    "dark:bg-blue-900/20"].join(" "),
     rowHover: ["hover:bg-blue-100",                             "dark:hover:bg-blue-900/30"].join(" "),
+    stickyBg: ["bg-blue-50",                                    "dark:bg-blue-950"].join(" "),
   },
   "closing-soon": {
     tab:      ["!bg-amber-50 !text-amber-800 border-amber-300", "dark:!bg-amber-900/30 dark:!text-amber-400 dark:border-amber-800"].join(" "),
     table:    ["bg-amber-50",                                   "dark:bg-amber-900/20"].join(" "),
     rowHover: ["hover:bg-amber-100",                            "dark:hover:bg-amber-900/30"].join(" "),
+    stickyBg: ["bg-amber-50",                                   "dark:bg-amber-950"].join(" "),
   },
   "all": {
     tab:      ["!bg-slate-50 !text-slate-700 border-slate-300", "dark:!bg-slate-800/50 dark:!text-slate-400 dark:border-slate-700"].join(" "),
     table:    ["bg-slate-50",                                   "dark:bg-slate-800/40"].join(" "),
     rowHover: ["hover:bg-slate-100",                            "dark:hover:bg-slate-800/60"].join(" "),
+    stickyBg: ["bg-slate-50",                                   "dark:bg-slate-900"].join(" "),
   },
   "closed": {
     tab:      ["!bg-rose-50 !text-rose-800 border-rose-300",    "dark:!bg-rose-900/30 dark:!text-rose-400 dark:border-rose-800"].join(" "),
     table:    ["bg-rose-50",                                    "dark:bg-rose-900/20"].join(" "),
     rowHover: ["hover:bg-rose-100",                             "dark:hover:bg-rose-900/30"].join(" "),
+    stickyBg: ["bg-rose-50",                                    "dark:bg-rose-950"].join(" "),
   },
 } as const;
 
@@ -328,7 +332,7 @@ export function JobTable() {
       {/* Tab nav */}
       <div className={cn("flex flex-col flex-1 min-h-0", TAB_STYLES[activeTab].table)}>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList className="bg-background p-0 h-auto rounded-none border-b border-border w-full justify-start items-end gap-1">
+        <TabsList className="bg-card p-0 h-auto rounded-none border-b border-border w-full justify-start items-end gap-1">
           {(
             [
               { value: "active", label: "Active" },
@@ -375,8 +379,8 @@ export function JobTable() {
             {isFiltered && ` of ${jobs.length}`} application
             {filteredJobs.length !== 1 ? "s" : ""}
           </TableCaption>
-          <TableHeader className={cn("sticky top-0 z-10", TAB_STYLES[activeTab].table)}>
-            <TableRow>
+          <TableHeader className={cn("sticky top-0 z-10", TAB_STYLES[activeTab].stickyBg)}>
+            <TableRow className="hover:bg-transparent">
               <TableHead className={cn("relative overflow-visible", sortProps.activeField === "company" && "border-b-2 border-primary")}>
                 <div className="flex items-center gap-1 group">
                   <button
