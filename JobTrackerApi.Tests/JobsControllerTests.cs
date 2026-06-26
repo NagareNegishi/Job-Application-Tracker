@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Moq;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 /// <summary>Tests for JobsController ensuring correct job management behavior and ownership enforcement.</summary>
 public class JobsControllerTests: IDisposable
@@ -33,6 +34,16 @@ public class JobsControllerTests: IDisposable
         // create context and controller directly
         _context = new JobTrackerContext(options);
         _controller = new JobsController(_context, _storageMock.Object, _parsingMock.Object);
+
+        // TryValidateModel requires ObjectValidator; not set when controller is instantiated directly without the MVC pipeline.
+        var validatorMock = new Mock<IObjectModelValidator>();
+        validatorMock.Setup(v => v.Validate(
+            It.IsAny<ActionContext>(),
+            It.IsAny<ValidationStateDictionary>(),
+            It.IsAny<string>(),
+            It.IsAny<object>()));
+        _controller.ObjectValidator = validatorMock.Object;
+
         SetUser();
     }
 
