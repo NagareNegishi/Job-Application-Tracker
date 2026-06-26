@@ -8,7 +8,9 @@ export const JobStatus = {
         Interview: 'Interview',
         Offered: 'Offered',
         Rejected: 'Rejected',
-        NoResponse: 'NoResponse'
+        NoResponse: 'NoResponse',
+        Assessment: 'Assessment',
+        Withdrawn: 'Withdrawn'
 } as const;
 
 export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
