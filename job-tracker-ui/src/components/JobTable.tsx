@@ -304,7 +304,7 @@ export function JobTable() {
   const showControls = activeTab !== "closed";
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-full">
 
       {/* Page header */}
       <div className="flex items-center justify-between px-2">
@@ -326,7 +326,7 @@ export function JobTable() {
       </div>
 
       {/* Tab nav */}
-      <div className={cn("flex flex-col", TAB_STYLES[activeTab].table)}>
+      <div className={cn("flex flex-col flex-1 min-h-0", TAB_STYLES[activeTab].table)}>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
         <TabsList className="bg-background p-0 h-auto rounded-none border-b border-border w-full justify-start items-end gap-1">
           {(
@@ -363,7 +363,7 @@ export function JobTable() {
           No jobs registered yet. Click "Add New Job" to create your first job application.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-auto flex-1 min-h-0">
         <Table style={{ width: totalWidth, tableLayout: "fixed" }}>
           <colgroup>
             {visibleCols.map((c) => (
