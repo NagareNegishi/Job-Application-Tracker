@@ -100,7 +100,7 @@ function KanbanColumn({ status, jobs, draggingId }: { status: JobStatus; jobs: J
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
   return (
-    <div className="flex flex-col gap-2 w-44">
+    <div className="flex flex-col gap-2 w-40">
       <div className="flex justify-center px-1">
         <StatusBadge status={status} className="text-sm px-6 py-1" />
       </div>
@@ -150,8 +150,8 @@ export function KanbanBoard() {
   return (
     <DndContext sensors={sensors} modifiers={[restrictToWindowEdges]} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="overflow-x-auto">
-        <div className="flex gap-4 min-w-max pb-4">
-          {COLUMNS.filter((s) => s !== JobStatus.NoResponse).map((status) => (
+        <div className="flex gap-3 min-w-max pb-4">
+          {COLUMNS.filter((s) => s !== JobStatus.Withdrawn && s !== JobStatus.NoResponse).map((status) => (
             <KanbanColumn
               key={status}
               status={status}
@@ -159,8 +159,13 @@ export function KanbanBoard() {
               draggingId={draggingId}
             />
           ))}
-          {/* NoResponse is outside the normal application flow */}
+          {/* Withdrawn and NoResponse are outside the normal application flow */}
           <div className="w-px self-stretch bg-border mx-1" />
+          <KanbanColumn
+            status={JobStatus.Withdrawn}
+            jobs={jobs.filter((j) => j.status === JobStatus.Withdrawn)}
+            draggingId={draggingId}
+          />
           <KanbanColumn
             status={JobStatus.NoResponse}
             jobs={jobs.filter((j) => j.status === JobStatus.NoResponse)}
