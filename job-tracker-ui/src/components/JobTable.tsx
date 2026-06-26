@@ -243,7 +243,11 @@ export function JobTable() {
 
     switch (activeTab) {
       case "active":
-        return all.filter((j) => j.status !== JobStatus.Rejected && j.status !== JobStatus.NoResponse);
+        return all.filter((j) =>
+          j.status !== JobStatus.Rejected &&
+          j.status !== JobStatus.NoResponse &&
+          j.status !== JobStatus.Withdrawn
+        );
       case "closing-soon":
         return all.filter((j) => {
           if (j.status !== JobStatus.Wishlist || !j.closedAt) return false;
@@ -251,7 +255,11 @@ export function JobTable() {
           return d >= today && d <= in7Days;
         });
       case "closed":
-        return all.filter((j) => j.status === JobStatus.Rejected || j.status === JobStatus.NoResponse);
+        return all.filter((j) =>
+          j.status === JobStatus.Rejected ||
+          j.status === JobStatus.NoResponse ||
+          j.status === JobStatus.Withdrawn
+        );
       default:
         return all;
     }
