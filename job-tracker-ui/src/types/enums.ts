@@ -5,9 +5,11 @@ export const JobStatus = {
         Wishlist: "Wishlist",
         Applied: 'Applied',
         Screening: 'Screening',
+        Assessment: 'Assessment',
         Interview: 'Interview',
         Offered: 'Offered',
         Rejected: 'Rejected',
+        Withdrawn: 'Withdrawn',
         NoResponse: 'NoResponse'
 } as const;
 

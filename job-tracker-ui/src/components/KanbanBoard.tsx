@@ -12,16 +12,28 @@ import { PriorityDot } from '@/components/ui/PriorityDot'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from "@/lib/utils"
 
-const COLUMNS = Object.values(JobStatus)
+const COLUMNS: JobStatus[] = [
+  JobStatus.Wishlist,
+  JobStatus.Applied,
+  JobStatus.Screening,
+  JobStatus.Assessment,
+  JobStatus.Interview,
+  JobStatus.Offered,
+  JobStatus.Rejected,
+  JobStatus.Withdrawn,
+  JobStatus.NoResponse,
+]
 
 const COLUMN_BG: Record<JobStatus, string> = {
-  Wishlist:  ["bg-slate-50/70",  "dark:bg-slate-800/40"].join(" "),
-  Applied:   ["bg-blue-50/70",   "dark:bg-blue-900/20"].join(" "),
-  Screening: ["bg-yellow-50/70", "dark:bg-yellow-900/20"].join(" "),
-  Interview: ["bg-purple-50/70", "dark:bg-purple-900/20"].join(" "),
-  Offered:   ["bg-green-50/70",  "dark:bg-green-900/20"].join(" "),
+  Wishlist:   ["bg-slate-50/70",  "dark:bg-slate-800/40"].join(" "),
+  Applied:    ["bg-blue-50/70",   "dark:bg-blue-900/20"].join(" "),
+  Screening:  ["bg-yellow-50/70", "dark:bg-yellow-900/20"].join(" "),
+  Assessment: ["bg-indigo-50/70", "dark:bg-indigo-900/20"].join(" "),
+  Interview:  ["bg-purple-50/70", "dark:bg-purple-900/20"].join(" "),
+  Offered:    ["bg-green-50/70",  "dark:bg-green-900/20"].join(" "),
   Rejected:   ["bg-red-50/70",    "dark:bg-red-900/20"].join(" "),
   NoResponse: ["bg-orange-50/70", "dark:bg-orange-900/20"].join(" "),
+  Withdrawn:  ["bg-gray-50/70",   "dark:bg-gray-800/40"].join(" "),
 }
 
 // Mirrors @dnd-kit/modifiers restrictToWindowEdges, inlined to avoid adding the package.
@@ -88,7 +100,7 @@ function KanbanColumn({ status, jobs, draggingId }: { status: JobStatus; jobs: J
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
   return (
-    <div className="flex flex-col gap-2 w-44">
+    <div className="flex flex-col gap-2 w-40">
       <div className="flex justify-center px-1">
         <StatusBadge status={status} className="text-sm px-6 py-1" />
       </div>
@@ -138,8 +150,8 @@ export function KanbanBoard() {
   return (
     <DndContext sensors={sensors} modifiers={[restrictToWindowEdges]} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="overflow-x-auto">
-        <div className="flex gap-4 min-w-max pb-4">
-          {COLUMNS.filter((s) => s !== JobStatus.NoResponse).map((status) => (
+        <div className="flex gap-3 min-w-max pb-4">
+          {COLUMNS.filter((s) => s !== JobStatus.Withdrawn && s !== JobStatus.NoResponse).map((status) => (
             <KanbanColumn
               key={status}
               status={status}
@@ -147,8 +159,13 @@ export function KanbanBoard() {
               draggingId={draggingId}
             />
           ))}
-          {/* NoResponse is outside the normal application flow */}
+          {/* Withdrawn and NoResponse are outside the normal application flow */}
           <div className="w-px self-stretch bg-border mx-1" />
+          <KanbanColumn
+            status={JobStatus.Withdrawn}
+            jobs={jobs.filter((j) => j.status === JobStatus.Withdrawn)}
+            draggingId={draggingId}
+          />
           <KanbanColumn
             status={JobStatus.NoResponse}
             jobs={jobs.filter((j) => j.status === JobStatus.NoResponse)}

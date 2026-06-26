@@ -208,12 +208,13 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 | RDS maintenance window | EventBridge stops DB 00:00–08:00 AEST; backend 503 on `DbException`; frontend `MaintenanceError` with time-aware message |
 | Company Verification API | External repo; live at `https://company-verification.onrender.com`; NZ + AU registries; not yet integrated into this project |
 | Dark mode + custom themes | Dark/light toggle in NavBar; 4 color themes (blue, red, yellow, pink); applied via `.theme-*` on `<html>`; stored in `UserPreferences.theme` |
+| Assessment + Withdrawn statuses | New enum values 7/8; auto-fill `appliedAt` on POST (non-Wishlist) and PATCH (→ Applied); Kanban column order and tab filters updated |
 
 ## Active / Upcoming Work
 
 | Plan | Item | Status |
 |---|---|---|
-| Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs, upcoming interviews | Pending |
+| Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs, upcoming interviews | In Progress |
 | Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Pending |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |

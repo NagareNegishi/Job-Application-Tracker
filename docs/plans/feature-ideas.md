@@ -65,12 +65,7 @@ All fields below added together in a single migration.
   - Job URL — no sort, no filter
 
   Also added `formatEnumLabel` to `enums.ts` — single function for all enum display conversions; register new overrides in `ENUM_DISPLAY_OVERRIDES` when needed.
-- **Dashboard / Analytics** — `/dashboard` page; no new model needed; useful widgets:
-  - Pipeline funnel — count per status; shows pipeline health
-  - Response rate — % of applied jobs that moved past Applied; signals resume/outreach effectiveness
-  - Weekly application chart — bar chart of applications sent per week; tracks effort
-  - Stale applications — jobs in Applied/Screening for 14+ days with no update; surfaces follow-up candidates
-  - Upcoming interviews — only relevant once `InterviewAt` field is added
+- **Dashboard / Analytics** — `/dashboard` page; see `docs/plans/dashboard-analytics.md`
 - **Kanban board view** — toggle on job list between table and Kanban grouped by `JobStatus`; drag card to change status
 
 ## Auto-fill Job Details (AI Parsing)

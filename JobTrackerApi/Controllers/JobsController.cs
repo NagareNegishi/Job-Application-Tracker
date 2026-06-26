@@ -95,6 +95,10 @@ public class JobsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var newJob = dto.ToJob();
         newJob.UserId = userId ?? string.Empty;
+
+        if (newJob.Status != JobStatus.Wishlist && newJob.AppliedAt == null)
+            newJob.AppliedAt = DateTime.UtcNow;
+
         _context.Jobs.Add(newJob);
         await _context.SaveChangesAsync();
 
@@ -182,6 +186,10 @@ public class JobsController : ControllerBase
 
         if (!ModelState.IsValid) return BadRequest(ModelState);
         if (!TryValidateModel(jobToPatch)) return BadRequest(ModelState);
+
+        // Auto-fill AppliedAt the first time a job is moved to Applied
+        if (jobToPatch.Status == JobStatus.Applied && jobToPatch.AppliedAt == null)
+            jobToPatch.AppliedAt = DateTime.UtcNow;
 
         // Map back to the original job entity
         job.Company = jobToPatch.Company;
