@@ -13,7 +13,7 @@ function JobPage() {
   return (
     <div className="min-h-screen bg-muted">
       <NavBar />
-      <div className={`${viewMode === 'kanban' ? 'max-w-7xl' : 'max-w-5xl'} mx-auto px-6 py-8`}>
+      <div className={`${viewMode === 'kanban' ? 'max-w-7xl px-2' : 'max-w-5xl px-6'} mx-auto py-8`}>
         {/* View toggle */}
         <div className="flex justify-end mb-4">
           <div className="flex gap-1 bg-card rounded-md p-1 shadow-sm">
@@ -34,7 +34,7 @@ function JobPage() {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-sm p-6">
+        <div className={`bg-card rounded-lg shadow-sm ${viewMode === 'kanban' ? 'px-4 py-4' : 'p-6'}`}>
           {viewMode === 'table' ? <JobTable /> : <KanbanBoard />}
         </div>
       </div>
