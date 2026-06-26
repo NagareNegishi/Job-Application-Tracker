@@ -26,7 +26,7 @@ Tracks decisions made when adding new `JobStatus` values beyond the original set
 - Appended after `Assessment` in the backend enum. Existing DB rows unaffected.
 - Terminal state — same filter rules as Rejected and NoResponse.
 - Shown in the "Closed" tab alongside Rejected and NoResponse.
-- No Kanban column — terminal states sit outside the active flow.
+- Kanban: own column at the end, after NoResponse.
 - Display label: "Withdrawn" (no override needed).
 - `StatusBadge` style: gray/neutral — exit, not a failure.
 - Excluded from response rate denominator (applicant's choice, not a missed reply).
