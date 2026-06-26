@@ -95,6 +95,10 @@ public class JobsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var newJob = dto.ToJob();
         newJob.UserId = userId ?? string.Empty;
+
+        if (newJob.Status != JobStatus.Wishlist && newJob.AppliedAt == null)
+            newJob.AppliedAt = DateTime.UtcNow;
+
         _context.Jobs.Add(newJob);
         await _context.SaveChangesAsync();
 
