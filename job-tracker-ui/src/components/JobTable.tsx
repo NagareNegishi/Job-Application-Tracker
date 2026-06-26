@@ -376,7 +376,12 @@ export function JobTable() {
           No jobs registered yet. Click "Add New Job" to create your first job application.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <div
+          ref={tableRef}
+          onScroll={onTableScroll}
+          className="overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
         <Table style={{ width: totalWidth, tableLayout: "fixed" }}>
           <colgroup>
             {visibleCols.map((c) => (
@@ -574,6 +579,14 @@ export function JobTable() {
           </TableBody>
         </Table>
         </div>
+        <div
+          ref={stickyBarRef}
+          onScroll={onBarScroll}
+          className="sticky bottom-0 overflow-x-auto overflow-y-hidden bg-card"
+        >
+          <div style={{ width: totalWidth, height: 1 }} />
+        </div>
+        </>
       )}
       </div>
 
