@@ -324,11 +324,6 @@ export function JobTable() {
       </div>
       <hr className="border-t border-border" />
 
-      {/* Toolbar */}
-      <div className="flex items-center px-2">
-        <ColumnToggle />
-      </div>
-
       {/* Tab nav */}
       <div className={cn("flex flex-col flex-1 min-h-0", TAB_STYLES[activeTab].table)}>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
