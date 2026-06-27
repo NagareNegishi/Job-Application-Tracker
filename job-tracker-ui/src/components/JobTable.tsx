@@ -353,6 +353,9 @@ export function JobTable() {
               {label}
             </TabsTrigger>
           ))}
+          <div className="ml-auto pb-1">
+            <ColumnToggle />
+          </div>
         </TabsList>
       </Tabs>
 
