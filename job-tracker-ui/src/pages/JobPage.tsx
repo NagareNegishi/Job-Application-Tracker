@@ -34,7 +34,7 @@ function JobPage() {
       </div>
 
       <div className={`${viewMode === 'kanban' ? 'max-w-7xl px-2' : 'max-w-5xl px-6'} mx-auto pb-1 flex-1 flex flex-col min-h-0`}>
-        <div className={`bg-card rounded-lg shadow-sm ${viewMode === 'kanban' ? 'px-4 pt-4 pb-0' : 'px-6 pt-6 pb-0'} flex-1 flex flex-col min-h-0`}>
+        <div className={`bg-card rounded-lg shadow-sm ${viewMode === 'kanban' ? 'px-4 pt-4 pb-0' : 'px-6 pt-3 pb-0'} flex-1 flex flex-col min-h-0`}>
           {viewMode === 'table' ? <JobTable /> : <KanbanBoard />}
         </div>
       </div>
