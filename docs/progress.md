@@ -221,3 +221,4 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
 | Table scroll accessibility | Viewport-contained flex chain; `table-plain.tsx`; sticky `TableHeader`; see `docs/plans/table-scroll-accessibility.md` | Done |
 | Action bar layout fix | Move "Add New Job" + "Show/Hide Columns" into the view toggle row (`JobPage.tsx`) so they anchor to window edge — prevents clipping on narrow viewports; requires lifting add-job dialog trigger out of `JobTable` | Pending |
+| — | View toggle + column selector polish | `IconToggle.tsx` extracted from `JobPage`; pill shape, animated check icon, blue active state; `ColumnToggle` icon + scroll still pending | In Progress |
