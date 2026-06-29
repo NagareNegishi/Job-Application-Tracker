@@ -391,11 +391,11 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
         </div>
 
         {/* Action buttons */}
-        <SheetFooter className="flex-row">
+        <SheetFooter className="flex-row justify-between">
           {/* Cancel just closes the sheet without saving */}
           <Button
             variant="outline"
-            className="flex-1"
+            className="hover:bg-gray-200 dark:hover:bg-gray-700"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
@@ -403,7 +403,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           </Button>
           {/* Save triggers form submission */}
           <Button
-            className="flex-1"
+            className="w-1/2 bg-blue-500 hover:bg-blue-600 text-white"
             onClick={handleSubmit}
             disabled={isPending}
           >
