@@ -53,7 +53,7 @@ export function ColumnToggle() {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-48 p-2">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 max-h-[80vh] overflow-y-auto">
           {TOGGLEABLE.map((col) => (
             <label
               key={col.key}
