@@ -52,8 +52,8 @@ export function ColumnToggle() {
           <SlidersHorizontal className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" side="bottom" avoidCollisions={false} className="w-48 p-2">
-        <div className="flex flex-col gap-1 max-h-[80vh] overflow-y-auto">
+      <PopoverContent align="end" side="bottom" avoidCollisions={false} className="w-48 p-1">
+        <div className="flex flex-col gap-0.5 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto">
           {TOGGLEABLE.map((col) => (
             <label
               key={col.key}
