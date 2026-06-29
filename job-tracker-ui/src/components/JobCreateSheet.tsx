@@ -18,6 +18,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
@@ -128,12 +129,12 @@ export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateShe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="overflow-y-auto sm:max-w-lg">
+      <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Add New Job</SheetTitle>
         </SheetHeader>
 
-        {/* form fields go here */}
+        <div className="flex-1 overflow-y-auto px-4 space-y-4">
 
         {/* Edit Company */}
         <div className="space-y-1.5">
@@ -321,12 +322,14 @@ export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateShe
           <p className="text-xs text-muted-foreground text-right">{form.notes.length} / {MAX_NOTES_LENGTH}</p>
         </div>
 
+        </div>
+
         {/* Action buttons */}
-        <div className="flex gap-2 pt-2">
+        <SheetFooter className="flex-row justify-between">
           {/* Cancel just closes the sheet without saving */}
           <Button
             variant="outline"
-            className="flex-1"
+            className="hover:bg-gray-200 dark:hover:bg-gray-700"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
@@ -334,13 +337,13 @@ export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateShe
           </Button>
           {/* Save triggers form submission */}
           <Button
-            className="flex-1"
+            className="w-1/2 bg-blue-500 hover:bg-blue-600 text-white"
             onClick={handleSubmit}
             disabled={isPending}
           >
             {isPending ? "Saving..." : "Save"}
           </Button>
-        </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   )
