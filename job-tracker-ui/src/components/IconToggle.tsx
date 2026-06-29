@@ -30,10 +30,10 @@ export function IconToggle<T extends string>({ options, value, onChange }: IconT
             <Button
               variant={active ? 'secondary' : 'ghost'}
               size="sm"
-              className="rounded-full"
+              className={cn('rounded-full', active && 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60')}
               onClick={() => onChange(opt.value)}
             >
-              {/* Span animates width to reveal/hide the check; overflow-hidden clips it when collapsed. */}
+              {/* Span animates width to reveal/hide the check */}
               <span className={cn(
                 'overflow-hidden transition-all duration-200',
                 active ? 'w-4 opacity-100' : 'w-0 opacity-0'
