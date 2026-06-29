@@ -49,8 +49,7 @@ export function ColumnToggle() {
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="shadow-xs hover:bg-secondary">
-          <SlidersHorizontal className="mr-2 h-4 w-4" />
-          Show/Hide Columns
+          <SlidersHorizontal className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-48 p-2">
