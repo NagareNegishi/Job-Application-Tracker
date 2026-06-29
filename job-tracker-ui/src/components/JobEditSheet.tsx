@@ -12,6 +12,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
@@ -186,12 +187,12 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="overflow-y-auto sm:max-w-lg">
+      <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Edit Job</SheetTitle>
         </SheetHeader>
 
-        {/* form fields go here */}
+        <div className="flex-1 overflow-y-auto px-4 space-y-4">
 
         {/* Edit Company */}
         <div className="space-y-1.5">
@@ -387,8 +388,10 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           <p className="text-xs text-muted-foreground text-right">{form.notes.length} / {MAX_NOTES_LENGTH}</p>
         </div>
 
+        </div>
+
         {/* Action buttons */}
-        <div className="flex gap-2 pt-2">
+        <SheetFooter className="flex-row">
           {/* Cancel just closes the sheet without saving */}
           <Button
             variant="outline"
@@ -406,7 +409,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           >
             {isPending ? "Saving..." : "Save"}
           </Button>
-        </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   )
