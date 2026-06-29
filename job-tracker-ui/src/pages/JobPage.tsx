@@ -2,14 +2,14 @@ import NavBar from '@/components/NavBar'
 import { JobTable } from '@/components/JobTable'
 import { KanbanBoard } from '@/components/KanbanBoard'
 import { IconToggle } from '@/components/IconToggle'
-import { Kanban, LayoutList } from 'lucide-react'
+import { Menu, Columns3 } from 'lucide-react'
 import { useState } from 'react'
 
 type ViewMode = 'table' | 'kanban'
 
 const VIEW_OPTIONS = [
-  { value: 'table' as const,  icon: <LayoutList className="h-4 w-4" /> },
-  { value: 'kanban' as const, icon: <Kanban className="h-4 w-4" /> },
+  { value: 'table' as const,  icon: <Menu className="h-4 w-4" /> },
+  { value: 'kanban' as const, icon: <Columns3 className="h-4 w-4" /> },
 ]
 
 function JobPage() {
