@@ -25,7 +25,7 @@ export function IconToggle<T extends string>({ options, value, onChange }: IconT
         const active = opt.value === value
         return (
           <Fragment key={opt.value}>
-            {/* Divider between options; inset vertically so it doesn't reach the container edge. */}
+            {/* Divider between options */}
             {i > 0 && <div className="w-0.5 bg-muted-foreground/40 self-stretch" />}
             <Button
               variant={active ? 'secondary' : 'ghost'}
@@ -33,8 +33,13 @@ export function IconToggle<T extends string>({ options, value, onChange }: IconT
               className="rounded-full"
               onClick={() => onChange(opt.value)}
             >
-              {/* Always rendered so button width stays fixed regardless of active state. */}
-              <Check className={cn('h-3 w-3', active ? 'visible' : 'invisible')} />
+              {/* Span animates width to reveal/hide the check; overflow-hidden clips it when collapsed. */}
+              <span className={cn(
+                'overflow-hidden transition-all duration-200',
+                active ? 'w-4 opacity-100' : 'w-0 opacity-0'
+              )}>
+                <Check />
+              </span>
               {opt.icon}
               {opt.label && <span>{opt.label}</span>}
             </Button>
