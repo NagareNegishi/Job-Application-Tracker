@@ -22,7 +22,7 @@ Three-way split used across all widgets:
 | **Won** | Offer |
 | **Closed** | Rejected, Withdrawn, No Response |
 
-New enum values to add: `Assessment`, `Withdrawn`. (`NoResponse` already exists.)
+New enum values `Assessment`, `Withdrawn`, `NoResponse` — already shipped.
 
 Response rate formula:
 ```
