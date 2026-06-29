@@ -1,5 +1,6 @@
 // Reusable icon-based toggle group for mutually exclusive view/mode switching.
 import { Check } from 'lucide-react'
+import { Fragment } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -19,22 +20,25 @@ interface IconToggleProps<T extends string> {
 /** Renders a pill-shaped button group where exactly one option is active at a time. */
 export function IconToggle<T extends string>({ options, value, onChange }: IconToggleProps<T>) {
   return (
-    <div className="flex bg-card rounded-full p-1 shadow-sm divide-x divide-border">
-      {options.map((opt) => {
+    <div className="flex bg-card rounded-full p-1 shadow-sm">
+      {options.map((opt, i) => {
         const active = opt.value === value
         return (
-          <Button
-            key={opt.value}
-            variant={active ? 'secondary' : 'ghost'}
-            size="sm"
-            className="rounded-full"
-            onClick={() => onChange(opt.value)}
-          >
-            {/* Always rendered so button width stays fixed regardless of active state. */}
-            <Check className={cn('h-3 w-3', active ? 'visible' : 'invisible')} />
-            {opt.icon}
-            {opt.label && <span>{opt.label}</span>}
-          </Button>
+          <Fragment key={opt.value}>
+            {/* Divider between options; inset vertically so it doesn't reach the container edge. */}
+            {i > 0 && <div className="w-0.5 bg-muted-foreground/40 self-stretch" />}
+            <Button
+              variant={active ? 'secondary' : 'ghost'}
+              size="sm"
+              className="rounded-full"
+              onClick={() => onChange(opt.value)}
+            >
+              {/* Always rendered so button width stays fixed regardless of active state. */}
+              <Check className={cn('h-3 w-3', active ? 'visible' : 'invisible')} />
+              {opt.icon}
+              {opt.label && <span>{opt.label}</span>}
+            </Button>
+          </Fragment>
         )
       })}
     </div>
