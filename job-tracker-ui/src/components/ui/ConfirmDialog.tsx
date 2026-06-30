@@ -46,7 +46,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="sm:justify-between">
           <Button variant="outline" onClick={() => { onOpenChange(false); onCancel?.() }}>
             {cancelLabel ?? "Cancel"}
           </Button>
