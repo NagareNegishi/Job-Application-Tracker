@@ -102,6 +102,7 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 | Company Verification API | External repo; live at `https://company-verification.onrender.com`; NZ + AU registries; not yet integrated into this project |
 | Dark mode + custom themes | Dark/light toggle in NavBar; 4 color themes (blue, red, yellow, pink); applied via `.theme-*` on `<html>`; stored in `UserPreferences.theme` |
 | Assessment + Withdrawn statuses | New enum values 7/8; auto-fill `appliedAt` on POST (non-Wishlist) and PATCH (→ Applied); confirm dialog when status changes to Applied and `appliedAt` already set (`JobEditSheet` + `KanbanBoard`); `ConfirmDialog` generic base + `DeleteConfirmDialog` wrapper in `ui/`; Kanban column order and tab filters updated |
+| Kanban drag polish | DragOverlay: `shadow-2xl`, `scale-105`, `rotate-1`; origin card ring + `bg-primary/5` highlight while dragging, persists while appliedAt confirm dialog is open |
 
 ## Active / Upcoming Work
 
