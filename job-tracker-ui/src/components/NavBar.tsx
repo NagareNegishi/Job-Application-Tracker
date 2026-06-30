@@ -20,28 +20,32 @@ export default function NavBar() {
     setColorTheme((prefs.theme ?? "default") as ColorTheme)
   }, [prefs?.theme])
 
+  const navLinkClass = "text-sm text-muted-foreground hover:text-foreground"
+
   return (
     <div className="border-b bg-card px-6 py-3 flex items-center justify-between">
-      {/* Left group: brand + nav links sit together; justify-between pushes actions to the far right */}
+      {/* Links group */}
       <div className="flex items-center gap-6">
         {/* Logo link — universal convention: clicking the brand name goes home */}
         <Link to="/jobs" className="font-semibold text-foreground hover:text-muted-foreground">
           Job Tracker
         </Link>
-        <Link to="/jobs" className="text-sm text-muted-foreground hover:text-foreground">
+        {/* Divider separates brand from page navigation links */}
+        <span className="h-4 w-px bg-border" />
+        <Link to="/jobs" className={navLinkClass}>
           Applications
         </Link>
-        <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/dashboard" className={navLinkClass}>
           Analytics
         </Link>
         {/* Admin link — only rendered for users with the Admin role */}
         {hasRole("Admin") && (
-          <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link to="/admin" className={navLinkClass}>
             Admin
           </Link>
         )}
       </div>
-      {/* Right group: theme toggle + user menu */}
+      {/* Action group */}
       <div className="flex items-center gap-2">
         {/* Moon switch to dark, Sun switch to light */}
         <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
