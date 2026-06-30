@@ -30,6 +30,7 @@ import {
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
 import type { Job, JobPatchOperation } from "@/types/job"
 import { useEffect, useState } from "react"
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 
 // FormState represents the internal state of the job edit form
 interface FormState {
@@ -90,6 +91,8 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
   const [form, setForm] = useState<FormState>(() => toFormState(job))
   const { mutate: patchJob, isPending } = usePatchJob()
   const [errors, setErrors] = useState<{ jobUrl?: string; salary?: string }>({})
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingOps, setPendingOps] = useState<JobPatchOperation[]>([])
 
   // Reset form when sheet opens with fresh job data
   useEffect(() => {
@@ -178,11 +181,29 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
       return
     }
 
+    // Ask before resetting appliedAt when status changes to Applied and date is already set
+    const statusChangingToApplied = form.status === JobStatus.Applied && job.status !== JobStatus.Applied
+    const appliedAtUnchanged = !operations.some(op => op.path === "/appliedAt")
+    if (statusChangingToApplied && job.appliedAt != null && appliedAtUnchanged) {
+      setPendingOps(operations)
+      setConfirmOpen(true)
+      return
+    }
+
     // Trigger the patch
     patchJob(
       { id: job.id, operations },
       { onSuccess: () => onOpenChange(false) }
     )
+  }
+
+  function handleResetAppliedAt() {
+    const ops: JobPatchOperation[] = [...pendingOps, { op: "replace" as const, path: "/appliedAt" as const, value: new Date().toISOString() }]
+    patchJob({ id: job.id, operations: ops }, { onSuccess: () => onOpenChange(false) })
+  }
+
+  function handleKeepAppliedAt() {
+    patchJob({ id: job.id, operations: pendingOps }, { onSuccess: () => onOpenChange(false) })
   }
 
   return (
@@ -410,6 +431,15 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             {isPending ? "Saving..." : "Save"}
           </Button>
         </SheetFooter>
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="Update Applied Date?"
+          description={<>{`You applied on ${new Date(job.appliedAt!).toLocaleDateString()}.`}<br />Reset to today?</>}
+          confirmLabel="Reset to today"
+          onConfirm={handleResetAppliedAt}
+          onCancel={handleKeepAppliedAt}
+        />
       </SheetContent>
     </Sheet>
   )

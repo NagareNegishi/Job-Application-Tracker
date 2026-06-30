@@ -6,11 +6,11 @@ Route: `/dashboard`. No new backend model or endpoint required — computed from
 
 `appliedAt` must be reliably filled for the weekly chart and response rate to be accurate.
 
-### Auto-fill appliedAt on status change
+### Auto-fill appliedAt on status change — Done
 
 - **Backend** (`JobsController.PatchJob`): when PATCH sets `status = Applied` and current `appliedAt` is null → set `appliedAt = now`. Enforces the rule at the API level regardless of caller.
-- **Frontend**: when user changes status to `Applied` and `appliedAt` is already set → show confirm dialog: *"Applied At is [date]. Reset to today?"* Yes adds `appliedAt` to the patch; No patches status only.
-- Covers Kanban drag and any inline status change.
+- **Frontend** (`JobEditSheet`, `KanbanBoard`): when user changes status to `Applied` and `appliedAt` is already set → confirm dialog: *"Applied At is [date]. Reset to today?"* "Reset to today" adds `/appliedAt: now` to the patch; "Keep existing" patches status only. `ConfirmDialog` (generic) / `DeleteConfirmDialog` (wrapper) introduced in `ui/`.
+- Covers Kanban drag and edit sheet submit.
 
 ## Status classification
 
