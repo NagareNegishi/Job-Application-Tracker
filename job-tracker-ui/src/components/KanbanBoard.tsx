@@ -213,7 +213,7 @@ export function KanbanBoard() {
         open={confirmJob != null}
         onOpenChange={open => { if (!open) setConfirmJob(null) }}
         title="Update Applied Date?"
-        description={`Applied At is currently ${new Date(confirmJob?.appliedAt!).toLocaleDateString()}. Reset to today?`}
+        description={<>{`Applied At is currently ${new Date(confirmJob?.appliedAt!).toLocaleDateString()}.`}<br />Reset to today?</>}
         confirmLabel="Reset to today"
         onConfirm={handleDragResetAppliedAt}
         onCancel={handleDragKeepAppliedAt}
