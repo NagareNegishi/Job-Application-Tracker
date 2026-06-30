@@ -1,7 +1,7 @@
 // Tests for dashboard utility functions.
 
 import { describe, it, expect } from "vitest";
-import { classifyStatus, computeSummary, computeResponseRate } from "./dashboardUtils";
+import { classifyStatus, computeSummary, computeResponseRate, computeStatusFunnel } from "./dashboardUtils";
 
 describe("classifyStatus", () => {
   it("classifies active statuses correctly", () => {
@@ -70,5 +70,33 @@ describe("computeSummary", () => {
       { status: "Rejected" },
     ] as any[];
     expect(computeSummary(jobs)).toEqual({ active: 2, won: 1, closed: 2 });
+  });
+});
+
+describe("computeStatusFunnel", () => {
+  it("returns all 9 statuses with count 0 for an empty array", () => {
+    const result = computeStatusFunnel([]);
+    expect(result).toHaveLength(9);
+    expect(result.every(e => e.count === 0)).toBe(true);
+  });
+
+  it("returns statuses in pipeline order", () => {
+    const result = computeStatusFunnel([]);
+    expect(result.map(e => e.status)).toEqual([
+      "Wishlist", "Applied", "Screening", "Assessment", "Interview",
+      "Offered", "Rejected", "Withdrawn", "NoResponse",
+    ]);
+  });
+
+  it("counts jobs per status correctly", () => {
+    const jobs = [
+      { status: "Applied" },
+      { status: "Applied" },
+      { status: "Screening" },
+    ] as any[];
+    const result = computeStatusFunnel(jobs);
+    expect(result.find(e => e.status === "Applied")?.count).toBe(2);
+    expect(result.find(e => e.status === "Screening")?.count).toBe(1);
+    expect(result.find(e => e.status === "Wishlist")?.count).toBe(0);
   });
 });
