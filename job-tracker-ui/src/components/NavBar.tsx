@@ -1,5 +1,5 @@
 import UserMenu from "@/components/UserMenu"
-import { Link } from "react-router"
+import { Link, NavLink } from "react-router"
 import { hasRole } from "@/lib/auth"
 import { Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -20,29 +20,30 @@ export default function NavBar() {
     setColorTheme((prefs.theme ?? "default") as ColorTheme)
   }, [prefs?.theme])
 
-  const navLinkClass = "text-sm text-muted-foreground hover:text-foreground"
+  // active page: full foreground + medium weight; inactive: muted until hovered
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `text-sm hover:text-foreground ${isActive ? "text-foreground font-medium" : "text-muted-foreground"}`
 
   return (
     <div className="border-b bg-card px-6 py-3 flex items-center justify-between">
       {/* Links group */}
       <div className="flex items-center gap-6">
-        {/* Logo link — universal convention: clicking the brand name goes home */}
+        {/* Logo -> home */}
         <Link to="/jobs" className="font-semibold text-foreground hover:text-muted-foreground">
-          Job Tracker
+          Job Application Tracker
         </Link>
-        {/* Divider separates brand from page navigation links */}
         <span className="h-4 w-px bg-border" />
-        <Link to="/jobs" className={navLinkClass}>
+        <NavLink to="/jobs" className={navLinkClass}>
           Applications
-        </Link>
-        <Link to="/dashboard" className={navLinkClass}>
+        </NavLink>
+        <NavLink to="/dashboard" className={navLinkClass}>
           Analytics
-        </Link>
+        </NavLink>
         {/* Admin link — only rendered for users with the Admin role */}
         {hasRole("Admin") && (
-          <Link to="/admin" className={navLinkClass}>
+          <NavLink to="/admin" className={navLinkClass}>
             Admin
-          </Link>
+          </NavLink>
         )}
       </div>
       {/* Action group */}
