@@ -1,3 +1,5 @@
+// Generic confirmation dialog used as the base for all confirm/alert flows.
+
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -10,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
+// ConfirmDialogProps defines the props for the ConfirmDialog component
 interface ConfirmDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -17,9 +20,13 @@ interface ConfirmDialogProps {
   description: ReactNode
   onConfirm: () => void
   confirmLabel: string
-  confirmClassName?: string
+  confirmClassName?: string  // optional styling for the confirm button; omit for plain outline
 }
 
+/**
+ * ConfirmDialog provides a reusable two-button confirmation dialog.
+ * Use confirmLabel and confirmClassName to specialise for a specific action.
+ */
 export function ConfirmDialog({
   open,
   onOpenChange,
