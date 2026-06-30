@@ -437,6 +437,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           title="Update Applied Date?"
           description={<>{`You applied on ${new Date(job.appliedAt!).toLocaleDateString()}.`}<br />Reset to today?</>}
           confirmLabel="Reset to today"
+          cancelLabel="No, keep it"
           onConfirm={handleResetAppliedAt}
           onCancel={handleKeepAppliedAt}
         />

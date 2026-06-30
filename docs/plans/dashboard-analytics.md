@@ -51,3 +51,46 @@ i.e. applications that got any human reply ÷ applications that could have gotte
 - New enum values: `Assessment` (sits between Screening and Interview in Kanban column order), `Withdrawn`, `No Response` — no fixed pipeline order enforced
 - `Offer` is terminal positive (Won), not Active — once you have an offer the application is complete
 - `Accepted` not added — Offer is sufficient as the final win state; users don't need to track post-offer acceptance in a job tracker
+
+## Implementation Plan
+
+### Route
+- Path: `/dashboard`
+- Wrapped in `ProtectedRoute` (same as `/jobs`)
+- Add "Dashboard" nav link in `NavBar` alongside "Jobs"
+
+### Page Frame — `src/pages/DashboardPage.tsx`
+- Calls `useJobs()` — jobs already cached by TanStack Query, no extra fetch
+- Single `useMemo` block computes all 6 widget values when jobs change
+- Layout: summary bar full-width top row; 2-column grid below for remaining widgets
+- Each widget is an inline card section — no separate component files in v1
+
+### Logic — `src/utils/dashboardUtils.ts`
+Pure functions only; no React, no side effects:
+
+| Function | Input | Output |
+|---|---|---|
+| `classifyStatus(status)` | `JobStatus` | `"active" \| "won" \| "closed"` |
+| `computeSummary(jobs)` | `Job[]` | `{ active, won, closed }` |
+| `computeResponseRate(jobs)` | `Job[]` | `number` (0–100) |
+| `computeStatusFunnel(jobs)` | `Job[]` | `{ status, count }[]` |
+| `computeWeeklyActivity(jobs)` | `Job[]` | `{ week: string, count: number }[]` from `appliedAt` |
+| `computeUpcomingInterviews(jobs)` | `Job[]` | `Job[]` with `interviewAt` within 14 days |
+| `computeStaleApplications(jobs)` | `Job[]` | `Job[]` active (excl. Wishlist), `updatedAt` 14+ days ago |
+
+### Tests — `src/utils/dashboardUtils.test.ts`
+Unit tests for all functions above. Edge cases: empty array, null `appliedAt`/`interviewAt`, boundary dates (exactly 14 days).
+
+### Frontend Data Flow
+1. `DashboardPage` calls `useJobs()` — returns cached `Job[]`
+2. `useMemo` runs all compute functions → destructured into widget props
+3. Each widget section reads from memo values — no local state
+
+## Progress
+
+| # | Step | Status |
+|---|---|---|
+| 1 | Route + NavBar link | Done |
+| 2 | `dashboardUtils.ts` — pure logic functions | — |
+| 3 | Tests for `dashboardUtils.ts` | — |
+| 4 | `DashboardPage.tsx` — page frame + all widgets | — |

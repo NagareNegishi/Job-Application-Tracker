@@ -1,3 +1,4 @@
+import AuthBrand from "@/components/AuthBrand"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,22 +22,27 @@ export default function ForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-full max-w-sm space-y-4 text-center">
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <AuthBrand />
+          <div className="space-y-4 text-center mt-10">
           <h1 className="text-2xl font-semibold">Check your email</h1>
           <p className="text-sm text-muted-foreground">
             If an account exists for <strong>{email}</strong>, you'll receive a reset link shortly.
           </p>
           <p className="text-sm text-muted-foreground">Can't find it? Check your spam folder.</p>
           <Link to="/login" className="text-sm underline">Back to sign in</Link>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <AuthBrand />
+        <form onSubmit={handleSubmit} className="w-full space-y-4 mt-10">
         <h1 className="text-2xl font-semibold">Reset your password</h1>
         <p className="text-sm text-muted-foreground">
           Enter your email and we'll send you a reset link.
@@ -55,7 +61,8 @@ export default function ForgotPasswordPage() {
         <p className="text-sm text-center">
           <Link to="/login" className="underline">Back to sign in</Link>
         </p>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }

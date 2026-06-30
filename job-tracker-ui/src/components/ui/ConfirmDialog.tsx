@@ -20,6 +20,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void
   confirmLabel: string
   confirmClassName?: string  // optional styling for the confirm button; omit for plain outline
+  cancelLabel?: string       // optional; defaults to "Cancel"
   onCancel?: () => void      // called when Cancel is clicked; omit to just close the dialog
 }
 
@@ -35,6 +36,7 @@ export function ConfirmDialog({
   onConfirm,
   confirmLabel,
   confirmClassName,
+  cancelLabel,
   onCancel,
 }: ConfirmDialogProps) {
   return (
@@ -44,9 +46,9 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="sm:justify-between">
           <Button variant="outline" onClick={() => { onOpenChange(false); onCancel?.() }}>
-            Cancel
+            {cancelLabel ?? "Cancel"}
           </Button>
           <Button
             variant="outline"
