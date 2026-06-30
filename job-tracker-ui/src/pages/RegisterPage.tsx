@@ -16,8 +16,10 @@ export default function RegisterPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <form onSubmit={async (e) => {
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <AuthBrand />
+        <form onSubmit={async (e) => {
         e.preventDefault()
         setError(null)
         setLoading(true)
@@ -29,8 +31,7 @@ export default function RegisterPage() {
         } finally {
           setLoading(false)
         }
-      }} className="w-full max-w-sm space-y-4">
-        <AuthBrand />
+      }} className="w-full space-y-4 mt-10">
         <h1 className="text-2xl font-semibold">Create account</h1>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -55,7 +56,8 @@ export default function RegisterPage() {
           Already have an account?{" "}
           <Link to="/login" className="underline">Sign in</Link>
         </p>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }

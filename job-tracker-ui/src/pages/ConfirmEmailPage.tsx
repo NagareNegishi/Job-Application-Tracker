@@ -38,9 +38,10 @@ export default function ConfirmEmailPage() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-sm space-y-4 text-center">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
         <AuthBrand />
+        <div className="space-y-4 text-center mt-10">
         {status === "loading" && (
           <p className="text-sm text-muted-foreground">Verifying your email...</p>
         )}
@@ -65,6 +66,7 @@ export default function ConfirmEmailPage() {
             </p>
           </>
         )}
+        </div>
       </div>
     </div>
   )

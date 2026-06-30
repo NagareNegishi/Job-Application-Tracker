@@ -32,9 +32,10 @@ export default function CheckEmailPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-sm space-y-4 text-center">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
         <AuthBrand />
+        <div className="space-y-4 text-center mt-10">
         <h1 className="text-2xl font-semibold">Check your email</h1>
         <p className="text-sm text-muted-foreground">
           We sent a verification link to <strong>{email ?? "your email"}</strong>.
@@ -51,6 +52,7 @@ export default function CheckEmailPage() {
         <Button onClick={handleResend} disabled={isCoolingDown} variant="outline" className="w-full">
           {isCoolingDown ? "Resend available shortly..." : "Resend verification email"}
         </Button>
+        </div>
       </div>
     </div>
   )
