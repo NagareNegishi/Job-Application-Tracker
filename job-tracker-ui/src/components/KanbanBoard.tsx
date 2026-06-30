@@ -220,6 +220,7 @@ export function KanbanBoard() {
         title="Update Applied Date?"
         description={<><span className="block [overflow-wrap:anywhere]">{confirmJob?.company}</span>{`You applied on ${new Date(confirmJob?.appliedAt ?? new Date()).toLocaleDateString()}.`}<br />Reset to today?</>}
         confirmLabel="Reset to today"
+        cancelLabel="No, keep it"
         onConfirm={handleDragResetAppliedAt}
         onCancel={handleDragKeepAppliedAt}
       />
