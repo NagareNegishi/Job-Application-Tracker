@@ -22,19 +22,26 @@ export default function NavBar() {
 
   return (
     <div className="border-b bg-card px-6 py-3 flex items-center justify-between">
-      {/* Logo link — universal convention: clicking the brand name goes home */}
-      <Link to="/jobs" className="font-semibold text-foreground hover:text-muted-foreground">
-        Job Tracker
-      </Link>
-      <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-        Dashboard
-      </Link>
-      {/* Admin link — only rendered for users with the Admin role */}
-      {hasRole("Admin") && (
-        <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">
-          Admin
+      {/* Left group: brand + nav links sit together; justify-between pushes actions to the far right */}
+      <div className="flex items-center gap-6">
+        {/* Logo link — universal convention: clicking the brand name goes home */}
+        <Link to="/jobs" className="font-semibold text-foreground hover:text-muted-foreground">
+          Job Tracker
         </Link>
-      )}
+        <Link to="/jobs" className="text-sm text-muted-foreground hover:text-foreground">
+          Applications
+        </Link>
+        <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+          Analytics
+        </Link>
+        {/* Admin link — only rendered for users with the Admin role */}
+        {hasRole("Admin") && (
+          <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">
+            Admin
+          </Link>
+        )}
+      </div>
+      {/* Right group: theme toggle + user menu */}
       <div className="flex items-center gap-2">
         {/* Moon switch to dark, Sun switch to light */}
         <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
