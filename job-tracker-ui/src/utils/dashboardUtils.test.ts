@@ -1,7 +1,7 @@
 // Tests for dashboard utility functions.
 
 import { describe, it, expect } from "vitest";
-import { classifyStatus, computeSummary } from "./dashboardUtils";
+import { classifyStatus, computeSummary, computeResponseRate } from "./dashboardUtils";
 
 describe("classifyStatus", () => {
   it("classifies active statuses correctly", () => {
