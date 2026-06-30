@@ -5,9 +5,7 @@ import type { Job } from "@/types/job";
 
 export type StatusGroup = "active" | "won" | "closed";
 
-/**
- * Maps a job status to its dashboard group.
- */
+/** Maps a job status to its dashboard group. */
 export function classifyStatus(status: JobStatus): StatusGroup {
   switch (status) {
     case JobStatus.Wishlist:
@@ -23,4 +21,19 @@ export function classifyStatus(status: JobStatus): StatusGroup {
     case JobStatus.NoResponse:
       return "closed";
   }
+}
+
+export interface SummaryResult {
+  active: number;
+  won: number;
+  closed: number;
+}
+
+/** Counts jobs in each status group for the summary bar. */
+export function computeSummary(jobs: Job[]): SummaryResult {
+  const result: SummaryResult = { active: 0, won: 0, closed: 0 };
+  for (const job of jobs) {
+    result[classifyStatus(job.status)]++;
+  }
+  return result;
 }
