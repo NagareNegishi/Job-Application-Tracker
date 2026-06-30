@@ -198,7 +198,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
   }
 
   function handleResetAppliedAt() {
-    const ops = [...pendingOps, { op: "replace" as const, path: "/appliedAt", value: new Date().toISOString() }]
+    const ops: JobPatchOperation[] = [...pendingOps, { op: "replace" as const, path: "/appliedAt" as const, value: new Date().toISOString() }]
     patchJob({ id: job.id, operations: ops }, { onSuccess: () => onOpenChange(false) })
   }
 
@@ -435,7 +435,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           open={confirmOpen}
           onOpenChange={setConfirmOpen}
           title="Update Applied Date?"
-          description={`Applied At is currently ${new Date(job.appliedAt!).toLocaleDateString()}. Reset to today?`}
+          description={<>{`Applied At is currently ${new Date(job.appliedAt!).toLocaleDateString()}.`}<br />Reset to today?</>}
           confirmLabel="Reset to today"
           onConfirm={handleResetAppliedAt}
           onCancel={handleKeepAppliedAt}
