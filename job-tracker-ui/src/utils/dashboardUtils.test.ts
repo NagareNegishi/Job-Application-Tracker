@@ -23,6 +23,39 @@ describe("classifyStatus", () => {
   });
 });
 
+describe("computeResponseRate", () => {
+  it("returns 0 for an empty array", () => {
+    expect(computeResponseRate([])).toBe(0);
+  });
+
+  it("returns 0 when no eligible applications exist", () => {
+    const jobs = [{ status: "Wishlist" }, { status: "Withdrawn" }] as any[];
+    expect(computeResponseRate(jobs)).toBe(0);
+  });
+
+  it("returns 0 when all eligible jobs are Applied or NoResponse", () => {
+    const jobs = [{ status: "Applied" }, { status: "NoResponse" }] as any[];
+    expect(computeResponseRate(jobs)).toBe(0);
+  });
+
+  it("computes response rate correctly", () => {
+    const jobs = [
+      { status: "Applied" },    // eligible, no reply
+      { status: "Screening" },  // replied
+      { status: "Rejected" },   // replied
+      { status: "Wishlist" },   // excluded
+      { status: "Withdrawn" },  // excluded
+    ] as any[];
+    // responded=2, eligible=3 → 67%
+    expect(computeResponseRate(jobs)).toBe(67);
+  });
+
+  it("returns 100 when all eligible jobs received a response", () => {
+    const jobs = [{ status: "Screening" }, { status: "Offered" }] as any[];
+    expect(computeResponseRate(jobs)).toBe(100);
+  });
+});
+
 describe("computeSummary", () => {
   it("returns zeros for an empty array", () => {
     expect(computeSummary([])).toEqual({ active: 0, won: 0, closed: 0 });
