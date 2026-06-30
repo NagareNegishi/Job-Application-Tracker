@@ -209,6 +209,15 @@ export function KanbanBoard() {
           </div>
         ) : null}
       </DragOverlay>
+      <ConfirmDialog
+        open={confirmJob != null}
+        onOpenChange={open => { if (!open) setConfirmJob(null) }}
+        title="Update Applied Date?"
+        description={`Applied At is currently ${new Date(confirmJob?.appliedAt!).toLocaleDateString()}. Reset to today?`}
+        confirmLabel="Reset to today"
+        onConfirm={handleDragResetAppliedAt}
+        onCancel={handleDragKeepAppliedAt}
+      />
     </DndContext>
   )
 }
