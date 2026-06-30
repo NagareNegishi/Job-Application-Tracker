@@ -431,6 +431,15 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             {isPending ? "Saving..." : "Save"}
           </Button>
         </SheetFooter>
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="Update Applied Date?"
+          description={`Applied At is currently ${new Date(job.appliedAt!).toLocaleDateString()}. Reset to today?`}
+          confirmLabel="Reset to today"
+          onConfirm={handleResetAppliedAt}
+          onCancel={handleKeepAppliedAt}
+        />
       </SheetContent>
     </Sheet>
   )
