@@ -71,7 +71,7 @@ function KanbanCardPreview({ job }: { job: Job }) {
   )
 }
 
-function KanbanCard({ job, isBeingDragged }: { job: Job; isBeingDragged: boolean }) {
+function KanbanCard({ job, isBeingDragged, isPendingConfirm }: { job: Job; isBeingDragged: boolean; isPendingConfirm: boolean }) {
   const navigate = useNavigate()
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
     id: job.id,
@@ -90,6 +90,7 @@ function KanbanCard({ job, isBeingDragged }: { job: Job; isBeingDragged: boolean
         "transition-shadow transition-colors",
         isDragging && "opacity-50",
         !isDragging && isBeingDragged && "opacity-0",
+        (isDragging || isPendingConfirm) && "ring-2 ring-primary/60 bg-primary/5",
       )}
     >
       <KanbanCardPreview job={job} />
@@ -97,7 +98,7 @@ function KanbanCard({ job, isBeingDragged }: { job: Job; isBeingDragged: boolean
   )
 }
 
-function KanbanColumn({ status, jobs, draggingId }: { status: JobStatus; jobs: Job[]; draggingId: number | null }) {
+function KanbanColumn({ status, jobs, draggingId, confirmJobId }: { status: JobStatus; jobs: Job[]; draggingId: number | null; confirmJobId: number | null }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
   return (
@@ -110,7 +111,7 @@ function KanbanColumn({ status, jobs, draggingId }: { status: JobStatus; jobs: J
         className={`${COLUMN_BG[status]} rounded-md p-2 flex flex-col gap-2 min-h-[120px] flex-1 ${isOver ? 'ring-2 ring-inset ring-primary/40' : ''}`}
       >
         {jobs.map((job) => (
-          <KanbanCard key={job.id} job={job} isBeingDragged={job.id === draggingId} />
+          <KanbanCard key={job.id} job={job} isBeingDragged={job.id === draggingId} isPendingConfirm={job.id === confirmJobId} />
         ))}
       </div>
     </div>
@@ -183,6 +184,7 @@ export function KanbanBoard() {
               status={status}
               jobs={jobs.filter((j) => j.status === status)}
               draggingId={draggingId}
+              confirmJobId={confirmJob?.id ?? null}
             />
           ))}
           {/* Withdrawn and NoResponse are outside the normal application flow */}
@@ -191,11 +193,13 @@ export function KanbanBoard() {
             status={JobStatus.Withdrawn}
             jobs={jobs.filter((j) => j.status === JobStatus.Withdrawn)}
             draggingId={draggingId}
+            confirmJobId={confirmJob?.id ?? null}
           />
           <KanbanColumn
             status={JobStatus.NoResponse}
             jobs={jobs.filter((j) => j.status === JobStatus.NoResponse)}
             draggingId={draggingId}
+            confirmJobId={confirmJob?.id ?? null}
           />
         </div>
       </div>
@@ -203,7 +207,8 @@ export function KanbanBoard() {
         {activeJob ? (
           <div className={cn(
             "bg-card border border-border rounded-md p-3",
-            "cursor-grabbing shadow-lg",
+            "cursor-grabbing shadow-2xl",
+            "scale-105 rotate-1",
           )}>
             <KanbanCardPreview job={activeJob} />
           </div>
