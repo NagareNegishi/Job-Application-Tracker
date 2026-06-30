@@ -51,6 +51,8 @@ i.e. applications that got any human reply ÷ applications that could have gotte
 - New enum values: `Assessment` (sits between Screening and Interview in Kanban column order), `Withdrawn`, `No Response` — no fixed pipeline order enforced
 - `Offer` is terminal positive (Won), not Active — once you have an offer the application is complete
 - `Accepted` not added — Offer is sufficient as the final win state; users don't need to track post-offer acceptance in a job tracker
+- `computeWeeklyActivity` deferred — chart library dependency; handle separately
+- `computeStaleApplications` deferred — needs `updatedAt` field added to backend first
 
 ## Implementation Plan
 
@@ -91,6 +93,6 @@ Unit tests for all functions above. Edge cases: empty array, null `appliedAt`/`i
 | # | Step | Status |
 |---|---|---|
 | 1 | Route + NavBar link | Done |
-| 2 | `dashboardUtils.ts` — pure logic functions | — |
-| 3 | Tests for `dashboardUtils.ts` | — |
+| 2 | `dashboardUtils.ts` — pure logic functions | In Progress |
+| 3 | Tests for `dashboardUtils.ts` | In Progress |
 | 4 | `DashboardPage.tsx` — page frame + all widgets | — |
