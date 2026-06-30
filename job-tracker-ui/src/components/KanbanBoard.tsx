@@ -1,6 +1,7 @@
 // [dnd-kit-legacy] migrate to @dnd-kit/react when v1.0 is stable
 
 import { useState } from 'react'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent, Modifier } from '@dnd-kit/core'
 import { useNavigate } from 'react-router'
@@ -122,6 +123,7 @@ export function KanbanBoard() {
   const sensors = useSensors(useSensor(PointerSensor))
   const [activeJob, setActiveJob] = useState<Job | null>(null)
   const [draggingId, setDraggingId] = useState<number | null>(null)
+  const [confirmJob, setConfirmJob] = useState<Job | null>(null)
 
   function handleDragStart(event: DragStartEvent) {
     // DragOverlay renders a full card clone, so we need the Job object.
@@ -138,10 +140,34 @@ export function KanbanBoard() {
       setDraggingId(null)
       return
     }
+    const draggedJob = jobs?.find(j => j.id === Number(active.id))
+    // Ask before resetting appliedAt when dragged to Applied and date is already set
+    if (over.id === JobStatus.Applied && draggedJob?.appliedAt != null) {
+      setDraggingId(null)
+      setConfirmJob(draggedJob)
+      return
+    }
     patchJob(
       { id: Number(active.id), operations: [{ op: 'replace', path: '/status', value: over.id as JobStatus }] },
       { onSettled: () => setDraggingId(null) }
     )
+  }
+
+  function handleDragResetAppliedAt() {
+    if (!confirmJob) return
+    patchJob({ id: confirmJob.id, operations: [
+      { op: 'replace', path: '/status', value: JobStatus.Applied },
+      { op: 'replace', path: '/appliedAt', value: new Date().toISOString() },
+    ]})
+    setConfirmJob(null)
+  }
+
+  function handleDragKeepAppliedAt() {
+    if (!confirmJob) return
+    patchJob({ id: confirmJob.id, operations: [
+      { op: 'replace', path: '/status', value: JobStatus.Applied },
+    ]})
+    setConfirmJob(null)
   }
 
   if (isPending) return <p>Loading...</p>
