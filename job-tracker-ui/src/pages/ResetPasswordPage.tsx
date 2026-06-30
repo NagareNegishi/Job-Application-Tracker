@@ -1,3 +1,4 @@
+import AuthBrand from "@/components/AuthBrand"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,6 +25,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-full max-w-sm space-y-4 text-center">
+          <AuthBrand />
           <h1 className="text-2xl font-semibold">Invalid reset link</h1>
           <p className="text-sm text-muted-foreground">
             Try requesting a new link from the{" "}
@@ -51,6 +53,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+        <AuthBrand />
         <h1 className="text-2xl font-semibold">Set new password</h1>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

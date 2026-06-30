@@ -1,3 +1,4 @@
+import AuthBrand from "@/components/AuthBrand"
 import { confirmEmail } from "@/services/authService"
 import { ApiError } from "@/lib/api"
 import { useEffect, useState } from "react"
@@ -39,6 +40,7 @@ export default function ConfirmEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-sm space-y-4 text-center">
+        <AuthBrand />
         {status === "loading" && (
           <p className="text-sm text-muted-foreground">Verifying your email...</p>
         )}

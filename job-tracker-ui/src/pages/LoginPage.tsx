@@ -1,3 +1,4 @@
+import AuthBrand from "@/components/AuthBrand"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -58,6 +59,7 @@ export default function LoginPage() {
           setLoading(false)
         }
       }} className="w-full max-w-sm space-y-4">
+        <AuthBrand />
         <h1 className="text-2xl font-semibold">Sign in</h1>
 
         {error && (

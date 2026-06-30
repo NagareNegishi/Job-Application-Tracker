@@ -1,3 +1,4 @@
+import AuthBrand from "@/components/AuthBrand"
 import { Button } from "@/components/ui/button"
 import { resendConfirmation } from "@/services/authService"
 import { useState, useEffect } from "react"
@@ -33,6 +34,7 @@ export default function CheckEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-sm space-y-4 text-center">
+        <AuthBrand />
         <h1 className="text-2xl font-semibold">Check your email</h1>
         <p className="text-sm text-muted-foreground">
           We sent a verification link to <strong>{email ?? "your email"}</strong>.
