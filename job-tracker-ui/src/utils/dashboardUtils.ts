@@ -29,6 +29,32 @@ export interface SummaryResult {
   closed: number;
 }
 
+/** Computes the percentage of applications that received a human response (0–100). */
+export function computeResponseRate(jobs: Job[]): number {
+  let responded = 0;
+  let eligible = 0;
+
+  for (const job of jobs) {
+    switch (job.status) {
+      case JobStatus.Screening:
+      case JobStatus.Assessment:
+      case JobStatus.Interview:
+      case JobStatus.Offered:
+      case JobStatus.Rejected:
+        responded++;
+        eligible++;
+        break;
+      case JobStatus.Applied:
+      case JobStatus.NoResponse:
+        eligible++;
+        break;
+    }
+  }
+
+  // Avoid division by zero when no eligible applications exist
+  return eligible === 0 ? 0 : Math.round((responded / eligible) * 100);
+}
+
 /** Counts jobs in each status group for the summary bar. */
 export function computeSummary(jobs: Job[]): SummaryResult {
   const result: SummaryResult = { active: 0, won: 0, closed: 0 };
