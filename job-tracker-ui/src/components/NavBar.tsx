@@ -26,6 +26,9 @@ export default function NavBar() {
       <Link to="/jobs" className="font-semibold text-foreground hover:text-muted-foreground">
         Job Tracker
       </Link>
+      <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+        Dashboard
+      </Link>
       {/* Admin link — only rendered for users with the Admin role */}
       {hasRole("Admin") && (
         <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">

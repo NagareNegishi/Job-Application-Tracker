@@ -90,7 +90,7 @@ Unit tests for all functions above. Edge cases: empty array, null `appliedAt`/`i
 
 | # | Step | Status |
 |---|---|---|
-| 1 | Route + NavBar link | — |
+| 1 | Route + NavBar link | Done |
 | 2 | `dashboardUtils.ts` — pure logic functions | — |
 | 3 | Tests for `dashboardUtils.ts` | — |
 | 4 | `DashboardPage.tsx` — page frame + all widgets | — |
