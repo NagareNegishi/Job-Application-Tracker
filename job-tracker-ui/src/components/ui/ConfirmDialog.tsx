@@ -21,6 +21,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void
   confirmLabel: string
   confirmClassName?: string  // optional styling for the confirm button; omit for plain outline
+  onCancel?: () => void      // called when Cancel is clicked; omit to just close the dialog
 }
 
 /**
@@ -35,6 +36,7 @@ export function ConfirmDialog({
   onConfirm,
   confirmLabel,
   confirmClassName,
+  onCancel,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,7 +46,7 @@ export function ConfirmDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => { onOpenChange(false); onCancel?.() }}>
             Cancel
           </Button>
           <Button
