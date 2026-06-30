@@ -29,6 +29,15 @@ export interface SummaryResult {
   closed: number;
 }
 
+/** Counts jobs in each status group for the summary bar. */
+export function computeSummary(jobs: Job[]): SummaryResult {
+  const result: SummaryResult = { active: 0, won: 0, closed: 0 };
+  for (const job of jobs) {
+    result[classifyStatus(job.status)]++;
+  }
+  return result;
+}
+
 /** Computes the percentage of applications that received a human response (0–100). */
 export function computeResponseRate(jobs: Job[]): number {
   let responded = 0;
@@ -55,11 +64,32 @@ export function computeResponseRate(jobs: Job[]): number {
   return eligible === 0 ? 0 : Math.round((responded / eligible) * 100);
 }
 
-/** Counts jobs in each status group for the summary bar. */
-export function computeSummary(jobs: Job[]): SummaryResult {
-  const result: SummaryResult = { active: 0, won: 0, closed: 0 };
+export interface StatusFunnelEntry {
+  status: JobStatus;
+  count: number;
+}
+
+const FUNNEL_ORDER: JobStatus[] = [
+  JobStatus.Wishlist,
+  JobStatus.Applied,
+  JobStatus.Screening,
+  JobStatus.Assessment,
+  JobStatus.Interview,
+  JobStatus.Offered,
+  JobStatus.Rejected,
+  JobStatus.Withdrawn,
+  JobStatus.NoResponse,
+];
+
+/** Returns job counts per status in pipeline order. */
+export function computeStatusFunnel(jobs: Job[]): StatusFunnelEntry[] {
+  const counts = new Map<JobStatus, number>(
+    FUNNEL_ORDER.map(status => [status, 0])
+  );
+
   for (const job of jobs) {
-    result[classifyStatus(job.status)]++;
+    counts.set(job.status, (counts.get(job.status) ?? 0) + 1);
   }
-  return result;
+
+  return FUNNEL_ORDER.map(status => ({ status, count: counts.get(status)! }));
 }
