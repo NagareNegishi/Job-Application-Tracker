@@ -31,8 +31,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <form onSubmit={async (e) => {
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <AuthBrand />
+        <form onSubmit={async (e) => {
         e.preventDefault()
         setError(null)
         setUnverified(false)
@@ -58,8 +60,7 @@ export default function LoginPage() {
         } finally { // ensures loading resets
           setLoading(false)
         }
-      }} className="w-full max-w-sm space-y-4">
-        <AuthBrand />
+      }} className="w-full space-y-4 mt-10">
         <h1 className="text-2xl font-semibold">Sign in</h1>
 
         {error && (
@@ -112,7 +113,8 @@ export default function LoginPage() {
           No account?{" "}
           <Link to="/register" className="underline">Register</Link>
         </p>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }
