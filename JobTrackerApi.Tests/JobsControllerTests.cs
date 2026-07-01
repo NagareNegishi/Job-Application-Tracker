@@ -510,6 +510,20 @@ public class JobsControllerTests: IDisposable
     }
 
     [Fact]
+    public async Task PatchJob_UpdatesStatusChangedAt_WhenStatusChanges()
+    {
+        var job = await SeedJobAsync(status: JobStatus.Wishlist);
+        var originalTimestamp = job.StatusChangedAt;
+        var patchDoc = new JsonPatchDocument<UpdateJobDTO>();
+        patchDoc.Replace(j => j.Status, JobStatus.Applied);
+
+        await _controller.PatchJob(job.Id, patchDoc);
+
+        var updated = await _context.Jobs.FindAsync(job.Id);
+        Assert.True(updated!.StatusChangedAt > originalTimestamp);
+    }
+
+    [Fact]
     public async Task PostJob_SetsStatusChangedAt_OnCreate()
     {
         var before = DateTime.UtcNow;
