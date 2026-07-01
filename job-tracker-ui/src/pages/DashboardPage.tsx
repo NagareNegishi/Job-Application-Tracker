@@ -19,6 +19,7 @@ import {
 import { formatEnumLabel } from "@/types/enums"
 import { SummaryBar } from "@/components/dashboard/SummaryBar"
 import { ResponseRateCard } from "@/components/dashboard/ResponseRateCard"
+import { StatusFunnelChart } from "@/components/dashboard/StatusFunnelChart"
 
 // Registers only the chart modules we use — Chart.js v4 is tree-shaken by default
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
@@ -90,6 +91,7 @@ export default function DashboardPage() {
         <SummaryBar summary={summary} />
         <div className="grid grid-cols-2 gap-4">
           <ResponseRateCard responseRate={responseRate} />
+          <StatusFunnelChart chartData={funnelChartData} />
           {/* remaining widgets */}
         </div>
       </div>
