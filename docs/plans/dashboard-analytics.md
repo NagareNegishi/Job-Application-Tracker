@@ -54,7 +54,12 @@ i.e. applications that got any human reply ÷ applications that could have gotte
 - Weekly activity widget: vertical bar chart via `<Bar />`
 - Status funnel widget: horizontal bar chart via `<Bar indexAxis="y" />` — no true funnel shape, no extra plugin needed
 - `computeWeeklyActivity` unblocked — chart library decided
-- `computeStaleApplications` deferred — needs `updatedAt` field added to backend first
+- Weekly activity tracks `appliedAt` — applications sent per week; jobs without `appliedAt` excluded
+- Week label format: `"Jun 29 '25"` (Monday of week start, ISO week convention)
+- Scope selector (`"all" | "year" | "month"`) is UI state in `DashboardPage` — filters jobs by `appliedAt` before passing to `computeWeeklyActivity`; function stays pure, always groups whatever it receives
+- `computeStaleApplications` blocked on: (1) `statusChangedAt` field on `Job` entity — set on create, updated only when status changes in `PatchJob`, DB migration required; (2) `staleThresholdDays: number` added to `UserPreferences` (default 21)
+- Stale criteria: status is Applied/Screening/Assessment/Interview, AND (`closedAt` not set OR `closedAt` is in the past), AND `today − statusChangedAt ≥ thresholdDays`
+- `computeStaleApplications` signature: `(jobs: Job[], thresholdDays: number): Job[]`
 
 ## Implementation Plan
 
