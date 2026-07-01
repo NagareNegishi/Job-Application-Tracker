@@ -129,3 +129,26 @@ export function computeWeeklyApplications(jobs: Job[]): WeeklyActivityEntry[] {
       return { week: `${month} ${day} '${year}`, count };
     });
 }
+
+const STALE_STATUSES = new Set<JobStatus>([
+  JobStatus.Applied,
+  JobStatus.Screening,
+  JobStatus.Assessment,
+  JobStatus.Interview,
+]);
+
+/** Returns active jobs where status hasn't changed in thresholdDays or more.
+ *  Excludes Wishlist, Won, and Closed statuses. Jobs with a future closedAt are also excluded. */
+export function computeStaleApplications(jobs: Job[], thresholdDays: number): Job[] {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0); // normalise to midnight UTC so daysSince is always a whole number
+
+  return jobs.filter(job => {
+    if (!STALE_STATUSES.has(job.status)) return false;
+    if (job.closedAt && new Date(job.closedAt) > today) return false;
+
+    // statusChangedAt is non-nullable on the entity
+    const daysSince = (today.getTime() - new Date(job.statusChangedAt!).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSince >= thresholdDays;
+  });
+}
