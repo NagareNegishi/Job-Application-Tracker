@@ -509,6 +509,19 @@ public class JobsControllerTests: IDisposable
         Assert.NotNull(updated!.AppliedAt);
     }
 
+    [Fact]
+    public async Task PostJob_SetsStatusChangedAt_OnCreate()
+    {
+        var before = DateTime.UtcNow;
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev" };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.True(dto.StatusChangedAt >= before);
+    }
+
     // Test for ParseListingRequest with empty text
     [Fact]
     public async Task ParseListingRequest_EmptyText_FailsValidation()
