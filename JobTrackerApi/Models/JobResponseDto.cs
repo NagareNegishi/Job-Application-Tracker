@@ -24,4 +24,5 @@ public class JobResponseDto
     public string? Location { get; set; }
     public WorkMode? WorkMode { get; set; }
     public DateTime? InterviewAt { get; set; }
+    public DateTime StatusChangedAt { get; set; }
 }
