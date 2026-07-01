@@ -84,10 +84,13 @@ Pure functions only; no React, no side effects:
 | `computeResponseRate(jobs)` | `Job[]` | `number` (0–100) |
 | `computeStatusFunnel(jobs)` | `Job[]` | `{ status, count }[]` |
 | `computeWeeklyActivity(jobs)` | `Job[]` | `{ week: string, count: number }[]` from `appliedAt` |
-| `computeStaleApplications(jobs)` | `Job[]` | `Job[]` active (excl. Wishlist), `updatedAt` 14+ days ago |
+| `computeStaleApplications(jobs, thresholdDays)` | `Job[], number` | `Job[]` active (excl. Wishlist), `statusChangedAt` 21+ days ago (configurable) |
 
 ### Tests — `src/utils/dashboardUtils.test.ts`
 Unit tests for all functions above. Edge cases: empty array, null `appliedAt`, boundary dates.
+
+### Stale indicator component — `src/components/ui/StaleIndicator.tsx`
+Reusable component, same pattern as `PriorityDot`. Amber `Clock` icon with a tooltip ("No status change in X days — consider following up"). Used in jobs list (table row + Kanban card). Blocked on same prerequisites as `computeStaleApplications`: `statusChangedAt` backend field + `staleThresholdDays` in `UserPreferences`.
 
 ### Frontend Data Flow
 1. `DashboardPage` calls `useJobs()` — returns cached `Job[]`
