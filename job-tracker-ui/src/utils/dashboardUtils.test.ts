@@ -1,7 +1,7 @@
 // Tests for dashboard utility functions.
 
 import { describe, it, expect } from "vitest";
-import { classifyStatus, computeSummary, computeResponseRate, computeStatusFunnel, computeWeeklyApplications } from "./dashboardUtils";
+import { classifyStatus, computeSummary, computeResponseRate, computeStatusFunnel, computeWeeklyApplications, computeStaleApplications } from "./dashboardUtils";
 
 describe("classifyStatus", () => {
   it("classifies active statuses correctly", () => {
@@ -130,5 +130,11 @@ describe("computeWeeklyApplications", () => {
     const result = computeWeeklyApplications(jobs);
     expect(result[0].week).toBe("Jun 30 '25");
     expect(result[1].week).toBe("Jul 7 '25");
+  });
+});
+
+describe("computeStaleApplications", () => {
+  it("returns empty array for no jobs", () => {
+    expect(computeStaleApplications([], 21)).toEqual([]);
   });
 });
