@@ -85,7 +85,12 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-muted">
       <NavBar />
-      {/* widgets go here in the next steps */}
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+        <SummaryBar summary={summary} />
+        <div className="grid grid-cols-2 gap-4">
+          {/* remaining widgets */}
+        </div>
+      </div>
     </div>
   )
 }
