@@ -137,4 +137,16 @@ describe("computeStaleApplications", () => {
   it("returns empty array for no jobs", () => {
     expect(computeStaleApplications([], 21)).toEqual([]);
   });
+
+  it("excludes non-active statuses", () => {
+    const old = "2020-01-01T00:00:00Z";
+    const jobs = [
+      { status: "Wishlist",   statusChangedAt: old },
+      { status: "Offered",    statusChangedAt: old },
+      { status: "Rejected",   statusChangedAt: old },
+      { status: "Withdrawn",  statusChangedAt: old },
+      { status: "NoResponse", statusChangedAt: old },
+    ] as any[];
+    expect(computeStaleApplications(jobs, 21)).toHaveLength(0);
+  });
 });
