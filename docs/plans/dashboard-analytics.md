@@ -53,11 +53,11 @@ i.e. applications that got any human reply ÷ applications that could have gotte
 - Chart library: `react-chartjs-2` v5.3.1 + `chart.js` v4; install: `npm install react-chartjs-2 chart.js`
 - Weekly activity widget: vertical bar chart via `<Bar />`
 - Status funnel widget: horizontal bar chart via `<Bar indexAxis="y" />` — no true funnel shape, no extra plugin needed
-- `computeWeeklyActivity` unblocked — chart library decided
+- `computeWeeklyApplications` unblocked — chart library decided
 - Weekly activity tracks `appliedAt` — applications sent per week; jobs without `appliedAt` excluded
 - Week label format: `"Jun 29 '25"` (Monday of week start, ISO week convention)
-- Scope selector (`"all" | "year" | "month"`) is UI state in `DashboardPage` — filters jobs by `appliedAt` before passing to `computeWeeklyActivity`; function stays pure, always groups whatever it receives
-- `computeStaleApplications` blocked on: (1) `statusChangedAt` field on `Job` entity — set on create, updated only when status changes in `PatchJob`, DB migration required; (2) `staleThresholdDays: number` added to `UserPreferences` (default 21)
+- Scope selector (`"all" | "year" | "month"`) is UI state in `DashboardPage` — filters jobs by `appliedAt` before passing to `computeWeeklyApplications`; function stays pure, always groups whatever it receives
+- `computeStaleApplications` unblocked: `statusChangedAt` added to `Job` entity + migration done; `staleThresholdDays` is a function parameter — `UserPreferences` integration deferred to `StaleIndicator` component
 - Stale criteria: status is Applied/Screening/Assessment/Interview, AND (`closedAt` not set OR `closedAt` is in the past), AND `today − statusChangedAt ≥ thresholdDays`
 - `computeStaleApplications` signature: `(jobs: Job[], thresholdDays: number): Job[]`
 
@@ -83,7 +83,7 @@ Pure functions only; no React, no side effects:
 | `computeSummary(jobs)` | `Job[]` | `{ active, won, closed }` |
 | `computeResponseRate(jobs)` | `Job[]` | `number` (0–100) |
 | `computeStatusFunnel(jobs)` | `Job[]` | `{ status, count }[]` |
-| `computeWeeklyActivity(jobs)` | `Job[]` | `{ week: string, count: number }[]` from `appliedAt` |
+| `computeWeeklyApplications(jobs)` | `Job[]` | `{ week: string, count: number }[]` from `appliedAt` |
 | `computeStaleApplications(jobs, thresholdDays)` | `Job[], number` | `Job[]` active (excl. Wishlist), `statusChangedAt` 21+ days ago (configurable) |
 
 ### Tests — `src/utils/dashboardUtils.test.ts`
@@ -102,6 +102,8 @@ Reusable component, same pattern as `PriorityDot`. Amber `Clock` icon with a too
 | # | Step | Status |
 |---|---|---|
 | 1 | Route + NavBar link | Done |
-| 2 | `dashboardUtils.ts` — pure logic functions | In Progress |
+| 2a | Backend: `StatusChangedAt` on `Job` + migration + 3 tests | Done |
+| 2b | `dashboardUtils.ts` — `computeWeeklyApplications` | Done |
+| 2c | `dashboardUtils.ts` — `computeStaleApplications` | — |
 | 3 | Tests for `dashboardUtils.ts` | In Progress |
 | 4 | `DashboardPage.tsx` — page frame + all widgets | — |
