@@ -51,7 +51,8 @@ public class Job
             SalaryMax = this.SalaryMax,
             Location = this.Location,
             WorkMode = this.WorkMode,
-            InterviewAt = this.InterviewAt
+            InterviewAt = this.InterviewAt,
+            StatusChangedAt = this.StatusChangedAt
         };
     }
 }
