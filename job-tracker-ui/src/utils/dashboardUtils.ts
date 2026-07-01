@@ -109,7 +109,7 @@ export interface WeeklyActivityEntry {
 }
 
 /** Groups jobs by the Monday of the ISO week their appliedAt falls in, oldest first. */
-export function computeWeeklyActivity(jobs: Job[]): WeeklyActivityEntry[] {
+export function computeWeeklyApplications(jobs: Job[]): WeeklyActivityEntry[] {
   const counts = new Map<string, number>();
 
   for (const job of jobs) {
