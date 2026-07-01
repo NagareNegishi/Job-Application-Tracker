@@ -149,4 +149,10 @@ describe("computeStaleApplications", () => {
     ] as any[];
     expect(computeStaleApplications(jobs, 21)).toHaveLength(0);
   });
+
+  it("excludes jobs with a future closedAt", () => {
+    const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const jobs = [{ status: "Applied", statusChangedAt: "2020-01-01T00:00:00Z", closedAt: future }] as any[];
+    expect(computeStaleApplications(jobs, 21)).toHaveLength(0);
+  });
 });
