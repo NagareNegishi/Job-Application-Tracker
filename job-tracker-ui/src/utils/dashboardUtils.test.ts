@@ -157,8 +157,19 @@ describe("computeStaleApplications", () => {
   });
 
   it("excludes jobs updated within the threshold", () => {
-    const recent = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+    const recent = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(); // 5 days ago, well under threshold
     const jobs = [{ status: "Applied", statusChangedAt: recent }] as any[];
     expect(computeStaleApplications(jobs, 21)).toHaveLength(0);
+  });
+
+  it("includes all eligible statuses at or past the threshold", () => {
+    const old = "2020-01-01T00:00:00Z";
+    const jobs = [
+      { status: "Applied",    statusChangedAt: old },
+      { status: "Screening",  statusChangedAt: old },
+      { status: "Assessment", statusChangedAt: old },
+      { status: "Interview",  statusChangedAt: old },
+    ] as any[];
+    expect(computeStaleApplications(jobs, 21)).toHaveLength(4);
   });
 });
