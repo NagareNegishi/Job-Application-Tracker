@@ -38,7 +38,6 @@ i.e. applications that got any human reply ÷ applications that could have gotte
 | Status funnel | Count per status + overall response rate | All jobs |
 | Weekly activity chart | Applications sent per week (bar chart) | `appliedAt` field |
 | Response rate | % of applications that got any human reply | Formula above |
-| Upcoming interviews | Jobs with `interviewAt` in next 14 days | `interviewAt` field |
 | Stale applications | Active jobs (excl. Wishlist) with no update for 14+ days | `updatedAt` + status |
 
 ## Key decisions
@@ -51,7 +50,10 @@ i.e. applications that got any human reply ÷ applications that could have gotte
 - New enum values: `Assessment` (sits between Screening and Interview in Kanban column order), `Withdrawn`, `No Response` — no fixed pipeline order enforced
 - `Offer` is terminal positive (Won), not Active — once you have an offer the application is complete
 - `Accepted` not added — Offer is sufficient as the final win state; users don't need to track post-offer acceptance in a job tracker
-- `computeWeeklyActivity` deferred — chart library dependency; handle separately
+- Chart library: `react-chartjs-2` v5.3.1 + `chart.js` v4; install: `npm install react-chartjs-2 chart.js`
+- Weekly activity widget: vertical bar chart via `<Bar />`
+- Status funnel widget: horizontal bar chart via `<Bar indexAxis="y" />` — no true funnel shape, no extra plugin needed
+- `computeWeeklyActivity` unblocked — chart library decided
 - `computeStaleApplications` deferred — needs `updatedAt` field added to backend first
 
 ## Implementation Plan
@@ -77,11 +79,10 @@ Pure functions only; no React, no side effects:
 | `computeResponseRate(jobs)` | `Job[]` | `number` (0–100) |
 | `computeStatusFunnel(jobs)` | `Job[]` | `{ status, count }[]` |
 | `computeWeeklyActivity(jobs)` | `Job[]` | `{ week: string, count: number }[]` from `appliedAt` |
-| `computeUpcomingInterviews(jobs)` | `Job[]` | `Job[]` with `interviewAt` within 14 days |
 | `computeStaleApplications(jobs)` | `Job[]` | `Job[]` active (excl. Wishlist), `updatedAt` 14+ days ago |
 
 ### Tests — `src/utils/dashboardUtils.test.ts`
-Unit tests for all functions above. Edge cases: empty array, null `appliedAt`/`interviewAt`, boundary dates (exactly 14 days).
+Unit tests for all functions above. Edge cases: empty array, null `appliedAt`, boundary dates.
 
 ### Frontend Data Flow
 1. `DashboardPage` calls `useJobs()` — returns cached `Job[]`
