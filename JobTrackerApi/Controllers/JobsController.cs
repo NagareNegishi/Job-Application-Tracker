@@ -192,6 +192,9 @@ public class JobsController : ControllerBase
         if (jobToPatch.Status == JobStatus.Applied && jobToPatch.AppliedAt == null)
             jobToPatch.AppliedAt = DateTime.UtcNow;
 
+        if (jobToPatch.Status != job.Status)
+            job.StatusChangedAt = DateTime.UtcNow;
+
         // Map back to the original job entity
         job.Company = jobToPatch.Company;
         job.Role = jobToPatch.Role;
