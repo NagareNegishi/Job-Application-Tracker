@@ -93,3 +93,39 @@ export function computeStatusFunnel(jobs: Job[]): StatusFunnelEntry[] {
 
   return FUNNEL_ORDER.map(status => ({ status, count: counts.get(status)! }));
 }
+
+/** Returns the Monday of the ISO week containing the given date (UTC). */
+function getWeekMonday(date: Date): Date {
+  const d = new Date(date);
+  d.setUTCHours(0, 0, 0, 0);
+  const day = d.getUTCDay(); // 0=Sun, 1=Mon, …6=Sat
+  d.setUTCDate(d.getUTCDate() - ((day + 6) % 7));
+  return d;
+}
+
+export interface WeeklyActivityEntry {
+  week: string;
+  count: number;
+}
+
+/** Groups jobs by the Monday of the ISO week their appliedAt falls in, oldest first. Jobs without appliedAt are excluded. */
+export function computeWeeklyActivity(jobs: Job[]): WeeklyActivityEntry[] {
+  const counts = new Map<string, number>();
+
+  for (const job of jobs) {
+    if (!job.appliedAt) continue;
+    const monday = getWeekMonday(new Date(job.appliedAt));
+    const key = monday.toISOString().slice(0, 10); // "2025-06-29" — used for sorting
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, count]) => {
+      const d = new Date(key + "T00:00:00Z");
+      const month = d.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
+      const day = d.getUTCDate();
+      const year = String(d.getUTCFullYear()).slice(2);
+      return { week: `${month} ${day} '${year}`, count };
+    });
+}
