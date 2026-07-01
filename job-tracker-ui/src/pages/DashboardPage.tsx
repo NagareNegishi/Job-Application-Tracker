@@ -18,6 +18,7 @@ import {
 } from "@/utils/dashboardUtils"
 import { formatEnumLabel } from "@/types/enums"
 import { SummaryBar } from "@/components/dashboard/SummaryBar"
+import { ResponseRateCard } from "@/components/dashboard/ResponseRateCard"
 
 // Registers only the chart modules we use — Chart.js v4 is tree-shaken by default
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
@@ -88,6 +89,7 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
         <SummaryBar summary={summary} />
         <div className="grid grid-cols-2 gap-4">
+          <ResponseRateCard responseRate={responseRate} />
           {/* remaining widgets */}
         </div>
       </div>
