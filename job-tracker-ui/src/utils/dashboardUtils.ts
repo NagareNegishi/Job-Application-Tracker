@@ -94,7 +94,7 @@ export function computeStatusFunnel(jobs: Job[]): StatusFunnelEntry[] {
   return FUNNEL_ORDER.map(status => ({ status, count: counts.get(status)! }));
 }
 
-/** Returns the Monday of the ISO week containing the given date (UTC). */
+/** Returns the Monday of the ISO week containing the given date */
 function getWeekMonday(date: Date): Date {
   const d = new Date(date);
   d.setUTCHours(0, 0, 0, 0);
@@ -108,14 +108,14 @@ export interface WeeklyActivityEntry {
   count: number;
 }
 
-/** Groups jobs by the Monday of the ISO week their appliedAt falls in, oldest first. Jobs without appliedAt are excluded. */
+/** Groups jobs by the Monday of the ISO week their appliedAt falls in, oldest first. */
 export function computeWeeklyActivity(jobs: Job[]): WeeklyActivityEntry[] {
   const counts = new Map<string, number>();
 
   for (const job of jobs) {
-    if (!job.appliedAt) continue;
+    if (!job.appliedAt) continue; // Jobs without appliedAt are excluded
     const monday = getWeekMonday(new Date(job.appliedAt));
-    const key = monday.toISOString().slice(0, 10); // "2025-06-29" — used for sorting
+    const key = monday.toISOString().slice(0, 10);
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 

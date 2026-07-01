@@ -1,7 +1,7 @@
 // Tests for dashboard utility functions.
 
 import { describe, it, expect } from "vitest";
-import { classifyStatus, computeSummary, computeResponseRate, computeStatusFunnel } from "./dashboardUtils";
+import { classifyStatus, computeSummary, computeResponseRate, computeStatusFunnel, computeWeeklyActivity } from "./dashboardUtils";
 
 describe("classifyStatus", () => {
   it("classifies active statuses correctly", () => {
@@ -98,5 +98,37 @@ describe("computeStatusFunnel", () => {
     expect(result.find(e => e.status === "Applied")?.count).toBe(2);
     expect(result.find(e => e.status === "Screening")?.count).toBe(1);
     expect(result.find(e => e.status === "Wishlist")?.count).toBe(0);
+  });
+});
+
+describe("computeWeeklyActivity", () => {
+  it("returns empty array for no jobs", () => {
+    expect(computeWeeklyActivity([])).toEqual([]);
+  });
+
+  it("excludes jobs without appliedAt", () => {
+    const jobs = [{ status: "Applied" }] as any[];
+    expect(computeWeeklyActivity(jobs)).toEqual([]);
+  });
+
+  it("groups two jobs in the same week into one entry", () => {
+    const jobs = [
+      { appliedAt: "2025-06-30T00:00:00Z" }, // Monday
+      { appliedAt: "2025-07-02T00:00:00Z" }, // Wednesday, same week
+    ] as any[];
+    const result = computeWeeklyActivity(jobs);
+    expect(result).toHaveLength(1);
+    expect(result[0].count).toBe(2);
+    expect(result[0].week).toBe("Jun 30 '25");
+  });
+
+  it("returns entries sorted oldest first", () => {
+    const jobs = [
+      { appliedAt: "2025-07-07T00:00:00Z" }, // week of Jul 7
+      { appliedAt: "2025-06-30T00:00:00Z" }, // week of Jun 30
+    ] as any[];
+    const result = computeWeeklyActivity(jobs);
+    expect(result[0].week).toBe("Jun 30 '25");
+    expect(result[1].week).toBe("Jul 7 '25");
   });
 });
