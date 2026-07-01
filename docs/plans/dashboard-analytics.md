@@ -104,6 +104,6 @@ Reusable component, same pattern as `PriorityDot`. Amber `Clock` icon with a too
 | 1 | Route + NavBar link | Done |
 | 2a | Backend: `StatusChangedAt` on `Job` + migration + 3 tests | Done |
 | 2b | `dashboardUtils.ts` — `computeWeeklyApplications` | Done |
-| 2c | `dashboardUtils.ts` — `computeStaleApplications` | — |
-| 3 | Tests for `dashboardUtils.ts` | In Progress |
+| 2c | `dashboardUtils.ts` — `computeStaleApplications` | Done |
+| 3 | Tests for `dashboardUtils.ts` | Done |
 | 4 | `DashboardPage.tsx` — page frame + all widgets | — |
