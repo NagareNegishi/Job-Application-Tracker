@@ -22,7 +22,7 @@ export function StaleApplicationsList({ jobs }: Props) {
       <p className="text-sm text-muted-foreground mb-3">Applications with no recent activity</p>
       {jobs.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">
-          All caught up!
+          No applications have gone quiet
         </p>
       ) : (
         <table className="w-full text-sm">

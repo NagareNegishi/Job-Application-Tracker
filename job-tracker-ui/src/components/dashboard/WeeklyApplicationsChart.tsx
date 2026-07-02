@@ -91,10 +91,10 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
             <button
               key={s}
               onClick={() => onScopeChange(s)}
-              className={`text-xs px-2 py-1 rounded ${
+              className={`text-xs px-2 py-1 rounded transition-colors ${
                 scope === s
-                  ? "bg-indigo-500 text-white"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-indigo-500 text-white hover:bg-indigo-600"
+                  : "bg-muted text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               }`}
             >
               {SCOPE_LABELS[s]}
