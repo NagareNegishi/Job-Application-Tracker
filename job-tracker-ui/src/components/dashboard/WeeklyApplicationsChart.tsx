@@ -32,7 +32,20 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
   const options = useMemo<ChartOptions<"line">>(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          // Labels are "Mon DD 'YY" (Thursday-based). Parse day → ordinal week of month.
+          title: (items) => {
+            const label = chartData.labels?.[items[0].dataIndex] as string | undefined
+            if (!label) return ""
+            const [month, dayStr] = label.split(" ")
+            return `Week ${Math.ceil(parseInt(dayStr) / 7)} ${month}`
+          },
+        },
+      },
+    },
     scales: {
       x: {
         grid: { display: false },

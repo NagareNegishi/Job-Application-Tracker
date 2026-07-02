@@ -129,7 +129,7 @@ describe("computeWeeklyApplications", () => {
     ] as any[];
     const result = computeWeeklyApplications(jobs);
     expect(result[0].week).toBe("Jul 3 '25");
-    expect(result[1].week).toBe("Jul 7 '25");
+    expect(result[1].week).toBe("Jul 10 '25");
   });
 });
 
