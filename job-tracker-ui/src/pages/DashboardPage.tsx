@@ -17,8 +17,7 @@ import {
   computeStaleApplications,
 } from "@/utils/dashboardUtils"
 import { formatEnumLabel } from "@/types/enums"
-import { SummaryBar } from "@/components/dashboard/SummaryBar"
-import { ResponseRateCard } from "@/components/dashboard/ResponseRateCard"
+import { OverviewSection } from "@/components/dashboard/OverviewSection"
 import { StatusFunnelChart } from "@/components/dashboard/StatusFunnelChart"
 import { WeeklyApplicationsChart, type Scope } from "@/components/dashboard/WeeklyApplicationsChart"
 import { StaleApplicationsList } from "@/components/dashboard/StaleApplicationsList"
@@ -88,9 +87,8 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-muted">
       <NavBar />
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-        <SummaryBar summary={summary} />
+        <OverviewSection summary={summary} responseRate={responseRate} />
         <div className="grid grid-cols-2 gap-4">
-          <ResponseRateCard responseRate={responseRate} />
           <StatusFunnelChart chartData={funnelChartData} />
           <WeeklyApplicationsChart
             chartData={weeklyChartData}
