@@ -16,7 +16,7 @@ function daysSince(isoString: string): number {
 export function StaleApplicationsList({ jobs }: Props) {
   return (
     <div className="bg-card rounded-lg shadow-sm p-5 col-span-2">
-      <p className="text-sm text-muted-foreground mb-3">Stale Applications</p>
+      <p className="text-sm text-muted-foreground mb-3">Applications with no recent activity</p>
       {jobs.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">
           All caught up!
@@ -28,7 +28,7 @@ export function StaleApplicationsList({ jobs }: Props) {
               <th className="pb-2 font-medium">Company</th>
               <th className="pb-2 font-medium">Role</th>
               <th className="pb-2 font-medium">Status</th>
-              <th className="pb-2 font-medium text-right">Days waiting</th>
+              <th className="pb-2 font-medium text-right">Days since last update</th>
             </tr>
           </thead>
           <tbody>
