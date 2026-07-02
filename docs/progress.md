@@ -108,7 +108,9 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 
 | Plan | Item | Status |
 |---|---|---|
-| Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs, upcoming interviews | In Progress |
+| Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs | Done |
+| Interview reminder email | Scheduled job emails user day-before interviewAt via IEmailService | Early planning |
+| Stale application indicator | `StaleIndicator` component — amber Clock icon + tooltip in jobs list; blocked on `statusChangedAt` + `staleThresholdDays` in UserPreferences | Pending |
 | Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Pending |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |

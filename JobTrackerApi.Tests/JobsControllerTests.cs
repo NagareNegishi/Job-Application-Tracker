@@ -509,6 +509,47 @@ public class JobsControllerTests: IDisposable
         Assert.NotNull(updated!.AppliedAt);
     }
 
+    [Fact]
+    public async Task PatchJob_DoesNotUpdateStatusChangedAt_WhenStatusDoesNotChange()
+    {
+        var job = await SeedJobAsync(status: JobStatus.Applied);
+        var originalTimestamp = job.StatusChangedAt;
+        var patchDoc = new JsonPatchDocument<UpdateJobDTO>();
+        patchDoc.Replace(j => j.Notes, "just updating notes");
+
+        await _controller.PatchJob(job.Id, patchDoc);
+
+        var updated = await _context.Jobs.FindAsync(job.Id);
+        Assert.Equal(originalTimestamp, updated!.StatusChangedAt);
+    }
+
+    [Fact]
+    public async Task PatchJob_UpdatesStatusChangedAt_WhenStatusChanges()
+    {
+        var job = await SeedJobAsync(status: JobStatus.Wishlist);
+        var originalTimestamp = job.StatusChangedAt;
+        var patchDoc = new JsonPatchDocument<UpdateJobDTO>();
+        patchDoc.Replace(j => j.Status, JobStatus.Applied);
+
+        await _controller.PatchJob(job.Id, patchDoc);
+
+        var updated = await _context.Jobs.FindAsync(job.Id);
+        Assert.True(updated!.StatusChangedAt > originalTimestamp);
+    }
+
+    [Fact]
+    public async Task PostJob_SetsStatusChangedAt_OnCreate()
+    {
+        var before = DateTime.UtcNow;
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev" };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.True(dto.StatusChangedAt >= before);
+    }
+
     // Test for ParseListingRequest with empty text
     [Fact]
     public async Task ParseListingRequest_EmptyText_FailsValidation()

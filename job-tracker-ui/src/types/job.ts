@@ -23,6 +23,7 @@ export interface Job {
   location?: string;
   workMode?: WorkMode;
   interviewAt?: string; // ISO date string
+  statusChangedAt?: string; // ISO date string, set on create, updated on status changes
 }
 
 

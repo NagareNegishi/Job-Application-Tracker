@@ -25,6 +25,7 @@ public class Job
     public string? Location { get; set; }
     public WorkMode? WorkMode { get; set; }
     public DateTime? InterviewAt { get; set; }
+    public DateTime StatusChangedAt { get; set; }
 
 
     // Method to convert Job to JobResponseDto
@@ -50,7 +51,8 @@ public class Job
             SalaryMax = this.SalaryMax,
             Location = this.Location,
             WorkMode = this.WorkMode,
-            InterviewAt = this.InterviewAt
+            InterviewAt = this.InterviewAt,
+            StatusChangedAt = this.StatusChangedAt
         };
     }
 }
