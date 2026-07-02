@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { Line } from "react-chartjs-2"
 import {
   Chart as ChartJS,
@@ -27,17 +28,23 @@ interface Props {
   onScopeChange: (s: Scope) => void
 }
 
-const options: ChartOptions<"line"> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
-  scales: {
-    x: { grid: { display: false } },
-    y: { min: 0, ticks: { stepSize: 1 }, grid: { display: false } },
-  },
-}
-
 export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Props) {
+  const options = useMemo<ChartOptions<"line">>(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        grid: { display: false },
+        // Month scope: x-axis shows "Week N"; full date appears in the hover tooltip
+        ...(scope === "month" && {
+          ticks: { callback: (_, index) => `Week ${index + 1}` },
+        }),
+      },
+      y: { min: 0, ticks: { stepSize: 1 }, grid: { display: false } },
+    },
+  }), [scope])
+
   return (
     <div className="bg-card rounded-lg shadow-sm p-5 col-span-2">
       <div className="flex items-center justify-between mb-3">
