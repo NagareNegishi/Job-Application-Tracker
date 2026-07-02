@@ -41,13 +41,16 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
           ? { callback: (_, index) => `Week ${index + 1}` }
           : scope === "year"
           // Year: show month name only on the first week of each month; blank otherwise
-          ? { callback: (_, index) => {
-                const label    = chartData.labels?.[index] as string | undefined
+          ? {
+              autoSkip: false,
+              callback: (_, index) => {
+                const label     = chartData.labels?.[index] as string | undefined
                 const prevLabel = chartData.labels?.[index - 1] as string | undefined
                 if (!label) return ""
                 const month = label.slice(0, 3)
                 return month !== prevLabel?.slice(0, 3) ? month : ""
-              }}
+              },
+            }
           : {},
       },
       y: { min: 0, ticks: { stepSize: 1 }, grid: { display: false } },
