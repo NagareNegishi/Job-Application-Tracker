@@ -3,7 +3,9 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  LineElement,
+  PointElement,
+  Filler,
   Tooltip,
 } from "chart.js"
 import NavBar from "@/components/NavBar"
@@ -23,7 +25,7 @@ import { WeeklyApplicationsChart, type Scope } from "@/components/dashboard/Week
 import { StaleApplicationsList } from "@/components/dashboard/StaleApplicationsList"
 
 // Registers only the chart modules we use — Chart.js v4 is tree-shaken by default
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
+ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Filler, Tooltip)
 
 // Status colours for the funnel chart — keyed by status group
 const GROUP_COLOR: Record<string, string> = {
@@ -73,10 +75,13 @@ export default function DashboardPage() {
         weeklyChartData: {
           labels: weekly.map(e => e.week),
           datasets: [{
-            label:           "Applications",
-            data:            weekly.map(e => e.count),
-            backgroundColor: "#6366f1",
-            borderRadius:    4,
+            label:               "Applications",
+            data:                weekly.map(e => e.count),
+            borderColor:         "#6366f1",
+            backgroundColor:     "#6366f133",
+            tension:             0.3,
+            fill:                true,
+            pointBackgroundColor: "#6366f1",
           }],
         },
         staleJobs: computeStaleApplications(all, 21),
