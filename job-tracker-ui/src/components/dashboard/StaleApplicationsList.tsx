@@ -28,10 +28,10 @@ export function StaleApplicationsList({ jobs }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-muted-foreground border-b">
-              <th className="pb-2 font-medium">Company</th>
-              <th className="pb-2 font-medium">Role</th>
-              <th className="pb-2 font-medium">Status</th>
-              <th className="pb-2 font-medium text-right">Last update</th>
+              <th className="pb-2 font-medium w-[30%]">Company</th>
+              <th className="pb-2 font-medium w-[35%]">Role</th>
+              <th className="pb-2 font-medium whitespace-nowrap w-[15%]">Status</th>
+              <th className="pb-2 font-medium text-right whitespace-nowrap w-[20%]">Last update</th>
             </tr>
           </thead>
           <tbody>
@@ -43,10 +43,10 @@ export function StaleApplicationsList({ jobs }: Props) {
                   onClick={() => navigate(`/jobs/${job.id}`)}
                   className="border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors"
                 >
-                  <td className="py-2">{job.company}</td>
-                  <td className="py-2 text-muted-foreground">{job.role}</td>
-                  <td className="py-2 text-muted-foreground">{formatEnumLabel(job.status)}</td>
-                  <td className="py-2 text-right font-medium text-amber-500">
+                  <td className="py-2.5 max-w-0 truncate">{job.company}</td>
+                  <td className="py-2.5 max-w-0 truncate text-muted-foreground">{job.role}</td>
+                  <td className="py-2.5 text-muted-foreground whitespace-nowrap">{formatEnumLabel(job.status)}</td>
+                  <td className="py-2.5 text-right font-medium text-amber-500 whitespace-nowrap">
                     {days !== null ? `${days} days ago` : "—"}
                   </td>
                 </tr>
