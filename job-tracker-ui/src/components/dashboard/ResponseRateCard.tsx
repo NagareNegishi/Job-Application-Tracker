@@ -1,5 +1,4 @@
-// Stat card showing what share of applications received any reply,
-// with a colour grading from red (0%) through amber to emerald (100%).
+// Stat card showing what share of applications received any reply.
 
 interface Props {
   responseRate: number

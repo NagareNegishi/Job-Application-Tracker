@@ -1,15 +1,17 @@
-import { Bar } from "react-chartjs-2"
+import { Line } from "react-chartjs-2"
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  LineElement,
+  PointElement,
+  Filler,
   Tooltip,
   type ChartData,
   type ChartOptions,
 } from "chart.js"
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
+ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Filler, Tooltip)
 
 export type Scope = "all" | "year" | "month"
 
@@ -20,12 +22,12 @@ const SCOPE_LABELS: Record<Scope, string> = {
 }
 
 interface Props {
-  chartData: ChartData<"bar", number[], string>
+  chartData: ChartData<"line", number[], string>
   scope: Scope
   onScopeChange: (s: Scope) => void
 }
 
-const options: ChartOptions<"bar"> = {
+const options: ChartOptions<"line"> = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
@@ -57,7 +59,7 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
         </div>
       </div>
       <div className="h-48">
-        <Bar data={chartData} options={options} />
+        <Line data={chartData} options={options} />
       </div>
     </div>
   )
