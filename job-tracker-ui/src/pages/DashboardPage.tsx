@@ -21,6 +21,7 @@ import { SummaryBar } from "@/components/dashboard/SummaryBar"
 import { ResponseRateCard } from "@/components/dashboard/ResponseRateCard"
 import { StatusFunnelChart } from "@/components/dashboard/StatusFunnelChart"
 import { WeeklyApplicationsChart, type Scope } from "@/components/dashboard/WeeklyApplicationsChart"
+import { StaleApplicationsList } from "@/components/dashboard/StaleApplicationsList"
 
 // Registers only the chart modules we use — Chart.js v4 is tree-shaken by default
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
@@ -96,7 +97,7 @@ export default function DashboardPage() {
             scope={scope}
             onScopeChange={setScope}
           />
-          {/* remaining widgets */}
+          <StaleApplicationsList jobs={staleJobs} />
         </div>
       </div>
     </div>
