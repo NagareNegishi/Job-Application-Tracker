@@ -36,14 +36,23 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
     scales: {
       x: {
         grid: { display: false },
-        // Month scope: x-axis shows "Week N"; full date appears in the hover tooltip
-        ...(scope === "month" && {
-          ticks: { callback: (_, index) => `Week ${index + 1}` },
-        }),
+        ticks: scope === "month"
+          // Month: "Week 1", "Week 2", … — full date appears in the hover tooltip
+          ? { callback: (_, index) => `Week ${index + 1}` }
+          : scope === "year"
+          // Year: show month name only on the first week of each month; blank otherwise
+          ? { callback: (_, index) => {
+                const label    = chartData.labels?.[index] as string | undefined
+                const prevLabel = chartData.labels?.[index - 1] as string | undefined
+                if (!label) return ""
+                const month = label.slice(0, 3)
+                return month !== prevLabel?.slice(0, 3) ? month : ""
+              }}
+          : {},
       },
       y: { min: 0, ticks: { stepSize: 1 }, grid: { display: false } },
     },
-  }), [scope])
+  }), [scope, chartData])
 
   return (
     <div className="bg-card rounded-lg shadow-sm p-5 col-span-2">

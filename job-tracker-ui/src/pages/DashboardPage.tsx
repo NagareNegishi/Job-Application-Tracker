@@ -59,7 +59,7 @@ export default function DashboardPage() {
             })
 
       const funnel = computeStatusFunnel(all)
-      const weekly = computeWeeklyApplications(scoped, scope === "month")
+      const weekly = computeWeeklyApplications(scoped, scope === "all" ? null : scope)
 
       return {
         summary:      computeSummary(all),
