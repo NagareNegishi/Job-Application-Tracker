@@ -19,7 +19,7 @@ export function StaleApplicationsList({ jobs }: Props) {
 
   return (
     <div className="bg-card rounded-lg shadow-sm p-5 col-span-2">
-      <p className="text-sm text-muted-foreground mb-3">Applications with no recent activity</p>
+      <p className="text-sm font-medium text-muted-foreground mb-3">Applications with no recent activity</p>
       {jobs.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">
           No applications have gone quiet
@@ -31,7 +31,7 @@ export function StaleApplicationsList({ jobs }: Props) {
               <th className="pb-2 font-medium">Company</th>
               <th className="pb-2 font-medium">Role</th>
               <th className="pb-2 font-medium">Status</th>
-              <th className="pb-2 font-medium text-right">Days since last update</th>
+              <th className="pb-2 font-medium text-right">Last update</th>
             </tr>
           </thead>
           <tbody>
@@ -47,7 +47,7 @@ export function StaleApplicationsList({ jobs }: Props) {
                   <td className="py-2 text-muted-foreground">{job.role}</td>
                   <td className="py-2 text-muted-foreground">{formatEnumLabel(job.status)}</td>
                   <td className="py-2 text-right font-medium text-amber-500">
-                    {days !== null ? `${days}d` : "—"}
+                    {days !== null ? `${days} days ago` : "—"}
                   </td>
                 </tr>
               )
