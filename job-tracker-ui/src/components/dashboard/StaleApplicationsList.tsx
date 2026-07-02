@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router"
 import type { Job } from "@/types/job"
 import { formatEnumLabel } from "@/types/enums"
 
@@ -14,6 +15,8 @@ function daysSince(isoString: string): number {
 }
 
 export function StaleApplicationsList({ jobs }: Props) {
+  const navigate = useNavigate()
+
   return (
     <div className="bg-card rounded-lg shadow-sm p-5 col-span-2">
       <p className="text-sm text-muted-foreground mb-3">Applications with no recent activity</p>
@@ -33,7 +36,7 @@ export function StaleApplicationsList({ jobs }: Props) {
           </thead>
           <tbody>
             {jobs.map(job => (
-              <tr key={job.id} className="border-b last:border-0">
+              <tr key={job.id} onClick={() => navigate(`/jobs/${job.id}`)} className="border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors">
                 <td className="py-2">{job.company}</td>
                 <td className="py-2 text-muted-foreground">{job.role}</td>
                 <td className="py-2 text-muted-foreground">{formatEnumLabel(job.status)}</td>
