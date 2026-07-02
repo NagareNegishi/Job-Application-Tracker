@@ -103,7 +103,7 @@ function getWeekMonday(date: Date): Date {
   return d;
 }
 
-/** Returns the ISO date string (YYYY-MM-DD) for each week Monday that overlaps the current month */
+/** Returns ISO date strings for each week Monday that overlaps the current month */
 function getMonthWeeks(): string[] {
   const now = new Date();
   const year = now.getUTCFullYear();
@@ -111,6 +111,22 @@ function getMonthWeeks(): string[] {
 
   const firstDay = new Date(Date.UTC(year, month, 1));
   const lastDay  = new Date(Date.UTC(year, month + 1, 0));
+
+  const weeks: string[] = [];
+  let monday = getWeekMonday(firstDay);
+  while (monday <= lastDay) {
+    weeks.push(monday.toISOString().slice(0, 10));
+    monday = new Date(monday);
+    monday.setUTCDate(monday.getUTCDate() + 7);
+  }
+  return weeks;
+}
+
+/** Returns ISO date strings for all week Mondays in the current year */
+function getYearWeeks(): string[] {
+  const year = new Date().getUTCFullYear();
+  const firstDay = new Date(Date.UTC(year, 0, 1));
+  const lastDay  = new Date(Date.UTC(year, 11, 31));
 
   const weeks: string[] = [];
   let monday = getWeekMonday(firstDay);
