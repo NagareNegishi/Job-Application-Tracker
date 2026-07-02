@@ -25,12 +25,9 @@ function rateColor(rate: number): string {
 
 export function ResponseRateCard({ responseRate }: Props) {
   return (
-    <div className="bg-card rounded-lg shadow-sm p-5">
-      <p className="text-sm text-muted-foreground mb-1 text-center">Response Rate</p>
-      <div className="flex items-end gap-2">
-        <p className="text-4xl font-bold" style={{ color: rateColor(responseRate) }}>{responseRate}%</p>
-        <p className="text-xs text-muted-foreground mb-1">of applications received a reply</p>
-      </div>
+    <div className="bg-card rounded-lg shadow-sm p-5 text-center">
+      <p className="text-sm text-muted-foreground mb-1">Response Rate</p>
+      <p className="text-4xl font-bold" style={{ color: rateColor(responseRate) }}>{responseRate}%</p>
     </div>
   )
 }

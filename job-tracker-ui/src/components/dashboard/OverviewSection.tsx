@@ -13,11 +13,11 @@ export function OverviewSection({ summary, responseRate }: Props) {
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 text-center">
         Overview
       </h2>
-      <div className="flex flex-col gap-4">
-        <SummaryBar summary={summary} />
-        <div className="self-start">
-          <ResponseRateCard responseRate={responseRate} />
+      <div className="grid grid-cols-4 gap-4">
+        <div className="col-span-3">
+          <SummaryBar summary={summary} />
         </div>
+        <ResponseRateCard responseRate={responseRate} />
       </div>
     </div>
   )
