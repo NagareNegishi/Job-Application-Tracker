@@ -20,6 +20,7 @@ import { formatEnumLabel } from "@/types/enums"
 import { SummaryBar } from "@/components/dashboard/SummaryBar"
 import { ResponseRateCard } from "@/components/dashboard/ResponseRateCard"
 import { StatusFunnelChart } from "@/components/dashboard/StatusFunnelChart"
+import { WeeklyApplicationsChart, type Scope } from "@/components/dashboard/WeeklyApplicationsChart"
 
 // Registers only the chart modules we use — Chart.js v4 is tree-shaken by default
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
@@ -30,8 +31,6 @@ const GROUP_COLOR: Record<string, string> = {
   won:    "#22c55e", // green
   closed: "#94a3b8", // slate
 }
-
-type Scope = "all" | "year" | "month"
 
 export default function DashboardPage() {
   const { data: jobs } = useJobs()
@@ -92,6 +91,11 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-4">
           <ResponseRateCard responseRate={responseRate} />
           <StatusFunnelChart chartData={funnelChartData} />
+          <WeeklyApplicationsChart
+            chartData={weeklyChartData}
+            scope={scope}
+            onScopeChange={setScope}
+          />
           {/* remaining widgets */}
         </div>
       </div>
