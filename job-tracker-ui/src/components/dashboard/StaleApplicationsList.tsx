@@ -6,12 +6,12 @@ interface Props {
   jobs: Job[]
 }
 
-function daysSince(isoString: string): number {
+function daysSince(isoString: string): number | null {
+  const d = new Date(isoString)
+  if (d.getFullYear() < 2000) return null // pre-migration rows have DateTime.MinValue (year 0001)
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
-  return Math.floor(
-    (today.getTime() - new Date(isoString).getTime()) / (1000 * 60 * 60 * 24)
-  )
+  return Math.floor((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 export function StaleApplicationsList({ jobs }: Props) {
@@ -35,16 +35,23 @@ export function StaleApplicationsList({ jobs }: Props) {
             </tr>
           </thead>
           <tbody>
-            {jobs.map(job => (
-              <tr key={job.id} onClick={() => navigate(`/jobs/${job.id}`)} className="border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors">
-                <td className="py-2">{job.company}</td>
-                <td className="py-2 text-muted-foreground">{job.role}</td>
-                <td className="py-2 text-muted-foreground">{formatEnumLabel(job.status)}</td>
-                <td className="py-2 text-right font-medium text-amber-500">
-                  {daysSince(job.statusChangedAt!)}d
-                </td>
-              </tr>
-            ))}
+            {jobs.map(job => {
+              const days = daysSince(job.statusChangedAt!)
+              return (
+                <tr
+                  key={job.id}
+                  onClick={() => navigate(`/jobs/${job.id}`)}
+                  className="border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <td className="py-2">{job.company}</td>
+                  <td className="py-2 text-muted-foreground">{job.role}</td>
+                  <td className="py-2 text-muted-foreground">{formatEnumLabel(job.status)}</td>
+                  <td className="py-2 text-right font-medium text-amber-500">
+                    {days !== null ? `${days}d` : "—"}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       )}
