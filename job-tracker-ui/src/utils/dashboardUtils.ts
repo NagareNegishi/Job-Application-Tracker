@@ -103,13 +103,35 @@ function getWeekMonday(date: Date): Date {
   return d;
 }
 
+/** Returns the ISO date string (YYYY-MM-DD) for each week Monday that overlaps the current month */
+function getMonthWeeks(): string[] {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+
+  const firstDay = new Date(Date.UTC(year, month, 1));
+  const lastDay  = new Date(Date.UTC(year, month + 1, 0));
+
+  const weeks: string[] = [];
+  let monday = getWeekMonday(firstDay);
+  while (monday <= lastDay) {
+    weeks.push(monday.toISOString().slice(0, 10));
+    monday = new Date(monday);
+    monday.setUTCDate(monday.getUTCDate() + 7);
+  }
+  return weeks;
+}
+
 export interface WeeklyActivityEntry {
   week: string;
   count: number;
 }
 
-/** Groups jobs by the Monday of the ISO week their appliedAt falls in, oldest first. */
-export function computeWeeklyApplications(jobs: Job[]): WeeklyActivityEntry[] {
+/**
+ * Groups jobs by the Monday of the ISO week their appliedAt falls in, oldest first.
+ * When fillMonth is true, all weeks of the current month are included (zero-count weeks included).
+ */
+export function computeWeeklyApplications(jobs: Job[], fillMonth = false): WeeklyActivityEntry[] {
   const counts = new Map<string, number>();
 
   for (const job of jobs) {
@@ -119,15 +141,17 @@ export function computeWeeklyApplications(jobs: Job[]): WeeklyActivityEntry[] {
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 
-  return Array.from(counts.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, count]) => {
-      const d = new Date(key + "T00:00:00Z");
-      const month = d.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
-      const day = d.getUTCDate();
-      const year = String(d.getUTCFullYear()).slice(2);
-      return { week: `${month} ${day} '${year}`, count };
-    });
+  const keys = fillMonth
+    ? getMonthWeeks()
+    : Array.from(counts.keys()).sort();
+
+  return keys.map(key => {
+    const d = new Date(key + "T00:00:00Z");
+    const month = d.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
+    const day = d.getUTCDate();
+    const year = String(d.getUTCFullYear()).slice(2);
+    return { week: `${month} ${day} '${year}`, count: counts.get(key) ?? 0 };
+  });
 }
 
 const STALE_STATUSES = new Set<JobStatus>([
