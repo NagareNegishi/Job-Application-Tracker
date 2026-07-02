@@ -65,7 +65,18 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
                 return month !== prevLabel?.slice(0, 3) ? month : ""
               },
             }
-          : {},
+          // All
+          : {
+              autoSkip: false,
+              callback: (_, index) => {
+                const label     = chartData.labels?.[index] as string | undefined
+                const prevLabel = chartData.labels?.[index - 1] as string | undefined
+                if (!label) return ""
+                const monthYear     = `${label.slice(0, 3)} '${label.slice(-2)}`
+                const prevMonthYear = prevLabel ? `${prevLabel.slice(0, 3)} '${prevLabel.slice(-2)}` : ""
+                return monthYear !== prevMonthYear ? monthYear : ""
+              },
+            },
       },
       y: { min: 0, ticks: { stepSize: 1 }, grid: { display: false } },
     },
