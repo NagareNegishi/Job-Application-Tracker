@@ -119,7 +119,7 @@ describe("computeWeeklyApplications", () => {
     const result = computeWeeklyApplications(jobs);
     expect(result).toHaveLength(1);
     expect(result[0].count).toBe(2);
-    expect(result[0].week).toBe("Jun 30 '25");
+    expect(result[0].week).toBe("Jul 3 '25");
   });
 
   it("returns entries sorted oldest first", () => {
@@ -128,7 +128,7 @@ describe("computeWeeklyApplications", () => {
       { appliedAt: "2025-06-30T00:00:00Z" }, // week of Jun 30
     ] as any[];
     const result = computeWeeklyApplications(jobs);
-    expect(result[0].week).toBe("Jun 30 '25");
+    expect(result[0].week).toBe("Jul 3 '25");
     expect(result[1].week).toBe("Jul 7 '25");
   });
 });
