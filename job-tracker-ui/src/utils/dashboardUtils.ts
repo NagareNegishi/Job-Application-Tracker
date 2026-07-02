@@ -145,9 +145,9 @@ export interface WeeklyActivityEntry {
 
 /**
  * Groups jobs by the Monday of the ISO week their appliedAt falls in, oldest first.
- * When fillMonth is true, all weeks of the current month are included (zero-count weeks included).
+ * When fillScope is "month" or "year", all weeks in that period are included (zeros for empty weeks).
  */
-export function computeWeeklyApplications(jobs: Job[], fillMonth = false): WeeklyActivityEntry[] {
+export function computeWeeklyApplications(jobs: Job[], fillScope: "month" | "year" | null = null): WeeklyActivityEntry[] {
   const counts = new Map<string, number>();
 
   for (const job of jobs) {
@@ -157,9 +157,10 @@ export function computeWeeklyApplications(jobs: Job[], fillMonth = false): Weekl
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 
-  const keys = fillMonth
-    ? getMonthWeeks()
-    : Array.from(counts.keys()).sort();
+  const keys =
+    fillScope === "month" ? getMonthWeeks() :
+    fillScope === "year"  ? getYearWeeks()  :
+    Array.from(counts.keys()).sort();
 
   return keys.map(key => {
     const d = new Date(key + "T00:00:00Z");
