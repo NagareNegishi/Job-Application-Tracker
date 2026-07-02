@@ -35,6 +35,7 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
     plugins: {
       legend: { display: false },
       tooltip: {
+        displayColors: false,
         callbacks: {
           // Labels are "Mon DD 'YY" (Thursday-based). Parse day → ordinal week of month.
           title: (items) => {
@@ -73,7 +74,7 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
   return (
     <div className="bg-card rounded-lg shadow-sm p-5 col-span-2">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-muted-foreground">Applications per Week</p>
+        <p className="text-sm text-muted-foreground">Applications Submitted per Week</p>
         <div className="flex gap-1">
           {(Object.keys(SCOPE_LABELS) as Scope[]).map(s => (
             <button
