@@ -85,7 +85,7 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
   return (
     <div className="bg-card rounded-lg shadow-sm p-5 col-span-2">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-muted-foreground">Applications Submitted per Week</p>
+        <p className="text-sm font-medium text-muted-foreground">Applications Submitted per Week</p>
         <div className="flex gap-1">
           {(Object.keys(SCOPE_LABELS) as Scope[]).map(s => (
             <button
@@ -93,8 +93,8 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
               onClick={() => onScopeChange(s)}
               className={`text-xs px-2 py-1 rounded transition-colors ${
                 scope === s
-                  ? "bg-indigo-500 text-white hover:bg-indigo-600"
-                  : "bg-muted text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-muted text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               {SCOPE_LABELS[s]}
@@ -102,7 +102,7 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
           ))}
         </div>
       </div>
-      <div className="h-48">
+      <div className="h-56">
         <Line data={chartData} options={options} />
       </div>
     </div>
