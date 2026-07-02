@@ -163,10 +163,14 @@ export function computeWeeklyApplications(jobs: Job[], fillScope: "month" | "yea
     Array.from(counts.keys()).sort();
 
   return keys.map(key => {
-    const d = new Date(key + "T00:00:00Z");
-    const month = d.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
-    const day = d.getUTCDate();
-    const year = String(d.getUTCFullYear()).slice(2);
+    const monday = new Date(key + "T00:00:00Z");
+    // ISO 8601: a week belongs to the month/year of its Thursday (Mon+3).
+    // Avoids Dec 29 labelling as "Dec" when the week is functionally a January week.
+    const thursday = new Date(monday);
+    thursday.setUTCDate(monday.getUTCDate() + 3);
+    const month = thursday.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
+    const day = thursday.getUTCDate();
+    const year = String(thursday.getUTCFullYear()).slice(2);
     return { week: `${month} ${day} '${year}`, count: counts.get(key) ?? 0 };
   });
 }
