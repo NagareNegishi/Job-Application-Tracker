@@ -47,7 +47,7 @@ function useColWidths() {
     () => Object.fromEntries(COLUMNS.map((c) => [c.key, c.defaultWidth])) as Record<ColumnKey, number>
   );
 
-  function startResize(key: ColumnKey) {
+  function startResize(key: ColumnKey, max = COL_RESIZE_MAX) {
     return (e: React.MouseEvent) => {
       e.preventDefault();
       const startX = e.clientX;
@@ -55,7 +55,7 @@ function useColWidths() {
       const onMove = (ev: MouseEvent) => {
         setWidths((prev) => ({
           ...prev,
-          [key]: Math.min(COL_RESIZE_MAX, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX)),
+          [key]: Math.min(max, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX)),
         }));
       };
       const onUp = () => {
@@ -467,12 +467,16 @@ export function JobTable() {
                 <SortableHead field="closedAt" label="Closed At" {...sortProps} />
               )}
               {isVisible("location") && (
-                <TableHead>
+                <TableHead className="relative overflow-visible">
                   <FilterPopover
                     label="Location"
                     options={availableLocations}
                     value={filters.location}
                     onChange={(v) => setFilters((f) => ({ ...f, location: v }))}
+                  />
+                  <div
+                    onMouseDown={startResize("location" as ColumnKey, 220)}
+                    className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                   />
                 </TableHead>
               )}
