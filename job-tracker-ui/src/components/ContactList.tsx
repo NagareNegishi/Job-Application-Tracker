@@ -186,8 +186,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
 
       { contacts.length === 0
         ? <p className="text-muted-foreground">No contacts.</p>
-        // TODO: flex-col? or grid-cols-2
-        : <div className="grid grid-cols-2 gap-6">
+        : <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* List of contacts */}
           {contacts.map((c, i) =>
             <ContactCard
