@@ -312,14 +312,18 @@ export function JobTable() {
 
       {/* Page header */}
       <div className="flex items-center justify-between px-2">
-        <h1 className="text-2xl font-bold">Job Applications</h1>
+        <h1 className="text-2xl font-bold">
+          <span className="hidden sm:inline">Job Applications</span>
+          <span className="sm:hidden">Applications</span>
+        </h1>
         <Button
           variant="outline"
           className="shadow-xs hover:bg-secondary"
           onClick={handleAddJob}
         >
           <Plus className="mr-2 h-4 w-4" />
-          Add New Job
+          <span className="hidden sm:inline">Add New Job</span>
+          <span className="sm:hidden">New Job</span>
         </Button>
       </div>
       <hr className="border-t border-border" />
