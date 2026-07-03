@@ -37,11 +37,11 @@ function JobDetailPage() {
   return (
     <div className="min-h-screen bg-muted">
       <NavBar />
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="bg-card rounded-lg shadow-sm p-6">
+      <div className="max-w-5xl mx-auto px-0 py-8 sm:px-6">
+        <div className="bg-card rounded-lg shadow-sm px-2 py-3 sm:p-6">
           <JobHeader job={job} onEdit={() => setEditOpen(true)} />
           <hr className="border-t border-border mb-6" />
-          <div className="px-4 space-y-6">
+          <div className="px-1 sm:px-4 space-y-6">
             <JobInfoCard job={job} />
             <ContactList
               contacts={job.contacts ?? []}
