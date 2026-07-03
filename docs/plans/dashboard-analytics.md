@@ -107,3 +107,4 @@ Reusable component, same pattern as `PriorityDot`. Amber `Clock` icon with a too
 | 2c | `dashboardUtils.ts` — `computeStaleApplications` | Done |
 | 3 | Tests for `dashboardUtils.ts` | Done |
 | 4 | `DashboardPage.tsx` — page frame + all widgets | — |
+| 5 | `StaleIndicator` component — amber Clock icon + tooltip in jobs list + Kanban card | Done |

@@ -31,6 +31,7 @@ import { ColumnToggle } from "./ColumnToggle";
 import { JobCreateSheet } from "./JobCreateSheet";
 import { ParseListingDialog } from "./ParseListingDialog";
 import { PriorityDot } from "./ui/PriorityDot";
+import { StaleIndicator } from "./ui/StaleIndicator";
 import { StatusBadge } from "./ui/StatusBadge";
 
 const COL_RESIZE_MIN = 80;
@@ -504,7 +505,12 @@ export function JobTable() {
                 onClick={() => navigate(`/jobs/${job.id}`)}
                 className={cn("cursor-pointer", TAB_STYLES[activeTab].rowHover)}
               >
-                <TableCell className="font-medium overflow-hidden text-ellipsis">{job.company}</TableCell>
+                <TableCell className="font-medium overflow-hidden text-ellipsis">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="truncate">{job.company}</span>
+                    <StaleIndicator job={job} />
+                  </div>
+                </TableCell>
                 <TableCell className="overflow-hidden text-ellipsis">{job.role}</TableCell>
                 {isVisible("status") && (
                   <TableCell className="text-center">

@@ -10,6 +10,7 @@ import { MaintenanceError } from '@/lib/api'
 import { JobStatus } from '@/types/enums'
 import type { Job } from '@/types/job'
 import { PriorityDot } from '@/components/ui/PriorityDot'
+import { StaleIndicator } from '@/components/ui/StaleIndicator'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from "@/lib/utils"
 
@@ -64,8 +65,9 @@ function KanbanCardPreview({ job }: { job: Job }) {
     <>
       <p className="font-medium text-sm truncate">{job.company}</p>
       <p className="text-xs text-muted-foreground truncate">{job.role}</p>
-      <div className="mt-2">
+      <div className="mt-2 flex items-center gap-2">
         <PriorityDot priority={job.priority} dotSize="w-2 h-2" />
+        <StaleIndicator job={job} />
       </div>
     </>
   )
