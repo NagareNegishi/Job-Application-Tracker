@@ -33,11 +33,6 @@ CV integration is deferred — analysis uses profile text only.
 
 Being resolved this session. Each item is rewritten from OPEN to the decision + reasoning once settled. Settled items get folded into the Design Decisions table / field specs above before implementation.
 
-**Profile — API & data**
-
-### D5. GET empty-response shape — OPEN
-GET returns `{}` when not created. Do the fields otherwise come back as empty arrays `[]`? Frontend needs a reliable "no profile yet" signal distinct from "profile exists but empty."
-
 **Profile — validation**
 
 ### D6. Field limits — OPEN
@@ -142,7 +137,7 @@ Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-**GET** — returns the profile, or empty object `{}` if not yet created (not 404).
+**GET** — returns the saved profile, or empty object `{}` if nothing has been saved yet (not 404). An existing profile always includes all fields (unfilled arrays serialize as `[]`), so the frontend distinguishes create vs update by whether the response is empty: empty → `PUT`, has data → `PATCH`. No timestamp field.
 
 **PUT** — creates the profile on first save. Returns 409 if a profile already exists. Frontend uses this only once (when GET returned empty).
 
