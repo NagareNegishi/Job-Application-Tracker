@@ -79,7 +79,7 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
   }), [scope, chartData])
 
   return (
-    <div className="bg-card rounded-lg shadow-sm p-5 col-span-2">
+    <div className="bg-card rounded-lg shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-medium text-muted-foreground">Applications Submitted per Week</p>
         <div className="flex gap-1">

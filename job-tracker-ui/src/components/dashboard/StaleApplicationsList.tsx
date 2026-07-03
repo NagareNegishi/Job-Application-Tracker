@@ -18,7 +18,7 @@ export function StaleApplicationsList({ jobs }: Props) {
   const navigate = useNavigate()
 
   return (
-    <div className="bg-card rounded-lg shadow-sm p-5 col-span-2">
+    <div className="bg-card rounded-lg shadow-sm p-5">
       <p className="text-sm font-medium text-muted-foreground mb-3">Applications with no recent activity</p>
       {jobs.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">

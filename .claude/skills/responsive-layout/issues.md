@@ -1,13 +1,3 @@
-## job-tracker-ui/src/components/NavBar.tsx — left nav link group
-- Snippet: `className="flex items-center gap-8"`
-- Risk: Logo + separator + up to 3 nav links in a non-wrapping flex row; overflows at ~640px and below
-- Suggestion: add `flex-wrap` and reduce `gap-8` to `gap-4` on the left group, or hide text links behind a hamburger at `sm:` breakpoint
-
-## job-tracker-ui/src/pages/DashboardPage.tsx — chart section grid
-- Snippet: `className="grid grid-cols-2 gap-4"`
-- Risk: Two-column chart grid with no responsive fallback; both columns are ~300px wide at 640px, too narrow for charts
-- Suggestion: `grid-cols-1 md:grid-cols-2`
-
 ## job-tracker-ui/src/components/dashboard/OverviewSection.tsx — outer grid
 - Snippet: `className="grid grid-cols-4 gap-4"`
 - Risk: 4-column layout with no responsive prefix; SummaryBar (col-span-3) and ResponseRateCard are squeezed below ~768px
