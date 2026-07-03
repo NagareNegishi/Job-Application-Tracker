@@ -65,16 +65,12 @@ export function WeeklyApplicationsChart({ chartData, scope, onScopeChange }: Pro
                 return month !== prevLabel?.slice(0, 3) ? month : ""
               },
             }
-          // All
+          // All: label every tick with month+year
           : {
-              autoSkip: false,
               callback: (_, index) => {
-                const label     = chartData.labels?.[index] as string | undefined
-                const prevLabel = chartData.labels?.[index - 1] as string | undefined
+                const label = chartData.labels?.[index] as string | undefined
                 if (!label) return ""
-                const monthYear     = `${label.slice(0, 3)} '${label.slice(-2)}`
-                const prevMonthYear = prevLabel ? `${prevLabel.slice(0, 3)} '${prevLabel.slice(-2)}` : ""
-                return monthYear !== prevMonthYear ? monthYear : ""
+                return `${label.slice(0, 3)} '${label.slice(-2)}`
               },
             },
       },
