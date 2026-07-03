@@ -83,8 +83,10 @@ Schema — paths relative to repo root:
 ## Mode: plan — decide test cases, write no tests
 
 1. Read `files.json`. If missing or empty, run scan mode first.
-2. Process files with `"planned": null` one at a time, highest value first:
-   read the file, list its test cases in `plan.md`, set the file's `planned` date.
+2. Process files with `"planned": null` one at a time, highest value first —
+   at most 5 files per run. For each: read the file (and its existing test file,
+   if any — plan only cases not already covered), append its test cases to
+   `plan.md`, set the file's `planned` date.
 3. Checklist for choosing cases:
    - Test public behavior only — never private implementation details.
    - Cover happy path, boundary values, and error/exception paths.
@@ -107,18 +109,30 @@ Entry format in `plan.md` — one `##` block per source file:
 - [ ] DeleteAsync_MissingKey_DoesNotThrow
 ```
 
+Blocked entry format — `BLOCKED` goes in the heading so write mode can skip it:
+
+```markdown
+## JobTrackerApi/Helpers/TimeHelper.cs — BLOCKED
+- Calls DateTime.Now directly, no injectable clock; needs a production refactor first
+```
+
 ## Mode: write — one source file per pass
 
 1. Read `plan.md` with `limit: 30` — only enough to get the FIRST non-blocked block.
 2. Read the source file and one existing test file for a similar target; mirror
    its structure and mocking style.
 3. Create the test file per the naming convention (or append to the existing
-   test file if one is recorded) and implement the listed cases.
-4. Run the configured test command scoped to this test file. On failure, fix the
-   TEST code only. If a failure reveals a real bug in production code, report it,
-   mark that case with a `BUG:` note in `plan.md`, and leave the production code
-   untouched.
-5. On green: remove the block from `plan.md`, set the file's `tested` date and
-   `testFile` in `files.json`.
+   test file if one is recorded) and implement the listed cases. If a case no
+   longer matches the source (member renamed or removed), drop or adjust it and
+   say so in the report.
+4. Run the test command from the config block for the file's root, scoped to
+   this test file. On failure, fix the TEST code only — after 3 failed attempts
+   on a case, mark it `FAILING:` in `plan.md` and move on. If a failure reveals
+   a real bug in production code, report it, mark that case with a `BUG:` note,
+   and leave the production code untouched.
+5. When all cases pass: remove the block from `plan.md`, set the file's `tested`
+   date and `testFile` in `files.json`. If `BUG:`/`FAILING:` cases remain: keep
+   only those cases in the block, add `— BLOCKED` to its heading, and still
+   record `testFile` for the tests that passed.
 6. Report cases written and test results, state how many blocks remain, then
    STOP and wait for approval before the next file.
