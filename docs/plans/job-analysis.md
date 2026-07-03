@@ -31,7 +31,14 @@ CV integration is deferred — analysis uses profile text only.
 
 ## Open Decisions
 
-Being resolved this session. Each item is rewritten from OPEN to the decision + reasoning once settled. Settled items get folded into the Design Decisions table / field specs above before implementation.
+Being resolved across sessions. Once settled, each item is folded into the Design Decisions table / field specs / API sections above and removed from this list.
+
+**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6. **Next: D7 (date validation)** — proposal on the table, awaiting confirmation:
+- WorkHistory `from`/`to`: regex `^(19|20)\d{2}-(0[1-9]|1[0-2])$` (YYYY-MM, 1900–2099); `to` optional.
+- Education years: `Range(1900, currentYear + 10)`; `to` optional.
+- Enforce `from ≤ to` via `IValidatableObject` on the entry DTOs; lenient on future start dates.
+
+After D7, remaining: D8–D13 (analysis inputs/gating, output bounds), D14–D16 (frontend), D17 (testing).
 
 **Profile — validation**
 
