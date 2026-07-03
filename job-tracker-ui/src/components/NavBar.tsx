@@ -28,7 +28,7 @@ export default function NavBar() {
   return (
     <div className="border-b bg-card px-6 py-3 flex items-center justify-between">
       {/* Links group */}
-      <div className="flex items-center gap-8">
+      <div className="flex items-center gap-4 flex-wrap">
         {/* Logo -> home; replace span with <img src="/logo.svg" alt="Job Application Tracker" className="h-7" /> when logo is ready */}
         <Link to="/jobs" className="flex items-center">
           <span className="font-semibold text-foreground">Job Application Tracker</span>

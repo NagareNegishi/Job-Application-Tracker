@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { ResponsiveButton } from "@/components/ui/ResponsiveButton"
 import { DocumentCard } from "@/components/DocumentCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateDocument, useDocuments } from "@/hooks/documentQuery"
@@ -58,13 +58,14 @@ export function DocumentList({ jobId }: DocumentListProps) {
               <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
-          <Button
+          <ResponsiveButton
+            icon={Plus}
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
           >
-            <Plus className="h-4 w-4" />{isUploading ? "Uploading..." : "Add Document"}
-          </Button>
+            {isUploading ? "Uploading..." : "Add Document"}
+          </ResponsiveButton>
         </div>
       </div>
       {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}

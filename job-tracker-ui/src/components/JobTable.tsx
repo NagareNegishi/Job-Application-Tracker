@@ -330,12 +330,12 @@ export function JobTable() {
         <TabsList className="bg-card p-0 h-auto rounded-none border-b border-border w-full justify-start items-end gap-1">
           {(
             [
-              { value: "active", label: "Active" },
-              { value: "closing-soon", label: "Closing Soon" },
-              { value: "all", label: "All" },
-              { value: "closed", label: "Closed" },
-            ] as const
-          ).map(({ value, label }) => (
+              { value: "active" as const,       label: "Active",       shortLabel: undefined },
+              { value: "closing-soon" as const, label: "Closing Soon", shortLabel: "Closing" },
+              { value: "all" as const,          label: "All",          shortLabel: undefined },
+              { value: "closed" as const,       label: "Closed",       shortLabel: undefined },
+            ]
+          ).map(({ value, label, shortLabel }) => (
             <TabsTrigger
               key={value}
               value={value}
@@ -343,14 +343,15 @@ export function JobTable() {
                 // shape & layout
                 "rounded-t-md rounded-b-none border border-border",
                 "bg-muted text-muted-foreground",
-                "px-4 py-1.5 h-auto flex-none -mb-px transition-colors duration-200",
+                "px-2 sm:px-4 py-1.5 h-auto flex-none -mb-px transition-colors duration-200",
                 // active state
                 "data-[state=active]:font-medium data-[state=active]:underline data-[state=active]:underline-offset-4",
                 "data-[state=active]:border-2 data-[state=active]:border-b-0 data-[state=active]:!shadow-none",
                 TAB_STYLES[value].tab
               )}
             >
-              {label}
+              <span className="sm:hidden">{shortLabel ?? label}</span>
+              <span className="hidden sm:inline">{label}</span>
             </TabsTrigger>
           ))}
           <div className="ml-auto pb-1">
@@ -520,7 +521,7 @@ export function JobTable() {
                   </TableCell>
                 )}
                 {isVisible("location") && (
-                  <TableCell>{job.location ?? "—"}</TableCell>
+                  <TableCell className="overflow-hidden text-ellipsis">{job.location ?? "—"}</TableCell>
                 )}
                 {isVisible("workMode") && (
                   <TableCell>
@@ -530,7 +531,7 @@ export function JobTable() {
                   </TableCell>
                 )}
                 {isVisible("salary") && (
-                  <TableCell>
+                  <TableCell className="overflow-hidden text-ellipsis">
                     {job.salaryMin != null || job.salaryMax != null
                       ? job.salaryMin != null && job.salaryMax != null && job.salaryMin !== job.salaryMax
                         ? `$${job.salaryMin.toLocaleString()} – $${job.salaryMax.toLocaleString()}`

@@ -13,7 +13,7 @@ export function OverviewSection({ summary, responseRate }: Props) {
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 text-center">
         Overview
       </h2>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="col-span-3">
           <SummaryBar summary={summary} />
         </div>
