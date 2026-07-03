@@ -35,17 +35,6 @@ Being resolved this session. Each item is rewritten from OPEN to the decision + 
 
 **Profile — API & data**
 
-### D3. Analysis gate — "enough info" threshold — OPEN (mostly agreed)
-Enforced in BOTH frontend (disable analysis buttons + advisory) and backend (400 guard); one rule, defined once, enforced identically. Hard minimum for a request to pass (else 400) — ALL required:
-- `TargetRoles` non-empty
-- `Skills` non-empty
-- `WorkingRights` non-empty (≥1 entry)
-- at least one of `Certifications` / `WorkHistory` / `Education` non-empty
-
-`Languages` not required. (D4 settled: save is permissive — folded into Design Decisions.)
-
-Pending: (a) does `WorkingRights` need ≥1 *positive* right, or does any entry (incl. `RequiresSponsorship`) count? (b) quality advisory — see D3b.
-
 ### D5. GET empty-response shape — OPEN
 GET returns `{}` when not created. Do the fields otherwise come back as empty arrays `[]`? Frontend needs a reliable "no profile yet" signal distinct from "profile exists but empty."
 
@@ -207,7 +196,7 @@ PATCH body (partial — only changed fields):
 All endpoints:
 - `POST /api/jobs/{jobId}/analyse/<type>`
 - Require `[Authorize]`; block demo user (403)
-- Return 400 if user has no profile saved
+- Return 400 unless the profile meets the analysis minimum — ALL of: `TargetRoles` non-empty, `Skills` non-empty, `WorkingRights` non-empty (≥1 entry, any status incl. `RequiresSponsorship`), and at least one of `Certifications` / `WorkHistory` / `Education` non-empty. `Languages` not required. Same rule enforced client-side (analysis buttons disabled until met); defined once, identical both sides.
 - Return 404 if job not found or belongs to another user
 
 | Type | Endpoint |
