@@ -343,7 +343,7 @@ export function JobTable() {
                 // shape & layout
                 "rounded-t-md rounded-b-none border border-border",
                 "bg-muted text-muted-foreground",
-                "px-4 py-1.5 h-auto flex-none -mb-px transition-colors duration-200",
+                "px-2 sm:px-4 py-1.5 h-auto flex-none -mb-px transition-colors duration-200",
                 // active state
                 "data-[state=active]:font-medium data-[state=active]:underline data-[state=active]:underline-offset-4",
                 "data-[state=active]:border-2 data-[state=active]:border-b-0 data-[state=active]:!shadow-none",
