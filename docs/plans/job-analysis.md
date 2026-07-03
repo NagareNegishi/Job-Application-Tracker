@@ -33,7 +33,10 @@ Being resolved this session. Each item is rewritten from OPEN to the decision + 
 **Profile — API & data**
 
 ### D1. Clearing a field via PATCH — OPEN
-Merge-patch by null-check can't distinguish "field omitted" (leave unchanged) from "field set to null" (clear it). Need a rule for clearing `WorkingRight` and for emptying the array fields.
+Rule under consideration: arrays clear via `[]`, omitted leaves unchanged. `WorkingRights` is now an array (see D1a), so it follows the same rule — the single-enum absent-vs-null problem and the proposed `Unspecified` value are dropped. Pending confirmation of the array rule (interacts with D2).
+
+### D1a. WorkingRights country representation — SETTLED
+`country` is an **ISO 3166-1 alpha-2 code** (`"NZ"`, `"AU"`, `"US"`), stored uppercase, **required per entry**. Standard, unambiguous, one code per country, covers all — no duplication. Backend format check: regex `^[A-Z]{2}$` (full-list validation optional; frontend picker guarantees valid codes). Frontend: reusable country-picker stores the code, displays full names via `Intl.DisplayNames` (zero-dependency); reusable across projects.
 
 ### D2. PATCH array semantics — replace or merge — OPEN
 When PATCH includes `skills` / `workHistory` / `education`, does it replace the whole array or append? How is a single entry deleted?
@@ -105,18 +108,24 @@ Controller-test scope for the new profile + analysis controllers, mirroring exis
 | `Skills` | `string[]` | Skills as a tag list — stored as JSON array |
 | `Certifications` | `string[]` | e.g. "AWS Certified Developer", "PMP" — stored as JSON array |
 | `Languages` | `string[]` | Spoken languages, free text tags — stored as JSON array |
-| `WorkingRight` | `WorkingRight?` | Work authorisation status — single nullable enum |
+| `WorkingRights` | `WorkingRightEntry[]` | Work authorisation per country — stored as JSON array |
 | `WorkHistory` | `WorkHistoryEntry[]` | Structured work experience entries — stored as JSON array |
 | `Education` | `EducationEntry[]` | Structured education entries — stored as JSON array |
+
+**WorkingRightEntry:**
+| Sub-field | Type | Notes |
+|---|---|---|
+| `country` | `string` | ISO 3166-1 alpha-2 code (e.g. `NZ`, `AU`), uppercase; required |
+| `status` | `WorkingRight` | Authorisation type for that country |
 
 **WorkingRight enum:**
 | Value | Meaning |
 |---|---|
-| `Citizen` | NZ / AU citizen — unrestricted |
-| `PermanentResident` | NZ / AU resident visa — unrestricted |
+| `Citizen` | Citizen — unrestricted |
+| `PermanentResident` | Permanent resident — unrestricted |
 | `WorkVisa` | Current work visa — right exists but time-limited |
 | `RequiresSponsorship` | No current right; needs employer sponsorship |
-| `Other` | Has working rights through another arrangement |
+| `Other` | Right through another arrangement |
 
 **WorkHistoryEntry:**
 | Sub-field | Type | Notes |
