@@ -44,7 +44,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
 
       {/* Row 2: Avatar + company identity on left, actions on right */}
       <div className="flex items-start justify-between gap-4">
-        <div className="sm:pl-10 -mt-1 min-w-0">
+        <div className="pl-3 sm:pl-10 -mt-1 min-w-0">
           {/* Avatar centered with company name only */}
           <div className="flex items-center gap-4 min-w-0">
             <div className="hidden sm:flex h-12 w-12 rounded-full bg-primary/10 items-center justify-center shrink-0">
