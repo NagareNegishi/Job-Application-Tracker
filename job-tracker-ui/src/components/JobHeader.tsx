@@ -1,9 +1,10 @@
 import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
-import { Button } from "@/components/ui/button";
 import { UnderlinedText } from "@/components/UnderlinedText";
 import { useDeleteJob } from "@/hooks/jobQuery";
 import type { Job } from "@/types/job";
 import { useQueryClient } from '@tanstack/react-query';
+import { Button } from "@/components/ui/button";
+import { ResponsiveButton } from "@/components/ui/ResponsiveButton";
 import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -68,24 +69,24 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2 pt-1 shrink-0">
-          <Button
+          <ResponsiveButton
+            icon={Pencil}
             variant="secondary"
             className="hover:bg-border active:scale-95"
             onClick={onEdit}
           >
-            <Pencil className="h-4 w-4" />
             Edit
-          </Button>
+          </ResponsiveButton>
 
-          <Button
+          <ResponsiveButton
+            icon={Trash2}
             variant="outline"
             className="border-destructive/50 text-destructive/70 hover:bg-destructive/10 hover:text-destructive hover:border-destructive active:scale-95"
             onClick={() => setDeleteOpen(true)}
             disabled={isDeleting}
           >
-            <Trash2 className="h-4 w-4" />
             {isDeleting ? "Deleting..." : "Delete"}
-          </Button>
+          </ResponsiveButton>
         </div>
       </div>
     </div>
