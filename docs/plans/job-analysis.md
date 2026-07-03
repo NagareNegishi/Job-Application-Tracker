@@ -20,6 +20,8 @@ CV integration is deferred — analysis uses profile text only.
 | `IAnalysisService` / `ClaudeAnalysisService` in `Services/` | Follows existing service abstraction pattern; mockable in tests |
 | `JobAnalysisController` — separate from `JobsController` | Five endpoints with their own route prefix keep `JobsController` clean |
 | PUT creates, PATCH updates (separate endpoints) | Avoids re-sending and re-validating the full profile on every edit; only changed fields sent and validated on PATCH |
+| PATCH follows JSON Merge Patch (RFC 7396): whole-array replace, `[]` clears, omit = unchanged | Standard and stateless; no element-identity tracking or separate delete op; pairs with per-section save so untouched sections are never sent |
+| `WorkingRights` is an array of `(country, status)` pairs, `country` = ISO 3166-1 alpha-2 | One person can hold rights in multiple countries and jobs span countries; a single enum can't express this. ISO codes are standard, unambiguous, no duplication |
 | Return 400 if profile not set | Analysis has no input without a profile; clear error, not a silent empty response |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
 | `claude-haiku-4-5` model | Fast and cheap; each call is a single focused extraction, not reasoning |
@@ -31,15 +33,6 @@ CV integration is deferred — analysis uses profile text only.
 Being resolved this session. Each item is rewritten from OPEN to the decision + reasoning once settled. Settled items get folded into the Design Decisions table / field specs above before implementation.
 
 **Profile — API & data**
-
-### D1. Clearing a field via PATCH — OPEN
-Rule under consideration: arrays clear via `[]`, omitted leaves unchanged. `WorkingRights` is now an array (see D1a), so it follows the same rule — the single-enum absent-vs-null problem and the proposed `Unspecified` value are dropped. Pending confirmation of the array rule (interacts with D2).
-
-### D1a. WorkingRights country representation — SETTLED
-`country` is an **ISO 3166-1 alpha-2 code** (`"NZ"`, `"AU"`, `"US"`), stored uppercase, **required per entry**. Standard, unambiguous, one code per country, covers all — no duplication. Backend format check: regex `^[A-Z]{2}$` (full-list validation optional; frontend picker guarantees valid codes). Frontend: reusable country-picker stores the code, displays full names via `Intl.DisplayNames` (zero-dependency); reusable across projects.
-
-### D2. PATCH array semantics — replace or merge — OPEN
-When PATCH includes `skills` / `workHistory` / `education`, does it replace the whole array or append? How is a single entry deleted?
 
 ### D3. "Has a profile" definition for the analysis 400 check — OPEN
 Is it row-exists, or row-has-meaningful-content? A PUT could create a row with all-empty arrays that passes a row-exists check but gives the AI nothing.
@@ -158,7 +151,7 @@ Content-Type: application/json
 
 **PUT** — creates the profile on first save. Returns 409 if a profile already exists. Frontend uses this only once (when GET returned empty).
 
-**PATCH** — partial update on an existing profile; only fields included in the body are updated, omitted fields are left unchanged (merge patch, not JSON Patch spec). Returns 404 if no profile exists yet. Use for all edits after initial creation.
+**PATCH** — partial update on an existing profile, following **JSON Merge Patch (RFC 7396)** semantics: only fields included in the body are updated, omitted fields are left unchanged; arrays are replaced wholesale (send the full array), and `[]` clears a field. The client must send **only changed fields** — an accidental `[]` on an untouched field wipes it (see per-section save, D14). Returns 404 if no profile exists yet. Use for all edits after initial creation.
 
 PUT body (full profile):
 ```json
@@ -282,3 +275,4 @@ Score is 1–5. `reasoning` is one sentence.
 - `Anthropic:ApiKey` is shared with the auto-fill parsing feature — no duplicate config key needed once that feature is added.
 - Tests: mock `IAnalysisService` in controller tests; no live Claude calls in CI.
 - Profile page vs Settings: `/profile` is a dedicated page — profile is substantial enough to warrant its own route rather than a section in Settings.
+- Country picker (frontend): stores the ISO 3166-1 alpha-2 code, displays full country names via `Intl.DisplayNames` (`new Intl.DisplayNames(['en'], { type: 'region' }).of('NZ')` → "New Zealand") — zero-dependency, reusable across projects.
