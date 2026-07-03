@@ -22,6 +22,7 @@ CV integration is deferred — analysis uses profile text only.
 | PUT creates, PATCH updates (separate endpoints) | Avoids re-sending and re-validating the full profile on every edit; only changed fields sent and validated on PATCH |
 | PATCH follows JSON Merge Patch (RFC 7396): whole-array replace, `[]` clears, omit = unchanged | Standard and stateless; no element-identity tracking or separate delete op; pairs with per-section save so untouched sections are never sent |
 | `WorkingRights` is an array of `(country, status)` pairs, `country` = ISO 3166-1 alpha-2 | One person can hold rights in multiple countries and jobs span countries; a single enum can't express this. ISO codes are standard, unambiguous, no duplication |
+| Save is permissive; the analysis gate is strict | Profiles are built incrementally — PUT/PATCH accept sparse or empty input; required-content is enforced only at analysis time (the 400 gate), not at save |
 | Return 400 if profile not set | Analysis has no input without a profile; clear error, not a silent empty response |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
 | `claude-haiku-4-5` model | Fast and cheap; each call is a single focused extraction, not reasoning |
@@ -34,11 +35,16 @@ Being resolved this session. Each item is rewritten from OPEN to the decision + 
 
 **Profile — API & data**
 
-### D3. "Has a profile" definition for the analysis 400 check — OPEN
-Is it row-exists, or row-has-meaningful-content? A PUT could create a row with all-empty arrays that passes a row-exists check but gives the AI nothing.
+### D3. Analysis gate — "enough info" threshold — OPEN (mostly agreed)
+Enforced in BOTH frontend (disable analysis buttons + advisory) and backend (400 guard); one rule, defined once, enforced identically. Hard minimum for a request to pass (else 400) — ALL required:
+- `TargetRoles` non-empty
+- `Skills` non-empty
+- `WorkingRights` non-empty (≥1 entry)
+- at least one of `Certifications` / `WorkHistory` / `Education` non-empty
 
-### D4. Required vs. optional fields on PUT — OPEN
-Can a profile be created entirely empty, or is at least one field (e.g. `TargetRoles`) required?
+`Languages` not required. (D4 settled: save is permissive — folded into Design Decisions.)
+
+Pending: (a) does `WorkingRights` need ≥1 *positive* right, or does any entry (incl. `RequiresSponsorship`) count? (b) quality advisory — see D3b.
 
 ### D5. GET empty-response shape — OPEN
 GET returns `{}` when not created. Do the fields otherwise come back as empty arrays `[]`? Frontend needs a reliable "no profile yet" signal distinct from "profile exists but empty."
@@ -276,3 +282,5 @@ Score is 1–5. `reasoning` is one sentence.
 - Tests: mock `IAnalysisService` in controller tests; no live Claude calls in CI.
 - Profile page vs Settings: `/profile` is a dedicated page — profile is substantial enough to warrant its own route rather than a section in Settings.
 - Country picker (frontend): stores the ISO 3166-1 alpha-2 code, displays full country names via `Intl.DisplayNames` (`new Intl.DisplayNames(['en'], { type: 'region' }).of('NZ')` → "New Zealand") — zero-dependency, reusable across projects.
+- WorkingRights entry (frontend): reuse the country picker; default country from the browser locale/region; default status to "don't have it" (`RequiresSponsorship`) so users consciously set their actual right rather than accepting an assumed one.
+- Profile quality: **now** a lightweight frontend advisory — a simple heuristic that flags "meets the minimum but thin; richer profiles give better analysis" when the 400 gate passes but content is sparse. A **full profile-quality score** (weighted 0–100 / meter + per-field improvement hints) is deferred to a **separate plan** — client-side only, like the dashboard. Add it to `docs/progress.md` upcoming work when this plan lands.
