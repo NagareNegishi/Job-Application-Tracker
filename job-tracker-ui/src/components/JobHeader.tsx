@@ -47,7 +47,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
         <div className="pl-10 -mt-1 min-w-0">
           {/* Avatar centered with company name only */}
           <div className="flex items-center gap-4 min-w-0">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <div className="hidden sm:flex h-12 w-12 rounded-full bg-primary/10 items-center justify-center shrink-0">
               <span className="text-lg font-bold text-primary">
                 {job.company.charAt(0).toUpperCase()}
               </span>
@@ -63,7 +63,7 @@ export function JobHeader({ job, onEdit }: JobHeaderProps) {
             </UnderlinedText>
           </div>
           {/* Role sits below, indented past avatar (w-12=3rem + gap-4=1rem = pl-16=4rem) */}
-          <div className="pl-16">
+          <div className="pl-0 sm:pl-16">
             <p className="text-lg font-semibold text-foreground/70 mt-1.5">{job.role}</p>
           </div>
         </div>
