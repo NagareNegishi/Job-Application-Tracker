@@ -28,6 +28,7 @@ Switch between a table view and a Kanban board, filter by location or work mode,
 - Change password from the Settings page
 - Demo mode: try the app without registering
 - AI auto-fill: paste a job listing and fields fill in automatically (AI-enabled accounts only)
+- Analytics dashboard: summary counts, status funnel, weekly applications chart, and stale applications list
 
 ## Demo
 
