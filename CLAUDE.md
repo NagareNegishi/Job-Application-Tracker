@@ -106,11 +106,11 @@ All controllers except `AuthController` require `[Authorize]`. New controllers m
 
 - `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, handles 401 silent refresh, and throws `MaintenanceError` on 503 during scheduled window (midnight–8 AM Sydney); includes `authService.ts`, `adminService.ts`, `preferencesService.ts`; silent refresh logic in `src/lib/auth.ts`
 - `src/hooks/` — TanStack Query hooks
-- `src/pages/` — `JobPage` (list), `JobDetailPage` (detail), `LoginPage`, `RegisterPage`, `SettingsPage`, `CheckEmailPage`, `ConfirmEmailPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `AdminPage`
-- `src/components/` — feature components including `KanbanBoard`, `ParseListingDialog`, `ColumnToggle`; `src/components/ui/` — shadcn/ui primitives
+- `src/pages/` — `JobPage` (list), `JobDetailPage` (detail), `LoginPage`, `RegisterPage`, `SettingsPage`, `CheckEmailPage`, `ConfirmEmailPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `AdminPage`, `DashboardPage` (analytics — client-side only, no API endpoint; `dashboardUtils.ts`)
+- `src/components/` — feature components including `KanbanBoard`, `ParseListingDialog`, `ColumnToggle`; `src/components/dashboard/` — dashboard widgets; `src/components/ui/` — shadcn/ui primitives
 - `src/types/` — TypeScript types mirroring backend models; enums use `const` object pattern (`enum` keyword disallowed by `erasableSyntaxOnly`)
 
-**Routing**: React Router 7 — `/` → `/jobs`, `/jobs/:id`, `/login`, `/register`, `/settings`, `/check-email`, `/confirm-email`, `/forgot-password`, `/reset-password`, `/admin`. All job + account routes wrapped in `ProtectedRoute`; `/admin` wrapped in `AdminRoute`.
+**Routing**: React Router 7 — `/` → `/jobs`, `/jobs/:id`, `/dashboard`, `/login`, `/register`, `/settings`, `/check-email`, `/confirm-email`, `/forgot-password`, `/reset-password`, `/admin`. All job + account routes wrapped in `ProtectedRoute`; `/admin` wrapped in `AdminRoute`.
 
 **Path alias**: `@/` resolves to `src/` (configured in `vite.config.ts`).
 
