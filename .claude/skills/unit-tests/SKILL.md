@@ -1,9 +1,9 @@
 ---
 name: unit-tests
 description: >
-  Write unit tests for existing source files in any project.
-  Use when the user runs /unit-tests <scan|plan|write> or asks to write, add,
-  or improve unit test coverage for existing code.
+  Systematically add unit test coverage for existing source files in any project,
+  tracked across sessions. Use ONLY when the user runs /unit-tests <scan|plan|write>
+  — do NOT trigger on ordinary one-off requests to write a test.
 ---
 
 # Unit Tests
@@ -33,11 +33,15 @@ Write mode may additionally create or edit test files in the configured test loc
 ## Mode selection
 
 Argument `scan`, `plan`, or `write` selects the mode.
-No argument: ask which mode to run — do not read any files first.
+If the user names a specific file alongside the command, run plan mode then
+write mode for that file only — skip the queue order.
+No argument and no named file: ask which mode to run — do not read any files first.
 
 ## Mode: scan — build or update the file inventory
 
-1. Detect project config (first scan only), store under `"config"` in `files.json`:
+1. Detect project config (first scan only), store under `"config"` in `files.json`.
+   If the repo has several testable projects (e.g., backend and frontend), ask
+   the user which to include and store one config block per root. For each root:
    - Test framework and location: look for an existing test project or directory
      (`*Tests.csproj`, `__tests__/`, `*.test.ts` siblings, `tests/` + pytest config)
      and confirm the framework from `package.json` / `.csproj` / `pyproject.toml`.
@@ -46,13 +50,15 @@ No argument: ask which mode to run — do not read any files first.
      `npx vitest run {testFile}` or `pytest {testFile}`.
    - Test file naming convention, taken from existing test files.
    - If anything is ambiguous or absent, ask the user.
-2. Glob source files under the project root and classify each by test value:
+2. Glob source files under each root and classify each by test value:
    - `high` — pure logic: utils, helpers, domain/service classes with injectable deps
    - `medium` — controllers, handlers, hooks with mockable dependencies
    - `skip` — config, generated code, type-only files, thin glue, markup-only
      components. Read a sample file when unclear from the name.
-3. For each kept file, record its existing test file (mapped by naming convention)
-   or `null`.
+   Record `skip` files too — it stops later scans from re-classifying them, and
+   plan mode never touches them.
+3. For each `high`/`medium` file, record its existing test file (mapped by naming
+   convention) or `null`.
 4. Read `files.json` (missing → `{}`). Add new files, keep existing entries
    unchanged, delete entries whose file no longer exists. Write it, report changes.
 
@@ -60,11 +66,12 @@ Schema — paths relative to repo root:
 ```json
 {
   "config": {
-    "root": "JobTrackerApi",
-    "framework": "xunit",
-    "testDir": "JobTrackerApi.Tests",
-    "testCommand": "dotnet test --filter \"FullyQualifiedName~{TestClass}\"",
-    "naming": "{ClassName}Tests.cs"
+    "JobTrackerApi": {
+      "framework": "xunit",
+      "testDir": "JobTrackerApi.Tests",
+      "testCommand": "dotnet test --filter \"FullyQualifiedName~{TestClass}\"",
+      "naming": "{ClassName}Tests.cs"
+    }
   },
   "files": {
     "JobTrackerApi/Services/LocalStorageService.cs":
