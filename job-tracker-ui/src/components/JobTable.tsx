@@ -520,7 +520,7 @@ export function JobTable() {
                   </TableCell>
                 )}
                 {isVisible("location") && (
-                  <TableCell>{job.location ?? "—"}</TableCell>
+                  <TableCell className="overflow-hidden text-ellipsis">{job.location ?? "—"}</TableCell>
                 )}
                 {isVisible("workMode") && (
                   <TableCell>
@@ -530,7 +530,7 @@ export function JobTable() {
                   </TableCell>
                 )}
                 {isVisible("salary") && (
-                  <TableCell>
+                  <TableCell className="overflow-hidden text-ellipsis">
                     {job.salaryMin != null || job.salaryMax != null
                       ? job.salaryMin != null && job.salaryMax != null && job.salaryMin !== job.salaryMax
                         ? `$${job.salaryMin.toLocaleString()} – $${job.salaryMax.toLocaleString()}`
