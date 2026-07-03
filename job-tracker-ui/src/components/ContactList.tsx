@@ -1,5 +1,6 @@
 import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
+import { ResponsiveButton } from "@/components/ui/ResponsiveButton";
 import {
   Dialog,
   DialogClose,
@@ -181,7 +182,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
       {/* Header with Add button */ }
       <div className="flex items-center justify-between">
         <span className="text-sm uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Contacts</span>
-        <Button size="sm" variant="outline" onClick={handleAdd}><Plus className="h-4 w-4" />Add Contact</Button>
+        <ResponsiveButton icon={Plus} size="sm" variant="outline" onClick={handleAdd}>Add Contact</ResponsiveButton>
       </div>
 
       { contacts.length === 0
