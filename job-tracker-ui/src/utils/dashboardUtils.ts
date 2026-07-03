@@ -182,18 +182,21 @@ const STALE_STATUSES = new Set<JobStatus>([
   JobStatus.Interview,
 ]);
 
-/** Returns active jobs where status hasn't changed in thresholdDays or more.
- *  Excludes Wishlist, Won, and Closed statuses. Jobs with a future closedAt are also excluded. */
-export function computeStaleApplications(jobs: Job[], thresholdDays: number): Job[] {
+/** Returns days since status change if the job is stale, null otherwise. */
+export function staleDaysSince(job: Job, thresholdDays: number): number | null {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0); // normalise to midnight UTC so daysSince is always a whole number
 
-  return jobs.filter(job => {
-    if (!STALE_STATUSES.has(job.status)) return false;
-    if (job.closedAt && new Date(job.closedAt) > today) return false;
+  if (!STALE_STATUSES.has(job.status)) return null;
+  if (job.closedAt && new Date(job.closedAt) > today) return null;
 
-    // statusChangedAt is non-nullable on the entity
-    const daysSince = (today.getTime() - new Date(job.statusChangedAt!).getTime()) / (1000 * 60 * 60 * 24);
-    return daysSince >= thresholdDays;
-  });
+  // statusChangedAt is non-nullable on the entity
+  const daysSince = (today.getTime() - new Date(job.statusChangedAt!).getTime()) / (1000 * 60 * 60 * 24);
+  return daysSince >= thresholdDays ? daysSince : null;
+}
+
+/** Returns active jobs where status hasn't changed in thresholdDays or more.
+ *  Excludes Wishlist, Won, and Closed statuses. Jobs with a future closedAt are also excluded. */
+export function computeStaleApplications(jobs: Job[], thresholdDays: number): Job[] {
+  return jobs.filter(job => staleDaysSince(job, thresholdDays) !== null);
 }
