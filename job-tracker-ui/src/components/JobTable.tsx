@@ -371,10 +371,10 @@ export function JobTable() {
         </p>
       ) : (
         <div className="overflow-auto flex-1 min-h-0">
-        <Table style={{ width: totalWidth, tableLayout: "fixed" }}>
+        <Table style={{ width: '100%', minWidth: totalWidth, tableLayout: "fixed" }}>
           <colgroup>
-            {visibleCols.map((c) => (
-              <col key={c.key} style={{ width: widths[c.key as ColumnKey] }} />
+            {visibleCols.map((c, i) => (
+              <col key={c.key} style={i < visibleCols.length - 1 ? { width: widths[c.key as ColumnKey] } : undefined} />
             ))}
           </colgroup>
           <TableCaption>
