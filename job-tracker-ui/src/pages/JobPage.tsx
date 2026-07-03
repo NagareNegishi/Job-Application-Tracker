@@ -22,8 +22,8 @@ function JobPage() {
         <IconToggle options={VIEW_OPTIONS} value={viewMode} onChange={setViewMode} />
       </div>
 
-      <div className={`${viewMode === 'kanban' ? 'max-w-7xl px-2' : 'max-w-5xl px-4'} mx-auto w-full pb-1 flex-1 flex flex-col min-h-0 min-w-0`}>
-        <div className={`bg-card rounded-lg shadow-sm ${viewMode === 'kanban' ? 'px-4 pt-4 pb-0' : 'px-4 pt-3 pb-0'} flex-1 flex flex-col min-h-0 min-w-0`}>
+      <div className={`${viewMode === 'kanban' ? 'max-w-7xl px-1 sm:px-2' : 'max-w-5xl px-2 sm:px-4'} mx-auto w-full pb-1 flex-1 flex flex-col min-h-0 min-w-0`}>
+        <div className={`bg-card rounded-lg shadow-sm ${viewMode === 'kanban' ? 'px-2 sm:px-4 pt-4 pb-0' : 'px-2 sm:px-4 pt-3 pb-0'} flex-1 flex flex-col min-h-0 min-w-0`}>
           {viewMode === 'table' ? <JobTable /> : <KanbanBoard />}
         </div>
       </div>
