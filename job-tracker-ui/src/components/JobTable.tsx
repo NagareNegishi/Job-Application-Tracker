@@ -475,7 +475,7 @@ export function JobTable() {
                     onChange={(v) => setFilters((f) => ({ ...f, location: v }))}
                   />
                   <div
-                    onMouseDown={startResize("location" as ColumnKey, 220)}
+                    onMouseDown={startResize("location" as ColumnKey, 260)}
                     className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                   />
                 </TableHead>
