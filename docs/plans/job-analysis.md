@@ -26,6 +26,75 @@ CV integration is deferred — analysis uses profile text only.
 
 ---
 
+## Open Decisions
+
+Being resolved this session. Each item is rewritten from OPEN to the decision + reasoning once settled. Settled items get folded into the Design Decisions table / field specs above before implementation.
+
+**Profile — API & data**
+
+### D1. Clearing a field via PATCH — OPEN
+Merge-patch by null-check can't distinguish "field omitted" (leave unchanged) from "field set to null" (clear it). Need a rule for clearing `WorkingRight` and for emptying the array fields.
+
+### D2. PATCH array semantics — replace or merge — OPEN
+When PATCH includes `skills` / `workHistory` / `education`, does it replace the whole array or append? How is a single entry deleted?
+
+### D3. "Has a profile" definition for the analysis 400 check — OPEN
+Is it row-exists, or row-has-meaningful-content? A PUT could create a row with all-empty arrays that passes a row-exists check but gives the AI nothing.
+
+### D4. Required vs. optional fields on PUT — OPEN
+Can a profile be created entirely empty, or is at least one field (e.g. `TargetRoles`) required?
+
+### D5. GET empty-response shape — OPEN
+GET returns `{}` when not created. Do the fields otherwise come back as empty arrays `[]`? Frontend needs a reliable "no profile yet" signal distinct from "profile exists but empty."
+
+**Profile — validation**
+
+### D6. Field limits — OPEN
+Max string length per tag, max item count per array, max `description` length on `WorkHistoryEntry`. Project has a `ValidationConstants` pattern to follow.
+
+### D7. Date validation — OPEN
+`"YYYY-MM"` format enforcement on work history; `from`/`to` ordering; plausible year ranges on education.
+
+**Analysis — inputs & gating**
+
+### D8. Which Job fields feed the prompt — OPEN
+Job has `Description`, `Notes`, `Role`, `Company`, `Location`, `WorkMode`, salary. Which subset goes to Claude, and what happens when `Description` (nullable) is empty?
+
+### D9. AiUser role / `AiEnabled` policy gating — OPEN
+Auto-fill parsing requires the `AiEnabled` policy. Plan currently states only `[Authorize]` + demo-block for analysis. Should analysis also be gated to AI-enabled users?
+
+### D10. Rate limiting — OPEN
+Parsing uses a `"parse"` 2/min policy. Five AI endpoints per job are costly. New policy, shared or per-endpoint?
+
+### D11. Claude failure / malformed JSON handling — OPEN
+Status code and response shape when the API errors or returns unparseable output.
+
+**Analysis — output bounds**
+
+### D12. Count bounds per type — OPEN
+How many `skills` / `gaps` / `questions` each endpoint returns. Prompts need explicit min/max.
+
+### D13. Max output tokens — OPEN
+Per analysis call.
+
+**Frontend**
+
+### D14. Profile save model vs. the PUT/PATCH split — OPEN
+One page-level Save (sends everything) vs. per-section save (partial PATCH). Drives whether the PATCH endpoint's partial semantics are actually used. Tied to D2.
+
+### D15. Analysis result lifetime — OPEN
+Results aren't saved server-side. Persist in component state across tab switches, or vanish on navigate-away?
+
+### D16. Nav link + demo user — OPEN
+Where the Profile link sits, and whether it shows for the demo user (403'd from analysis, but could still edit a profile?).
+
+**Testing**
+
+### D17. Coverage expectations — OPEN
+Controller-test scope for the new profile + analysis controllers, mirroring existing conventions.
+
+---
+
 ## Profile
 
 ### Fields
