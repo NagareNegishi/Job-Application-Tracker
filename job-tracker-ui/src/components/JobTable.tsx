@@ -47,7 +47,7 @@ function useColWidths() {
     () => Object.fromEntries(COLUMNS.map((c) => [c.key, c.defaultWidth])) as Record<ColumnKey, number>
   );
 
-  function startResize(key: ColumnKey) {
+  function startResize(key: ColumnKey, max = COL_RESIZE_MAX) {
     return (e: React.MouseEvent) => {
       e.preventDefault();
       const startX = e.clientX;
@@ -55,7 +55,7 @@ function useColWidths() {
       const onMove = (ev: MouseEvent) => {
         setWidths((prev) => ({
           ...prev,
-          [key]: Math.min(COL_RESIZE_MAX, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX)),
+          [key]: Math.min(max, Math.max(COL_RESIZE_MIN, startW + ev.clientX - startX)),
         }));
       };
       const onUp = () => {
@@ -312,14 +312,18 @@ export function JobTable() {
 
       {/* Page header */}
       <div className="flex items-center justify-between px-2">
-        <h1 className="text-2xl font-bold">Job Applications</h1>
+        <h1 className="text-2xl font-bold">
+          <span className="hidden sm:inline">Job Applications</span>
+          <span className="sm:hidden">Applications</span>
+        </h1>
         <Button
           variant="outline"
           className="shadow-xs hover:bg-secondary"
           onClick={handleAddJob}
         >
           <Plus className="mr-2 h-4 w-4" />
-          Add New Job
+          <span className="hidden sm:inline">Add New Job</span>
+          <span className="sm:hidden">New Job</span>
         </Button>
       </div>
       <hr className="border-t border-border" />
@@ -367,10 +371,10 @@ export function JobTable() {
         </p>
       ) : (
         <div className="overflow-auto flex-1 min-h-0">
-        <Table style={{ width: totalWidth, tableLayout: "fixed" }}>
+        <Table style={{ width: '100%', minWidth: totalWidth, tableLayout: "fixed" }}>
           <colgroup>
-            {visibleCols.map((c) => (
-              <col key={c.key} style={{ width: widths[c.key as ColumnKey] }} />
+            {visibleCols.map((c, i) => (
+              <col key={c.key} style={i < visibleCols.length - 1 ? { width: widths[c.key as ColumnKey] } : undefined} />
             ))}
           </colgroup>
           <TableCaption>
@@ -463,12 +467,16 @@ export function JobTable() {
                 <SortableHead field="closedAt" label="Closed At" {...sortProps} />
               )}
               {isVisible("location") && (
-                <TableHead>
+                <TableHead className="relative overflow-visible">
                   <FilterPopover
                     label="Location"
                     options={availableLocations}
                     value={filters.location}
                     onChange={(v) => setFilters((f) => ({ ...f, location: v }))}
+                  />
+                  <div
+                    onMouseDown={startResize("location" as ColumnKey, 260)}
+                    className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-border select-none"
                   />
                 </TableHead>
               )}
