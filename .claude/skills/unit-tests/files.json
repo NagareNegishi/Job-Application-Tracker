@@ -78,7 +78,7 @@
     "JobTrackerApi/Services/IEmailService.cs": { "value": "skip", "testFile": null, "planned": null, "tested": null },
     "JobTrackerApi/Services/IParsingService.cs": { "value": "skip", "testFile": null, "planned": null, "tested": null },
     "JobTrackerApi/Services/IStorageService.cs": { "value": "skip", "testFile": null, "planned": null, "tested": null },
-    "JobTrackerApi/Services/LocalStorageService.cs": { "value": "high", "testFile": null, "planned": "2026-07-03", "tested": null },
+    "JobTrackerApi/Services/LocalStorageService.cs": { "value": "high", "testFile": "JobTrackerApi.Tests/LocalStorageServiceTests.cs", "planned": "2026-07-03", "tested": "2026-07-03" },
     "JobTrackerApi/Services/LogEmailService.cs": { "value": "high", "testFile": null, "planned": "2026-07-03", "tested": null },
     "JobTrackerApi/Services/ResendEmailService.cs": { "value": "medium", "testFile": null, "planned": null, "tested": null },
     "JobTrackerApi/Services/S3StorageService.cs": { "value": "medium", "testFile": null, "planned": null, "tested": null },

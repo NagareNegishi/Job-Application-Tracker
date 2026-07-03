@@ -1,15 +1,3 @@
-## JobTrackerApi/Services/LocalStorageService.cs
-- Mocks: temp directory via `Path.GetTempPath()`; `IConfiguration` stub returning temp path; `IFormFile` mock via Moq
-- [ ] Constructor_MissingConfig_ThrowsInvalidOperationException
-- [ ] Constructor_ValidConfig_CreatesUploadsDirectory
-- [ ] SaveAsync_ValidFile_ReturnsStoredName
-- [ ] SaveAsync_ValidFile_WritesContentToDisk
-- [ ] DeleteAsync_ExistingFile_RemovesFile
-- [ ] DeleteAsync_MissingFile_DoesNotThrow
-- [ ] GetAsync_ExistingFile_ReturnsReadableStream
-- [ ] GetAsync_MissingFile_ThrowsFileNotFoundException
-- [ ] GetDownloadUrlAsync_AnyKey_ReturnsNull
-
 ## JobTrackerApi/Services/LogEmailService.cs
 - Mocks: `Mock<ILogger<LogEmailService>>` (Moq); verify LogInformation called with correct structured args
 - [ ] SendEmailAsync_ValidInput_LogsEmailDetails
