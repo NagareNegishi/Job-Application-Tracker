@@ -35,9 +35,6 @@ Being resolved this session. Each item is rewritten from OPEN to the decision + 
 
 **Profile — validation**
 
-### D6. Field limits — OPEN
-Max string length per tag, max item count per array, max `description` length on `WorkHistoryEntry`. Project has a `ValidationConstants` pattern to follow.
-
 ### D7. Date validation — OPEN
 `"YYYY-MM"` format enforcement on work history; `from`/`to` ordering; plausible year ranges on education.
 
@@ -126,6 +123,14 @@ Controller-test scope for the new profile + analysis controllers, mirroring exis
 | `degree` | `string` | Degree and field |
 | `from` | `int` | Year started |
 | `to` | `int?` | Year graduated; `null` = currently enrolled |
+
+### Validation
+
+Added to `ValidationConstants` (`MaxProfile*` etc.). Generous by design — bounds payload/abuse, not real users.
+
+- **Array counts:** TargetRoles 10, Skills 50, Certifications 20, Languages 15, WorkingRights 20, WorkHistory 20, Education 10.
+- **String lengths:** TargetRoles item 100, Skills item 50, Certifications item 100, Languages item 30; WorkHistoryEntry `title` 100 / `company` 100 / `description` 2000; EducationEntry `institution` 100 / `degree` 100; WorkingRightEntry `country` 2 (regex `^[A-Z]{2}$`).
+- **Dates:** see D7 (open).
 
 ### API Shape
 
