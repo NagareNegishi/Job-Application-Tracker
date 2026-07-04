@@ -39,26 +39,13 @@ CV integration is deferred — analysis uses profile text only.
 | Profile page: per-section Save (D14) | Each section (Skills, Work History, Education, …) has its own Save that PATCHes only that section's field(s). Fits how profiles are actually edited — small partial updates over time — and avoids a single bottom Save that forces scrolling past everything to change one tag. Merge-patch (D3b) makes it natural: each PATCH carries one field, untouched sections are never sent (no accidental-`[]` wipe). **First save** of an as-yet-unsaved profile (GET returned empty) uses PUT with the whole current form (mostly-empty arrays, save is permissive); every save after uses PATCH |
 | Analysis result lifetime: page-durable (D15) | All 5 results live only in Job Detail page state — kept while on the page (switching among the types preserves prior results), reset on refresh or navigate-away; re-running a type replaces its result with a fresh call. No client cache or persistence — simplest, and reinforces "on-demand, always fresh". Persisting a result long-term is out of scope here (see the *Save analysis to job* follow-up in Notes) |
 | Nav link + demo user (D16) | Profile is a **top-level nav link** (peer of Jobs/Dashboard), not tucked under Settings/account menu — analysis buttons are gated on a filled profile, so discoverability matters (a buried link leaves users stuck on "why are the analysis buttons disabled?"). The **demo user sees Profile and can edit it**, seeded with a sample profile via `DemoSeed` (like demo jobs) so the feature shows fully; analysis endpoints still 403 for demo (D11, API-cost block). Because the demo profile is editable, the periodic demo-reset + login re-seed must also reset/re-seed it — see the *demo profile reset* follow-up in Notes |
+| Test coverage scope (D17) | Three test files, mirroring existing conventions (in-memory EF, direct controller instantiation, manual `ClaimsPrincipal`, service mocked at the controller boundary — same as `IParsingService` in `JobsControllerTests`). **(1) `ProfileDTOTests`** (new, mirrors `JobDTOTests`) — array-count caps, per-item string caps, `country` regex `^[A-Z]{2}$`, date attributes (YYYY-MM regex / `[Range(1900,2099)]`), and `IValidatableObject` cross-field rules (`from` not future, `to ≥ from`, `to` null = current). **(2) Profile tests in `AccountControllerTests`** (extend) — GET empty `{}` vs full; PUT creates + 409 if exists; PATCH merge semantics (`[]` clears, omitted untouched) + 404 if none; own-profile-only. **(3) `AnalysisControllerTests`** (new, mocks `IAnalysisService`, no live Claude) — 400 on description too short/empty/over-max, 400 on profile-gate fail, 400 on no profile, 403 demo, 502 when service throws `AnalysisFormatException`, 200 happy path returns mocked result. **Out of scope** (consistent with existing suite): no `ClaudeAnalysisServiceTests` (AI service mocked at controller, never live-tested — same as `ClaudeParsingService`); no tests for `[Authorize]`, the `AiEnabled` policy, or the `"analyse"` rate-limit (pipeline concerns, untested everywhere else) |
 
 ---
 
 ## Open Decisions
 
-Being resolved across sessions. Once settled, each item is folded into the Design Decisions table / field specs / API sections above and removed from this list.
-
-**Pick up here (as of 2026-07-04):** Settled & folded — D1…D14, D15. **Next: D16 (nav link + demo user).**
-
-Remaining: D16 (frontend), D17 (testing).
-
-**Frontend**
-
-### D16. Nav link + demo user — OPEN
-Where the Profile link sits, and whether it shows for the demo user (403'd from analysis, but could still edit a profile?).
-
-**Testing**
-
-### D17. Coverage expectations — OPEN
-Controller-test scope for the new profile + analysis controllers, mirroring existing conventions.
+**All decisions D1–D17 settled and folded into the Design Decisions table above (as of 2026-07-04).** No open questions remain — the plan is ready to implement, starting at Step 1 (`UserProfile` entity + migration).
 
 ---
 
