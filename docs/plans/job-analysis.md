@@ -19,7 +19,7 @@ CV integration is deferred — analysis uses profile text only.
 | One profile per user (unique FK to `ApplicationUser`) | Cascade deletes automatic; no orphan cleanup needed |
 | `IAnalysisService` / `ClaudeAnalysisService` in `Services/` | Follows existing service abstraction pattern; mockable in tests |
 | `AnalysisController` at `/api/analyse` — content-scoped, not job-scoped | Analysis takes the job's text in the request body; no stored-job fetch, so no `{jobId}`, no 404, no ownership check. Serves both a saved-job flow and an ad-hoc "is this worth it?" paste through one endpoint |
-| Only `description` is required; `role`/`company` are optional context | `description` is the sole signal that matters; a saved job always has role/company, an ad-hoc paste may not. Null/empty `description` → 400; thin-but-present → the analysis returns "not enough information" rather than a 400 |
+| Only `description` is required; `role`/`company` are optional context | `description` is the sole signal that matters; a saved job always has role/company, an ad-hoc paste may not. `description` must be 30 chars (`MinAnalysisDescription`) to the existing `Description` max; below/empty/over → 400. The floor bounds accidental/trivial input, not quality (char count ≠ meaning); thin-but-present clears the gate and the analysis returns "not enough information" instead |
 | Ad-hoc entry point exposes Alignment only; saved jobs expose all 5 types | Ad-hoc is a triage check ("worth pursuing?"); the other four analyses only make sense for a job you're actually tracking |
 | PUT creates, PATCH updates (separate endpoints) | Avoids re-sending and re-validating the full profile on every edit; only changed fields sent and validated on PATCH |
 | PATCH follows JSON Merge Patch (RFC 7396): whole-array replace, `[]` clears, omit = unchanged | Standard and stateless; no element-identity tracking or separate delete op; pairs with per-section save so untouched sections are never sent |
@@ -210,7 +210,7 @@ Request body (minimal — only `description` is required):
 
 All endpoints:
 - Require `[Authorize]`; block demo user (403)
-- Return 400 if `description` is null/empty — the only job-side gate. `role`/`company` are optional context, never gated. A thin-but-present description is *not* a 400; the analysis itself returns a "not enough information" style answer.
+- Return 400 if `description` is null/empty, shorter than `MinAnalysisDescription` (30 chars), or longer than the existing `Description` max (reused so the ad-hoc paste is bounded like a saved job). This length check is the only job-side gate — it bounds accidental/trivial input ("test", "asdf"), not quality; deliberate abuse is handled by rate limiting (D10). Enforced client-side too. `role`/`company` are optional context, never gated. A description that clears the minimum but is still thin is *not* a 400; the analysis itself returns a "not enough information" style answer.
 - Return 400 unless the profile meets the analysis minimum — ALL of: `TargetRoles` non-empty, `Skills` non-empty, `WorkingRights` non-empty (≥1 entry, any status incl. `RequiresSponsorship`), and at least one of `Certifications` / `WorkHistory` / `Education` non-empty. `Languages` not required. Same rule enforced client-side (analysis buttons disabled until met); defined once, identical both sides.
 
 **Two entry points, one endpoint:**
