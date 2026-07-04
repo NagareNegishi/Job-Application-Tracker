@@ -111,7 +111,7 @@ All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full d
 | Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs | Done |
 | Interview reminder email | Scheduled job emails user day-before interviewAt via IEmailService | Early planning |
 | Stale application indicator | `StaleIndicator` component — amber Clock icon + tooltip in jobs list and Kanban card; `staleDaysSince` helper extracted in `dashboardUtils.ts` | Done |
-| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Planning — polishing design decisions in `docs/plans/job-analysis.md` (Open Decisions: D1–D10 settled; resume at D11 — Claude failure/malformed-JSON handling) |
+| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Planning — polishing design decisions in `docs/plans/job-analysis.md` (Open Decisions D1–D15 settled & folded; **resume at D16** — Profile nav link placement + demo-user visibility; D17 testing remains). New deferred follow-up captured: optional "Save to job" for the 2 prep analyses onto new `Job` fields |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
