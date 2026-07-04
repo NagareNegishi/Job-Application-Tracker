@@ -18,7 +18,9 @@ CV integration is deferred — analysis uses profile text only.
 | All analysis endpoints use the full profile | Alignment, gaps, and interview questions all benefit from the complete picture — no field is exclusive to one analysis type |
 | One profile per user (unique FK to `ApplicationUser`) | Cascade deletes automatic; no orphan cleanup needed |
 | `IAnalysisService` / `ClaudeAnalysisService` in `Services/` | Follows existing service abstraction pattern; mockable in tests |
-| `JobAnalysisController` — separate from `JobsController` | Five endpoints with their own route prefix keep `JobsController` clean |
+| `AnalysisController` at `/api/analyse` — content-scoped, not job-scoped | Analysis takes the job's text in the request body; no stored-job fetch, so no `{jobId}`, no 404, no ownership check. Serves both a saved-job flow and an ad-hoc "is this worth it?" paste through one endpoint |
+| Only `description` is required; `role`/`company` are optional context | `description` is the sole signal that matters; a saved job always has role/company, an ad-hoc paste may not. Null/empty `description` → 400; thin-but-present → the analysis returns "not enough information" rather than a 400 |
+| Ad-hoc entry point exposes Alignment only; saved jobs expose all 5 types | Ad-hoc is a triage check ("worth pursuing?"); the other four analyses only make sense for a job you're actually tracking |
 | PUT creates, PATCH updates (separate endpoints) | Avoids re-sending and re-validating the full profile on every edit; only changed fields sent and validated on PATCH |
 | PATCH follows JSON Merge Patch (RFC 7396): whole-array replace, `[]` clears, omit = unchanged | Standard and stateless; no element-identity tracking or separate delete op; pairs with per-section save so untouched sections are never sent |
 | `WorkingRights` is an array of `(country, status)` pairs, `country` = ISO 3166-1 alpha-2 | One person can hold rights in multiple countries and jobs span countries; a single enum can't express this. ISO codes are standard, unambiguous, no duplication |
@@ -35,14 +37,11 @@ CV integration is deferred — analysis uses profile text only.
 
 Being resolved across sessions. Once settled, each item is folded into the Design Decisions table / field specs / API sections above and removed from this list.
 
-**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7. **Next: D8 (which Job fields feed the prompt).**
+**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7, D8. **Next: D9 (AiUser role / `AiEnabled` policy gating).**
 
-Remaining: D8–D13 (analysis inputs/gating, output bounds), D14–D16 (frontend), D17 (testing).
+Remaining: D9–D13 (analysis inputs/gating, output bounds), D14–D16 (frontend), D17 (testing).
 
 **Analysis — inputs & gating**
-
-### D8. Which Job fields feed the prompt — OPEN
-Job has `Description`, `Notes`, `Role`, `Company`, `Location`, `WorkMode`, salary. Which subset goes to Claude, and what happens when `Description` (nullable) is empty?
 
 ### D9. AiUser role / `AiEnabled` policy gating — OPEN
 Auto-fill parsing requires the `AiEnabled` policy. Plan currently states only `[Authorize]` + demo-block for analysis. Should analysis also be gated to AI-enabled users?
@@ -196,19 +195,35 @@ PATCH body (partial — only changed fields):
 
 ### Endpoints
 
-All endpoints:
-- `POST /api/jobs/{jobId}/analyse/<type>`
-- Require `[Authorize]`; block demo user (403)
-- Return 400 unless the profile meets the analysis minimum — ALL of: `TargetRoles` non-empty, `Skills` non-empty, `WorkingRights` non-empty (≥1 entry, any status incl. `RequiresSponsorship`), and at least one of `Certifications` / `WorkHistory` / `Education` non-empty. `Languages` not required. Same rule enforced client-side (analysis buttons disabled until met); defined once, identical both sides.
-- Return 404 if job not found or belongs to another user
+**Content-scoped, not job-scoped.** Analysis takes the job's text in the request body — it does not fetch a stored job by id. So there is no `{jobId}` in the route, no job lookup, and no 404/ownership check: a pasted description is not a per-user resource, only the profile is. One code path serves both entry points below.
 
-| Type | Endpoint |
-|---|---|
-| Alignment score | `POST /api/jobs/{jobId}/analyse/alignment` |
-| Top skills for this role | `POST /api/jobs/{jobId}/analyse/skills` |
-| Gap analysis | `POST /api/jobs/{jobId}/analyse/gaps` |
-| Questions to ask | `POST /api/jobs/{jobId}/analyse/questions-to-ask` |
-| Likely interview questions | `POST /api/jobs/{jobId}/analyse/interview-questions` |
+```
+POST /api/analyse/<type>
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+Request body (minimal — only `description` is required):
+```json
+{ "description": "...", "role": "Senior Backend Engineer", "company": "Acme" }
+```
+
+All endpoints:
+- Require `[Authorize]`; block demo user (403)
+- Return 400 if `description` is null/empty — the only job-side gate. `role`/`company` are optional context, never gated. A thin-but-present description is *not* a 400; the analysis itself returns a "not enough information" style answer.
+- Return 400 unless the profile meets the analysis minimum — ALL of: `TargetRoles` non-empty, `Skills` non-empty, `WorkingRights` non-empty (≥1 entry, any status incl. `RequiresSponsorship`), and at least one of `Certifications` / `WorkHistory` / `Education` non-empty. `Languages` not required. Same rule enforced client-side (analysis buttons disabled until met); defined once, identical both sides.
+
+**Two entry points, one endpoint:**
+1. *From a saved job* (job detail page) — exposes all 5 analysis types. The frontend pre-fills `description` from the stored job (or prompts for one if empty), plus `role`/`company`, then posts the body above.
+2. *Ad-hoc triage* ("is this worth considering?") — user pastes just a `description`, no saved job. Exposes **Alignment only**.
+
+| Type | Endpoint | Entry points |
+|---|---|---|
+| Alignment score | `POST /api/analyse/alignment` | saved job + ad-hoc |
+| Top skills for this role | `POST /api/analyse/skills` | saved job |
+| Gap analysis | `POST /api/analyse/gaps` | saved job |
+| Questions to ask | `POST /api/analyse/questions-to-ask` | saved job |
+| Likely interview questions | `POST /api/analyse/interview-questions` | saved job |
 
 ### Response Shapes
 
@@ -262,9 +277,10 @@ Score is 1–5. `reasoning` is one sentence.
 | # | Item | Status |
 |---|---|---|
 | 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | — |
-| 7 | Add `JobAnalysisController` with 5 endpoints | — |
+| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`) | — |
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | — |
-| 9 | Add analysis UI to Job Detail page — 5 independent buttons, each shows its own result inline | — |
+| 9 | Add analysis UI to Job Detail page — 5 independent buttons; pre-fill `description` from the job (prompt if empty); each shows its own result inline | — |
+| 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
 
 ---
 
