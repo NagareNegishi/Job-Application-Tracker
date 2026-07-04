@@ -28,6 +28,7 @@ CV integration is deferred — analysis uses profile text only.
 | Date format enforced by attribute; "not future" + `from ≤ to` enforced by `IValidatableObject` | A static attribute can't bound against "today", so runtime cross-field validation handles not-future and ordering. YYYY-MM is zero-padded, so lexicographic string compare equals chronological — no date parsing needed. Dropping future dates also lets Education use a plain `[Range(1900, 2099)]` (compile-time constant) instead of a custom attribute |
 | Save is permissive; the analysis gate is strict | Profiles are built incrementally — PUT/PATCH accept sparse or empty input; required-content is enforced only at analysis time (the 400 gate), not at save |
 | Return 400 if profile not set | Analysis has no input without a profile; clear error, not a silent empty response |
+| Analysis requires the `AiEnabled` policy | Every Claude-backed feature sits behind AI access (same as auto-fill parsing), so the admin AI-access switch governs the whole paid surface — no ungated hole where a non-AI user burns API budget |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
 | `claude-haiku-4-5` model | Fast and cheap; each call is a single focused extraction, not reasoning |
 
@@ -37,14 +38,11 @@ CV integration is deferred — analysis uses profile text only.
 
 Being resolved across sessions. Once settled, each item is folded into the Design Decisions table / field specs / API sections above and removed from this list.
 
-**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7, D8. **Next: D9 (AiUser role / `AiEnabled` policy gating).**
+**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7, D8, D9. **Next: D10 (rate limiting).**
 
-Remaining: D9–D13 (analysis inputs/gating, output bounds), D14–D16 (frontend), D17 (testing).
+Remaining: D10–D13 (analysis inputs/gating, output bounds), D14–D16 (frontend), D17 (testing).
 
 **Analysis — inputs & gating**
-
-### D9. AiUser role / `AiEnabled` policy gating — OPEN
-Auto-fill parsing requires the `AiEnabled` policy. Plan currently states only `[Authorize]` + demo-block for analysis. Should analysis also be gated to AI-enabled users?
 
 ### D10. Rate limiting — OPEN
 Parsing uses a `"parse"` 2/min policy. Five AI endpoints per job are costly. New policy, shared or per-endpoint?
@@ -209,7 +207,7 @@ Request body (minimal — only `description` is required):
 ```
 
 All endpoints:
-- Require `[Authorize]`; block demo user (403)
+- Require `[Authorize]` **and the `AiEnabled` policy** (same as auto-fill parsing — every Claude-backed feature requires AI access); block demo user (403)
 - Return 400 if `description` is null/empty, shorter than `MinAnalysisDescription` (30 chars), or longer than the existing `Description` max (reused so the ad-hoc paste is bounded like a saved job). This length check is the only job-side gate — it bounds accidental/trivial input ("test", "asdf"), not quality; deliberate abuse is handled by rate limiting (D10). Enforced client-side too. `role`/`company` are optional context, never gated. A description that clears the minimum but is still thin is *not* a 400; the analysis itself returns a "not enough information" style answer.
 - Return 400 unless the profile meets the analysis minimum — ALL of: `TargetRoles` non-empty, `Skills` non-empty, `WorkingRights` non-empty (≥1 entry, any status incl. `RequiresSponsorship`), and at least one of `Certifications` / `WorkHistory` / `Education` non-empty. `Languages` not required. Same rule enforced client-side (analysis buttons disabled until met); defined once, identical both sides.
 
