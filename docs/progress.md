@@ -55,7 +55,7 @@ C#/.NET job application tracker project. Full-stack ASP.NET Core 10 Web API + Re
 
 ## Production Build Status
 
-All planned production steps complete. See `docs/Production build plan.md` for full detail.
+All planned production steps complete. See `docs/plans/production-build.md` for full detail.
 
 | Step | Item | Status |
 |---|---|---|
@@ -75,7 +75,7 @@ All planned production steps complete. See `docs/Production build plan.md` for f
 
 ## Demo + Auth Features Status
 
-All planned steps complete. See `docs/Demo and Auth Features Plan.md` for full detail.
+All planned steps complete. See `docs/plans/demo-auth-features.md` for full detail.
 
 | Step | Item | Status |
 |---|---|---|
