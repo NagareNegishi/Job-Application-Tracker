@@ -22,6 +22,8 @@ CV integration is deferred — analysis uses profile text only.
 | PUT creates, PATCH updates (separate endpoints) | Avoids re-sending and re-validating the full profile on every edit; only changed fields sent and validated on PATCH |
 | PATCH follows JSON Merge Patch (RFC 7396): whole-array replace, `[]` clears, omit = unchanged | Standard and stateless; no element-identity tracking or separate delete op; pairs with per-section save so untouched sections are never sent |
 | `WorkingRights` is an array of `(country, status)` pairs, `country` = ISO 3166-1 alpha-2 | One person can hold rights in multiple countries and jobs span countries; a single enum can't express this. ISO codes are standard, unambiguous, no duplication |
+| Dates: no future dates; "current" role/study = `null` end date, set via a per-entry checkbox | Standard résumé UX (LinkedIn/Seek); an explicit "currently here" checkbox is more discoverable than an inferred blank field; multiple concurrent current entries allowed; start date always required |
+| Date format enforced by attribute; "not future" + `from ≤ to` enforced by `IValidatableObject` | A static attribute can't bound against "today", so runtime cross-field validation handles not-future and ordering. YYYY-MM is zero-padded, so lexicographic string compare equals chronological — no date parsing needed. Dropping future dates also lets Education use a plain `[Range(1900, 2099)]` (compile-time constant) instead of a custom attribute |
 | Save is permissive; the analysis gate is strict | Profiles are built incrementally — PUT/PATCH accept sparse or empty input; required-content is enforced only at analysis time (the 400 gate), not at save |
 | Return 400 if profile not set | Analysis has no input without a profile; clear error, not a silent empty response |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
@@ -33,17 +35,9 @@ CV integration is deferred — analysis uses profile text only.
 
 Being resolved across sessions. Once settled, each item is folded into the Design Decisions table / field specs / API sections above and removed from this list.
 
-**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6. **Next: D7 (date validation)** — proposal on the table, awaiting confirmation:
-- WorkHistory `from`/`to`: regex `^(19|20)\d{2}-(0[1-9]|1[0-2])$` (YYYY-MM, 1900–2099); `to` optional.
-- Education years: `Range(1900, currentYear + 10)`; `to` optional.
-- Enforce `from ≤ to` via `IValidatableObject` on the entry DTOs; lenient on future start dates.
+**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7. **Next: D8 (which Job fields feed the prompt).**
 
-After D7, remaining: D8–D13 (analysis inputs/gating, output bounds), D14–D16 (frontend), D17 (testing).
-
-**Profile — validation**
-
-### D7. Date validation — OPEN
-`"YYYY-MM"` format enforcement on work history; `from`/`to` ordering; plausible year ranges on education.
+Remaining: D8–D13 (analysis inputs/gating, output bounds), D14–D16 (frontend), D17 (testing).
 
 **Analysis — inputs & gating**
 
@@ -119,8 +113,8 @@ Controller-test scope for the new profile + analysis controllers, mirroring exis
 |---|---|---|
 | `title` | `string` | Job title |
 | `company` | `string` | Employer |
-| `from` | `string` | Start date (`"YYYY-MM"`) |
-| `to` | `string?` | End date (`"YYYY-MM"`); `null` = current role |
+| `from` | `string` | Start date (`"YYYY-MM"`); required; not future |
+| `to` | `string?` | End date (`"YYYY-MM"`); `null` = current role (checkbox); `≥ from`; not future |
 | `description` | `string` | Responsibilities and achievements |
 
 **EducationEntry:**
@@ -128,8 +122,8 @@ Controller-test scope for the new profile + analysis controllers, mirroring exis
 |---|---|---|
 | `institution` | `string` | University or school |
 | `degree` | `string` | Degree and field |
-| `from` | `int` | Year started |
-| `to` | `int?` | Year graduated; `null` = currently enrolled |
+| `from` | `int` | Year started; required; not future |
+| `to` | `int?` | Year graduated; `null` = currently enrolled (checkbox); `≥ from`; not future |
 
 ### Validation
 
@@ -137,7 +131,9 @@ Added to `ValidationConstants` (`MaxProfile*` etc.). Generous by design — boun
 
 - **Array counts:** TargetRoles 10, Skills 50, Certifications 20, Languages 15, WorkingRights 20, WorkHistory 20, Education 10.
 - **String lengths:** TargetRoles item 100, Skills item 50, Certifications item 100, Languages item 30; WorkHistoryEntry `title` 100 / `company` 100 / `description` 2000; EducationEntry `institution` 100 / `degree` 100; WorkingRightEntry `country` 2 (regex `^[A-Z]{2}$`).
-- **Dates:** see D7 (open).
+- **Dates:**
+  - *Format (attribute):* WorkHistory `from`/`to` — `[RegularExpression]` `^(19|20)\d{2}-(0[1-9]|1[0-2])$` (YYYY-MM, 1900–2099). Education `from`/`to` — `[Range(1900, 2099)]`.
+  - *Runtime (`IValidatableObject` on the entry DTOs):* `from` required and not in the future (≤ current month/year); `to` optional (`null` = current), and when present `≥ from` and not in the future. Month comparison is lexicographic on the zero-padded YYYY-MM string.
 
 ### API Shape
 
@@ -279,4 +275,5 @@ Score is 1–5. `reasoning` is one sentence.
 - Profile page vs Settings: `/profile` is a dedicated page — profile is substantial enough to warrant its own route rather than a section in Settings.
 - Country picker (frontend): stores the ISO 3166-1 alpha-2 code, displays full country names via `Intl.DisplayNames` (`new Intl.DisplayNames(['en'], { type: 'region' }).of('NZ')` → "New Zealand") — zero-dependency, reusable across projects.
 - WorkingRights entry (frontend): reuse the country picker; default country from the browser locale/region; default status to "don't have it" (`RequiresSponsorship`) so users consciously set their actual right rather than accepting an assumed one.
+- WorkHistory/Education entry (frontend): per-entry "I currently work/study here" checkbox — ticking it disables and clears the end-date field and sends `to: null`. Multiple entries may be current. Start date always required. Cap date inputs at the current month/year (no future dates).
 - Profile quality: **now** a lightweight frontend advisory — a simple heuristic that flags "meets the minimum but thin; richer profiles give better analysis" when the 400 gate passes but content is sparse. A **full profile-quality score** (weighted 0–100 / meter + per-field improvement hints) is deferred to a **separate plan** — client-side only, like the dashboard. Add it to `docs/progress.md` upcoming work when this plan lands.
