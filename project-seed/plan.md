@@ -24,10 +24,12 @@ seed-repo/
 │   └── .env.example
 ├── .claude/
 │   ├── settings.json
-│   └── skills/                  # portable skills only
+│   ├── rules/                   # example path-scoped rule file
+│   └── skills/                  # portable skills only, state files excluded
 ├── docs/
 │   ├── progress.md              # empty template
-│   └── plans/                   # .gitkeep; convention documented in CLAUDE.md
+│   ├── plans/                   # .gitkeep; convention documented in CLAUDE.md
+│   └── reference/               # generic concept docs carried from source repo
 ├── examples/
 │   └── dotnet-postgres/         # this repo's real files + per-stack README
 ├── CLAUDE.md                    # section-header skeleton to fill per project
@@ -52,17 +54,58 @@ seed-repo/
   `dist.nuget.org`, `marketplace.visualstudio.com`, `vscode.blob.core.windows.net`,
   `update.code.visualstudio.com`, `dotnetcli.blob.core.windows.net`, `ui.shadcn.com`.
   Undecided: `api.osv.dev` (used by owasp skills — generic if those skills ship).
-- `.claude/settings.json` — keep permissions as-is. The `.comment-audit` allow
-  entries stay only if the code-commenting skill ships with the seed.
+- `.claude/settings.json` — keep permissions as-is; `.comment-audit` entries stay
+  (comment-audit skill ships). Do not copy `settings.local.json`.
+- `.claude/rules/` — mechanism ships (path-scoped rule files with `paths:`
+  frontmatter); replace this repo's backend/frontend/tests rules with one example.
 - `CLAUDE.md` — ready-made skeleton at `project-seed/CLAUDE.md.template`; rename
   to `CLAUDE.md` at the seed root.
 - `docs/progress.md` — empty template with the update convention noted.
 
-## Skills triage (confirm with `ls .claude/skills` — repo-level list unverified)
+## Skills triage (confirmed against `.claude/skills/`)
 
-- Portable as-is: code-commenting, human-writing, github-issue-creator,
-  dev-research, owasp-guard/scan/update, unit-tests, learning-mode-coding.
+- Portable as-is: code-commenting, comment-audit, human-writing,
+  github-issue-creator, dev-research, owasp-guard/scan/update, unit-tests,
+  learning-mode-coding. The `owasp-guard/cache/` + `references/` ship (pre-bundled
+  per `docs/owasp-guard-skill-SETUP.md`).
 - Genericize or drop: frontend-design, responsive-layout (hardcode `job-tracker-ui/`).
+- Exclude per-project state files: `owasp-scan/findings.json`,
+  `responsive-layout/files.json` + `issues.md`, `unit-tests/files.json` + `plan.md`.
+
+## Docs to carry over (copy as-is; generalize in the new repo, not here)
+
+To `docs/reference/` — generic or nearly so:
+
+- `Dev Containers.md` — dev container + Claude Code feature concepts.
+- `Claude Code — WSL credential extraction.md` — auth-in-container workaround;
+  pairs with the `claude-credentials` volume.
+- `new-machine-setup.md` — git CRLF fix + prerequisites.
+- `refresh tokens.md` — auth concept reference.
+- `Cookie storage for JWTs.md` — httpOnly cookie + silent-refresh pattern.
+- `Ssl tls production setup guide.md` — concept reference; placeholder the domain.
+- `owasp-guard-skill-SETUP.md` — ships next to the owasp-* skills.
+- `deployment-setup.md` — AWS resources / GitHub secrets / IAM table format;
+  placeholder the `jobtracker-*` names.
+- `Setup pipeline in EC2.md` — EC2 one-time setup; placeholder remaining names.
+- `stack-decisions.md` — AWS free-tier research; keep its "verify against live
+  pricing" warning, note it rots.
+- `ses-rejection-notes.md` — lesson learned: SES rejects low-volume personal
+  apps → use Resend.
+
+To `examples/dotnet-postgres/reference/` — .NET-stack docs:
+
+- `ASP.NET Core backend.md`, `ASP.NET Identity.md`.
+
+Do not carry: `cv-highlights.md` (personal), `dev-accounts.md` (credentials; the
+doc+seed-script pattern gets one line in seed conventions),
+`company-verification-api-reference.md` (project contract), `docs/plans/*`
+(convention only — check `plans/issue-creator-decisions.md` first, it may belong
+with the github-issue-creator skill).
+
+Extract, don't copy: the production step checklist in `docs/plans/production-build.md`
+(auth → infra → config → logging → health check → security headers → CI/CD →
+migrations → deploy → SSL → rate limiting → monitoring) becomes a generic
+`docs/reference/production-checklist.md`.
 
 ## Create new
 
@@ -87,7 +130,12 @@ seed-repo/
 
 ## Open items
 
-- Confirm repo-level skill list (`ls -R .claude`).
 - Decide seed repo name.
-- Decide whether `api.osv.dev` is generic or per-stack.
+- Decide whether `api.osv.dev` is generic or per-stack (owasp skills ship, so
+  likely generic).
 - Decide which other projects become `examples/` entries, and gather their files.
+- Check `docs/plans/issue-creator-decisions.md` before dropping plans.
+- Housekeeping in the source repo (not the seed): `docs/progress.md` still points
+  at `docs/Production build plan.md` and `docs/Demo and Auth Features Plan.md`;
+  actual paths are `docs/plans/production-build.md` and
+  `docs/plans/demo-auth-features.md`.
