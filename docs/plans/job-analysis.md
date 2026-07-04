@@ -275,7 +275,7 @@ Score is 1–5. `reasoning` is one sentence.
 | # | Item | Status |
 |---|---|---|
 | 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | — |
-| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`) | — |
+| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block | — |
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | — |
 | 9 | Add analysis UI to Job Detail page — 5 independent buttons; pre-fill `description` from the job (prompt if empty); each shows its own result inline | — |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
