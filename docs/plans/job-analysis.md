@@ -37,6 +37,7 @@ CV integration is deferred — analysis uses profile text only.
 | Analysis tunables centralized in `ClaudeAnalysisConfig` | One `internal static class` (mirrors `ClaudeParsingConfig`) holds model, max tokens, the count bounds above, and the 5 system prompts. Count bounds are named consts **interpolated into the prompts** via `$$"""` raw strings (interpolation delimiter `{{ }}`, so literal JSON braces in the prompt examples need no escaping) — a range changes in exactly one place, never drifting from the prompt text. Prompts are therefore `static readonly` (interpolated at load), not `const`. `MinAnalysisDescription` stays in `ValidationConstants` (request-validation gate, not a Claude tunable) |
 | Max output tokens = 512 (single shared) | One `MaxTokens` in `ClaudeAnalysisConfig` across all 5 types (same value as the parser). `MaxTokens` is a ceiling, not a cost (billed on actual output), and the D12 count bounds already constrain length — so a shared cap with ~2.5× headroom over the heaviest type (gaps ≈ 200 tokens) prevents mid-JSON truncation (→ 502) without per-type tuning |
 | Profile page: per-section Save (D14) | Each section (Skills, Work History, Education, …) has its own Save that PATCHes only that section's field(s). Fits how profiles are actually edited — small partial updates over time — and avoids a single bottom Save that forces scrolling past everything to change one tag. Merge-patch (D3b) makes it natural: each PATCH carries one field, untouched sections are never sent (no accidental-`[]` wipe). **First save** of an as-yet-unsaved profile (GET returned empty) uses PUT with the whole current form (mostly-empty arrays, save is permissive); every save after uses PATCH |
+| Analysis result lifetime: page-durable (D15) | All 5 results live only in Job Detail page state — kept while on the page (switching among the types preserves prior results), reset on refresh or navigate-away; re-running a type replaces its result with a fresh call. No client cache or persistence — simplest, and reinforces "on-demand, always fresh". Persisting a result long-term is out of scope here (see the *Save analysis to job* follow-up in Notes) |
 
 ---
 
@@ -44,14 +45,11 @@ CV integration is deferred — analysis uses profile text only.
 
 Being resolved across sessions. Once settled, each item is folded into the Design Decisions table / field specs / API sections above and removed from this list.
 
-**Pick up here (as of 2026-07-04):** Settled & folded — D1…D13, D14. **Next: D15 (analysis result lifetime).**
+**Pick up here (as of 2026-07-04):** Settled & folded — D1…D14, D15. **Next: D16 (nav link + demo user).**
 
-Remaining: D15–D16 (frontend), D17 (testing).
+Remaining: D16 (frontend), D17 (testing).
 
 **Frontend**
-
-### D15. Analysis result lifetime — OPEN
-Results aren't saved server-side. Persist in component state across tab switches, or vanish on navigate-away?
 
 ### D16. Nav link + demo user — OPEN
 Where the Profile link sits, and whether it shows for the demo user (403'd from analysis, but could still edit a profile?).
@@ -278,4 +276,5 @@ Score is 1–5. `reasoning` is one sentence.
 - Country picker (frontend): stores the ISO 3166-1 alpha-2 code, displays full country names via `Intl.DisplayNames` (`new Intl.DisplayNames(['en'], { type: 'region' }).of('NZ')` → "New Zealand") — zero-dependency, reusable across projects.
 - WorkingRights entry (frontend): reuse the country picker; default country from the browser locale/region; default status to "don't have it" (`RequiresSponsorship`) so users consciously set their actual right rather than accepting an assumed one.
 - WorkHistory/Education entry (frontend): per-entry "I currently work/study here" checkbox — ticking it disables and clears the end-date field and sends `to: null`. Multiple entries may be current. Start date always required. Cap date inputs at the current month/year (no future dates).
+- **Save analysis to job (deferred — separate scope):** the two prep-oriented analyses — *Questions to ask* and *Likely interview questions* — get an optional "Save to job" action that persists them onto new optional `Job` fields (e.g. `QuestionsToAsk`, `InterviewQuestions`), so they survive as interview/meetup prep. Partially overrides "on-demand, not saved" for those two types only; the three assessment types (Alignment, Skills, Gaps) stay ephemeral (D15). Adds `Job` entity fields + migration + save UI; scope separately. Add to `docs/progress.md` upcoming work when this plan lands.
 - Profile quality: **now** a lightweight frontend advisory — a simple heuristic that flags "meets the minimum but thin; richer profiles give better analysis" when the 400 gate passes but content is sparse. A **full profile-quality score** (weighted 0–100 / meter + per-field improvement hints) is deferred to a **separate plan** — client-side only, like the dashboard. Add it to `docs/progress.md` upcoming work when this plan lands.
