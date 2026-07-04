@@ -32,6 +32,7 @@ CV integration is deferred — analysis uses profile text only.
 | Analysis requires the `AiEnabled` policy | Every Claude-backed feature sits behind AI access (same as auto-fill parsing), so the admin AI-access switch governs the whole paid surface — no ungated hole where a non-AI user burns API budget |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
 | `claude-haiku-4-5` model | Fast and cheap; each call is a single focused extraction, not reasoning |
+| Claude failure → 502 | Both a thrown Anthropic API error and a 200 whose body is unparseable or missing required fields (e.g. no `score`) return **502** with `{ "error": "..." }` — an upstream dependency failed, not a bug in our code (500) and not parse's silent degrade-to-empty. The service throws a typed exception (e.g. `AnalysisFormatException`); the controller catches and maps to 502. Analysis output *is* the product, so a hollow result would mislead where parse's empty-form fallback is harmless. No retry (matches the parse config's deliberate no-retry choice); a single re-prompt is deferred as a later enhancement |
 
 ---
 
@@ -39,14 +40,9 @@ CV integration is deferred — analysis uses profile text only.
 
 Being resolved across sessions. Once settled, each item is folded into the Design Decisions table / field specs / API sections above and removed from this list.
 
-**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7, D8, D9, D10. **Next: D11 (Claude failure / malformed JSON handling).**
+**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7, D8, D9, D10, D11. **Next: D12 (count bounds per type).**
 
-Remaining: D11–D13 (analysis inputs/gating, output bounds), D14–D16 (frontend), D17 (testing).
-
-**Analysis — inputs & gating**
-
-### D11. Claude failure / malformed JSON handling — OPEN
-Status code and response shape when the API errors or returns unparseable output.
+Remaining: D12–D13 (output bounds), D14–D16 (frontend), D17 (testing).
 
 **Analysis — output bounds**
 
@@ -274,7 +270,7 @@ Score is 1–5. `reasoning` is one sentence.
 | # | Item | Status |
 |---|---|---|
 | 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | — |
-| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block | — |
+| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min-per-IP policy | — |
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | — |
 | 9 | Add analysis UI to Job Detail page — 5 independent buttons; pre-fill `description` from the job (prompt if empty); each shows its own result inline | — |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
