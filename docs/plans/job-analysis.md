@@ -35,6 +35,7 @@ CV integration is deferred — analysis uses profile text only.
 | Claude failure → 502 | Both a thrown Anthropic API error and a 200 whose body is unparseable or missing required fields (e.g. no `score`) return **502** with `{ "error": "..." }` — an upstream dependency failed, not a bug in our code (500) and not parse's silent degrade-to-empty. The service throws a typed exception (e.g. `AnalysisFormatException`); the controller catches and maps to 502. Analysis output *is* the product, so a hollow result would mislead where parse's empty-form fallback is harmless. No retry (matches the parse config's deliberate no-retry choice); a single re-prompt is deferred as a later enhancement |
 | Count bounds per list type | Each list prompt states an explicit **min–max** so output length is predictable (stable UI card size) and neither padded nor thin: Skills **5–8**, Gaps **2–4**, Questions-to-ask **3–5**, Interview-questions **4–6**. Alignment is exempt (single score + one sentence) |
 | Analysis tunables centralized in `ClaudeAnalysisConfig` | One `internal static class` (mirrors `ClaudeParsingConfig`) holds model, max tokens, the count bounds above, and the 5 system prompts. Count bounds are named consts **interpolated into the prompts** via `$$"""` raw strings (interpolation delimiter `{{ }}`, so literal JSON braces in the prompt examples need no escaping) — a range changes in exactly one place, never drifting from the prompt text. Prompts are therefore `static readonly` (interpolated at load), not `const`. `MinAnalysisDescription` stays in `ValidationConstants` (request-validation gate, not a Claude tunable) |
+| Max output tokens = 512 (single shared) | One `MaxTokens` in `ClaudeAnalysisConfig` across all 5 types (same value as the parser). `MaxTokens` is a ceiling, not a cost (billed on actual output), and the D12 count bounds already constrain length — so a shared cap with ~2.5× headroom over the heaviest type (gaps ≈ 200 tokens) prevents mid-JSON truncation (→ 502) without per-type tuning |
 
 ---
 
@@ -42,14 +43,9 @@ CV integration is deferred — analysis uses profile text only.
 
 Being resolved across sessions. Once settled, each item is folded into the Design Decisions table / field specs / API sections above and removed from this list.
 
-**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7, D8, D9, D10, D11, D12. **Next: D13 (max output tokens).**
+**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13. **Next: D14 (profile save model vs. PUT/PATCH split).**
 
-Remaining: D13 (output bounds), D14–D16 (frontend), D17 (testing).
-
-**Analysis — output bounds**
-
-### D13. Max output tokens — OPEN
-Per analysis call.
+Remaining: D14–D16 (frontend), D17 (testing).
 
 **Frontend**
 
