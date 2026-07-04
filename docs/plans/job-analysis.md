@@ -36,6 +36,7 @@ CV integration is deferred — analysis uses profile text only.
 | Count bounds per list type | Each list prompt states an explicit **min–max** so output length is predictable (stable UI card size) and neither padded nor thin: Skills **5–8**, Gaps **2–4**, Questions-to-ask **3–5**, Interview-questions **4–6**. Alignment is exempt (single score + one sentence) |
 | Analysis tunables centralized in `ClaudeAnalysisConfig` | One `internal static class` (mirrors `ClaudeParsingConfig`) holds model, max tokens, the count bounds above, and the 5 system prompts. Count bounds are named consts **interpolated into the prompts** via `$$"""` raw strings (interpolation delimiter `{{ }}`, so literal JSON braces in the prompt examples need no escaping) — a range changes in exactly one place, never drifting from the prompt text. Prompts are therefore `static readonly` (interpolated at load), not `const`. `MinAnalysisDescription` stays in `ValidationConstants` (request-validation gate, not a Claude tunable) |
 | Max output tokens = 512 (single shared) | One `MaxTokens` in `ClaudeAnalysisConfig` across all 5 types (same value as the parser). `MaxTokens` is a ceiling, not a cost (billed on actual output), and the D12 count bounds already constrain length — so a shared cap with ~2.5× headroom over the heaviest type (gaps ≈ 200 tokens) prevents mid-JSON truncation (→ 502) without per-type tuning |
+| Profile page: per-section Save (D14) | Each section (Skills, Work History, Education, …) has its own Save that PATCHes only that section's field(s). Fits how profiles are actually edited — small partial updates over time — and avoids a single bottom Save that forces scrolling past everything to change one tag. Merge-patch (D3b) makes it natural: each PATCH carries one field, untouched sections are never sent (no accidental-`[]` wipe). **First save** of an as-yet-unsaved profile (GET returned empty) uses PUT with the whole current form (mostly-empty arrays, save is permissive); every save after uses PATCH |
 
 ---
 
@@ -43,14 +44,11 @@ CV integration is deferred — analysis uses profile text only.
 
 Being resolved across sessions. Once settled, each item is folded into the Design Decisions table / field specs / API sections above and removed from this list.
 
-**Pick up here (as of 2026-07-04):** Settled & folded — D1, D1a, D2, D3, D3b, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13. **Next: D14 (profile save model vs. PUT/PATCH split).**
+**Pick up here (as of 2026-07-04):** Settled & folded — D1…D13, D14. **Next: D15 (analysis result lifetime).**
 
-Remaining: D14–D16 (frontend), D17 (testing).
+Remaining: D15–D16 (frontend), D17 (testing).
 
 **Frontend**
-
-### D14. Profile save model vs. the PUT/PATCH split — OPEN
-One page-level Save (sends everything) vs. per-section save (partial PATCH). Drives whether the PATCH endpoint's partial semantics are actually used. Tied to D2.
 
 ### D15. Analysis result lifetime — OPEN
 Results aren't saved server-side. Persist in component state across tab switches, or vanish on navigate-away?
