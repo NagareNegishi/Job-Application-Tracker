@@ -241,6 +241,8 @@ Score is 1–5. `reasoning` is one sentence.
 | 1 | Add `UserProfile` entity + migration | Done |
 | 2 | Add `ProfileDTO` (request) + `ProfileResponseDto` (response) | Done |
 | 3 | Add `GET /api/account/profile` + `PUT /api/account/profile` + `PATCH /api/account/profile` to `AccountController` | Done |
+| 3a | `ProfileDTOTests` — validation for `ProfileDTO`, `WorkingRightEntry`, `WorkHistoryEntry`, `EducationEntry` | Done |
+| 3b | Profile tests in `AccountControllerTests` — GET empty/full, PUT + 409, PATCH merge + 404 | Done |
 | 4 | Add `/profile` page to frontend — tags input for `TargetRoles` and `Skills`; repeating entry forms for `WorkHistory` and `Education` (add/remove entries) | In progress (types, service, hook, page skeleton done) |
 | 5 | Add Profile nav link | — |
 
@@ -251,6 +253,7 @@ Score is 1–5. `reasoning` is one sentence.
 | 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | — |
 | 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min-per-IP policy | — |
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | — |
+| 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | — |
 | 9 | Add analysis UI to Job Detail page — 5 independent buttons; pre-fill `description` from the job (prompt if empty); each shows its own result inline | — |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
 
