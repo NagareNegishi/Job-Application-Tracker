@@ -495,4 +495,27 @@ public class AccountControllerTests : IDisposable
         Assert.Equal(["C#", "Go"], dto.Skills);
         Assert.Equal(["Engineer"], dto.TargetRoles);
     }
+
+    // PATCH with [] clears the field — empty array is not the same as omitting the field
+    [Fact]
+    public async Task UpdateProfile_ClearsArray_WhenEmptyArraySent()
+    {
+        // Arrange: existing profile with skills
+        _context.UserProfiles.Add(new UserProfile
+        {
+            UserId = TestUserId,
+            Skills = ["C#", "React"],
+            TargetRoles = ["Engineer"]
+        });
+        await _context.SaveChangesAsync();
+
+        // Act: PATCH sends Skills = [] — must wipe skills; TargetRoles must survive
+        var result = await _controller.UpdateProfile(new ProfileDTO { Skills = [] });
+
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<ProfileResponseDto>(ok.Value);
+        Assert.Empty(dto.Skills);
+        Assert.Equal(["Engineer"], dto.TargetRoles);
+    }
 }
