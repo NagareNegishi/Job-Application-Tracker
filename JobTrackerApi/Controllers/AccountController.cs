@@ -75,6 +75,21 @@ public class AccountController : ControllerBase
         return Ok(dto);
     }
 
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // null if no profile yet; throws if >1 row (impossible — unique FK)
+        var profile = await _context.UserProfiles
+            .SingleOrDefaultAsync(p => p.UserId == userId);
+
+        if (profile == null)
+            return Ok(new { });
+
+        return Ok(profile.ToResponseDto());
+    }
+
     // Change password — validates current password via Identity, blocks demo user
     [HttpPost("change-password")]
     [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents brute-forcing with a stolen JWT
