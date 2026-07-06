@@ -40,6 +40,9 @@ export default function NavBar() {
         <NavLink to="/dashboard" className={navLinkClass}>
           Analytics
         </NavLink>
+        <NavLink to="/profile" className={navLinkClass}>
+          Profile
+        </NavLink>
         {/* Admin link — only rendered for users with the Admin role */}
         {hasRole("Admin") && (
           <NavLink to="/admin" className={navLinkClass}>
