@@ -138,4 +138,21 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkingRightEntry.Country)));
     }
+
+    // A valid ISO 3166-1 alpha-2 code must pass validation
+    [Fact]
+    public void WorkingRightEntry_Country_ValidCode_Passes()
+    {
+        // Arrange
+        var entry = new WorkingRightEntry { Country = "NZ", Status = WorkingRight.Citizen };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
 }
