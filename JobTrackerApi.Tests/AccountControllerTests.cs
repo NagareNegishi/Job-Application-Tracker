@@ -385,4 +385,137 @@ public class AccountControllerTests : IDisposable
         var token = _context.RefreshTokens.Single(t => t.Token == "old-token");
         Assert.Equal(originalRevokedAt, token.RevokedAt);
     }
+
+    // GET returns an empty object when no profile row exists yet for this user
+    [Fact]
+    public async Task GetProfile_ReturnsEmpty_WhenNoProfileExists()
+    {
+        // Arrange: no UserProfile seeded — DB is empty for this user
+
+        // Act
+        var result = await _controller.GetProfile();
+
+        // Assert: 200 with an empty object (not 404)
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.NotNull(ok.Value);
+        Assert.Equal("{}", System.Text.Json.JsonSerializer.Serialize(ok.Value));
+    }
+
+    // GET returns the saved profile when a row exists for this user
+    [Fact]
+    public async Task GetProfile_ReturnsProfile_WhenExists()
+    {
+        // Arrange: seed a profile row directly into the in-memory DB
+        _context.UserProfiles.Add(new UserProfile
+        {
+            UserId = TestUserId,
+            Skills = ["C#", "React"],
+            TargetRoles = ["Engineer"]
+        });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetProfile();
+
+        // Assert: 200 with a ProfileResponseDto carrying the seeded data
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<ProfileResponseDto>(ok.Value);
+        Assert.Equal(["C#", "React"], dto.Skills);
+        Assert.Equal(["Engineer"], dto.TargetRoles);
+    }
+
+    // PUT creates the profile when none exists and returns the saved data
+    [Fact]
+    public async Task CreateProfile_ReturnsOk_WhenNoProfileExists()
+    {
+        // Arrange
+        var dto = new ProfileDTO
+        {
+            Skills = ["TypeScript", "C#"],
+            TargetRoles = ["Senior Engineer"]
+        };
+
+        // Act
+        var result = await _controller.CreateProfile(dto);
+
+        // Assert: 200 returned and the profile row was persisted
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var profile = Assert.IsType<ProfileResponseDto>(ok.Value);
+        Assert.Equal(["TypeScript", "C#"], profile.Skills);
+        Assert.Single(_context.UserProfiles.Where(p => p.UserId == TestUserId));
+    }
+
+    // PUT returns 409 when a profile already exists for this user
+    [Fact]
+    public async Task CreateProfile_ReturnsConflict_WhenProfileAlreadyExists()
+    {
+        // Arrange: seed an existing profile row
+        _context.UserProfiles.Add(new UserProfile { UserId = TestUserId });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.CreateProfile(new ProfileDTO());
+
+        // Assert: 409 Conflict — second PUT must be rejected
+        Assert.IsType<ConflictObjectResult>(result);
+    }
+
+    // PATCH returns 404 when no profile row exists yet for this user
+    [Fact]
+    public async Task UpdateProfile_ReturnsNotFound_WhenNoProfileExists()
+    {
+        // Arrange: no profile seeded — DB is empty for this user
+
+        // Act
+        var result = await _controller.UpdateProfile(new ProfileDTO { Skills = ["Go"] });
+
+        // Assert: 404 — PATCH requires an existing profile; use PUT first
+        Assert.IsType<NotFoundObjectResult>(result);
+    }
+
+    // PATCH updates only the sent fields — untouched fields are left unchanged
+    [Fact]
+    public async Task UpdateProfile_MergesFields_WhenExists()
+    {
+        // Arrange: existing profile with both skills and target roles
+        _context.UserProfiles.Add(new UserProfile
+        {
+            UserId = TestUserId,
+            Skills = ["C#"],
+            TargetRoles = ["Engineer"]
+        });
+        await _context.SaveChangesAsync();
+
+        // Act: PATCH sends only Skills — TargetRoles must survive untouched
+        var result = await _controller.UpdateProfile(new ProfileDTO { Skills = ["C#", "Go"] });
+
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<ProfileResponseDto>(ok.Value);
+        Assert.Equal(["C#", "Go"], dto.Skills);
+        Assert.Equal(["Engineer"], dto.TargetRoles);
+    }
+
+    // PATCH with [] clears the field — empty array is not the same as omitting the field
+    [Fact]
+    public async Task UpdateProfile_ClearsArray_WhenEmptyArraySent()
+    {
+        // Arrange: existing profile with skills
+        _context.UserProfiles.Add(new UserProfile
+        {
+            UserId = TestUserId,
+            Skills = ["C#", "React"],
+            TargetRoles = ["Engineer"]
+        });
+        await _context.SaveChangesAsync();
+
+        // Act: PATCH sends Skills = [] — must wipe skills; TargetRoles must survive
+        var result = await _controller.UpdateProfile(new ProfileDTO { Skills = [] });
+
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<ProfileResponseDto>(ok.Value);
+        Assert.Empty(dto.Skills);
+        Assert.Equal(["Engineer"], dto.TargetRoles);
+    }
 }
