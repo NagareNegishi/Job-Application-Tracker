@@ -252,4 +252,27 @@ public class ProfileDTOTests
         Assert.True(isValid);
         Assert.Empty(results);
     }
+
+    // A From date that doesn't match YYYY-MM format must fail the regex attribute
+    [Fact]
+    public void WorkHistoryEntry_InvalidFormat_Fails()
+    {
+        // Arrange: "2024-1" is missing the leading zero — fails the regex
+        var entry = new WorkHistoryEntry
+        {
+            Title = "Engineer",
+            Company = "Acme",
+            From = "2024-1",
+            Description = "Did things."
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.From)));
+    }
 }
