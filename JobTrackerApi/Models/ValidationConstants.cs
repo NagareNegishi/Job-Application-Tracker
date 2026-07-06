@@ -31,4 +31,24 @@ public static class ValidationConstants
     public const int MaxContactRoleLength = 50;
     public const int MaxContactEmailLength = 100;
     public const int MaxContactPhoneLength = 20;
+
+    // Profile array count limits
+    public const int MaxProfileTargetRolesCount = 10;
+    public const int MaxProfileSkillsCount = 50;
+    public const int MaxProfileCertificationsCount = 20;
+    public const int MaxProfileLanguagesCount = 15;
+    public const int MaxProfileWorkingRightsCount = 20;
+    public const int MaxProfileWorkHistoryCount = 20;
+    public const int MaxProfileEducationCount = 10;
+
+    // Profile per-item string length limits
+    public const int MaxProfileTargetRoleItemLength = 100;
+    public const int MaxProfileSkillItemLength = 50;
+    public const int MaxProfileCertificationItemLength = 100;
+    public const int MaxProfileLanguageItemLength = 30;
+    public const int MaxProfileWorkHistoryTitleLength = 100;
+    public const int MaxProfileWorkHistoryCompanyLength = 100;
+    public const int MaxProfileWorkHistoryDescriptionLength = 2000;
+    public const int MaxProfileEducationInstitutionLength = 100;
+    public const int MaxProfileEducationDegreeLength = 100;
 }
