@@ -82,7 +82,7 @@ export default function ProfilePage() {
         </div>
         <div className="bg-card rounded-lg border p-5 space-y-3">
           <h2 className="text-sm font-medium">Target Roles</h2>
-          <TagInput value={targetRoles} onChange={setTargetRoles} placeholder="Type a role and press Enter" maxItems={10} />
+          <TagInput value={targetRoles} onChange={setTargetRoles} placeholder="Type a role and press Enter" maxItems={10} layout="stack" savedValue={data?.targetRoles ?? []} />
           {sectionErrors.targetRoles && <p className="text-xs text-destructive">{sectionErrors.targetRoles}</p>}
           <div className="flex justify-end">
             <Button size="sm" onClick={() => saveSection("targetRoles", { targetRoles })} disabled={savingSection === "targetRoles"}>
@@ -93,7 +93,7 @@ export default function ProfilePage() {
 
         <div className="bg-card rounded-lg border p-5 space-y-3">
           <h2 className="text-sm font-medium">Skills</h2>
-          <TagInput value={skills} onChange={setSkills} placeholder="Type a skill and press Enter" maxItems={50} />
+          <TagInput value={skills} onChange={setSkills} placeholder="Type a skill and press Enter" maxItems={50} savedValue={data?.skills ?? []} />
           {sectionErrors.skills && <p className="text-xs text-destructive">{sectionErrors.skills}</p>}
           <div className="flex justify-end">
             <Button size="sm" onClick={() => saveSection("skills", { skills })} disabled={savingSection === "skills"}>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
 
         <div className="bg-card rounded-lg border p-5 space-y-3">
           <h2 className="text-sm font-medium">Certifications</h2>
-          <TagInput value={certifications} onChange={setCertifications} placeholder="Type a certification and press Enter" maxItems={20} />
+          <TagInput value={certifications} onChange={setCertifications} placeholder="Type a certification and press Enter" maxItems={20} layout="stack" savedValue={data?.certifications ?? []} />
           {sectionErrors.certifications && <p className="text-xs text-destructive">{sectionErrors.certifications}</p>}
           <div className="flex justify-end">
             <Button size="sm" onClick={() => saveSection("certifications", { certifications })} disabled={savingSection === "certifications"}>
@@ -115,7 +115,7 @@ export default function ProfilePage() {
 
         <div className="bg-card rounded-lg border p-5 space-y-3">
           <h2 className="text-sm font-medium">Languages</h2>
-          <TagInput value={languages} onChange={setLanguages} placeholder="Type a language and press Enter" maxItems={15} />
+          <TagInput value={languages} onChange={setLanguages} placeholder="Type a language and press Enter" maxItems={15} savedValue={data?.languages ?? []} />
           {sectionErrors.languages && <p className="text-xs text-destructive">{sectionErrors.languages}</p>}
           <div className="flex justify-end">
             <Button size="sm" onClick={() => saveSection("languages", { languages })} disabled={savingSection === "languages"}>
