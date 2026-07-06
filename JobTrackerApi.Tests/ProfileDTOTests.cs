@@ -84,4 +84,24 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Certifications)));
     }
+
+    // A language item exceeding the per-item length cap must fail validation
+    [Fact]
+    public void ProfileDTO_ItemLength_LanguageTooLong_Fails()
+    {
+        // Arrange: one language that is one character over the 30-char cap
+        var dto = new ProfileDTO
+        {
+            Languages = [new string('a', ValidationConstants.MaxProfileLanguageItemLength + 1)]
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Languages)));
+    }
 }
