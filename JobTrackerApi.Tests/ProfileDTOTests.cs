@@ -104,4 +104,21 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Languages)));
     }
+
+    // Country codes must be uppercase — lowercase must fail the regex
+    [Fact]
+    public void WorkingRightEntry_Country_Lowercase_Fails()
+    {
+        // Arrange: "nz" is valid ISO format but lowercase — regex requires [A-Z]{2}
+        var entry = new WorkingRightEntry { Country = "nz", Status = WorkingRight.Citizen };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkingRightEntry.Country)));
+    }
 }
