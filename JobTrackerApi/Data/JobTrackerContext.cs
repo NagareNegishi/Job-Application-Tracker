@@ -24,9 +24,26 @@ public class JobTrackerContext : IdentityDbContext<ApplicationUser>
             .OwnsMany(j => j.Contacts, contacts => contacts.ToJson());
         modelBuilder.Entity<Job>()
             .OwnsMany(j => j.Correspondences, correspondence => correspondence.ToJson());
+
+        // UserProfile: one per user; cascade delete when user is removed
+        modelBuilder.Entity<UserProfile>()
+            .HasOne(p => p.User)
+            .WithOne()
+            .HasForeignKey<UserProfile>(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserProfile>()
+            .HasIndex(p => p.UserId)
+            .IsUnique();
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.WorkingRights, wr => wr.ToJson());
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.WorkHistory, wh => wh.ToJson());
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.Education, e => e.ToJson());
     }
 
     public DbSet<Job> Jobs { get; set; } = null!;
     public DbSet<Document> Documents { get; set; } = null!;
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+    public DbSet<UserProfile> UserProfiles { get; set; } = null!;
 }
