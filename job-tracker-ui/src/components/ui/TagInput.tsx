@@ -74,13 +74,40 @@ export default function TagInput({ value, onChange, placeholder, maxItems, layou
 
   return (
     <div className="space-y-2">
-      <input
-        value={inputValue}
-        onChange={e => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
-      />
+      <div className="relative">
+        <input
+          value={inputValue}
+          onChange={e => { setInputValue(e.target.value); setOpen(true); setHighlight(-1) }}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
+          placeholder={placeholder}
+          role="combobox"
+          aria-expanded={showList}
+          aria-autocomplete="list"
+          className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+        />
+        {showList && (
+          <ul
+            ref={listRef}
+            role="listbox"
+            className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md"
+          >
+            {suggestionMatches.map((s, i) => (
+              <li
+                key={s}
+                role="option"
+                aria-selected={i === highlight}
+                onMouseDown={e => { e.preventDefault(); commitTag(s) }}
+                onMouseEnter={() => setHighlight(i)}
+                className={`px-3 py-1.5 text-sm cursor-pointer ${i === highlight ? "bg-accent text-accent-foreground" : ""}`}
+              >
+                {s}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       {value.length > 0 && (
         <div className={layout === "stack" ? "flex flex-col items-start gap-1" : "flex flex-wrap gap-1.5"}>
           {value.map((tag, i) => (
