@@ -320,4 +320,27 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(EducationEntry.To)));
     }
+
+    // To = null means currently enrolled — must pass validation
+    [Fact]
+    public void EducationEntry_To_Null_Passes()
+    {
+        // Arrange
+        var entry = new EducationEntry
+        {
+            Institution = "MIT",
+            Degree = "BSc CS",
+            From = 2022,
+            To = null
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
 }
