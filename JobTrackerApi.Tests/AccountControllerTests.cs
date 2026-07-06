@@ -472,4 +472,27 @@ public class AccountControllerTests : IDisposable
         // Assert: 404 — PATCH requires an existing profile; use PUT first
         Assert.IsType<NotFoundObjectResult>(result);
     }
+
+    // PATCH updates only the sent fields — untouched fields are left unchanged
+    [Fact]
+    public async Task UpdateProfile_MergesFields_WhenExists()
+    {
+        // Arrange: existing profile with both skills and target roles
+        _context.UserProfiles.Add(new UserProfile
+        {
+            UserId = TestUserId,
+            Skills = ["C#"],
+            TargetRoles = ["Engineer"]
+        });
+        await _context.SaveChangesAsync();
+
+        // Act: PATCH sends only Skills — TargetRoles must survive untouched
+        var result = await _controller.UpdateProfile(new ProfileDTO { Skills = ["C#", "Go"] });
+
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<ProfileResponseDto>(ok.Value);
+        Assert.Equal(["C#", "Go"], dto.Skills);
+        Assert.Equal(["Engineer"], dto.TargetRoles);
+    }
 }
