@@ -90,6 +90,24 @@ public class AccountController : ControllerBase
         return Ok(profile.ToResponseDto());
     }
 
+    [HttpPut("profile")]
+    public async Task<IActionResult> CreateProfile(ProfileDTO dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var exists = await _context.UserProfiles
+            .AnyAsync(p => p.UserId == userId);
+
+        if (exists)
+            return Conflict(new { message = "Profile already exists. Use PATCH to update." });
+
+        var profile = dto.ToProfile(userId!);
+        _context.UserProfiles.Add(profile);
+        await _context.SaveChangesAsync();
+
+        return Ok(profile.ToResponseDto());
+    }
+
     // Change password — validates current password via Identity, blocks demo user
     [HttpPost("change-password")]
     [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents brute-forcing with a stolen JWT
