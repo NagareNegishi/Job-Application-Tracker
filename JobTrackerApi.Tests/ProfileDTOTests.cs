@@ -179,4 +179,28 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.From)));
     }
+
+    // A work history entry where To is earlier than From must fail validation
+    [Fact]
+    public void WorkHistoryEntry_To_BeforeFrom_Fails()
+    {
+        // Arrange: From is 2023-06, To is 2023-01 — earlier month, same year
+        var entry = new WorkHistoryEntry
+        {
+            Title = "Engineer",
+            Company = "Acme",
+            From = "2023-06",
+            To = "2023-01",
+            Description = "Did things."
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.To)));
+    }
 }
