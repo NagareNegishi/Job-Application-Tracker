@@ -297,4 +297,27 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(EducationEntry.From)));
     }
+
+    // An education entry where To is earlier than From must fail validation
+    [Fact]
+    public void EducationEntry_To_BeforeFrom_Fails()
+    {
+        // Arrange: graduated before starting
+        var entry = new EducationEntry
+        {
+            Institution = "MIT",
+            Degree = "BSc CS",
+            From = 2022,
+            To = 2020
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(EducationEntry.To)));
+    }
 }
