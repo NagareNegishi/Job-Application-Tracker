@@ -27,8 +27,6 @@ export default function TagInput({ value, onChange, placeholder, maxItems, layou
     if (e.key === "Enter") {
       e.preventDefault()
       addTag()
-    } else if (e.key === "Backspace" && inputValue === "") {
-      onChange(value.slice(0, -1))
     }
   }
 
