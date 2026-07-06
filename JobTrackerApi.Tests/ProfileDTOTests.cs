@@ -44,4 +44,24 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Skills)));
     }
+
+    // A target role item exceeding the per-item length cap must fail validation
+    [Fact]
+    public void ProfileDTO_ItemLength_TargetRoleTooLong_Fails()
+    {
+        // Arrange: one role that is one character over the 100-char cap
+        var dto = new ProfileDTO
+        {
+            TargetRoles = [new string('a', ValidationConstants.MaxProfileTargetRoleItemLength + 1)]
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.TargetRoles)));
+    }
 }
