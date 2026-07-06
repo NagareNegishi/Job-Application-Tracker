@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react"
+import { useState, useMemo, useRef, useEffect, type KeyboardEvent } from "react"
 import { X } from "lucide-react"
 
 type TagInputProps = {
@@ -8,23 +8,62 @@ type TagInputProps = {
   maxItems?: number
   layout?: "wrap" | "stack"
   savedValue?: string[]
+  suggestions?: string[]   // optional autocomplete pool; omit → no dropdown
 }
 
-export default function TagInput({ value, onChange, placeholder, maxItems, layout = "wrap", savedValue }: TagInputProps) {
-  const [inputValue, setInputValue] = useState("")
+// Cap rendered matches so the DOM stays light; the scroll box handles overflow.
+const SUGGESTION_LIMIT = 50
 
-  function addTag() {
-    const trimmed = inputValue.trim()
+export default function TagInput({ value, onChange, placeholder, maxItems, layout = "wrap", savedValue, suggestions }: TagInputProps) {
+  const [inputValue, setInputValue] = useState("")
+  const [open, setOpen] = useState(false)        // dropdown visibility
+  const [highlight, setHighlight] = useState(-1) // keyboard-active option index (-1 = none)
+  const listRef = useRef<HTMLUListElement>(null)
+
+  // Substring matches (case-insensitive), excluding already-added tags; empty until the user types
+  const suggestionMatches = useMemo(() => {
+    const query = inputValue.trim().toLowerCase()
+    if (!query || !suggestions) return []
+    const taken = new Set(value.map(v => v.toLowerCase()))
+    return suggestions
+      .filter(s => s.toLowerCase().includes(query) && !taken.has(s.toLowerCase()))
+      .slice(0, SUGGESTION_LIMIT)
+  }, [inputValue, suggestions, value])
+
+  const showList = open && suggestionMatches.length > 0
+
+  // Keep the keyboard-highlighted option scrolled into view
+  useEffect(() => {
+    if (highlight < 0 || !listRef.current) return
+    const el = listRef.current.children[highlight] as HTMLElement | undefined
+    el?.scrollIntoView({ block: "nearest" })
+  }, [highlight])
+
+  // Adds a tag from any source (typed text or a picked suggestion); preserves original casing
+  function commitTag(raw: string) {
+    const trimmed = raw.trim()
     if (!trimmed || value.includes(trimmed)) return
     if (maxItems && value.length >= maxItems) return
     onChange([...value, trimmed])
     setInputValue("")
+    setOpen(false)
+    setHighlight(-1)
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
+    if (e.key === "ArrowDown" && showList) {
       e.preventDefault()
-      addTag()
+      setHighlight(h => (h + 1) % suggestionMatches.length)
+    } else if (e.key === "ArrowUp" && showList) {
+      e.preventDefault()
+      setHighlight(h => (h <= 0 ? suggestionMatches.length - 1 : h - 1))
+    } else if (e.key === "Enter") {
+      e.preventDefault()
+      // Enter picks the highlighted suggestion if one is active, else commits the typed text
+      commitTag(highlight >= 0 && showList ? suggestionMatches[highlight] : inputValue)
+    } else if (e.key === "Escape") {
+      setOpen(false)
+      setHighlight(-1)
     }
   }
 
