@@ -228,4 +228,28 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.To)));
     }
+
+    // To = null means currently in this role — must pass validation
+    [Fact]
+    public void WorkHistoryEntry_To_Null_Passes()
+    {
+        // Arrange
+        var entry = new WorkHistoryEntry
+        {
+            Title = "Engineer",
+            Company = "Acme",
+            From = "2022-01",
+            To = null,
+            Description = "Did things."
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
 }
