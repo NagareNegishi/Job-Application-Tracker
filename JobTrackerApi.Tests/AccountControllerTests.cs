@@ -400,4 +400,27 @@ public class AccountControllerTests : IDisposable
         Assert.NotNull(ok.Value);
         Assert.Equal("{}", System.Text.Json.JsonSerializer.Serialize(ok.Value));
     }
+
+    // GET returns the saved profile when a row exists for this user
+    [Fact]
+    public async Task GetProfile_ReturnsProfile_WhenExists()
+    {
+        // Arrange: seed a profile row directly into the in-memory DB
+        _context.UserProfiles.Add(new UserProfile
+        {
+            UserId = TestUserId,
+            Skills = ["C#", "React"],
+            TargetRoles = ["Engineer"]
+        });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetProfile();
+
+        // Assert: 200 with a ProfileResponseDto carrying the seeded data
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<ProfileResponseDto>(ok.Value);
+        Assert.Equal(["C#", "React"], dto.Skills);
+        Assert.Equal(["Engineer"], dto.TargetRoles);
+    }
 }
