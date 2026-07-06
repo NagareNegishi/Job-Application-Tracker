@@ -3,6 +3,8 @@ import NavBar from "@/components/NavBar"
 import { useProfile, useCreateProfile, usePatchProfile } from "@/hooks/profileQuery"
 import type { ProfilePatch, WorkingRightEntry, WorkHistoryEntry, EducationEntry } from "@/types/profile"
 import { useEffect, useRef, useState } from "react"
+import TagInput from "@/components/ui/TagInput"
+import { Button } from "@/components/ui/button"
 
 export default function ProfilePage() {
   const { data, isLoading } = useProfile()
@@ -78,7 +80,49 @@ export default function ProfilePage() {
             Your career profile is used as context for AI job analysis.
           </p>
         </div>
-        {/* Tag sections — Sub-step E */}
+        <div className="bg-card rounded-lg border p-5 space-y-3">
+          <h2 className="text-sm font-medium">Target Roles</h2>
+          <TagInput value={targetRoles} onChange={setTargetRoles} placeholder="Type a role and press Enter" maxItems={10} />
+          {sectionErrors.targetRoles && <p className="text-xs text-destructive">{sectionErrors.targetRoles}</p>}
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => saveSection("targetRoles", { targetRoles })} disabled={savingSection === "targetRoles"}>
+              {savingSection === "targetRoles" ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-lg border p-5 space-y-3">
+          <h2 className="text-sm font-medium">Skills</h2>
+          <TagInput value={skills} onChange={setSkills} placeholder="Type a skill and press Enter" maxItems={50} />
+          {sectionErrors.skills && <p className="text-xs text-destructive">{sectionErrors.skills}</p>}
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => saveSection("skills", { skills })} disabled={savingSection === "skills"}>
+              {savingSection === "skills" ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-lg border p-5 space-y-3">
+          <h2 className="text-sm font-medium">Certifications</h2>
+          <TagInput value={certifications} onChange={setCertifications} placeholder="Type a certification and press Enter" maxItems={20} />
+          {sectionErrors.certifications && <p className="text-xs text-destructive">{sectionErrors.certifications}</p>}
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => saveSection("certifications", { certifications })} disabled={savingSection === "certifications"}>
+              {savingSection === "certifications" ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-lg border p-5 space-y-3">
+          <h2 className="text-sm font-medium">Languages</h2>
+          <TagInput value={languages} onChange={setLanguages} placeholder="Type a language and press Enter" maxItems={15} />
+          {sectionErrors.languages && <p className="text-xs text-destructive">{sectionErrors.languages}</p>}
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => saveSection("languages", { languages })} disabled={savingSection === "languages"}>
+              {savingSection === "languages" ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </div>
         {/* Working Rights — Sub-step F */}
         {/* Work History — Sub-step G */}
         {/* Education — Sub-step H */}
