@@ -343,4 +343,26 @@ public class ProfileDTOTests
         Assert.True(isValid);
         Assert.Empty(results);
     }
+
+    // An education From year below 1900 must fail the [Range] attribute
+    [Fact]
+    public void EducationEntry_From_OutOfRange_Fails()
+    {
+        // Arrange: 1899 is one year below the [Range(1900, 2099)] lower bound
+        var entry = new EducationEntry
+        {
+            Institution = "MIT",
+            Degree = "BSc CS",
+            From = 1899
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(EducationEntry.From)));
+    }
 }
