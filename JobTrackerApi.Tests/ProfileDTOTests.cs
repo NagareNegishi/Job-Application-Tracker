@@ -121,4 +121,21 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkingRightEntry.Country)));
     }
+
+    // Country codes longer than 2 characters must fail validation
+    [Fact]
+    public void WorkingRightEntry_Country_ThreeChars_Fails()
+    {
+        // Arrange: "NZL" is the ISO 3166-1 alpha-3 code — wrong standard, too long
+        var entry = new WorkingRightEntry { Country = "NZL", Status = WorkingRight.Citizen };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkingRightEntry.Country)));
+    }
 }
