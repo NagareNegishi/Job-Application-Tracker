@@ -17,4 +17,15 @@ public class UserProfile
     public List<WorkingRightEntry> WorkingRights { get; set; } = [];
     public List<WorkHistoryEntry> WorkHistory { get; set; } = [];
     public List<EducationEntry> Education { get; set; } = [];
+
+    public ProfileResponseDto ToResponseDto() => new()
+    {
+        TargetRoles = TargetRoles,
+        Skills = Skills,
+        Certifications = Certifications,
+        Languages = Languages,
+        WorkingRights = WorkingRights,
+        WorkHistory = WorkHistory,
+        Education = Education
+    };
 }
