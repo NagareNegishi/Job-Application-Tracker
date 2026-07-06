@@ -155,4 +155,28 @@ public class ProfileDTOTests
         Assert.True(isValid);
         Assert.Empty(results);
     }
+
+    // A work history entry with a future From date must fail the IValidatableObject check
+    [Fact]
+    public void WorkHistoryEntry_From_FutureDate_Fails()
+    {
+        // Arrange: a date two years from now — always future regardless of when the test runs
+        var futureDate = DateTime.UtcNow.AddYears(2).ToString("yyyy-MM");
+        var entry = new WorkHistoryEntry
+        {
+            Title = "Engineer",
+            Company = "Acme",
+            From = futureDate,
+            Description = "Did things."
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.From)));
+    }
 }
