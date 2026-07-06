@@ -238,7 +238,7 @@ Score is 1–5. `reasoning` is one sentence.
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Add `UserProfile` entity + migration | — |
+| 1 | Add `UserProfile` entity + migration | Done |
 | 2 | Add `ProfileDTO` (request) + `ProfileResponseDto` (response) | — |
 | 3 | Add `GET /api/account/profile` + `PUT /api/account/profile` to `AccountController` | — |
 | 4 | Add `/profile` page to frontend — tags input for `TargetRoles` and `Skills`; repeating entry forms for `WorkHistory` and `Education` (add/remove entries) | — |
