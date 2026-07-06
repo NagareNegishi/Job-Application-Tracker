@@ -385,4 +385,19 @@ public class AccountControllerTests : IDisposable
         var token = _context.RefreshTokens.Single(t => t.Token == "old-token");
         Assert.Equal(originalRevokedAt, token.RevokedAt);
     }
+
+    // GET returns an empty object when no profile row exists yet for this user
+    [Fact]
+    public async Task GetProfile_ReturnsEmpty_WhenNoProfileExists()
+    {
+        // Arrange: no UserProfile seeded — DB is empty for this user
+
+        // Act
+        var result = await _controller.GetProfile();
+
+        // Assert: 200 with an empty object (not 404)
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.NotNull(ok.Value);
+        Assert.Equal("{}", System.Text.Json.JsonSerializer.Serialize(ok.Value));
+    }
 }
