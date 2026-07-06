@@ -459,4 +459,17 @@ public class AccountControllerTests : IDisposable
         // Assert: 409 Conflict — second PUT must be rejected
         Assert.IsType<ConflictObjectResult>(result);
     }
+
+    // PATCH returns 404 when no profile row exists yet for this user
+    [Fact]
+    public async Task UpdateProfile_ReturnsNotFound_WhenNoProfileExists()
+    {
+        // Arrange: no profile seeded — DB is empty for this user
+
+        // Act
+        var result = await _controller.UpdateProfile(new ProfileDTO { Skills = ["Go"] });
+
+        // Assert: 404 — PATCH requires an existing profile; use PUT first
+        Assert.IsType<NotFoundObjectResult>(result);
+    }
 }
