@@ -4,6 +4,12 @@ import { useProfile, useCreateProfile, usePatchProfile } from "@/hooks/profileQu
 import type { ProfilePatch, WorkingRightEntry, WorkHistoryEntry, EducationEntry } from "@/types/profile"
 import { useEffect, useRef, useState } from "react"
 import TagSection from "@/components/profile/TagSection"
+import {
+  TARGET_ROLE_SUGGESTIONS,
+  SKILL_SUGGESTIONS,
+  CERTIFICATION_SUGGESTIONS,
+  LANGUAGE_SUGGESTIONS,
+} from "@/components/profile/tagSuggestions"
 
 export default function ProfilePage() {
   const { data, isLoading } = useProfile()
@@ -90,6 +96,7 @@ export default function ProfilePage() {
           placeholder="Type a role and press Enter"
           maxItems={10}
           layout="stack"
+          suggestions={TARGET_ROLE_SUGGESTIONS}
         />
 
         <TagSection
@@ -102,6 +109,7 @@ export default function ProfilePage() {
           error={sectionErrors.skills}
           placeholder="Type a skill and press Enter"
           maxItems={50}
+          suggestions={SKILL_SUGGESTIONS}
         />
 
         <TagSection
@@ -115,6 +123,7 @@ export default function ProfilePage() {
           placeholder="Type a certification and press Enter"
           maxItems={20}
           layout="stack"
+          suggestions={CERTIFICATION_SUGGESTIONS}
         />
 
         <TagSection
@@ -127,6 +136,7 @@ export default function ProfilePage() {
           error={sectionErrors.languages}
           placeholder="Type a language and press Enter"
           maxItems={15}
+          suggestions={LANGUAGE_SUGGESTIONS}
         />
         {/* Working Rights — Sub-step F */}
         {/* Work History — Sub-step G */}

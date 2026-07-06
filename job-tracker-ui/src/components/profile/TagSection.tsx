@@ -19,17 +19,18 @@ type TagSectionProps = {
   placeholder?: string
   maxItems?: number
   layout?: "wrap" | "stack"
+  suggestions?: string[]
 }
 
 export default function TagSection({
-  title, value, onChange, savedValue, saving, onSave, error, placeholder, maxItems, layout,
+  title, value, onChange, savedValue, saving, onSave, error, placeholder, maxItems, layout, suggestions,
 }: TagSectionProps) {
   const dirty = !arraysEqual(value, savedValue)
 
   return (
     <div className="bg-card rounded-lg border p-5 space-y-3">
       <h2 className="text-sm font-medium">{title}</h2>
-      <TagInput value={value} onChange={onChange} placeholder={placeholder} maxItems={maxItems} layout={layout} savedValue={savedValue} />
+      <TagInput value={value} onChange={onChange} placeholder={placeholder} maxItems={maxItems} layout={layout} savedValue={savedValue} suggestions={suggestions} />
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="flex justify-end gap-2">
         {dirty && (
