@@ -6,6 +6,11 @@ import { useEffect, useRef, useState } from "react"
 import TagInput from "@/components/ui/TagInput"
 import { Button } from "@/components/ui/button"
 
+// Order-sensitive shallow compare — tags preserve insertion order, so position matters
+function arraysEqual(a: string[], b: string[]) {
+  return a.length === b.length && a.every((v, i) => v === b[i])
+}
+
 export default function ProfilePage() {
   const { data, isLoading } = useProfile()
   const { mutateAsync: createProfile } = useCreateProfile()
@@ -84,8 +89,13 @@ export default function ProfilePage() {
           <h2 className="text-sm font-medium">Target Roles</h2>
           <TagInput value={targetRoles} onChange={setTargetRoles} placeholder="Type a role and press Enter" maxItems={10} layout="stack" savedValue={data?.targetRoles ?? []} />
           {sectionErrors.targetRoles && <p className="text-xs text-destructive">{sectionErrors.targetRoles}</p>}
-          <div className="flex justify-end">
-            <Button size="sm" onClick={() => saveSection("targetRoles", { targetRoles })} disabled={savingSection === "targetRoles"}>
+          <div className="flex justify-end gap-2">
+            {!arraysEqual(targetRoles, data?.targetRoles ?? []) && (
+              <Button size="sm" variant="ghost" onClick={() => setTargetRoles(data?.targetRoles ?? [])} disabled={savingSection === "targetRoles"}>
+                Cancel
+              </Button>
+            )}
+            <Button size="sm" onClick={() => saveSection("targetRoles", { targetRoles })} disabled={savingSection === "targetRoles" || arraysEqual(targetRoles, data?.targetRoles ?? [])}>
               {savingSection === "targetRoles" ? "Saving…" : "Save"}
             </Button>
           </div>
@@ -95,8 +105,13 @@ export default function ProfilePage() {
           <h2 className="text-sm font-medium">Skills</h2>
           <TagInput value={skills} onChange={setSkills} placeholder="Type a skill and press Enter" maxItems={50} savedValue={data?.skills ?? []} />
           {sectionErrors.skills && <p className="text-xs text-destructive">{sectionErrors.skills}</p>}
-          <div className="flex justify-end">
-            <Button size="sm" onClick={() => saveSection("skills", { skills })} disabled={savingSection === "skills"}>
+          <div className="flex justify-end gap-2">
+            {!arraysEqual(skills, data?.skills ?? []) && (
+              <Button size="sm" variant="ghost" onClick={() => setSkills(data?.skills ?? [])} disabled={savingSection === "skills"}>
+                Cancel
+              </Button>
+            )}
+            <Button size="sm" onClick={() => saveSection("skills", { skills })} disabled={savingSection === "skills" || arraysEqual(skills, data?.skills ?? [])}>
               {savingSection === "skills" ? "Saving…" : "Save"}
             </Button>
           </div>
@@ -106,8 +121,13 @@ export default function ProfilePage() {
           <h2 className="text-sm font-medium">Certifications</h2>
           <TagInput value={certifications} onChange={setCertifications} placeholder="Type a certification and press Enter" maxItems={20} layout="stack" savedValue={data?.certifications ?? []} />
           {sectionErrors.certifications && <p className="text-xs text-destructive">{sectionErrors.certifications}</p>}
-          <div className="flex justify-end">
-            <Button size="sm" onClick={() => saveSection("certifications", { certifications })} disabled={savingSection === "certifications"}>
+          <div className="flex justify-end gap-2">
+            {!arraysEqual(certifications, data?.certifications ?? []) && (
+              <Button size="sm" variant="ghost" onClick={() => setCertifications(data?.certifications ?? [])} disabled={savingSection === "certifications"}>
+                Cancel
+              </Button>
+            )}
+            <Button size="sm" onClick={() => saveSection("certifications", { certifications })} disabled={savingSection === "certifications" || arraysEqual(certifications, data?.certifications ?? [])}>
               {savingSection === "certifications" ? "Saving…" : "Save"}
             </Button>
           </div>
@@ -117,8 +137,13 @@ export default function ProfilePage() {
           <h2 className="text-sm font-medium">Languages</h2>
           <TagInput value={languages} onChange={setLanguages} placeholder="Type a language and press Enter" maxItems={15} savedValue={data?.languages ?? []} />
           {sectionErrors.languages && <p className="text-xs text-destructive">{sectionErrors.languages}</p>}
-          <div className="flex justify-end">
-            <Button size="sm" onClick={() => saveSection("languages", { languages })} disabled={savingSection === "languages"}>
+          <div className="flex justify-end gap-2">
+            {!arraysEqual(languages, data?.languages ?? []) && (
+              <Button size="sm" variant="ghost" onClick={() => setLanguages(data?.languages ?? [])} disabled={savingSection === "languages"}>
+                Cancel
+              </Button>
+            )}
+            <Button size="sm" onClick={() => saveSection("languages", { languages })} disabled={savingSection === "languages" || arraysEqual(languages, data?.languages ?? [])}>
               {savingSection === "languages" ? "Saving…" : "Save"}
             </Button>
           </div>
