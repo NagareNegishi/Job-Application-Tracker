@@ -444,4 +444,19 @@ public class AccountControllerTests : IDisposable
         Assert.Equal(["TypeScript", "C#"], profile.Skills);
         Assert.Single(_context.UserProfiles.Where(p => p.UserId == TestUserId));
     }
+
+    // PUT returns 409 when a profile already exists for this user
+    [Fact]
+    public async Task CreateProfile_ReturnsConflict_WhenProfileAlreadyExists()
+    {
+        // Arrange: seed an existing profile row
+        _context.UserProfiles.Add(new UserProfile { UserId = TestUserId });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.CreateProfile(new ProfileDTO());
+
+        // Assert: 409 Conflict — second PUT must be rejected
+        Assert.IsType<ConflictObjectResult>(result);
+    }
 }
