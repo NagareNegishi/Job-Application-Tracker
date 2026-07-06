@@ -423,4 +423,25 @@ public class AccountControllerTests : IDisposable
         Assert.Equal(["C#", "React"], dto.Skills);
         Assert.Equal(["Engineer"], dto.TargetRoles);
     }
+
+    // PUT creates the profile when none exists and returns the saved data
+    [Fact]
+    public async Task CreateProfile_ReturnsOk_WhenNoProfileExists()
+    {
+        // Arrange
+        var dto = new ProfileDTO
+        {
+            Skills = ["TypeScript", "C#"],
+            TargetRoles = ["Senior Engineer"]
+        };
+
+        // Act
+        var result = await _controller.CreateProfile(dto);
+
+        // Assert: 200 returned and the profile row was persisted
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var profile = Assert.IsType<ProfileResponseDto>(ok.Value);
+        Assert.Equal(["TypeScript", "C#"], profile.Skills);
+        Assert.Single(_context.UserProfiles.Where(p => p.UserId == TestUserId));
+    }
 }
