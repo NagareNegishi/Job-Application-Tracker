@@ -47,7 +47,7 @@ export default function TagInput({ value, onChange, placeholder, maxItems, layou
           {value.map((tag, i) => (
             <span
               key={i}
-              className={`inline-flex items-center gap-1 rounded-md border pl-3 pr-2 py-1.5 text-xs font-semibold ${
+              className={`inline-flex items-center gap-1 rounded-md border pl-3 pr-2 py-1.5 text-sm font-semibold ${
                 isSaved(tag)
                   ? "border-transparent bg-secondary text-secondary-foreground"
                   : "border-dashed border-primary/50 bg-primary/5"
