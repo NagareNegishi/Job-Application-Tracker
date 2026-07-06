@@ -243,8 +243,8 @@ Score is 1–5. `reasoning` is one sentence.
 | 3 | Add `GET /api/account/profile` + `PUT /api/account/profile` + `PATCH /api/account/profile` to `AccountController` | Done |
 | 3a | `ProfileDTOTests` — validation for `ProfileDTO`, `WorkingRightEntry`, `WorkHistoryEntry`, `EducationEntry` | Done |
 | 3b | Profile tests in `AccountControllerTests` — GET empty/full, PUT + 409, PATCH merge + 404 | Done |
-| 4 | Add `/profile` page to frontend — tags input for `TargetRoles` and `Skills`; repeating entry forms for `WorkHistory` and `Education` (add/remove entries) | In progress (types, service, hook, page skeleton done) |
-| 5 | Add Profile nav link | — |
+| 4 | Add `/profile` page to frontend — tags input for `TargetRoles` and `Skills`; repeating entry forms for `WorkHistory` and `Education` (add/remove entries) | In progress — route + nav done (Step 5 folded in); tag sections (E) done; **polish `TagInput` before continuing**; working rights (F), work history (G), education (H) remaining |
+| 5 | Add Profile nav link | Done (folded into Step 4) |
 
 ### Analysis
 
@@ -269,4 +269,5 @@ Score is 1–5. `reasoning` is one sentence.
 - WorkHistory/Education entry (frontend): per-entry "I currently work/study here" checkbox — ticking it disables and clears the end-date field and sends `to: null`. Multiple entries may be current. Start date always required. Cap date inputs at the current month/year (no future dates).
 - **Demo profile reset (deferred — pairs with D16):** the demo user can edit their seeded profile, so the existing periodic demo-data reset + login re-seed (Demo/Auth step 2) must be extended to cover `UserProfile` — add the sample profile to `DemoSeed` and include it in the reset path. Scope alongside the profile backend (Steps 1–3). Add to `docs/progress.md` upcoming work when this plan lands.
 - **Save analysis to job (deferred — separate scope):** the two prep-oriented analyses — *Questions to ask* and *Likely interview questions* — get an optional "Save to job" action that persists them onto new optional `Job` fields (e.g. `QuestionsToAsk`, `InterviewQuestions`), so they survive as interview/meetup prep. Partially overrides "on-demand, not saved" for those two types only; the three assessment types (Alignment, Skills, Gaps) stay ephemeral (D15). Adds `Job` entity fields + migration + save UI; scope separately. Add to `docs/progress.md` upcoming work when this plan lands.
+- **TagInput polish (next session first task):** before moving to Working Rights (F), revisit `TagInput` UX — exact improvements TBD by user.
 - Profile quality: **now** a lightweight frontend advisory — a simple heuristic that flags "meets the minimum but thin; richer profiles give better analysis" when the 400 gate passes but content is sparse. A **full profile-quality score** (weighted 0–100 / meter + per-field improvement hints) is deferred to a **separate plan** — client-side only, like the dashboard. Add it to `docs/progress.md` upcoming work when this plan lands.
