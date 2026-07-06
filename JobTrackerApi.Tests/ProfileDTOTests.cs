@@ -275,4 +275,26 @@ public class ProfileDTOTests
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.From)));
     }
+
+    // An education entry with a future From year must fail the IValidatableObject check
+    [Fact]
+    public void EducationEntry_From_FutureYear_Fails()
+    {
+        // Arrange: a year two years from now — always future regardless of when the test runs
+        var entry = new EducationEntry
+        {
+            Institution = "MIT",
+            Degree = "BSc CS",
+            From = DateTime.UtcNow.Year + 2
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(EducationEntry.From)));
+    }
 }
