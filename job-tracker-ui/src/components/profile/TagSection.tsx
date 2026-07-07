@@ -19,6 +19,7 @@ type TagSectionProps = {
   error?: string
   placeholder?: string
   maxItems?: number
+  maxItemLength?: number
   layout?: "wrap" | "stack"
   suggestions?: string[]
   matchStrategy?: MatchStrategy
@@ -34,6 +35,7 @@ export default function TagSection({
   error,
   placeholder,
   maxItems,
+  maxItemLength,
   layout,
   suggestions,
   matchStrategy,
@@ -48,6 +50,7 @@ export default function TagSection({
         onChange={onChange}
         placeholder={placeholder}
         maxItems={maxItems}
+        maxItemLength={maxItemLength}
         layout={layout}
         savedValue={savedValue}
         suggestions={suggestions}

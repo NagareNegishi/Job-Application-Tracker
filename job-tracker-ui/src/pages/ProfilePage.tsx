@@ -5,6 +5,12 @@ import type { ProfilePatch, WorkingRightEntry, WorkHistoryEntry, EducationEntry 
 import { useEffect, useRef, useState } from "react"
 import TagSection from "@/components/profile/TagSection"
 import {
+  MAX_TARGET_ROLE_ITEM_LENGTH,
+  MAX_SKILL_ITEM_LENGTH,
+  MAX_CERTIFICATION_ITEM_LENGTH,
+  MAX_LANGUAGE_ITEM_LENGTH,
+} from "@/lib/validationConstants"
+import {
   TARGET_ROLE_SUGGESTIONS,
   SKILL_SUGGESTIONS,
   CERTIFICATION_SUGGESTIONS,
@@ -96,6 +102,7 @@ export default function ProfilePage() {
           error={sectionErrors.targetRoles}
           placeholder="Type a role and press Enter"
           maxItems={10}
+          maxItemLength={MAX_TARGET_ROLE_ITEM_LENGTH}
           layout="stack"
           suggestions={TARGET_ROLE_SUGGESTIONS}
         />
@@ -110,6 +117,7 @@ export default function ProfilePage() {
           error={sectionErrors.skills}
           placeholder="Type a skill and press Enter"
           maxItems={50}
+          maxItemLength={MAX_SKILL_ITEM_LENGTH}
           suggestions={SKILL_SUGGESTIONS}
         />
 
@@ -123,6 +131,7 @@ export default function ProfilePage() {
           error={sectionErrors.certifications}
           placeholder="Type a certification and press Enter"
           maxItems={20}
+          maxItemLength={MAX_CERTIFICATION_ITEM_LENGTH}
           layout="stack"
           suggestions={CERTIFICATION_SUGGESTIONS}
         />
@@ -137,6 +146,7 @@ export default function ProfilePage() {
           error={sectionErrors.languages}
           placeholder="Type a language and press Enter"
           maxItems={15}
+          maxItemLength={MAX_LANGUAGE_ITEM_LENGTH}
           suggestions={LANGUAGE_SUGGESTIONS}
           matchStrategy="prefix"
         />
