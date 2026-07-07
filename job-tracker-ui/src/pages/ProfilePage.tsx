@@ -1,9 +1,10 @@
 // Career profile page — lets users maintain the background data used as context for AI job analysis.
 import NavBar from "@/components/NavBar"
 import { useProfile, useCreateProfile, usePatchProfile } from "@/hooks/profileQuery"
-import type { ProfilePatch, WorkingRightEntry, WorkHistoryEntry, EducationEntry } from "@/types/profile"
+import type { UserProfile, ProfilePatch } from "@/types/profile"
 import { useEffect, useRef, useState } from "react"
 import TagSection from "@/components/profile/TagSection"
+import { type MatchStrategy } from "@/utils/matchSuggestion"
 import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
   MAX_SKILL_ITEM_LENGTH,
@@ -16,6 +17,38 @@ import {
   CERTIFICATION_SUGGESTIONS,
   LANGUAGE_SUGGESTIONS,
 } from "@/components/profile/tagSuggestions"
+
+// Empty form used before the query settles and for the "no profile yet" case.
+const EMPTY_PROFILE: UserProfile = {
+  targetRoles: [], skills: [], certifications: [], languages: [],
+  workingRights: [], workHistory: [], education: [],
+}
+
+// Only the four string[] fields render as tag sections; keyed so state/save wire up generically.
+type TagFieldKey = "targetRoles" | "skills" | "certifications" | "languages"
+
+type TagSectionConfig = {
+  key: TagFieldKey
+  title: string
+  placeholder: string
+  maxItems: number
+  maxItemLength: number
+  suggestions: string[]
+  layout?: "wrap" | "stack"      // default "wrap" (TagInput's own default)
+  matchStrategy?: MatchStrategy  // default "word-start"; Languages overrides to "prefix"
+}
+
+// Per-section data only — the wiring (value/onChange/save/dirty) is identical and lives in the map below.
+const TAG_SECTIONS: TagSectionConfig[] = [
+  { key: "targetRoles", title: "Target Roles", placeholder: "Type a role and press Enter",
+    maxItems: 10, maxItemLength: MAX_TARGET_ROLE_ITEM_LENGTH, layout: "stack", suggestions: TARGET_ROLE_SUGGESTIONS },
+  { key: "skills", title: "Skills", placeholder: "Type a skill and press Enter",
+    maxItems: 50, maxItemLength: MAX_SKILL_ITEM_LENGTH, suggestions: SKILL_SUGGESTIONS },
+  { key: "certifications", title: "Certifications", placeholder: "Type a certification and press Enter",
+    maxItems: 20, maxItemLength: MAX_CERTIFICATION_ITEM_LENGTH, layout: "stack", suggestions: CERTIFICATION_SUGGESTIONS },
+  { key: "languages", title: "Languages", placeholder: "Type a language and press Enter",
+    maxItems: 15, maxItemLength: MAX_LANGUAGE_ITEM_LENGTH, suggestions: LANGUAGE_SUGGESTIONS, matchStrategy: "prefix" },
+]
 
 export default function ProfilePage() {
   const { data, isLoading } = useProfile()
