@@ -10,15 +10,15 @@ export function validateTag(
   const lower = existing.map(e => e.toLowerCase())
 
   if (/<[^>]*>/.test(value))
-    return "Something's off with that one — try typing it as plain text"
+    return "Only plain text is allowed"
   if (maxLength && value.length > maxLength)
-    return `That's a bit long — ${maxLength} characters max`
+    return "This entry is too long"
   if (value.length > 2 && [...value].every(c => c === value[0]))
-    return "Hmm, that doesn't look like a real entry"
+    return "This doesn't look like a valid entry"
   if (lower.includes(value.toLowerCase()))
-    return "You've already added that one"
+    return "This is already in the list"
   if (maxItems && existing.length >= maxItems)
-    return `You're at the ${maxItems}-item limit — remove one to add another`
+    return "You've reached the limit"
 
   return null
 }
