@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, type KeyboardEvent } from "react"
 import { X } from "lucide-react"
+import { matchesSuggestion, type MatchStrategy } from "@/utils/matchSuggestion"
 
 type TagInputProps = {
   value: string[]
@@ -8,27 +9,37 @@ type TagInputProps = {
   maxItems?: number
   layout?: "wrap" | "stack"
   savedValue?: string[]
-  suggestions?: string[]   // optional autocomplete pool; omit → no dropdown
+  suggestions?: string[]       // optional autocomplete pool; omit → no dropdown
+  matchStrategy?: MatchStrategy  // omit → "word-start"
 }
 
 // Cap rendered matches so the DOM stays light; the scroll box handles overflow.
 const SUGGESTION_LIMIT = 50
 
-export default function TagInput({ value, onChange, placeholder, maxItems, layout = "wrap", savedValue, suggestions }: TagInputProps) {
+export default function TagInput({
+  value,
+  onChange,
+  placeholder,
+  maxItems,
+  layout = "wrap",
+  savedValue,
+  suggestions,
+  matchStrategy = "word-start",
+}: TagInputProps) {
   const [inputValue, setInputValue] = useState("")
   const [open, setOpen] = useState(false)        // dropdown visibility
   const [highlight, setHighlight] = useState(-1) // keyboard-active option index (-1 = none)
   const listRef = useRef<HTMLUListElement>(null)
 
-  // Substring matches (case-insensitive), excluding already-added tags; empty until the user types
+  // Filters suggestion pool by matchStrategy, excluding already-added tags; empty until the user types
   const suggestionMatches = useMemo(() => {
     const query = inputValue.trim().toLowerCase()
     if (!query || !suggestions) return []
     const taken = new Set(value.map(v => v.toLowerCase()))
     return suggestions
-      .filter(s => s.toLowerCase().includes(query) && !taken.has(s.toLowerCase()))
+      .filter(s => matchesSuggestion(s, query, matchStrategy) && !taken.has(s.toLowerCase()))
       .slice(0, SUGGESTION_LIMIT)
-  }, [inputValue, suggestions, value])
+  }, [inputValue, suggestions, value, matchStrategy])
 
   const showList = open && suggestionMatches.length > 0
 
@@ -77,7 +88,11 @@ export default function TagInput({ value, onChange, placeholder, maxItems, layou
       <div className="relative">
         <input
           value={inputValue}
-          onChange={e => { setInputValue(e.target.value); setOpen(true); setHighlight(-1) }}
+          onChange={e => {
+            setInputValue(e.target.value)
+            setOpen(true)
+            setHighlight(-1)
+          }}
           onKeyDown={handleKeyDown}
           onFocus={() => setOpen(true)}
           onBlur={() => setOpen(false)}
@@ -98,7 +113,10 @@ export default function TagInput({ value, onChange, placeholder, maxItems, layou
                 key={s}
                 role="option"
                 aria-selected={i === highlight}
-                onMouseDown={e => { e.preventDefault(); commitTag(s) }}
+                onMouseDown={e => {
+                  e.preventDefault()
+                  commitTag(s)
+                }}
                 onMouseEnter={() => setHighlight(i)}
                 className={`px-3 py-1.5 text-sm cursor-pointer ${i === highlight ? "bg-accent text-accent-foreground" : ""}`}
               >
