@@ -111,7 +111,7 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs | Done |
 | Interview reminder email | Scheduled job emails user day-before interviewAt via IEmailService | Early planning |
 | Stale application indicator | `StaleIndicator` component — amber Clock icon + tooltip in jobs list and Kanban card; `staleDaysSince` helper extracted in `dashboardUtils.ts` | Done |
-| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Steps 1–3 + 3a/3b (tests) done. Step 4 in progress: route + nav done; tag sections done + `TagInput` polished + tag-input autocomplete done (placeholder suggestion lists — full lists deferred to a separate session); **next: working rights (F), work history (G), education (H)**. See `docs/plans/job-analysis.md`. |
+| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Steps 1–3 + 3a/3b (tests) done. Step 4 in progress: route + nav done; tag sections + `TagInput` polish + autocomplete done; `matchesSuggestion` util + 10 Vitest tests added (`src/utils/`); `TagInput` `matchStrategy` prop wired (default `"word-start"`, Languages uses `"prefix"`); **next: continue TagInput polish, then working rights (F), work history (G), education (H)**. See `docs/plans/job-analysis.md`. |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
