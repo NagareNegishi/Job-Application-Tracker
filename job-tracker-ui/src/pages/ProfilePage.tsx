@@ -72,23 +72,28 @@ export default function ProfilePage() {
     setForm(data)
   }, [data])
 
+  // Update exactly one field; every other field is carried over unchanged, so other sections stay non-dirty
+  function updateField<K extends keyof UserProfile>(key: K, val: UserProfile[K]) {
+    setForm(f => ({ ...f, [key]: val }))
+  }
+
   /**
    * Saves a single section. PUT on first save (no profile row yet), PATCH on all subsequent saves.
-   * sectionKey is used only to track per-section loading and error state.
+   * The PATCH carries only this section's field; merge-patch leaves untouched sections alone.
    */
-  async function saveSection(sectionKey: string, patch: ProfilePatch) {
-    setSavingSection(sectionKey)
-    setSectionErrors(prev => ({ ...prev, [sectionKey]: "" }))
+  async function saveSection(key: keyof UserProfile) {
+    setSavingSection(key)
+    setSectionErrors(prev => ({ ...prev, [key]: "" }))
     try {
       if (!profileExists.current) {
         // First save — PUT the full form so the row is created with all current values
-        await createProfile({ targetRoles, skills, certifications, languages, workingRights, workHistory, education })
+        await createProfile(form)
         profileExists.current = true
       } else {
-        await patchProfile(patch)
+        await patchProfile({ [key]: form[key] } as ProfilePatch)
       }
     } catch {
-      setSectionErrors(prev => ({ ...prev, [sectionKey]: "Failed to save. Please try again." }))
+      setSectionErrors(prev => ({ ...prev, [key]: "Failed to save. Please try again." }))
     } finally {
       setSavingSection(null)
     }
