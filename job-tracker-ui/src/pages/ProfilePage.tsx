@@ -85,6 +85,7 @@ export default function ProfilePage() {
             Your career profile is used as context for AI job analysis.
           </p>
         </div>
+        {/* suggestion matching defaults to "word-start"; see Languages for an override */}
         <TagSection
           title="Target Roles"
           value={targetRoles}
@@ -137,6 +138,7 @@ export default function ProfilePage() {
           placeholder="Type a language and press Enter"
           maxItems={15}
           suggestions={LANGUAGE_SUGGESTIONS}
+          matchStrategy="prefix"
         />
         {/* Working Rights — Sub-step F */}
         {/* Work History — Sub-step G */}
