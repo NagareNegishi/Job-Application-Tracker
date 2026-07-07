@@ -59,7 +59,7 @@ export default function TagInput({
     const trimmed = raw.trim()
     if (!trimmed) return
     const error = validateTag(trimmed, { maxLength: maxItemLength, existing: value, maxItems })
-    if (error) { setInputError(error); return }
+    if (error) { setInputError(error); setInputValue(""); setOpen(false); setHighlight(-1); return }
     onChange([...value, trimmed])
     setInputValue("")
     setOpen(false)
