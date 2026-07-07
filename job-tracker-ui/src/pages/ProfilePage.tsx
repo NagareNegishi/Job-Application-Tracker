@@ -10,6 +10,10 @@ import {
   MAX_SKILL_ITEM_LENGTH,
   MAX_CERTIFICATION_ITEM_LENGTH,
   MAX_LANGUAGE_ITEM_LENGTH,
+  MAX_TARGET_ROLES_COUNT,
+  MAX_SKILLS_COUNT,
+  MAX_CERTIFICATIONS_COUNT,
+  MAX_LANGUAGES_COUNT,
 } from "@/lib/validationConstants"
 import {
   TARGET_ROLE_SUGGESTIONS,
@@ -41,13 +45,13 @@ type TagSectionConfig = {
 // Per-section data only — the wiring (value/onChange/save/dirty) is identical and lives in the map below.
 const TAG_SECTIONS: TagSectionConfig[] = [
   { key: "targetRoles", title: "Target Roles", placeholder: "Type a role and press Enter",
-    maxItems: 10, maxItemLength: MAX_TARGET_ROLE_ITEM_LENGTH, layout: "stack", suggestions: TARGET_ROLE_SUGGESTIONS },
+    maxItems: MAX_TARGET_ROLES_COUNT, maxItemLength: MAX_TARGET_ROLE_ITEM_LENGTH, layout: "stack", suggestions: TARGET_ROLE_SUGGESTIONS },
   { key: "skills", title: "Skills", placeholder: "Type a skill and press Enter",
-    maxItems: 50, maxItemLength: MAX_SKILL_ITEM_LENGTH, suggestions: SKILL_SUGGESTIONS },
+    maxItems: MAX_SKILLS_COUNT, maxItemLength: MAX_SKILL_ITEM_LENGTH, suggestions: SKILL_SUGGESTIONS },
   { key: "certifications", title: "Certifications", placeholder: "Type a certification and press Enter",
-    maxItems: 20, maxItemLength: MAX_CERTIFICATION_ITEM_LENGTH, layout: "stack", suggestions: CERTIFICATION_SUGGESTIONS },
+    maxItems: MAX_CERTIFICATIONS_COUNT, maxItemLength: MAX_CERTIFICATION_ITEM_LENGTH, layout: "stack", suggestions: CERTIFICATION_SUGGESTIONS },
   { key: "languages", title: "Languages", placeholder: "Type a language and press Enter",
-    maxItems: 15, maxItemLength: MAX_LANGUAGE_ITEM_LENGTH, suggestions: LANGUAGE_SUGGESTIONS, matchStrategy: "prefix" },
+    maxItems: MAX_LANGUAGES_COUNT, maxItemLength: MAX_LANGUAGE_ITEM_LENGTH, suggestions: LANGUAGE_SUGGESTIONS, matchStrategy: "prefix" },
 ]
 
 export default function ProfilePage() {
@@ -118,65 +122,26 @@ export default function ProfilePage() {
             Your career profile is used as context for AI job analysis.
           </p>
         </div>
-        {/* suggestion matching defaults to "word-start"; see Languages for an override */}
-        <TagSection
-          title="Target Roles"
-          value={targetRoles}
-          onChange={setTargetRoles}
-          savedValue={data?.targetRoles ?? []}
-          saving={savingSection === "targetRoles"}
-          onSave={() => saveSection("targetRoles", { targetRoles })}
-          error={sectionErrors.targetRoles}
-          placeholder="Type a role and press Enter"
-          maxItems={10}
-          maxItemLength={MAX_TARGET_ROLE_ITEM_LENGTH}
-          layout="stack"
-          suggestions={TARGET_ROLE_SUGGESTIONS}
-        />
+        {/* All four tag sections share identical wiring; only the per-section config differs */}
+        {TAG_SECTIONS.map(s => (
+          <TagSection
+            key={s.key}
+            title={s.title}
+            value={form[s.key]}
+            onChange={val => updateField(s.key, val)}
+            savedValue={data?.[s.key] ?? []}
+            saving={savingSection === s.key}
+            onSave={() => saveSection(s.key)}
+            error={sectionErrors[s.key]}
+            placeholder={s.placeholder}
+            maxItems={s.maxItems}
+            maxItemLength={s.maxItemLength}
+            layout={s.layout}
+            suggestions={s.suggestions}
+            matchStrategy={s.matchStrategy}
+          />
+        ))}
 
-        <TagSection
-          title="Skills"
-          value={skills}
-          onChange={setSkills}
-          savedValue={data?.skills ?? []}
-          saving={savingSection === "skills"}
-          onSave={() => saveSection("skills", { skills })}
-          error={sectionErrors.skills}
-          placeholder="Type a skill and press Enter"
-          maxItems={50}
-          maxItemLength={MAX_SKILL_ITEM_LENGTH}
-          suggestions={SKILL_SUGGESTIONS}
-        />
-
-        <TagSection
-          title="Certifications"
-          value={certifications}
-          onChange={setCertifications}
-          savedValue={data?.certifications ?? []}
-          saving={savingSection === "certifications"}
-          onSave={() => saveSection("certifications", { certifications })}
-          error={sectionErrors.certifications}
-          placeholder="Type a certification and press Enter"
-          maxItems={20}
-          maxItemLength={MAX_CERTIFICATION_ITEM_LENGTH}
-          layout="stack"
-          suggestions={CERTIFICATION_SUGGESTIONS}
-        />
-
-        <TagSection
-          title="Languages"
-          value={languages}
-          onChange={setLanguages}
-          savedValue={data?.languages ?? []}
-          saving={savingSection === "languages"}
-          onSave={() => saveSection("languages", { languages })}
-          error={sectionErrors.languages}
-          placeholder="Type a language and press Enter"
-          maxItems={15}
-          maxItemLength={MAX_LANGUAGE_ITEM_LENGTH}
-          suggestions={LANGUAGE_SUGGESTIONS}
-          matchStrategy="prefix"
-        />
         {/* Working Rights — Sub-step F */}
         {/* Work History — Sub-step G */}
         {/* Education — Sub-step H */}

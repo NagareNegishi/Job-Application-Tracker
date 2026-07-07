@@ -18,3 +18,9 @@ export const MAX_TARGET_ROLE_ITEM_LENGTH = 100
 export const MAX_SKILL_ITEM_LENGTH = 50
 export const MAX_CERTIFICATION_ITEM_LENGTH = 100
 export const MAX_LANGUAGE_ITEM_LENGTH = 30
+
+// Profile array-count caps
+export const MAX_TARGET_ROLES_COUNT = 10
+export const MAX_SKILLS_COUNT = 50
+export const MAX_CERTIFICATIONS_COUNT = 20
+export const MAX_LANGUAGES_COUNT = 15
