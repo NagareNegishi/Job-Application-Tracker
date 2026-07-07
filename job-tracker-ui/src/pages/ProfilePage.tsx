@@ -58,29 +58,18 @@ export default function ProfilePage() {
   // Ref not state — flipping this flag must not trigger a re-render
   const profileExists = useRef(false)
 
-  const [targetRoles, setTargetRoles] = useState<string[]>([])
-  const [skills, setSkills] = useState<string[]>([])
-  const [certifications, setCertifications] = useState<string[]>([])
-  const [languages, setLanguages] = useState<string[]>([])
-  const [workingRights, setWorkingRights] = useState<WorkingRightEntry[]>([])
-  const [workHistory, setWorkHistory] = useState<WorkHistoryEntry[]>([])
-  const [education, setEducation] = useState<EducationEntry[]>([])
+  // Single form object — one key per profile field; replaces seven parallel useState hooks
+  const [form, setForm] = useState<UserProfile>(EMPTY_PROFILE)
 
-  const [savingSection, setSavingSection] = useState<string | null>(null)
+  const [savingSection, setSavingSection] = useState<keyof UserProfile | null>(null)
   const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({})
 
-  // Populate local state once the query settles; re-syncs after a save invalidates and refetches
+  // Populate the form once the query settles; re-syncs after a save invalidates and refetches
   useEffect(() => {
     if (data === undefined) return
     if (data === null) { profileExists.current = false; return }
     profileExists.current = true
-    setTargetRoles(data.targetRoles)
-    setSkills(data.skills)
-    setCertifications(data.certifications)
-    setLanguages(data.languages)
-    setWorkingRights(data.workingRights)
-    setWorkHistory(data.workHistory)
-    setEducation(data.education)
+    setForm(data)
   }, [data])
 
   /**
