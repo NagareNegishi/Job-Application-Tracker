@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, type KeyboardEvent } from "react"
 import { X } from "lucide-react"
 import { matchesSuggestion, type MatchStrategy } from "@/utils/matchSuggestion"
+import { validateTag } from "@/utils/validateTag"
 
 type TagInputProps = {
   value: string[]
@@ -9,6 +10,7 @@ type TagInputProps = {
   maxItems?: number
   layout?: "wrap" | "stack"
   savedValue?: string[]
+  maxItemLength?: number
   suggestions?: string[]       // optional autocomplete pool; omit → no dropdown
   matchStrategy?: MatchStrategy  // omit → "word-start"
 }
@@ -21,12 +23,14 @@ export default function TagInput({
   onChange,
   placeholder,
   maxItems,
+  maxItemLength,
   layout = "wrap",
   savedValue,
   suggestions,
   matchStrategy = "word-start",
 }: TagInputProps) {
   const [inputValue, setInputValue] = useState("")
+  const [inputError, setInputError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)        // dropdown visibility
   const [highlight, setHighlight] = useState(-1) // keyboard-active option index (-1 = none)
   const listRef = useRef<HTMLUListElement>(null)
@@ -53,12 +57,14 @@ export default function TagInput({
   // Adds a tag from any source (typed text or a picked suggestion); preserves original casing
   function commitTag(raw: string) {
     const trimmed = raw.trim()
-    if (!trimmed || value.includes(trimmed)) return
-    if (maxItems && value.length >= maxItems) return
+    if (!trimmed) return
+    const error = validateTag(trimmed, { maxLength: maxItemLength, existing: value, maxItems })
+    if (error) { setInputError(error); return }
     onChange([...value, trimmed])
     setInputValue("")
     setOpen(false)
     setHighlight(-1)
+    setInputError(null)
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -92,6 +98,7 @@ export default function TagInput({
             setInputValue(e.target.value)
             setOpen(true)
             setHighlight(-1)
+            if (inputError) setInputError(null)
           }}
           onKeyDown={handleKeyDown}
           onFocus={() => setOpen(true)}
@@ -102,6 +109,7 @@ export default function TagInput({
           aria-autocomplete="list"
           className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
         />
+        {inputError && <p className="text-xs text-destructive mt-1">{inputError}</p>}
         {showList && (
           <ul
             ref={listRef}
