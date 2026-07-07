@@ -2,6 +2,7 @@
 // Controlled — value/onChange live in the page so first-save can PUT the whole form.
 import TagInput from "@/components/ui/TagInput"
 import { Button } from "@/components/ui/button"
+import { type MatchStrategy } from "@/utils/matchSuggestion"
 
 // Order-sensitive shallow compare — tags preserve insertion order, so position matters
 function arraysEqual(a: string[], b: string[]) {
@@ -20,17 +21,38 @@ type TagSectionProps = {
   maxItems?: number
   layout?: "wrap" | "stack"
   suggestions?: string[]
+  matchStrategy?: MatchStrategy
 }
 
 export default function TagSection({
-  title, value, onChange, savedValue, saving, onSave, error, placeholder, maxItems, layout, suggestions,
+  title,
+  value,
+  onChange,
+  savedValue,
+  saving,
+  onSave,
+  error,
+  placeholder,
+  maxItems,
+  layout,
+  suggestions,
+  matchStrategy,
 }: TagSectionProps) {
   const dirty = !arraysEqual(value, savedValue)
 
   return (
     <div className="bg-card rounded-lg border p-5 space-y-3">
       <h2 className="text-sm font-medium">{title}</h2>
-      <TagInput value={value} onChange={onChange} placeholder={placeholder} maxItems={maxItems} layout={layout} savedValue={savedValue} suggestions={suggestions} />
+      <TagInput
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        maxItems={maxItems}
+        layout={layout}
+        savedValue={savedValue}
+        suggestions={suggestions}
+        matchStrategy={matchStrategy}
+      />
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="flex justify-end gap-2">
         {dirty && (
