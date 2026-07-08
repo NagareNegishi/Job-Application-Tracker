@@ -4,6 +4,7 @@ import { useProfile, useCreateProfile, usePatchProfile } from "@/hooks/profileQu
 import type { UserProfile, ProfilePatch } from "@/types/profile"
 import { useEffect, useRef, useState } from "react"
 import TagSection from "@/components/profile/TagSection"
+import WorkingRightsSection from "@/components/profile/WorkingRightsSection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
 import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
@@ -142,7 +143,14 @@ export default function ProfilePage() {
           />
         ))}
 
-        {/* Working Rights — Sub-step F */}
+        <WorkingRightsSection
+          value={form.workingRights}
+          onChange={val => updateField("workingRights", val)}
+          savedValue={data?.workingRights ?? []}
+          saving={savingSection === "workingRights"}
+          onSave={() => saveSection("workingRights")}
+          error={sectionErrors["workingRights"]}
+        />
         {/* Work History — Sub-step G */}
         {/* Education — Sub-step H */}
       </div>
