@@ -43,7 +43,7 @@ export default function WorkingRightsSection({
 
   return (
     <div className="bg-card rounded-lg border p-5 space-y-3">
-      <h2 className="text-sm font-medium">Work Authorisation</h2>
+      <h2 className="text-sm font-medium">Work Rights</h2>
       <div className="space-y-2">
         {value.map((entry, i) => (
           <div key={i} className="flex items-center gap-2 bg-muted/50 border rounded-md p-2">
@@ -84,7 +84,7 @@ export default function WorkingRightsSection({
       </div>
       <Button size="sm" variant="outline" onClick={addEntry} className="gap-1">
         <Plus className="h-4 w-4" />
-        Add entry
+        Add country
       </Button>
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="flex justify-end gap-2">
@@ -93,7 +93,7 @@ export default function WorkingRightsSection({
             Cancel
           </Button>
         )}
-        <Button size="sm" onClick={onSave} disabled={saving || !dirty}>
+        <Button size="sm" onClick={onSave} disabled={saving || !dirty || value.some(e => !e.country)}>
           {saving ? "Saving…" : "Save"}
         </Button>
       </div>
