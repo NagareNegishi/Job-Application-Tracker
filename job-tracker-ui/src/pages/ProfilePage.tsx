@@ -45,7 +45,7 @@ type TagSectionConfig = {
 
 // Per-section data only — the wiring (value/onChange/save/dirty) is identical and lives in the map below.
 const TAG_SECTIONS: TagSectionConfig[] = [
-  { key: "targetRoles", title: "Target Roles", placeholder: "Type a role and press Enter",
+  { key: "targetRoles", title: "Desired Roles", placeholder: "Type a role and press Enter",
     maxItems: MAX_TARGET_ROLES_COUNT, maxItemLength: MAX_TARGET_ROLE_ITEM_LENGTH, layout: "stack", suggestions: TARGET_ROLE_SUGGESTIONS },
   { key: "skills", title: "Skills", placeholder: "Type a skill and press Enter",
     maxItems: MAX_SKILLS_COUNT, maxItemLength: MAX_SKILL_ITEM_LENGTH, suggestions: SKILL_SUGGESTIONS },
