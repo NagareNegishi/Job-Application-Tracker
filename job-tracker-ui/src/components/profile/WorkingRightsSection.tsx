@@ -43,7 +43,7 @@ export default function WorkingRightsSection({
 
   return (
     <div className="bg-card rounded-lg border p-5 space-y-3">
-      <h2 className="text-sm font-medium">Working Rights</h2>
+      <h2 className="text-sm font-medium">Work Authorisation</h2>
       <div className="space-y-2">
         {value.map((entry, i) => (
           <div key={i} className="flex items-center gap-2 bg-muted/50 border rounded-md p-2">
@@ -52,6 +52,7 @@ export default function WorkingRightsSection({
                 <CountryCombobox
                   value={entry.country}
                   onChange={code => updateEntry(i, { country: code })}
+                  excludeCodes={value.filter((_, j) => j !== i).map(e => e.country).filter(Boolean)}
                 />
               </div>
               <div className="flex-1 min-w-0">

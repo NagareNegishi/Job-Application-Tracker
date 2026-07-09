@@ -12,13 +12,14 @@ import { COUNTRY_CODES, getCountryName } from "./countryCodes"
 type Props = {
   value: string
   onChange: (code: string) => void
+  excludeCodes?: string[]
 }
 
 function Flag({ code }: { code: string }) {
   return <span className={`fi fi-${code.toLowerCase()} rounded-sm shrink-0`} />
 }
 
-export default function CountryCombobox({ value, onChange }: Props) {
+export default function CountryCombobox({ value, onChange, excludeCodes }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -41,7 +42,7 @@ export default function CountryCombobox({ value, onChange }: Props) {
           <CommandInput placeholder="Search countries…" />
           <CommandList>
             <CommandEmpty>No country found.</CommandEmpty>
-            {COUNTRY_CODES.map(code => (
+            {COUNTRY_CODES.filter(code => !excludeCodes?.includes(code)).map(code => (
               <CommandItem
                 key={code}
                 value={getCountryName(code)}
