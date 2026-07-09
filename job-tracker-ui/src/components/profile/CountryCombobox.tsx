@@ -24,7 +24,7 @@ export default function CountryCombobox({ value, onChange }: Props) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" className="w-52 justify-between font-normal">
+        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
           {value ? (
             <span className="flex items-center gap-2 truncate">
               <Flag code={value} />
@@ -36,7 +36,7 @@ export default function CountryCombobox({ value, onChange }: Props) {
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-52 p-0">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
           <CommandInput placeholder="Search countries…" />
           <CommandList>

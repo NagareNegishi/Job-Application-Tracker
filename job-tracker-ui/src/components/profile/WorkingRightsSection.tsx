@@ -47,15 +47,18 @@ export default function WorkingRightsSection({
       <div className="space-y-2">
         {value.map((entry, i) => (
           <div key={i} className="flex items-center gap-2">
-            <CountryCombobox
-              value={entry.country}
-              onChange={code => updateEntry(i, { country: code })}
-            />
+            <div className="flex-1 min-w-0">
+              <CountryCombobox
+                value={entry.country}
+                onChange={code => updateEntry(i, { country: code })}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
             <Select
               value={entry.status}
               onValueChange={status => updateEntry(i, { status: status as WorkingRight })}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -64,6 +67,7 @@ export default function WorkingRightsSection({
                 ))}
               </SelectContent>
             </Select>
+            </div>
             <Button
               size="icon"
               variant="ghost"
