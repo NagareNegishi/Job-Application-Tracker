@@ -27,6 +27,12 @@ describe("word-start", () => {
   it("is case-insensitive", () => {
     expect(matchesSuggestion("Software Engineer", "ENG", "word-start")).toBe(true)
   })
+  it("matches a multi-word query spanning word boundaries", () => {
+    expect(matchesSuggestion("Software Engineer", "software e", "word-start")).toBe(true)
+  })
+  it("rejects a multi-word query that doesn't align", () => {
+    expect(matchesSuggestion("Software Engineer", "engineer s", "word-start")).toBe(false)
+  })
 })
 
 describe("substring", () => {
