@@ -5,28 +5,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select"
 import type { WorkHistoryEntry } from "@/types/profile"
+import MonthYearPicker from "./MonthYearPicker"
 import {
   MAX_WORK_HISTORY_TITLE_LENGTH,
   MAX_WORK_HISTORY_COMPANY_LENGTH,
   MAX_WORK_HISTORY_DESCRIPTION_LENGTH,
 } from "@/lib/validationConstants"
-
-const MONTHS = [
-  { value: "1", label: "January" },  { value: "2", label: "February" },
-  { value: "3", label: "March" },    { value: "4", label: "April" },
-  { value: "5", label: "May" },      { value: "6", label: "June" },
-  { value: "7", label: "July" },     { value: "8", label: "August" },
-  { value: "9", label: "September" },{ value: "10", label: "October" },
-  { value: "11", label: "November" },{ value: "12", label: "December" },
-]
-
-const CURRENT_YEAR = new Date().getFullYear()
-// Descending so the most recent year appears first in the dropdown.
-const YEARS = Array.from({ length: CURRENT_YEAR - 1899 }, (_, i) => CURRENT_YEAR - i)
 
 type Props = {
   value: WorkHistoryEntry[]
@@ -83,12 +68,12 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">
-                    Company <span className="text-destructive">*</span>
+                    Company or organization <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     value={entry.company}
                     onChange={e => updateEntry(i, { company: e.target.value })}
-                    placeholder="e.g. Acme Corp"
+                    placeholder="e.g. Google"
                     maxLength={MAX_WORK_HISTORY_COMPANY_LENGTH}
                   />
                 </div>
@@ -101,80 +86,24 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
                     }
                   />
                   <Label htmlFor={`wh-current-${i}`} className="text-xs font-normal cursor-pointer">
-                    Currently working here
+                    I am currently working in this role
                   </Label>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Start date</Label>
-                  <div className="flex gap-2">
-                    <div className="flex-1 space-y-1">
-                      <Label className="text-xs text-muted-foreground">Month</Label>
-                      <Select
-                        value={entry.fromMonth !== null ? String(entry.fromMonth) : ""}
-                        onValueChange={v => updateEntry(i, { fromMonth: parseInt(v) })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Optional" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <Label className="text-xs text-muted-foreground">
-                        Year <span className="text-destructive">*</span>
-                      </Label>
-                      <Select
-                        value={entry.fromYear !== 0 ? String(entry.fromYear) : ""}
-                        onValueChange={v => updateEntry(i, { fromYear: parseInt(v) })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
+                <MonthYearPicker
+                  label="Start date"
+                  month={entry.fromMonth}
+                  year={entry.fromYear}
+                  onMonthChange={v => updateEntry(i, { fromMonth: v })}
+                  onYearChange={v => updateEntry(i, { fromYear: v })}
+                />
                 {!isCurrent && (
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">End date</Label>
-                    <div className="flex gap-2">
-                      <div className="flex-1 space-y-1">
-                        <Label className="text-xs text-muted-foreground">Month</Label>
-                        <Select
-                          value={entry.toMonth !== null ? String(entry.toMonth) : ""}
-                          onValueChange={v => updateEntry(i, { toMonth: parseInt(v) })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Optional" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <Label className="text-xs text-muted-foreground">
-                          Year <span className="text-destructive">*</span>
-                        </Label>
-                        <Select
-                          value={entry.toYear !== null && entry.toYear !== 0 ? String(entry.toYear) : ""}
-                          onValueChange={v => updateEntry(i, { toYear: parseInt(v) })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Year" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
+                  <MonthYearPicker
+                    label="End date"
+                    month={entry.toMonth}
+                    year={entry.toYear ?? 0}
+                    onMonthChange={v => updateEntry(i, { toMonth: v })}
+                    onYearChange={v => updateEntry(i, { toYear: v })}
+                  />
                 )}
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">Description</Label>
