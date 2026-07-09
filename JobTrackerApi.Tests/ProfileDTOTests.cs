@@ -156,17 +156,16 @@ public class ProfileDTOTests
         Assert.Empty(results);
     }
 
-    // A work history entry with a future From date must fail the IValidatableObject check
+    // FromYear in the future must fail the IValidatableObject check
     [Fact]
-    public void WorkHistoryEntry_From_FutureDate_Fails()
+    public void WorkHistoryEntry_FromYear_FutureYear_Fails()
     {
-        // Arrange: a date two years from now — always future regardless of when the test runs
-        var futureDate = DateTime.UtcNow.AddYears(2).ToString("yyyy-MM");
+        // Arrange: two years from now — always future regardless of when the test runs
         var entry = new WorkHistoryEntry
         {
             Title = "Engineer",
             Company = "Acme",
-            From = futureDate,
+            FromYear = DateTime.UtcNow.Year + 2,
             Description = "Did things."
         };
 
@@ -177,20 +176,18 @@ public class ProfileDTOTests
 
         // Assert
         Assert.False(isValid);
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.From)));
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.FromYear)));
     }
 
-    // A work history entry where To is earlier than From must fail validation
+    // ToYear earlier than FromYear must fail validation
     [Fact]
-    public void WorkHistoryEntry_To_BeforeFrom_Fails()
+    public void WorkHistoryEntry_ToYear_BeforeFromYear_Fails()
     {
-        // Arrange: From is 2023-06, To is 2023-01 — earlier month, same year
         var entry = new WorkHistoryEntry
         {
             Title = "Engineer",
             Company = "Acme",
-            From = "2023-06",
-            To = "2023-01",
+            FromYear = 2023, ToYear = 2022,
             Description = "Did things."
         };
 
@@ -201,21 +198,20 @@ public class ProfileDTOTests
 
         // Assert
         Assert.False(isValid);
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.To)));
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.ToYear)));
     }
 
-    // A work history entry with a future To date must fail validation
+    // Same year, ToMonth earlier than FromMonth must fail validation
     [Fact]
-    public void WorkHistoryEntry_To_FutureDate_Fails()
+    public void WorkHistoryEntry_ToMonth_BeforeFromMonth_SameYear_Fails()
     {
-        // Arrange: From is a past date; To is two years from now
-        var futureDate = DateTime.UtcNow.AddYears(2).ToString("yyyy-MM");
+        // Arrange: both in 2023 but June → January is backwards
         var entry = new WorkHistoryEntry
         {
             Title = "Engineer",
             Company = "Acme",
-            From = "2022-01",
-            To = futureDate,
+            FromYear = 2023, FromMonth = 6,
+            ToYear = 2023, ToMonth = 1,
             Description = "Did things."
         };
 
@@ -226,20 +222,40 @@ public class ProfileDTOTests
 
         // Assert
         Assert.False(isValid);
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.To)));
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.ToMonth)));
     }
 
-    // To = null means currently in this role — must pass validation
+    // ToYear in the future must fail validation
     [Fact]
-    public void WorkHistoryEntry_To_Null_Passes()
+    public void WorkHistoryEntry_ToYear_FutureYear_Fails()
     {
-        // Arrange
         var entry = new WorkHistoryEntry
         {
             Title = "Engineer",
             Company = "Acme",
-            From = "2022-01",
-            To = null,
+            FromYear = 2022, ToYear = DateTime.UtcNow.Year + 2,
+            Description = "Did things."
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.ToYear)));
+    }
+
+    // ToYear = null means currently in this role — must pass validation
+    [Fact]
+    public void WorkHistoryEntry_ToYear_Null_Passes()
+    {
+        var entry = new WorkHistoryEntry
+        {
+            Title = "Engineer",
+            Company = "Acme",
+            FromYear = 2022,
             Description = "Did things."
         };
 
@@ -253,16 +269,15 @@ public class ProfileDTOTests
         Assert.Empty(results);
     }
 
-    // A From date that doesn't match YYYY-MM format must fail the regex attribute
+    // FromYear below the valid range must fail the [Range] attribute
     [Fact]
-    public void WorkHistoryEntry_InvalidFormat_Fails()
+    public void WorkHistoryEntry_FromYear_OutOfRange_Fails()
     {
-        // Arrange: "2024-1" is missing the leading zero — fails the regex
         var entry = new WorkHistoryEntry
         {
             Title = "Engineer",
             Company = "Acme",
-            From = "2024-1",
+            FromYear = 1800,
             Description = "Did things."
         };
 
@@ -273,7 +288,7 @@ public class ProfileDTOTests
 
         // Assert
         Assert.False(isValid);
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.From)));
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkHistoryEntry.FromYear)));
     }
 
     // An education entry with a future From year must fail the IValidatableObject check

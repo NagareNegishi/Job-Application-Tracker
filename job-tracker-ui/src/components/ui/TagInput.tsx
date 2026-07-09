@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, type KeyboardEvent } from "react"
-import { X } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import { matchesSuggestion, type MatchStrategy } from "@/utils/matchSuggestion"
 import { validateTag } from "@/utils/validateTag"
 
@@ -139,7 +139,7 @@ export default function TagInput({
           {value.map((tag, i) => (
             <span
               key={i}
-              className={`inline-flex items-center gap-1 rounded-md border pl-3 pr-2 py-1.5 text-sm font-semibold ${
+              className={`inline-flex items-center gap-2 rounded-md border pl-3 pr-2 py-1.5 text-sm font-semibold ${
                 isSaved(tag)
                   ? "border-transparent bg-secondary text-secondary-foreground"
                   : "border-dashed border-primary/50 bg-primary/5"
@@ -152,7 +152,7 @@ export default function TagInput({
                 className="hover:text-destructive transition-colors"
                 aria-label={`Remove ${tag}`}
               >
-                <X className="h-3 w-3" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             </span>
           ))}

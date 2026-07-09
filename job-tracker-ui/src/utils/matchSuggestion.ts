@@ -7,8 +7,13 @@ export function matchesSuggestion(suggestion: string, query: string, strategy: M
   switch (strategy) {
     case "prefix":
       return s.startsWith(q)
-    case "word-start":
-      return s.split(/\s+/).some(word => word.startsWith(q))
+    case "word-start": {
+      const queryWords = q.trim().split(/\s+/)
+      const suggWords = s.split(/\s+/)
+      return suggWords.some((_, start) =>
+        queryWords.every((qw, j) => (suggWords[start + j] ?? "").startsWith(qw))
+      )
+    }
     case "substring":
       return s.includes(q)
   }

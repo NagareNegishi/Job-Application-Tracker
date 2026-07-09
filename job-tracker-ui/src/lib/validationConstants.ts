@@ -24,3 +24,12 @@ export const MAX_TARGET_ROLES_COUNT = 10
 export const MAX_SKILLS_COUNT = 50
 export const MAX_CERTIFICATIONS_COUNT = 20
 export const MAX_LANGUAGES_COUNT = 15
+
+// Work history per-item limits
+export const MAX_WORK_HISTORY_TITLE_LENGTH = 100
+export const MAX_WORK_HISTORY_COMPANY_LENGTH = 100
+export const MAX_WORK_HISTORY_DESCRIPTION_LENGTH = 2000
+
+// Education per-item limits
+export const MAX_EDUCATION_INSTITUTION_LENGTH = 100
+export const MAX_EDUCATION_DEGREE_LENGTH = 100

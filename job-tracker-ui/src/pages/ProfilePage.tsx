@@ -4,6 +4,8 @@ import { useProfile, useCreateProfile, usePatchProfile } from "@/hooks/profileQu
 import type { UserProfile, ProfilePatch } from "@/types/profile"
 import { useEffect, useRef, useState } from "react"
 import TagSection from "@/components/profile/TagSection"
+import WorkingRightsSection from "@/components/profile/WorkingRightsSection"
+import WorkHistorySection from "@/components/profile/WorkHistorySection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
 import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
@@ -44,7 +46,7 @@ type TagSectionConfig = {
 
 // Per-section data only — the wiring (value/onChange/save/dirty) is identical and lives in the map below.
 const TAG_SECTIONS: TagSectionConfig[] = [
-  { key: "targetRoles", title: "Target Roles", placeholder: "Type a role and press Enter",
+  { key: "targetRoles", title: "Desired Roles", placeholder: "Type a role and press Enter",
     maxItems: MAX_TARGET_ROLES_COUNT, maxItemLength: MAX_TARGET_ROLE_ITEM_LENGTH, layout: "stack", suggestions: TARGET_ROLE_SUGGESTIONS },
   { key: "skills", title: "Skills", placeholder: "Type a skill and press Enter",
     maxItems: MAX_SKILLS_COUNT, maxItemLength: MAX_SKILL_ITEM_LENGTH, suggestions: SKILL_SUGGESTIONS },
@@ -142,8 +144,22 @@ export default function ProfilePage() {
           />
         ))}
 
-        {/* Working Rights — Sub-step F */}
-        {/* Work History — Sub-step G */}
+        <WorkingRightsSection
+          value={form.workingRights}
+          onChange={val => updateField("workingRights", val)}
+          savedValue={data?.workingRights ?? []}
+          saving={savingSection === "workingRights"}
+          onSave={() => saveSection("workingRights")}
+          error={sectionErrors["workingRights"]}
+        />
+        <WorkHistorySection
+          value={form.workHistory}
+          onChange={val => updateField("workHistory", val)}
+          savedValue={data?.workHistory ?? []}
+          saving={savingSection === "workHistory"}
+          onSave={() => saveSection("workHistory")}
+          error={sectionErrors["workHistory"]}
+        />
         {/* Education — Sub-step H */}
       </div>
     </div>

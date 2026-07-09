@@ -16,8 +16,10 @@ export type WorkingRightEntry = {
 export type WorkHistoryEntry = {
   title: string;
   company: string;
-  from: string;
-  to: string | null;
+  fromYear: number;         // 0 = not yet selected
+  fromMonth: number | null; // 1–12; null = not selected (optional)
+  toYear: number | null;    // null = currently working; 0 = unchecked, no year yet
+  toMonth: number | null;   // 1–12; null = not selected (optional)
   description: string;
 };
 

@@ -122,3 +122,7 @@ Tests use an in-memory EF Core database (unique per test class via `Guid.NewGuid
 
 - When working on frontend UI or styling: follow: `.claude/skills/frontend-design/SKILL.md`
 - When writing or editing code: follow: `.claude/skills/code-commenting/SKILL.md`
+
+## Frontend Component Workflow
+
+Once a component is wired into a page, stop and wait for approval before starting the next one.
