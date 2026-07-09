@@ -87,7 +87,7 @@ CV integration is deferred — analysis uses profile text only.
 | `fromMonth` | `int?` | Start month (1–12); optional |
 | `toYear` | `int?` | End year; `null` = current role (checkbox); `≥ fromYear`; not future |
 | `toMonth` | `int?` | End month (1–12); optional; `≥ fromMonth` when same year and both present |
-| `description` | `string` | Responsibilities and achievements |
+| `description` | `string?` | Responsibilities and achievements; optional |
 
 **EducationEntry:**
 | Sub-field | Type | Notes |
@@ -102,7 +102,7 @@ CV integration is deferred — analysis uses profile text only.
 Added to `ValidationConstants` (`MaxProfile*` etc.). Generous by design — bounds payload/abuse, not real users.
 
 - **Array counts:** TargetRoles 10, Skills 50, Certifications 20, Languages 15, WorkingRights 20, WorkHistory 20, Education 10.
-- **String lengths:** TargetRoles item 100, Skills item 50, Certifications item 100, Languages item 30; WorkHistoryEntry `title` 100 / `company` 100 / `description` 2000; EducationEntry `institution` 100 / `degree` 100; WorkingRightEntry `country` 2 (regex `^[A-Z]{2}$`).
+- **String lengths:** TargetRoles item 100, Skills item 50, Certifications item 100, Languages item 30; WorkHistoryEntry `title` 100 / `company` 100 / `description` 2000 (optional); EducationEntry `institution` 100 / `degree` 100; WorkingRightEntry `country` 2 (regex `^[A-Z]{2}$`).
 - **Dates:**
   - *Format (attribute):* WorkHistory — `fromYear`/`toYear` use `[Range(1900, 2099)]`; `fromMonth`/`toMonth` use `[Range(1, 12)]`. Education `from`/`to` — `[Range(1900, 2099)]`. No regex attributes on WorkHistory (model changed from YYYY-MM string to separate int fields).
   - *Runtime (`IValidatableObject` on the entry DTOs):* year fields not future; `toYear ≥ fromYear` when present; `toMonth ≥ fromMonth` when same year and both present. Month-only ordering enforced only when both months are provided (month is optional).
@@ -280,3 +280,4 @@ Score is 1–5. `reasoning` is one sentence.
 - Profile quality: **now** a lightweight frontend advisory — a simple heuristic that flags "meets the minimum but thin; richer profiles give better analysis" when the 400 gate passes but content is sparse. A **full profile-quality score** (weighted 0–100 / meter + per-field improvement hints) is deferred to a **separate plan** — client-side only, like the dashboard. Add it to `docs/progress.md` upcoming work when this plan lands.
 - **Form re-hydration on refetch (deferred enhancement):** `ProfilePage`'s effect re-runs `setForm(data)` on every profile refetch, so saving one section wipes unsaved edits in any other mid-edit section. Left as-is (rare to edit two sections at once). Fix when polishing: hydrate the form once via a `hydrated` ref guard — per-section `savedValue` already comes from `data`, so no re-sync is needed.
 - **WorkingRightsSection polish (done 2026-07-09):** (1) Duplicate country prevention — `CountryCombobox` gains `excludeCodes` prop; each entry's picker filters out codes used by other entries, making duplicates impossible to select. Save also disabled when any entry has no country. (2) Copy: section title → "Work Rights"; button → "Add country"; "Target Roles" → "Desired Roles" in `ProfilePage`. (3) Improve error messages (still deferred) — generic "Failed to save." doesn't surface API detail; distinguish network vs validation errors when polishing.
+- **WorkHistorySection polish (done 2026-07-10):** (1) `select.tsx` global fix — `SelectTrigger` base `w-fit` → `w-full` (prevents trigger resize flash on value change); `SelectContent` default `position` `"item-aligned"` → `"popper"` (prevents repositioning flash on close); both affect all selects app-wide. (2) Month/year layout — equal `flex-1` columns with individual "Month" / "Year *" labels; grouped under "Start date" / "End date" section labels. (3) Extracted `MonthSelect`, `YearSelect`, `MonthYearPicker` into `src/components/profile/` — `YearSelect` reusable for Education (H). (4) `SuggestionInput` added to `src/components/ui/` — single-value input with type-ahead dropdown; reuses `matchesSuggestion`; Title field uses `TARGET_ROLE_SUGGESTIONS`. (5) `matchSuggestion` `"word-start"` fix — now splits query into words and matches consecutive suggestion words, so "software e" matches "Software Engineer"; 2 new tests added. (6) Copy: label → "Company or organization"; placeholder → "e.g. Google"; checkbox → "I am currently working in this role".
