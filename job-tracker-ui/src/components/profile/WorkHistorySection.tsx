@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import SuggestionInput from "@/components/ui/SuggestionInput"
 import type { WorkHistoryEntry } from "@/types/profile"
 import MonthYearPicker from "./MonthYearPicker"
+import { TARGET_ROLE_SUGGESTIONS } from "@/components/profile/tagSuggestions"
 import {
   MAX_WORK_HISTORY_TITLE_LENGTH,
   MAX_WORK_HISTORY_COMPANY_LENGTH,
@@ -59,11 +61,12 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
                   <Label className="text-xs text-muted-foreground">
                     Title <span className="text-destructive">*</span>
                   </Label>
-                  <Input
+                  <SuggestionInput
                     value={entry.title}
-                    onChange={e => updateEntry(i, { title: e.target.value })}
+                    onChange={v => updateEntry(i, { title: v })}
                     placeholder="e.g. Software Engineer"
                     maxLength={MAX_WORK_HISTORY_TITLE_LENGTH}
+                    suggestions={TARGET_ROLE_SUGGESTIONS}
                   />
                 </div>
                 <div className="space-y-1">
