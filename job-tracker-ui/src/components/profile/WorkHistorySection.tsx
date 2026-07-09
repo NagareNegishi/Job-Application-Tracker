@@ -16,28 +16,17 @@ import {
 } from "@/lib/validationConstants"
 
 const MONTHS = [
-  { value: "01", label: "January" },  { value: "02", label: "February" },
-  { value: "03", label: "March" },    { value: "04", label: "April" },
-  { value: "05", label: "May" },      { value: "06", label: "June" },
-  { value: "07", label: "July" },     { value: "08", label: "August" },
-  { value: "09", label: "September" },{ value: "10", label: "October" },
-  { value: "11", label: "November" }, { value: "12", label: "December" },
+  { value: "1", label: "January" },  { value: "2", label: "February" },
+  { value: "3", label: "March" },    { value: "4", label: "April" },
+  { value: "5", label: "May" },      { value: "6", label: "June" },
+  { value: "7", label: "July" },     { value: "8", label: "August" },
+  { value: "9", label: "September" },{ value: "10", label: "October" },
+  { value: "11", label: "November" },{ value: "12", label: "December" },
 ]
 
 const CURRENT_YEAR = new Date().getFullYear()
 // Descending so the most recent year appears first in the dropdown.
-const YEARS = Array.from({ length: CURRENT_YEAR - 1899 }, (_, i) => String(CURRENT_YEAR - i))
-
-// Split "YYYY-MM" into parts; returns empty strings if the value is missing or malformed.
-function splitDate(val: string): { year: string; month: string } {
-  if (!val || val.length !== 7) return { year: "", month: "" }
-  return { year: val.slice(0, 4), month: val.slice(5, 7) }
-}
-
-// Combine year + month back into "YYYY-MM"; returns "" if either part is missing (blocks save).
-function joinDate(year: string, month: string): string {
-  return year && month ? `${year}-${month}` : ""
-}
+const YEARS = Array.from({ length: CURRENT_YEAR - 1899 }, (_, i) => CURRENT_YEAR - i)
 
 type Props = {
   value: WorkHistoryEntry[]
@@ -49,13 +38,14 @@ type Props = {
 }
 
 function emptyEntry(): WorkHistoryEntry {
-  return { title: "", company: "", from: "", to: null, description: "" }
+  return { title: "", company: "", fromYear: 0, fromMonth: null, toYear: null, toMonth: null, description: "" }
 }
 
 export default function WorkHistorySection({ value, onChange, savedValue, saving, onSave, error }: Props) {
   const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
+  // fromYear === 0: no start year chosen. toYear === 0: unchecked but no end year chosen.
   const saveBlocked = value.some(e =>
-    !e.title.trim() || !e.company.trim() || !e.from || e.to === ""
+    !e.title.trim() || !e.company.trim() || e.fromYear === 0 || e.toYear === 0
   )
 
   function addEntry() {
@@ -70,27 +60,12 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
     onChange(value.filter((_, i) => i !== index))
   }
 
-  function updateDatePart(
-    index: number,
-    field: "from" | "to",
-    part: "year" | "month",
-    newVal: string,
-    currentVal: string,
-  ) {
-    const { year, month } = splitDate(currentVal)
-    const nextYear = part === "year" ? newVal : year
-    const nextMonth = part === "month" ? newVal : month
-    updateEntry(index, { [field]: joinDate(nextYear, nextMonth) })
-  }
-
   return (
     <div className="bg-card rounded-lg border p-5 space-y-3">
       <h2 className="text-sm font-medium">Work History</h2>
       <div className="space-y-3">
         {value.map((entry, i) => {
-          const { year: fromYear, month: fromMonth } = splitDate(entry.from)
-          const { year: toYear, month: toMonth } = splitDate(entry.to ?? "")
-          const isCurrent = entry.to === null
+          const isCurrent = entry.toYear === null
 
           return (
             <div key={i} className="flex items-start gap-2 bg-muted/50 border rounded-md p-3">
@@ -121,7 +96,9 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
                   <Checkbox
                     id={`wh-current-${i}`}
                     checked={isCurrent}
-                    onCheckedChange={checked => updateEntry(i, { to: checked ? null : "" })}
+                    onCheckedChange={checked =>
+                      updateEntry(i, { toYear: checked ? null : 0, toMonth: null })
+                    }
                   />
                   <Label htmlFor={`wh-current-${i}`} className="text-xs font-normal cursor-pointer">
                     Currently working here
@@ -132,20 +109,26 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
                     From <span className="text-destructive">*</span>
                   </Label>
                   <div className="flex gap-2">
-                    <Select value={fromMonth} onValueChange={v => updateDatePart(i, "from", "month", v, entry.from)}>
+                    <Select
+                      value={entry.fromMonth !== null ? String(entry.fromMonth) : ""}
+                      onValueChange={v => updateEntry(i, { fromMonth: parseInt(v) })}
+                    >
                       <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Month" />
+                        <SelectValue placeholder="Month (optional)" />
                       </SelectTrigger>
                       <SelectContent>
                         {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <Select value={fromYear} onValueChange={v => updateDatePart(i, "from", "year", v, entry.from)}>
+                    <Select
+                      value={entry.fromYear !== 0 ? String(entry.fromYear) : ""}
+                      onValueChange={v => updateEntry(i, { fromYear: parseInt(v) })}
+                    >
                       <SelectTrigger className="w-28">
                         <SelectValue placeholder="Year" />
                       </SelectTrigger>
                       <SelectContent>
-                        {YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                        {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -156,20 +139,26 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
                       To <span className="text-destructive">*</span>
                     </Label>
                     <div className="flex gap-2">
-                      <Select value={toMonth} onValueChange={v => updateDatePart(i, "to", "month", v, entry.to ?? "")}>
+                      <Select
+                        value={entry.toMonth !== null ? String(entry.toMonth) : ""}
+                        onValueChange={v => updateEntry(i, { toMonth: parseInt(v) })}
+                      >
                         <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Month" />
+                          <SelectValue placeholder="Month (optional)" />
                         </SelectTrigger>
                         <SelectContent>
                           {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      <Select value={toYear} onValueChange={v => updateDatePart(i, "to", "year", v, entry.to ?? "")}>
+                      <Select
+                        value={entry.toYear !== null && entry.toYear !== 0 ? String(entry.toYear) : ""}
+                        onValueChange={v => updateEntry(i, { toYear: parseInt(v) })}
+                      >
                         <SelectTrigger className="w-28">
                           <SelectValue placeholder="Year" />
                         </SelectTrigger>
                         <SelectContent>
-                          {YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                          {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
