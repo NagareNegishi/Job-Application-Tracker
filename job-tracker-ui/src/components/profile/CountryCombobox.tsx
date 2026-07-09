@@ -15,7 +15,7 @@ type Props = {
 }
 
 function Flag({ code }: { code: string }) {
-  return <span className={`fi fi-${code.toLowerCase()} rounded-sm`} />
+  return <span className={`fi fi-${code.toLowerCase()} rounded-sm shrink-0`} />
 }
 
 export default function CountryCombobox({ value, onChange }: Props) {

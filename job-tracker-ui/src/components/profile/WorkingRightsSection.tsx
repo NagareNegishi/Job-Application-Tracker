@@ -46,27 +46,29 @@ export default function WorkingRightsSection({
       <h2 className="text-sm font-medium">Working Rights</h2>
       <div className="space-y-2">
         {value.map((entry, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              <CountryCombobox
-                value={entry.country}
-                onChange={code => updateEntry(i, { country: code })}
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-            <Select
-              value={entry.status}
-              onValueChange={status => updateEntry(i, { status: status as WorkingRight })}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(WorkingRight).map(s => (
-                  <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div key={i} className="flex items-center gap-2 bg-muted/50 border rounded-md p-2">
+            <div className="flex flex-col sm:flex-row flex-1 gap-2">
+              <div className="flex-1 min-w-0">
+                <CountryCombobox
+                  value={entry.country}
+                  onChange={code => updateEntry(i, { country: code })}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Select
+                  value={entry.status}
+                  onValueChange={status => updateEntry(i, { status: status as WorkingRight })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(WorkingRight).map(s => (
+                      <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <Button
               size="icon"
