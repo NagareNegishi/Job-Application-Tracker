@@ -105,62 +105,74 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
                   </Label>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">
-                    From <span className="text-destructive">*</span>
-                  </Label>
+                  <Label className="text-xs text-muted-foreground">Start date</Label>
                   <div className="flex gap-2">
-                    <Select
-                      value={entry.fromMonth !== null ? String(entry.fromMonth) : ""}
-                      onValueChange={v => updateEntry(i, { fromMonth: parseInt(v) })}
-                    >
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Month (optional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={entry.fromYear !== 0 ? String(entry.fromYear) : ""}
-                      onValueChange={v => updateEntry(i, { fromYear: parseInt(v) })}
-                    >
-                      <SelectTrigger className="w-28">
-                        <SelectValue placeholder="Year" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                {!isCurrent && (
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      To <span className="text-destructive">*</span>
-                    </Label>
-                    <div className="flex gap-2">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs text-muted-foreground">Month</Label>
                       <Select
-                        value={entry.toMonth !== null ? String(entry.toMonth) : ""}
-                        onValueChange={v => updateEntry(i, { toMonth: parseInt(v) })}
+                        value={entry.fromMonth !== null ? String(entry.fromMonth) : ""}
+                        onValueChange={v => updateEntry(i, { fromMonth: parseInt(v) })}
                       >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Month (optional)" />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Optional" />
                         </SelectTrigger>
                         <SelectContent>
                           {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        Year <span className="text-destructive">*</span>
+                      </Label>
                       <Select
-                        value={entry.toYear !== null && entry.toYear !== 0 ? String(entry.toYear) : ""}
-                        onValueChange={v => updateEntry(i, { toYear: parseInt(v) })}
+                        value={entry.fromYear !== 0 ? String(entry.fromYear) : ""}
+                        onValueChange={v => updateEntry(i, { fromYear: parseInt(v) })}
                       >
-                        <SelectTrigger className="w-28">
+                        <SelectTrigger>
                           <SelectValue placeholder="Year" />
                         </SelectTrigger>
                         <SelectContent>
                           {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                         </SelectContent>
                       </Select>
+                    </div>
+                  </div>
+                </div>
+                {!isCurrent && (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">End date</Label>
+                    <div className="flex gap-2">
+                      <div className="flex-1 space-y-1">
+                        <Label className="text-xs text-muted-foreground">Month</Label>
+                        <Select
+                          value={entry.toMonth !== null ? String(entry.toMonth) : ""}
+                          onValueChange={v => updateEntry(i, { toMonth: parseInt(v) })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Optional" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MONTHS.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <Label className="text-xs text-muted-foreground">
+                          Year <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                          value={entry.toYear !== null && entry.toYear !== 0 ? String(entry.toYear) : ""}
+                          onValueChange={v => updateEntry(i, { toYear: parseInt(v) })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 )}
