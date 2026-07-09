@@ -26,9 +26,8 @@ public class WorkHistoryEntry : IValidatableObject
     [Range(1, 12)]
     public int? ToMonth { get; set; }
 
-    [Required]
     [MaxLength(ValidationConstants.MaxProfileWorkHistoryDescriptionLength)]
-    public string Description { get; set; } = null!;
+    public string? Description { get; set; }
 
     /// <summary>Cross-field date rules: From not future; To ≥ From and not future when present.</summary>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
