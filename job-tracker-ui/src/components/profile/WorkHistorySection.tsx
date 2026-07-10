@@ -9,6 +9,7 @@ import SuggestionInput from "@/components/ui/SuggestionInput"
 import type { WorkHistoryEntry } from "@/types/profile"
 import MonthYearPicker from "./MonthYearPicker"
 import { TARGET_ROLE_SUGGESTIONS } from "@/components/profile/tagSuggestions"
+import { checkDateOrder } from "@/utils/dateValidation"
 import {
   MAX_WORK_HISTORY_TITLE_LENGTH,
   MAX_WORK_HISTORY_COMPANY_LENGTH,
@@ -30,9 +31,12 @@ function emptyEntry(): WorkHistoryEntry {
 
 export default function WorkHistorySection({ value, onChange, savedValue, saving, onSave, error }: Props) {
   const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
+  const errors = value.map(e =>
+    checkDateOrder(e.fromYear, e.toYear, e.fromMonth, e.toMonth)
+  )
   // fromYear === 0: no start year chosen. toYear === 0: unchecked but no end year chosen.
-  const saveBlocked = value.some(e =>
-    !e.title.trim() || !e.company.trim() || e.fromYear === 0 || e.toYear === 0
+  const saveBlocked = value.some((e, i) =>
+    !e.title.trim() || !e.company.trim() || e.fromYear === 0 || e.toYear === 0 || errors[i] !== null
   )
 
   function addEntry() {
@@ -107,6 +111,9 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
                     onMonthChange={v => updateEntry(i, { toMonth: v })}
                     onYearChange={v => updateEntry(i, { toYear: v })}
                   />
+                )}
+                {errors[i] && (
+                  <p className="text-xs text-destructive">{errors[i]}</p>
                 )}
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">Description</Label>
