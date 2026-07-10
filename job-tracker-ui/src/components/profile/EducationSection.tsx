@@ -65,7 +65,18 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
                     suggestions={INSTITUTION_SUGGESTIONS}
                   />
                 </div>
-                {/* degree field */}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Degree <span className="text-destructive">*</span>
+                  </Label>
+                  <SuggestionInput
+                    value={entry.degree}
+                    onChange={v => updateEntry(i, { degree: v })}
+                    placeholder="e.g. Bachelor of Science in Computer Science"
+                    maxLength={MAX_EDUCATION_DEGREE_LENGTH}
+                    suggestions={DEGREE_SUGGESTIONS}
+                  />
+                </div>
                 {/* currently enrolled checkbox */}
                 {/* start year */}
                 {/* end year — hidden when isCurrent */}
