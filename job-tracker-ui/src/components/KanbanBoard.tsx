@@ -6,7 +6,6 @@ import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, use
 import type { DragEndEvent, DragStartEvent, Modifier } from '@dnd-kit/core'
 import { useNavigate } from 'react-router'
 import { useJobs, usePatchJob } from '@/hooks/jobQuery'
-import { MaintenanceError } from '@/lib/api'
 import { JobStatus } from '@/types/enums'
 import type { Job } from '@/types/job'
 import { PriorityDot } from '@/components/ui/PriorityDot'
@@ -174,7 +173,7 @@ export function KanbanBoard() {
   }
 
   if (isPending) return <p>Loading...</p>
-  if (isError) return <p>{error instanceof MaintenanceError ? error.message : 'Something went wrong.'}</p>
+  if (isError) return <p>Something went wrong.</p>
 
   return (
     <DndContext sensors={sensors} modifiers={[restrictToWindowEdges]} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
