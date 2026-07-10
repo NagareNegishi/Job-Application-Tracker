@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react"
 import TagSection from "@/components/profile/TagSection"
 import WorkingRightsSection from "@/components/profile/WorkingRightsSection"
 import WorkHistorySection from "@/components/profile/WorkHistorySection"
+import EducationSection from "@/components/profile/EducationSection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
 import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
@@ -160,7 +161,14 @@ export default function ProfilePage() {
           onSave={() => saveSection("workHistory")}
           error={sectionErrors["workHistory"]}
         />
-        {/* Education — Sub-step H */}
+        <EducationSection
+          value={form.education}
+          onChange={val => updateField("education", val)}
+          savedValue={data?.education ?? []}
+          saving={savingSection === "education"}
+          onSave={() => saveSection("education")}
+          error={sectionErrors["education"]}
+        />
       </div>
     </div>
   )
