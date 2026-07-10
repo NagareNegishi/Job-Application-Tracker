@@ -7,6 +7,7 @@ import SuggestionInput from "@/components/ui/SuggestionInput"
 import type { EducationEntry } from "@/types/profile"
 import YearSelect from "./YearSelect"
 import { INSTITUTION_SUGGESTIONS, DEGREE_SUGGESTIONS } from "@/components/profile/tagSuggestions"
+import { checkDateOrder } from "@/utils/dateValidation"
 import {
   MAX_EDUCATION_INSTITUTION_LENGTH,
   MAX_EDUCATION_DEGREE_LENGTH,
@@ -27,8 +28,9 @@ function emptyEntry(): EducationEntry {
 
 export default function EducationSection({ value, onChange, savedValue, saving, onSave, error }: Props) {
   const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
-  const saveBlocked = value.some(e =>
-    !e.institution.trim() || !e.degree.trim() || e.from === 0 || e.to === 0
+  const errors = value.map(e => checkDateOrder(e.from, e.to))
+  const saveBlocked = value.some((e, i) =>
+    !e.institution.trim() || !e.degree.trim() || e.from === 0 || e.to === 0 || errors[i] !== null
   )
 
   function addEntry() {
@@ -113,6 +115,9 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
                     )}
                   </div>
                 </div>
+                {errors[i] && (
+                  <p className="text-xs text-destructive">{errors[i]}</p>
+                )}
               </div>
               <Button
                 size="icon" variant="ghost"
