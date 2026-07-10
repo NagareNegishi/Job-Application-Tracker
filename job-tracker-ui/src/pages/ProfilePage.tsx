@@ -6,7 +6,10 @@ import { useEffect, useRef, useState } from "react"
 import TagSection from "@/components/profile/TagSection"
 import WorkingRightsSection from "@/components/profile/WorkingRightsSection"
 import WorkHistorySection from "@/components/profile/WorkHistorySection"
+import EducationSection from "@/components/profile/EducationSection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
+import { computeProfileScore } from "@/utils/profileScore"
+import { ScoreRing } from "@/components/ui/ScoreRing"
 import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
   MAX_SKILL_ITEM_LENGTH,
@@ -105,6 +108,33 @@ export default function ProfilePage() {
     }
   }
 
+  // Renders one tag section by key. Wiring is identical across all four; only the per-section
+  // config differs, so we look it up rather than duplicate the prop block at each call site.
+  function renderTagSection(key: TagFieldKey) {
+    const s = TAG_SECTIONS.find(c => c.key === key)!
+    return (
+      <TagSection
+        key={s.key}
+        title={s.title}
+        value={form[s.key]}
+        onChange={val => updateField(s.key, val)}
+        savedValue={data?.[s.key] ?? []}
+        saving={savingSection === s.key}
+        onSave={() => saveSection(s.key)}
+        error={sectionErrors[s.key]}
+        placeholder={s.placeholder}
+        maxItems={s.maxItems}
+        maxItemLength={s.maxItemLength}
+        layout={s.layout}
+        suggestions={s.suggestions}
+        matchStrategy={s.matchStrategy}
+      />
+    )
+  }
+
+  // Live completeness score of the current form.
+  const profileScore = computeProfileScore(form).score
+
   if (isLoading) return (
     <div className="min-h-screen bg-muted">
       <NavBar />
@@ -123,26 +153,31 @@ export default function ProfilePage() {
           <p className="text-sm text-muted-foreground mt-1">
             Your career profile is used as context for AI job analysis.
           </p>
+          <ScoreRing score={profileScore} />
         </div>
-        {/* All four tag sections share identical wiring; only the per-section config differs */}
-        {TAG_SECTIONS.map(s => (
-          <TagSection
-            key={s.key}
-            title={s.title}
-            value={form[s.key]}
-            onChange={val => updateField(s.key, val)}
-            savedValue={data?.[s.key] ?? []}
-            saving={savingSection === s.key}
-            onSave={() => saveSection(s.key)}
-            error={sectionErrors[s.key]}
-            placeholder={s.placeholder}
-            maxItems={s.maxItems}
-            maxItemLength={s.maxItemLength}
-            layout={s.layout}
-            suggestions={s.suggestions}
-            matchStrategy={s.matchStrategy}
-          />
-        ))}
+        {/* Sections render in résumé order: goal → experience → education → supporting → logistics */}
+        {renderTagSection("targetRoles")}
+
+        <WorkHistorySection
+          value={form.workHistory}
+          onChange={val => updateField("workHistory", val)}
+          savedValue={data?.workHistory ?? []}
+          saving={savingSection === "workHistory"}
+          onSave={() => saveSection("workHistory")}
+          error={sectionErrors["workHistory"]}
+        />
+        <EducationSection
+          value={form.education}
+          onChange={val => updateField("education", val)}
+          savedValue={data?.education ?? []}
+          saving={savingSection === "education"}
+          onSave={() => saveSection("education")}
+          error={sectionErrors["education"]}
+        />
+
+        {renderTagSection("skills")}
+        {renderTagSection("certifications")}
+        {renderTagSection("languages")}
 
         <WorkingRightsSection
           value={form.workingRights}
@@ -152,15 +187,6 @@ export default function ProfilePage() {
           onSave={() => saveSection("workingRights")}
           error={sectionErrors["workingRights"]}
         />
-        <WorkHistorySection
-          value={form.workHistory}
-          onChange={val => updateField("workHistory", val)}
-          savedValue={data?.workHistory ?? []}
-          saving={savingSection === "workHistory"}
-          onSave={() => saveSection("workHistory")}
-          error={sectionErrors["workHistory"]}
-        />
-        {/* Education — Sub-step H */}
       </div>
     </div>
   )
