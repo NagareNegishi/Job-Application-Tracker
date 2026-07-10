@@ -53,7 +53,18 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
           return (
             <div key={i} className="flex items-start gap-2 bg-muted/50 border rounded-md p-3">
               <div className="flex-1 space-y-2">
-                {/* institution field */}
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Institution <span className="text-destructive">*</span>
+                  </Label>
+                  <SuggestionInput
+                    value={entry.institution}
+                    onChange={v => updateEntry(i, { institution: v })}
+                    placeholder="e.g. University of Auckland"
+                    maxLength={MAX_EDUCATION_INSTITUTION_LENGTH}
+                    suggestions={INSTITUTION_SUGGESTIONS}
+                  />
+                </div>
                 {/* degree field */}
                 {/* currently enrolled checkbox */}
                 {/* start year */}
