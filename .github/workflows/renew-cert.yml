@@ -2,9 +2,9 @@ name: Renew SSL Certificate
 
 on:
   schedule:
-    # 1st of every month at 15:00 UTC = 01:00 AEST.
-    # RDS maintenance window is 00:00–08:00 AEST — site is already in maintenance mode during this window,
-    # so container downtime (if renewal is needed) has no user impact.
+    # 1st of every month at 15:00 UTC = 03:00 NZST / 04:00 NZDT.
+    # RDS is down 20:00–07:00 NZ (site in maintenance mode) — 15:00 UTC lands inside that
+    # window in both seasons, so container downtime (if renewal is needed) has no user impact.
     - cron: '0 15 1 * *'
   workflow_dispatch:
 
