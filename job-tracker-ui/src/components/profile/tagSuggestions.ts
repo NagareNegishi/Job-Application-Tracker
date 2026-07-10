@@ -194,10 +194,175 @@ export const SKILL_SUGGESTIONS: string[] = [
   "Electron", "WebAssembly",
 ]
 
+// Common professional certifications across tech, finance, HR, marketing, and operations.
 export const CERTIFICATION_SUGGESTIONS: string[] = [
-  "AWS Certified Solutions Architect",
-  "Azure Fundamentals (AZ-900)",
-  "Certified Kubernetes Administrator (CKA)",
+  // AWS
+  "AWS Certified Cloud Practitioner",
+  "AWS Certified Solutions Architect – Associate",
+  "AWS Certified Solutions Architect – Professional",
+  "AWS Certified Developer – Associate",
+  "AWS Certified SysOps Administrator – Associate",
+  "AWS Certified DevOps Engineer – Professional",
+  "AWS Certified Data Engineer – Associate",
+  "AWS Certified Machine Learning – Specialty",
+  "AWS Certified Security – Specialty",
+  "AWS Certified Advanced Networking – Specialty",
+  // Microsoft Azure
+  "Microsoft Azure Fundamentals (AZ-900)",
+  "Microsoft Azure Administrator (AZ-104)",
+  "Microsoft Azure Developer (AZ-204)",
+  "Microsoft Azure Solutions Architect Expert (AZ-305)",
+  "Microsoft Azure DevOps Engineer Expert (AZ-400)",
+  "Microsoft Azure AI Engineer Associate (AI-102)",
+  "Microsoft Azure Data Engineer Associate (DP-203)",
+  "Microsoft Azure Data Scientist Associate (DP-100)",
+  "Microsoft Azure Security Engineer Associate (AZ-500)",
+  "Microsoft Cybersecurity Architect (SC-100)",
+  "Microsoft Security Operations Analyst (SC-200)",
+  "Microsoft 365 Fundamentals (MS-900)",
+  "Microsoft 365 Administrator (MS-102)",
+  "Microsoft Power BI Data Analyst (PL-300)",
+  // Google Cloud
+  "Google Associate Cloud Engineer",
+  "Google Professional Cloud Architect",
+  "Google Professional Cloud Developer",
+  "Google Professional Data Engineer",
+  "Google Professional Cloud DevOps Engineer",
+  "Google Professional Cloud Security Engineer",
+  "Google Professional Machine Learning Engineer",
+  // CompTIA
+  "CompTIA IT Fundamentals (ITF+)",
+  "CompTIA A+",
+  "CompTIA Network+",
+  "CompTIA Security+",
+  "CompTIA Cloud+",
+  "CompTIA Linux+",
+  "CompTIA Data+",
+  "CompTIA CySA+",
+  "CompTIA PenTest+",
+  "CompTIA CASP+",
+  // Cisco
+  "Cisco CCNA",
+  "Cisco CCNP",
+  "Cisco CCIE",
+  "Cisco CyberOps Associate",
+  "Cisco DevNet Associate",
+  // Security — ISC2
+  "CISSP",
+  "CCSP (Certified Cloud Security Professional)",
+  "SSCP",
+  // Security — ISACA
+  "CISM",
+  "CISA",
+  "CRISC",
+  "CGEIT",
+  // Security — EC-Council & Other
+  "CEH (Certified Ethical Hacker)",
+  "CCISO (Certified Chief Information Security Officer)",
+  "OSCP (Offensive Security Certified Professional)",
+  // Security — GIAC
+  "GIAC GSEC",
+  "GIAC GCIH",
+  "GIAC GPEN",
+  "GIAC GWAPT",
+  // Data Privacy
+  "CIPP/E",
+  "CIPP/US",
+  "CIPM",
+  "CIPT",
+  // Kubernetes & DevOps
+  "CKA (Certified Kubernetes Administrator)",
+  "CKAD (Certified Kubernetes Application Developer)",
+  "CKS (Certified Kubernetes Security Specialist)",
+  "HashiCorp Terraform Associate",
+  "Docker Certified Associate",
+  "Red Hat Certified System Administrator (RHCSA)",
+  "Red Hat Certified Engineer (RHCE)",
+  // GitHub
+  "GitHub Foundations",
+  "GitHub Actions",
+  "GitHub Advanced Security",
+  "GitHub Copilot",
+  // Networking & Infrastructure
+  "Palo Alto PCNSA",
+  "Palo Alto PCNSE",
+  "VMware VCP (vSphere Foundation)",
+  // Data & Analytics
+  "Databricks Certified Data Engineer Associate",
+  "Databricks Certified Machine Learning Professional",
+  "Snowflake SnowPro Core",
+  "Tableau Desktop Specialist",
+  "dbt Analytics Engineering Certification",
+  // AI / ML
+  "TensorFlow Developer Certificate",
+  "Certified AI Practitioner (CompTIA)",
+  // SAP
+  "SAP Certified Application Associate",
+  "SAP Certified Technology Associate",
+  // Salesforce
+  "Salesforce Certified Administrator",
+  "Salesforce Platform Developer I",
+  "Salesforce Platform App Builder",
+  "Salesforce Sales Cloud Consultant",
+  "Salesforce Service Cloud Consultant",
+  // ServiceNow
+  "ServiceNow Certified System Administrator",
+  "ServiceNow Certified Application Developer",
+  // Project Management
+  "PMP (Project Management Professional)",
+  "CAPM (Certified Associate in Project Management)",
+  "PMI-ACP (Agile Certified Practitioner)",
+  "PMI-PBA (Professional in Business Analysis)",
+  "PMI-RMP (Risk Management Professional)",
+  "PRINCE2 Foundation",
+  "PRINCE2 Practitioner",
+  // Agile & Scrum
+  "CSM (Certified Scrum Master)",
+  "CSPO (Certified Scrum Product Owner)",
+  "CSP-SM",
+  "CSP-PO",
+  "SAFe Agilist",
+  "SAFe Practitioner",
+  // IT Service Management
+  "ITIL 4 Foundation",
+  "ITIL 4 Practitioner",
+  // Finance & Accounting
+  "CPA (Certified Public Accountant)",
+  "CFA (Chartered Financial Analyst)",
+  "CMA (Certified Management Accountant)",
+  "CFP (Certified Financial Planner)",
+  "FRM (Financial Risk Manager)",
+  "CIA (Certified Internal Auditor)",
+  "ACCA",
+  "CA (Chartered Accountant)",
+  "CAIA (Chartered Alternative Investment Analyst)",
+  "CFE (Certified Fraud Examiner)",
+  // Human Resources
+  "SHRM-CP",
+  "SHRM-SCP",
+  "PHR (Professional in Human Resources)",
+  "SPHR (Senior Professional in Human Resources)",
+  "GPHR (Global Professional in Human Resources)",
+  "aPHR (Associate Professional in Human Resources)",
+  // Marketing & Digital
+  "Google Analytics Certification",
+  "Google Ads Certification",
+  "HubSpot Inbound Marketing Certification",
+  "HubSpot Content Marketing Certification",
+  "HubSpot Digital Marketing Certification",
+  "Meta Blueprint Certification",
+  // Supply Chain & Operations
+  "APICS CPIM",
+  "APICS CSCP (Certified Supply Chain Professional)",
+  "CLTD (Certified in Logistics, Transportation and Distribution)",
+  // Quality & Lean
+  "Lean Six Sigma Green Belt",
+  "Lean Six Sigma Black Belt",
+  "Six Sigma Green Belt",
+  "Six Sigma Black Belt",
+  // Engineering & Other
+  "PE (Professional Engineer)",
+  "LEED AP",
 ]
 
 // All ISO 639-1 English language names (~184), computed once at module load. Custom entries still allowed.
