@@ -9,7 +9,7 @@ import SuggestionInput from "@/components/ui/SuggestionInput"
 import type { WorkHistoryEntry } from "@/types/profile"
 import MonthYearPicker from "./MonthYearPicker"
 import { TARGET_ROLE_SUGGESTIONS } from "@/components/profile/tagSuggestions"
-import { checkDateOrder } from "@/utils/dateValidation"
+import { checkDateOrder, checkNotFuture } from "@/utils/dateValidation"
 import {
   MAX_WORK_HISTORY_TITLE_LENGTH,
   MAX_WORK_HISTORY_COMPANY_LENGTH,
@@ -31,8 +31,11 @@ function emptyEntry(): WorkHistoryEntry {
 
 export default function WorkHistorySection({ value, onChange, savedValue, saving, onSave, error }: Props) {
   const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
+  // Future-date check (start, then end) precedes the ordering check; first failure wins per entry.
   const errors = value.map(e =>
-    checkDateOrder(e.fromYear, e.toYear, e.fromMonth, e.toMonth)
+    checkNotFuture(e.fromYear, e.fromMonth)
+    ?? checkNotFuture(e.toYear, e.toMonth)
+    ?? checkDateOrder(e.fromYear, e.toYear, e.fromMonth, e.toMonth)
   )
   // fromYear === 0: no start year chosen. toYear === 0: unchecked but no end year chosen.
   const saveBlocked = value.some((e, i) =>

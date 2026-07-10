@@ -25,3 +25,17 @@ export function checkDateOrder(
   }
   return null
 }
+
+// Rejects a year/month that lies in the future, mirroring the backend's not-future rule.
+// Month is optional: a future month is only flagged within the current year (year alone can't
+// exceed the current year via the picker, but we check it anyway to stay in step with the API).
+// year null or 0 (not selected) returns null — the required check handles that case.
+export function checkNotFuture(year: number | null, month: number | null): string | null {
+  if (!year) return null
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() + 1 // getMonth() is 0-based; API months are 1-based
+  if (year > currentYear || (year === currentYear && month != null && month > currentMonth))
+    return "Date cannot be in the future."
+  return null
+}
