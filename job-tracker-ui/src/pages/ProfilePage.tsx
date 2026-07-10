@@ -106,6 +106,30 @@ export default function ProfilePage() {
     }
   }
 
+  // Renders one tag section by key. Wiring is identical across all four; only the per-section
+  // config differs, so we look it up rather than duplicate the prop block at each call site.
+  function renderTagSection(key: TagFieldKey) {
+    const s = TAG_SECTIONS.find(c => c.key === key)!
+    return (
+      <TagSection
+        key={s.key}
+        title={s.title}
+        value={form[s.key]}
+        onChange={val => updateField(s.key, val)}
+        savedValue={data?.[s.key] ?? []}
+        saving={savingSection === s.key}
+        onSave={() => saveSection(s.key)}
+        error={sectionErrors[s.key]}
+        placeholder={s.placeholder}
+        maxItems={s.maxItems}
+        maxItemLength={s.maxItemLength}
+        layout={s.layout}
+        suggestions={s.suggestions}
+        matchStrategy={s.matchStrategy}
+      />
+    )
+  }
+
   if (isLoading) return (
     <div className="min-h-screen bg-muted">
       <NavBar />
@@ -125,34 +149,9 @@ export default function ProfilePage() {
             Your career profile is used as context for AI job analysis.
           </p>
         </div>
-        {/* All four tag sections share identical wiring; only the per-section config differs */}
-        {TAG_SECTIONS.map(s => (
-          <TagSection
-            key={s.key}
-            title={s.title}
-            value={form[s.key]}
-            onChange={val => updateField(s.key, val)}
-            savedValue={data?.[s.key] ?? []}
-            saving={savingSection === s.key}
-            onSave={() => saveSection(s.key)}
-            error={sectionErrors[s.key]}
-            placeholder={s.placeholder}
-            maxItems={s.maxItems}
-            maxItemLength={s.maxItemLength}
-            layout={s.layout}
-            suggestions={s.suggestions}
-            matchStrategy={s.matchStrategy}
-          />
-        ))}
+        {/* Sections render in résumé order: goal → experience → education → supporting → logistics */}
+        {renderTagSection("targetRoles")}
 
-        <WorkingRightsSection
-          value={form.workingRights}
-          onChange={val => updateField("workingRights", val)}
-          savedValue={data?.workingRights ?? []}
-          saving={savingSection === "workingRights"}
-          onSave={() => saveSection("workingRights")}
-          error={sectionErrors["workingRights"]}
-        />
         <WorkHistorySection
           value={form.workHistory}
           onChange={val => updateField("workHistory", val)}
@@ -168,6 +167,19 @@ export default function ProfilePage() {
           saving={savingSection === "education"}
           onSave={() => saveSection("education")}
           error={sectionErrors["education"]}
+        />
+
+        {renderTagSection("skills")}
+        {renderTagSection("certifications")}
+        {renderTagSection("languages")}
+
+        <WorkingRightsSection
+          value={form.workingRights}
+          onChange={val => updateField("workingRights", val)}
+          savedValue={data?.workingRights ?? []}
+          saving={savingSection === "workingRights"}
+          onSave={() => saveSection("workingRights")}
+          error={sectionErrors["workingRights"]}
         />
       </div>
     </div>
