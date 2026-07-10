@@ -77,9 +77,38 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
                     suggestions={DEGREE_SUGGESTIONS}
                   />
                 </div>
-                {/* currently enrolled checkbox */}
-                {/* start year */}
-                {/* end year — hidden when isCurrent */}
+                <div className="flex items-center gap-1.5">
+                  <Checkbox
+                    id={`edu-current-${i}`}
+                    checked={isCurrent}
+                    onCheckedChange={checked =>
+                      updateEntry(i, { to: checked ? null : 0 })
+                    }
+                  />
+                  <Label htmlFor={`edu-current-${i}`} className="text-xs font-normal cursor-pointer">
+                    I am currently enrolled here
+                  </Label>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Start year <span className="text-destructive">*</span>
+                  </Label>
+                  <YearSelect
+                    value={entry.from}
+                    onChange={v => updateEntry(i, { from: v })}
+                  />
+                </div>
+                {!isCurrent && (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      End year <span className="text-destructive">*</span>
+                    </Label>
+                    <YearSelect
+                      value={entry.to ?? 0}
+                      onChange={v => updateEntry(i, { to: v })}
+                    />
+                  </div>
+                )}
               </div>
               <Button
                 size="icon" variant="ghost"
