@@ -29,19 +29,24 @@ export async function silentRefresh(): Promise<string> {
   return refreshPromise
 }
 
-const MAINTENANCE_WINDOW = { startHour: 0, endHour: 8, timezone: "Australia/Sydney" }
+const MAINTENANCE_WINDOW = { startHour: 20, endHour: 7, timezone: "Pacific/Auckland" }
 
-// Returns true if the current time in Sydney falls within the scheduled maintenance window
+// Returns true if the current NZ time falls within the scheduled maintenance window.
+// The window crosses midnight (20:00 → 07:00), so when startHour > endHour the check
+// is an OR: "after start OR before end". Matches the DST-aware EventBridge RDS schedule.
 function isMaintenanceWindow(): boolean {
   const hour = parseInt(
     new Intl.DateTimeFormat("en-AU", {
       timeZone: MAINTENANCE_WINDOW.timezone,
       hour: "numeric",
-      hour12: false,
+      hourCycle: "h23",
     }).format(new Date()),
     10
   )
-  return hour >= MAINTENANCE_WINDOW.startHour && hour < MAINTENANCE_WINDOW.endHour
+  const { startHour, endHour } = MAINTENANCE_WINDOW
+  return startHour <= endHour
+    ? hour >= startHour && hour < endHour
+    : hour >= startHour || hour < endHour
 }
 
 /**
@@ -110,10 +115,10 @@ export class ApiError extends Error {
 }
 
 /**
- * Thrown when a 503 response is received during the scheduled maintenance window (midnight–8 AM Sydney time).
+ * Thrown when a 503 response is received during the scheduled maintenance window (8 PM–7 AM New Zealand time).
  */
 export class MaintenanceError extends Error {
-  constructor(message = "Service is in maintenance (midnight–8 AM Sydney time). Please try again later.") {
+  constructor(message = "Service is in maintenance (8 PM–7 AM New Zealand time). Please try again later.") {
     super(message)
     this.name = "MaintenanceError"
   }
