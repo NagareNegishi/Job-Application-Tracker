@@ -16,6 +16,7 @@ import RegisterPage from "./pages/RegisterPage"
 import SettingsPage from "./pages/SettingsPage"
 import DashboardPage from "./pages/DashboardPage"
 import ProfilePage from "./pages/ProfilePage"
+import MaintenancePage from "./pages/MaintenancePage"
 
 function App() {
   // the gate. React re-renders when state changes
@@ -41,6 +42,7 @@ function App() {
       <Route path="/confirm-email" element={<ConfirmEmailPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/maintenance" element={<MaintenancePage />} />
       <Route path="/jobs" element={<ProtectedRoute><JobPage /></ProtectedRoute>} />
       <Route path="/jobs/:id" element={<ProtectedRoute><JobDetailPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

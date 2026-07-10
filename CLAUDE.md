@@ -104,7 +104,7 @@ All controllers except `AuthController` require `[Authorize]`. New controllers m
 
 **Data flow**: `pages/` → `hooks/` (TanStack Query) → `services/` (fetch wrappers) → API
 
-- `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, handles 401 silent refresh, and throws `MaintenanceError` on 503 during scheduled window (midnight–8 AM Sydney); includes `authService.ts`, `adminService.ts`, `preferencesService.ts`; silent refresh logic in `src/lib/auth.ts`
+- `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, handles 401 silent refresh, and throws `MaintenanceError` on 503 during scheduled window (8 PM–7 AM NZ); includes `authService.ts`, `adminService.ts`, `preferencesService.ts`; silent refresh logic in `src/lib/auth.ts`
 - `src/hooks/` — TanStack Query hooks
 - `src/pages/` — `JobPage` (list), `JobDetailPage` (detail), `LoginPage`, `RegisterPage`, `SettingsPage`, `CheckEmailPage`, `ConfirmEmailPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `AdminPage`, `DashboardPage` (analytics — client-side only, no API endpoint; `dashboardUtils.ts`)
 - `src/components/` — feature components including `KanbanBoard`, `ParseListingDialog`, `ColumnToggle`; `src/components/dashboard/` — dashboard widgets; `src/components/ui/` — shadcn/ui primitives

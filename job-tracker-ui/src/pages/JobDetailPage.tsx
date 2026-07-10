@@ -15,7 +15,6 @@ import { DocumentList } from "@/components/DocumentList";
 import { JobEditSheet } from "@/components/JobEditSheet";
 import { JobHeader } from "@/components/JobHeader";
 import { JobInfoCard } from "@/components/JobInfoCard";
-import { MaintenanceError } from "@/lib/api";
 import { useJob } from "@/hooks/jobQuery";
 import { useState } from "react";
 import NavBar from "@/components/NavBar";
@@ -28,10 +27,10 @@ function JobDetailPage() {
 
   const { id } = useParams()
   const jobId = id ? parseInt(id) : NaN
-  const { data: job, isPending, isError, error } = useJob(jobId, { enabled: !isNaN(jobId) })
+  const { data: job, isPending, isError } = useJob(jobId, { enabled: !isNaN(jobId) })
   if (!id || isNaN(jobId)) return <p>Invalid job ID.</p>
   if (isPending) return <p>Loading...</p>
-  if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Something went wrong."}</p>
+  if (isError) return <p>Something went wrong.</p>
   if (!job) return <p>Job not found.</p>
 
   return (

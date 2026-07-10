@@ -2,7 +2,7 @@ import AuthBrand from "@/components/AuthBrand"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ApiError, MaintenanceError } from "@/lib/api"
+import { ApiError } from "@/lib/api"
 import { login, loginDemo } from "@/services/authService"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router"
@@ -24,7 +24,7 @@ export default function LoginPage() {
       await loginDemo()
       navigate("/jobs")
     } catch (err) {
-      setError(err instanceof MaintenanceError ? err.message : "Demo login failed. Please try again.")
+      setError("Demo login failed. Please try again.")
     } finally {
       setDemoLoading(false)
     }
@@ -43,9 +43,7 @@ export default function LoginPage() {
           await login(email, password)
           navigate("/jobs")
         } catch (err) {
-          if (err instanceof MaintenanceError) {
-            setError(err.message)
-          } else if (err instanceof ApiError) {
+          if (err instanceof ApiError) {
             if (err.status === 403) {
               setUnverified(true)
               setError(err.message)
