@@ -98,7 +98,7 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Kanban DragOverlay refactor | `DragOverlay` portal; `KanbanCardPreview` clone; `draggingId` state for clean post-drop transition |
 | AI access admin | `Admin` + `AiUser` roles; `AdminController`; `/admin` page |
 | Auto-fill parsing | `ParseListingDialog`; Claude Haiku; `POST /api/jobs/parse`; 2/min rate limit |
-| RDS maintenance window | EventBridge stops DB 00:00–08:00 AEST; backend 503 on `DbException`; frontend `MaintenanceError` with time-aware message |
+| RDS maintenance window | EventBridge stops DB 20:00–07:00 NZ; backend 503 on `DbException`; frontend `MaintenanceError` with time-aware message |
 | Company Verification API | External repo; live at `https://company-verification.onrender.com`; NZ + AU registries; not yet integrated into this project |
 | Dark mode + custom themes | Dark/light toggle in NavBar; 4 color themes (blue, red, yellow, pink); applied via `.theme-*` on `<html>`; stored in `UserPreferences.theme` |
 | Assessment + Withdrawn statuses | New enum values 7/8; auto-fill `appliedAt` on POST (non-Wishlist) and PATCH (→ Applied); confirm dialog when status changes to Applied and `appliedAt` already set (`JobEditSheet` + `KanbanBoard`); `ConfirmDialog` generic base + `DeleteConfirmDialog` wrapper in `ui/`; Kanban column order and tab filters updated |
@@ -117,4 +117,5 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
 | Table scroll accessibility | Viewport-contained flex chain; `table-plain.tsx`; sticky `TableHeader`; see `docs/plans/table-scroll-accessibility.md` | Done |
 | Action bar layout fix | Move "Add New Job" + "Show/Hide Columns" into the view toggle row (`JobPage.tsx`) so they anchor to window edge — prevents clipping on narrow viewports; requires lifting add-job dialog trigger out of `JobTable` | Pending |
+| Maintenance page | Redirect to `/maintenance` on in-window 503; health-poll auto-recovery; see `docs/plans/maintenance-page.md` | Done |
 | — | View toggle + column selector polish | `IconToggle.tsx`: pill shape, animated check, blue active state. `ColumnToggle`: `Settings2` icon-only, `w-auto` popover, right-edge aligned, always-below, viewport-aware scroll | Done |
