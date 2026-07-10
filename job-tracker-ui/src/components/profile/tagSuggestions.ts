@@ -139,12 +139,59 @@ export const TARGET_ROLE_SUGGESTIONS: string[] = [
   "Robotics Engineer",
 ]
 
+// Tech and software skills only; non-exhaustive for non-technical fields.
 export const SKILL_SUGGESTIONS: string[] = [
-  "TypeScript",
-  "React",
-  "C#",
-  ".NET",
-  "PostgreSQL",
+  // Programming languages
+  "Python", "JavaScript", "TypeScript", "Java", "C#", "C++", "C",
+  "Go", "Rust", "Ruby", "PHP", "Kotlin", "Swift", "Scala", "R",
+  "Dart", "Elixir", "Haskell", "Lua", "Perl", "MATLAB", "Bash",
+  "PowerShell", "SQL",
+  // Web — frontend
+  "HTML", "CSS", "React", "Angular", "Vue.js", "Svelte", "Next.js",
+  "Nuxt.js", "Remix", "Tailwind CSS", "Bootstrap", "Sass", "jQuery",
+  "Redux", "Zustand", "Vite", "Webpack",
+  // Web — backend
+  "Node.js", "Express", "NestJS", "FastAPI", "Django", "Flask",
+  "Spring Boot", "ASP.NET Core", "Laravel", "Ruby on Rails",
+  "Gin", "Fiber", "Actix",
+  // Mobile
+  "React Native", "Flutter", "SwiftUI", "Jetpack Compose",
+  "Xamarin", "Ionic",
+  // Databases
+  "PostgreSQL", "MySQL", "SQLite", "SQL Server", "Oracle",
+  "MongoDB", "Redis", "Cassandra", "DynamoDB", "Elasticsearch",
+  "Neo4j", "InfluxDB", "Supabase", "Firebase", "Firestore",
+  // Cloud & infrastructure
+  "AWS", "Azure", "Google Cloud Platform", "Terraform", "Pulumi",
+  "CloudFormation", "Docker", "Kubernetes", "Helm", "Ansible",
+  "Linux", "Nginx", "Apache",
+  // CI/CD & DevOps
+  "GitHub Actions", "GitLab CI", "Jenkins", "CircleCI",
+  "ArgoCD", "Datadog", "Prometheus", "Grafana",
+  // Data & analytics
+  "pandas", "NumPy", "scikit-learn", "Apache Spark", "Apache Kafka",
+  "Apache Airflow", "dbt", "Snowflake", "Databricks", "BigQuery",
+  "Tableau", "Power BI", "Looker",
+  // AI / ML / LLM
+  "TensorFlow", "PyTorch", "Keras", "Hugging Face", "LangChain",
+  "LlamaIndex", "OpenAI API", "RAG", "Vector Databases",
+  "Computer Vision", "NLP", "Deep Learning", "Reinforcement Learning",
+  // Testing
+  "Jest", "Vitest", "pytest", "JUnit", "Mocha", "Cypress",
+  "Playwright", "Selenium", "xUnit", "Moq",
+  // Architecture & practices
+  "REST APIs", "GraphQL", "gRPC", "WebSockets", "WebAssembly",
+  "Microservices", "Event-Driven Architecture", "Domain-Driven Design",
+  "Test-Driven Development", "Agile", "Scrum", "Kanban",
+  "CI/CD", "DevOps", "DevSecOps", "Site Reliability Engineering",
+  "Clean Architecture", "SOLID Principles",
+  // Security
+  "OAuth 2.0", "JWT", "OpenID Connect", "OWASP", "SSL/TLS",
+  "Penetration Testing", "Cryptography",
+  // Tools & platforms
+  "Git", "GitHub", "GitLab", "Bitbucket", "Jira", "Confluence",
+  "Figma", "Postman", "VS Code", "OpenAPI", "Swagger",
+  "Electron", "WebAssembly",
 ]
 
 export const CERTIFICATION_SUGGESTIONS: string[] = [
