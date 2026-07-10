@@ -26,8 +26,22 @@ function emptyEntry(): EducationEntry {
 }
 
 export default function EducationSection({ value, onChange, savedValue, saving, onSave, error }: Props) {
-  const dirty = {/* TODO */}
-  const saveBlocked = {/* TODO */}
+  const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
+  const saveBlocked = value.some(e =>
+    !e.institution.trim() || !e.degree.trim() || e.from === 0 || e.to === 0
+  )
+
+  function addEntry() {
+    onChange([...value, emptyEntry()])
+  }
+
+  function updateEntry(index: number, patch: Partial<EducationEntry>) {
+    onChange(value.map((e, i) => i === index ? { ...e, ...patch } : e))
+  }
+
+  function removeEntry(index: number) {
+    onChange(value.filter((_, i) => i !== index))
+  }
 
   return (
     <div className="bg-card rounded-lg border p-5 space-y-3">
@@ -48,7 +62,7 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
               <Button
                 size="icon" variant="ghost"
                 className="text-muted-foreground hover:text-destructive shrink-0"
-                onClick={() => {/* TODO removeEntry */}}
+                onClick={() => removeEntry(i)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -56,7 +70,7 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
           )
         })}
       </div>
-      <Button size="sm" variant="outline" onClick={() => {/* TODO addEntry */}} disabled={dirty} className="gap-1">
+      <Button size="sm" variant="outline" onClick={addEntry} disabled={dirty} className="gap-1">
         <Plus className="h-4 w-4" />
         Add education
       </Button>
