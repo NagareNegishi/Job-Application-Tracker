@@ -55,7 +55,7 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
               <div className="flex-1 space-y-2">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">
-                    Institution <span className="text-destructive">*</span>
+                    School or institution <span className="text-destructive">*</span>
                   </Label>
                   <SuggestionInput
                     value={entry.institution}
@@ -72,7 +72,7 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
                   <SuggestionInput
                     value={entry.degree}
                     onChange={v => updateEntry(i, { degree: v })}
-                    placeholder="e.g. Bachelor of Science in Computer Science"
+                    placeholder="e.g. BSc Computer Science"
                     maxLength={MAX_EDUCATION_DEGREE_LENGTH}
                     suggestions={DEGREE_SUGGESTIONS}
                   />
@@ -89,26 +89,30 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
                     I am currently enrolled here
                   </Label>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">
-                    Start year <span className="text-destructive">*</span>
-                  </Label>
-                  <YearSelect
-                    value={entry.from}
-                    onChange={v => updateEntry(i, { from: v })}
-                  />
-                </div>
-                {!isCurrent && (
-                  <div className="space-y-1">
+                <div className="flex gap-2">
+                  <div className="flex-1 space-y-1">
                     <Label className="text-xs text-muted-foreground">
-                      End year <span className="text-destructive">*</span>
+                      Start year <span className="text-destructive">*</span>
                     </Label>
                     <YearSelect
-                      value={entry.to ?? 0}
-                      onChange={v => updateEntry(i, { to: v })}
+                      value={entry.from}
+                      onChange={v => updateEntry(i, { from: v })}
                     />
                   </div>
-                )}
+                  <div className="flex-1">
+                    {!isCurrent && (
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">
+                          End year <span className="text-destructive">*</span>
+                        </Label>
+                        <YearSelect
+                          value={entry.to ?? 0}
+                          onChange={v => updateEntry(i, { to: v })}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
               <Button
                 size="icon" variant="ghost"
