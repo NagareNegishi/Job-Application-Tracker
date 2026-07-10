@@ -67,3 +67,29 @@ Show users a meaningful maintenance message instead of a generic error during th
 - RDS uptime: 08:00–00:00 AEST = 22:00–14:00 UTC
 - GitHub Actions adds ~2 hr delay to scheduled runs — cron must target no later than 12:00 UTC or the delay risks hitting the 14:00 UTC shutdown
 - Demo reset cron set to `30 9 * * *` UTC → fires ~9:30 PM Sydney time — avoids peak Sydney hours and stays safely within RDS uptime
+
+---
+
+## Phase 2 — NZ timezone + longer shutdown (supersedes the Phase 1 window above)
+
+RDS now runs **07:00–20:00 NZ** (down 20:00–07:00, 11h/day), scheduled in EventBridge with timezone `Pacific/Auckland` (DST-aware). Portfolio-first: up during recruiter hours (unlikely after 8pm); 07:00 start (not 08:00) leaves a buffer since RDS takes ~5–10 min to become available after the start command.
+
+### Scheduled jobs and their coupling to the RDS window
+
+| Job | Location | Cron | Coupling |
+|---|---|---|---|
+| RDS stop | EventBridge Scheduler | `0 20 * * ? *` Pacific/Auckland (20:00 NZ) | anchor |
+| RDS start | EventBridge Scheduler | `0 7 * * ? *` Pacific/Auckland (07:00 NZ) | anchor |
+| demo-reset | `.github/workflows/demo-reset.yml` | `0 20 * * *` UTC | must run while RDS **UP** |
+| renew-cert | `.github/workflows/renew-cert.yml` | `0 15 1 * *` UTC | must run while RDS **DOWN** (maintenance) |
+
+### DST gotcha (why these exact times — don't naively "align" them)
+
+GitHub Actions crons are fixed UTC; EventBridge `Pacific/Auckland` follows NZ DST, so the RDS window shifts ±1h in UTC between NZST (UTC+12) and NZDT (UTC+13). Both couplings hold in both seasons:
+- RDS up (UTC): NZST 19:00–08:00 · NZDT 18:00–07:00
+- demo-reset `0 20` UTC (+≤2h GitHub delay): fires ~08:00–11:00 NZ — inside UP both seasons ✓. (DB is only up in the daytime now, so demo data resets during recruiter hours — accepted.)
+- renew-cert `0 15` UTC: 03:00 NZST / 04:00 NZDT — inside the DOWN window both seasons ✓.
+
+If the window ever changes, re-verify both couplings in both seasons.
+
+**Pending:** the `demo-reset.yml` + `renew-cert.yml` edits are not yet merged to `main`. Scheduled workflows run only from the default branch, so demo-reset fails nightly until merged. The EventBridge schedules are already live.
