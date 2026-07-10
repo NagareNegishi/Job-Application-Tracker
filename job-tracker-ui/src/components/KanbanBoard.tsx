@@ -120,7 +120,7 @@ function KanbanColumn({ status, jobs, draggingId, confirmJobId }: { status: JobS
 }
 
 export function KanbanBoard() {
-  const { data: jobs, isPending, isError, error } = useJobs()
+  const { data: jobs, isPending, isError } = useJobs()
   const { mutate: patchJob } = usePatchJob()
   const sensors = useSensors(useSensor(PointerSensor))
   const [activeJob, setActiveJob] = useState<Job | null>(null)

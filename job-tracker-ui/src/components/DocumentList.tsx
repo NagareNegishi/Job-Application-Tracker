@@ -12,7 +12,7 @@ interface DocumentListProps {
 }
 
 export function DocumentList({ jobId }: DocumentListProps) {
-  const { data: documents, isPending, isError, error } = useDocuments(jobId)
+  const { data: documents, isPending, isError } = useDocuments(jobId)
   const { mutate: addDocument, isPending: isUploading } = useCreateDocument()
   const [selectedType, setSelectedType] = useState<DocumentType>("Other")
   const [uploadError, setUploadError] = useState<string | null>(null)

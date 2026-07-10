@@ -27,7 +27,7 @@ function JobDetailPage() {
 
   const { id } = useParams()
   const jobId = id ? parseInt(id) : NaN
-  const { data: job, isPending, isError, error } = useJob(jobId, { enabled: !isNaN(jobId) })
+  const { data: job, isPending, isError } = useJob(jobId, { enabled: !isNaN(jobId) })
   if (!id || isNaN(jobId)) return <p>Invalid job ID.</p>
   if (isPending) return <p>Loading...</p>
   if (isError) return <p>Something went wrong.</p>

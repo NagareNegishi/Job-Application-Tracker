@@ -214,7 +214,7 @@ const TAB_STYLES = {
 } as const;
 
 export function JobTable() {
-  const { data: jobs, isPending, isError, error } = useJobs();
+  const { data: jobs, isPending, isError } = useJobs();
   // AI users see ParseListingDialog first, non-AI sers see JobCreateSheet directly
   const [parseOpen, setParseOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
