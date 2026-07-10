@@ -16,7 +16,6 @@ import {
 import { useJobs } from "@/hooks/jobQuery";
 import { useJobFilters, type SortField } from "@/hooks/useJobFilters";
 import { usePreferences } from "@/hooks/preferencesQuery";
-import { MaintenanceError } from "@/lib/api";
 import { COLUMNS } from "@/lib/columns";
 import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
@@ -283,7 +282,7 @@ export function JobTable() {
   } = useJobFilters(tabFilteredJobs);
 
   if (isPending) return <p>Loading...</p>;
-  if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Something went wrong."}</p>;
+  if (isError) return <p>Something went wrong.</p>;
 
   // Opens dialog for AI users with auto-fill on; otherwise opens sheet directly
   function handleAddJob() {
