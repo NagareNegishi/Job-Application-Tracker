@@ -73,7 +73,10 @@ export async function apiFetch(
 
   // 503 — DB unreachable, show maintenance message if within scheduled window
   if (response.status === 503) {
-    if (isMaintenanceWindow()) throw new MaintenanceError()
+    if (isMaintenanceWindow()) {
+      window.location.href = "/maintenance"
+      throw new MaintenanceError()
+    }
     throw new ApiError(503, "Service temporarily unavailable. Please try again.")
   }
 
