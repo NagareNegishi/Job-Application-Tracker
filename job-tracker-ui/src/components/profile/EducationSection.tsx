@@ -26,4 +26,51 @@ function emptyEntry(): EducationEntry {
 }
 
 export default function EducationSection({ value, onChange, savedValue, saving, onSave, error }: Props) {
+  const dirty = {/* TODO */}
+  const saveBlocked = {/* TODO */}
+
+  return (
+    <div className="bg-card rounded-lg border p-5 space-y-3">
+      <h2 className="text-sm font-medium">Education</h2>
+      <div className="space-y-3">
+        {value.map((entry, i) => {
+          const isCurrent = entry.to === null
+
+          return (
+            <div key={i} className="flex items-start gap-2 bg-muted/50 border rounded-md p-3">
+              <div className="flex-1 space-y-2">
+                {/* institution field */}
+                {/* degree field */}
+                {/* currently enrolled checkbox */}
+                {/* start year */}
+                {/* end year — hidden when isCurrent */}
+              </div>
+              <Button
+                size="icon" variant="ghost"
+                className="text-muted-foreground hover:text-destructive shrink-0"
+                onClick={() => {/* TODO removeEntry */}}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )
+        })}
+      </div>
+      <Button size="sm" variant="outline" onClick={() => {/* TODO addEntry */}} disabled={dirty} className="gap-1">
+        <Plus className="h-4 w-4" />
+        Add education
+      </Button>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <div className="flex justify-end gap-2">
+        {dirty && (
+          <Button size="sm" variant="ghost" onClick={() => onChange(savedValue)} disabled={saving}>
+            Cancel
+          </Button>
+        )}
+        <Button size="sm" onClick={onSave} disabled={saving || !dirty || saveBlocked}>
+          {saving ? "Saving…" : "Save"}
+        </Button>
+      </div>
+    </div>
+  )
 }
