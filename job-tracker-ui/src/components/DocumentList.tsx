@@ -2,7 +2,7 @@ import { ResponsiveButton } from "@/components/ui/ResponsiveButton"
 import { DocumentCard } from "@/components/DocumentCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateDocument, useDocuments } from "@/hooks/documentQuery"
-import { ApiError, MaintenanceError } from "@/lib/api"
+import { ApiError } from "@/lib/api"
 import type { DocumentType } from "@/types/enums"
 import { Plus } from "lucide-react"
 import { useRef, useState } from "react"
@@ -26,7 +26,7 @@ export function DocumentList({ jobId }: DocumentListProps) {
       {
         onSuccess: () => setUploadError(null),
         onError: (err) => setUploadError(
-          err instanceof MaintenanceError || err instanceof ApiError ? err.message : "Failed to upload document."
+          err instanceof ApiError ? err.message : "Failed to upload document."
         )
       }
     )
@@ -34,7 +34,7 @@ export function DocumentList({ jobId }: DocumentListProps) {
   }
 
   if (isPending) return <p>Loading documents...</p>
-  if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Failed to load documents."}</p>
+  if (isError) return <p>Failed to load documents.</p>
 
   return (
     <div className="space-y-4">
