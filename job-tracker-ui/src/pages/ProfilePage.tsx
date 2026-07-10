@@ -8,6 +8,7 @@ import WorkingRightsSection from "@/components/profile/WorkingRightsSection"
 import WorkHistorySection from "@/components/profile/WorkHistorySection"
 import EducationSection from "@/components/profile/EducationSection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
+import { computeProfileScore } from "@/utils/profileScore"
 import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
   MAX_SKILL_ITEM_LENGTH,
@@ -130,6 +131,9 @@ export default function ProfilePage() {
     )
   }
 
+  // Live completeness score of the current form. Temporary plain-text readout — a meter component replaces this next.
+  const profileScore = computeProfileScore(form).score
+
   if (isLoading) return (
     <div className="min-h-screen bg-muted">
       <NavBar />
@@ -148,6 +152,8 @@ export default function ProfilePage() {
           <p className="text-sm text-muted-foreground mt-1">
             Your career profile is used as context for AI job analysis.
           </p>
+          {/* Temporary readout — replaced by a score meter component next session */}
+          <p className="text-sm mt-2">Profile completeness: {profileScore}/100</p>
         </div>
         {/* Sections render in résumé order: goal → experience → education → supporting → logistics */}
         {renderTagSection("targetRoles")}
