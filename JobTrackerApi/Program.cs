@@ -303,7 +303,19 @@ app.UseExceptionHandler(errorApp =>
 
         if (error != null)
         {
-            if (error.Error is System.Data.Common.DbException)
+            // Walk the whole chain: EF Core wraps a DB connection failure in a non-DbException,
+            // so the DbException is nested, not top-level. See docs/plans/maintenance-page.md.
+            var isDbDown = false;
+            for (var e = error.Error; e is not null; e = e.InnerException)
+            {
+                if (e is System.Data.Common.DbException)
+                {
+                    isDbDown = true;
+                    break;
+                }
+            }
+
+            if (isDbDown)
             {
                 // DbException includes intentional maintenance window downtime
                 logger.LogError(error.Error, "Database unavailable");
