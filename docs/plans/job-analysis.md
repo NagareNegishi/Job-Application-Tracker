@@ -299,7 +299,7 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 
 ### Validation constants (new)
 
-- Counts: `MaxProfileWorkModesCount` 3, `MaxProfileContractTypesCount` 6, `MaxProfileLocationsCount` 20, `MaxProfileLocationAreasCount` 10.
+- Counts: `MaxProfileWorkModesCount` 3, `MaxProfileContractTypesCount` 6, `MaxProfileLocationsCount` 10, `MaxProfileLocationAreasCount` 10.
 - Lengths: `MaxProfileLocationAreaItemLength` 100, `MaxProfileAdditionalConditionsLength` 500.
 - Salary: `MaxSalaryAmount` (e.g. 100_000_000); currency regex `^[A-Z]{3}$` inline on the entry.
 
