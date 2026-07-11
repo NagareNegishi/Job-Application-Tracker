@@ -252,7 +252,7 @@ Score is 1–5. `reasoning` is one sentence.
 
 | # | Item | Status |
 |---|---|---|
-| 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | — |
+| 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | Done |
 | 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min-per-IP policy | — |
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | — |
 | 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | — |
@@ -266,6 +266,10 @@ Score is 1–5. `reasoning` is one sentence.
 ### For the Analysis build (Steps 6–10)
 - `Anthropic:ApiKey` is shared with the auto-fill parsing feature — no duplicate config key needed.
 - Tests: mock `IAnalysisService` in controller tests; no live Claude calls in CI.
+
+### Step 6 polish (before Step 7)
+- **Prompt quality:** all 5 prompts in `ClaudeAnalysisConfig.cs` are placeholder quality — marked with a `TODO` comment. Dedicate a session to test each against real job descriptions and iterate before shipping.
+- **Shared Claude helper refactor:** `ClaudeParsingService` and `ClaudeAnalysisService` both duplicate `ExtractJson`. `ClaudeParsingService` also has `LogContractIssues` (logs unexpected/null keys to help tune prompts) that `ClaudeAnalysisService` lacks. Consider extracting both into a shared internal static helper (e.g. `ClaudeResponseHelper`) and adding contract-issue logging to the analysis service.
 
 ### Deferred / follow-up work
 - **Demo profile reset (pairs with D16):** the demo user can edit their seeded profile, so the periodic demo-data reset + login re-seed (Demo/Auth step 2) must be extended to cover `UserProfile` — add the sample profile to `DemoSeed` and include it in the reset path.
