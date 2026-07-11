@@ -51,4 +51,17 @@ public static class ValidationConstants
     public const int MaxProfileWorkHistoryDescriptionLength = 2000;
     public const int MaxProfileEducationInstitutionLength = 100;
     public const int MaxProfileEducationDegreeLength = 100;
+
+    // Profile conditions — array count limits
+    public const int MaxProfileWorkModesCount     = 3;
+    public const int MaxProfileContractTypesCount = 6;
+    public const int MaxProfileLocationsCount     = 10;
+    public const int MaxProfileLocationAreasCount = 10;
+
+    // Profile conditions — string length limits
+    public const int MaxProfileLocationAreaItemLength    = 100;
+    public const int MaxProfileAdditionalConditionsLength = 500;
+
+    // Profile conditions — salary expectation ceiling (bounds abuse; covers any currency/period)
+    public const int MaxSalaryAmount = 100_000_000;
 }
