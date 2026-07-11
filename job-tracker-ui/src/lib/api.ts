@@ -139,6 +139,13 @@ export class MaintenanceError extends Error {
 }
 
 
+// Never echo the backend's { error } field (untrusted channel — could leak server detail);
+// return a safe client-authored fallback instead. See docs/plans/maintenance-page.md.
+function genericFallbackMessage(status: number): string {
+  if (status >= 500) return "Something went wrong on our end. Please try again shortly."
+  return "Something went wrong. Please try again."
+}
+
 /**
  * Helper function to throw an ApiError with the status code and message from the response body if available.
  * @param response - The Response object returned from a fetch request.
@@ -159,7 +166,7 @@ async function throwApiError(response: Response): Promise<never> {
       ? body.map((e: { description?: string }) => e.description).filter(Boolean).join(". ")
       : null) ??
     (typeof body === "string" ? body : null) ??
-    "Unknown error"
+    genericFallbackMessage(response.status)
   )
 }
 
