@@ -17,6 +17,17 @@ export async function silentRefresh(): Promise<string> {
     credentials: "include",
   })
     .then(async (res) => {
+      // DB down during the scheduled window, route to the maintenance page instead of
+      // throwing (which would strand the user on /login). Skip when already on /maintenance:
+      // App.tsx runs silentRefresh on every mount, so redirecting there would reload-loop.
+      if (
+        res.status === 503 &&
+        isMaintenanceWindow() &&
+        window.location.pathname !== "/maintenance"
+      ) {
+        window.location.href = "/maintenance"
+        throw new MaintenanceError()
+      }
       if (!res.ok) throw new Error("Refresh failed")
       const data = await res.json()
       setToken(data.accessToken)
