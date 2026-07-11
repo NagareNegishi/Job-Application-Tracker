@@ -306,7 +306,7 @@ app.UseExceptionHandler(errorApp =>
             // Walk the whole chain: EF Core wraps a DB connection failure in a non-DbException,
             // so the DbException is nested, not top-level. See docs/plans/maintenance-page.md.
             var isDbDown = false;
-            for (var e = error.Error; e is not null; e = e.InnerException)
+            for (Exception? e = error.Error; e is not null; e = e.InnerException)
             {
                 if (e is System.Data.Common.DbException)
                 {
