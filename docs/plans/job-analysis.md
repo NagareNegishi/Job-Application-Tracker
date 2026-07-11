@@ -203,9 +203,9 @@ All endpoints:
 
 **Alignment**
 ```json
-{ "score": 3, "reasoning": "Strong frontend match; limited backend exposure." }
+{ "score": 3, "reasoning": "Strong frontend match; limited backend exposure.", "concern": null }
 ```
-Score is 1–5. `reasoning` is one sentence.
+Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine listing, else a short not-a-job note (soft, non-refusing) — see the Profile Conditions expansion below.
 
 **Skills** — 5–8 items
 ```json
@@ -258,6 +258,65 @@ Score is 1–5. `reasoning` is one sentence.
 | 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | — |
 | 9 | Add analysis UI to Job Detail page — 5 independent buttons; pre-fill `description` from the job (prompt if empty); each shows its own result inline | — |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
+
+---
+
+## Profile Conditions (Expansion — added 2026-07-12)
+
+Adds a "What I'm looking for" dimension to the profile — the user's **conditions/preferences**, distinct from **background**. Alignment analysis reads them so it answers "do you *want* this job?" not just "*can* you do it?". Modelled on the reference screener's "My Conditions". **Not started**; spans backend + frontend + the alignment prompt. Reopens Profile (previously "done" for background only).
+
+### Decisions
+
+| Decision | Reasoning |
+|---|---|
+| Profile = Background + Conditions (global, not per-role) | Conditions apply across all target roles, not per-role; `TargetRoles` stays `string[]` and heads a new "What I'm looking for" section. Per-role conditions rejected — rare need, large model/UI/prompt cost |
+| New condition fields: `WorkModes`, `ContractTypes`, `SalaryExpectation`, `PreferredLocations`, `AdditionalConditions` | Structure the filterable conditions (mode/contract/salary/location) for consistent hard signals; one free-text field absorbs nuance that resists structure |
+| Experience level → free text, not a structured field | Seniority is fuzzy and often role-dependent; an enum would fight reality. Reference treated junior-only as a hard filter — a soft free-text note fits this project better |
+| `WorkModes` reuses existing `WorkMode` enum (`OnSite`/`Remote`/`Hybrid`), multi-select | Remote is a work-mode, not a location — keeps geography and remote orthogonal (no "Remote country" hack) |
+| `ContractTypes` = unordered *acceptable set* (new enum) | Set answers "is this type acceptable?" — enough for alignment. Ranked preference deferred (nicer signal, more UI, low payoff now). Enum: `FullTimePermanent`, `FullTimeContract`, `PartTime`, `Casual`, `Internship`, `Temporary` |
+| `SalaryExpectation` = min floor only | Expectation is a floor; "any paid" = unset. Min+max range deferred. Owned object `{ MinAmount int?, Currency, Period }`, whole object nullable. Currency ISO 4217 alpha-3 (`^[A-Z]{3}$`); `SalaryPeriod` enum `Annual`/`Monthly`/`Hourly` |
+| `PreferredLocations` = `[{ Country, Areas[] }]`; empty `Areas` = anywhere in country | Country ISO-2 (reuse `^[A-Z]{2}$`) is a short autocomplete list — fixes "list too long"; `Areas` optional loose text (the infinite list stays unstructured). Multiple areas per country allowed. Cross-country regions ("Europe") go in free text, not a continent grouping |
+| `AdditionalConditions` = free text (`text`, max 500), HTML-rejected | Catch-all: experience level, "unpaid only if exceptional", region nuance. 500 fits a few preference notes, not an essay. Reject markup via the same inline `<[a-zA-Z/]` regex `ParseListingRequest` uses (no reusable attribute exists — it's an `IValidatableObject` check in `ProfileDTO.Validate()`) |
+| Conditions are optional — analysis gate unchanged | Requiring conditions would block a quick alignment run; they enrich output when present. The D9 profile-minimum stays background-only |
+| Only Alignment (of the 5) reads conditions | The other four are background-only (skills/gaps/interview prep); conditions are about fit/desire, which is Alignment's job |
+| Alignment gains soft `concern: string?` (not-a-job detection) | Surfaces "looks like a CV service / scam / unclear listing" without refusing — score + reasoning still return, the user decides. Non-strict by choice (some users want unclear listings). Threshold/wording tuned in the Step 6 prompt-polish session |
+
+### New fields (on `UserProfile`, `ProfileDTO`, `ProfileResponseDto`)
+
+| Field | Type | Storage (mirrors) |
+|---|---|---|
+| `WorkModes` | `List<WorkMode>` | JSONB list |
+| `ContractTypes` | `List<ContractType>` | JSONB list |
+| `SalaryExpectation` | `SalaryExpectation?` (owned) | JSONB (like `WorkingRights`) |
+| `PreferredLocations` | `List<PreferredLocationEntry>` | JSONB owned (like `WorkingRightEntry`) |
+| `AdditionalConditions` | `string?` | `text` column |
+
+**New enums** (`Models/Enums/`): `ContractType` (`FullTimePermanent`, `FullTimeContract`, `PartTime`, `Casual`, `Internship`, `Temporary`); `SalaryPeriod` (`Annual`, `Monthly`, `Hourly`).
+
+**New entry classes** (`Models/`, DataAnnotations style like `WorkingRightEntry.cs`):
+- `SalaryExpectation` — `MinAmount int?` (`[Range(0, MaxSalaryAmount)]`), `Currency string` (`^[A-Z]{3}$`), `Period SalaryPeriod`.
+- `PreferredLocationEntry` — `Country string` (required, `^[A-Z]{2}$`), `Areas List<string>` (optional; each item ≤ `MaxProfileLocationAreaItemLength`).
+
+### Validation constants (new)
+
+- Counts: `MaxProfileWorkModesCount` 3, `MaxProfileContractTypesCount` 6, `MaxProfileLocationsCount` 20, `MaxProfileLocationAreasCount` 10.
+- Lengths: `MaxProfileLocationAreaItemLength` 100, `MaxProfileAdditionalConditionsLength` 500.
+- Salary: `MaxSalaryAmount` (e.g. 100_000_000); currency regex `^[A-Z]{3}$` inline on the entry.
+
+### Steps (not started)
+
+| # | Item | Status |
+|---|---|---|
+| C1 | `ValidationConstants` + `ContractType`/`SalaryPeriod` enums + `PreferredLocationEntry`/`SalaryExpectation` classes | — |
+| C2 | `UserProfile` entity — add the 5 fields | — |
+| C3 | Migration (new `text` + JSONB columns) | — |
+| C4 | `ProfileDTO` + `ProfileResponseDto` — validation + `ToProfile`/`ApplyTo`/`ToResponseDto` wiring | — |
+| C5 | `ProfileDTOTests` — new-field validation (currency/country regex, count caps, salary range, `AdditionalConditions` HTML-reject) | — |
+| C6 | `FormatUserMessage` + `AlignmentPrompt` + Alignment model `concern` (the analysis payoff) | — |
+| C7 | Frontend profile form — conditions section + country/currency suggestion lists | — |
+| C8 | Frontend alignment display — show `concern` when present | — |
+
+Prompt-quality polish for the reworked `AlignmentPrompt` + the `concern` threshold folds into the existing Step 6 prompt-polish session.
 
 ---
 
