@@ -33,6 +33,11 @@ public class UserProfile
     public ProfileResponseDto ToResponseDto() => new()
     {
         TargetRoles = TargetRoles,
+        WorkModes = WorkModes,
+        ContractTypes = ContractTypes,
+        SalaryExpectation = SalaryExpectation,
+        PreferredLocations = PreferredLocations,
+        AdditionalConditions = AdditionalConditions,
         Skills = Skills,
         Certifications = Certifications,
         Languages = Languages,
