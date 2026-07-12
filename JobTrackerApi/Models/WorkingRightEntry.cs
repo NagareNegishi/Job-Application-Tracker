@@ -10,6 +10,7 @@ public class WorkingRightEntry
     [RegularExpression(@"^[A-Z]{2}$", ErrorMessage = "Country must be a valid ISO 3166-1 alpha-2 code (e.g. NZ, AU).")]
     public string Country { get; set; } = null!;
 
+    // Nullable so [Required] rejects an omitted status
     [Required]
-    public WorkingRight Status { get; set; }
+    public WorkingRight? Status { get; set; }
 }
