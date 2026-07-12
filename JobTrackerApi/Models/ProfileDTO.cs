@@ -79,6 +79,11 @@ public class ProfileDTO : IValidatableObject
     {
         UserId = userId,
         TargetRoles = TargetRoles ?? [],
+        WorkModes = WorkModes ?? [],
+        ContractTypes = ContractTypes ?? [],
+        SalaryExpectation = SalaryExpectation,   // nullable on entity; null = not set
+        PreferredLocations = PreferredLocations ?? [],
+        AdditionalConditions = AdditionalConditions, // nullable on entity; null = not set
         Skills = Skills ?? [],
         Certifications = Certifications ?? [],
         Languages = Languages ?? [],
