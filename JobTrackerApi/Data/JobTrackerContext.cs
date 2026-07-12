@@ -47,6 +47,10 @@ public class JobTrackerContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<UserProfile>()
             .PrimitiveCollection(p => p.ContractTypes)
             .HasColumnType("jsonb");
+        modelBuilder.Entity<UserProfile>()
+            .OwnsOne(p => p.SalaryExpectation, se => se.ToJson());
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.PreferredLocations, pl => pl.ToJson());
     }
 
     public DbSet<Job> Jobs { get; set; } = null!;
