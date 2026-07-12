@@ -96,6 +96,11 @@ public class ProfileDTO : IValidatableObject
     public void ApplyTo(UserProfile profile)
     {
         if (TargetRoles != null) profile.TargetRoles = TargetRoles;
+        if (WorkModes != null) profile.WorkModes = WorkModes;
+        if (ContractTypes != null) profile.ContractTypes = ContractTypes;
+        if (SalaryExpectation != null) profile.SalaryExpectation = SalaryExpectation;
+        if (PreferredLocations != null) profile.PreferredLocations = PreferredLocations;
+        if (AdditionalConditions != null) profile.AdditionalConditions = AdditionalConditions;
         if (Skills != null) profile.Skills = Skills;
         if (Certifications != null) profile.Certifications = Certifications;
         if (Languages != null) profile.Languages = Languages;
