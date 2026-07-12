@@ -40,6 +40,13 @@ public class JobTrackerContext : IdentityDbContext<ApplicationUser>
             .OwnsMany(p => p.WorkHistory, wh => wh.ToJson());
         modelBuilder.Entity<UserProfile>()
             .OwnsMany(p => p.Education, e => e.ToJson());
+        // PrimitiveCollection is the EF Core 8 API for List<enum/scalar>; OwnsMany only works for entity types
+        modelBuilder.Entity<UserProfile>()
+            .PrimitiveCollection(p => p.WorkModes)
+            .HasColumnType("jsonb");
+        modelBuilder.Entity<UserProfile>()
+            .PrimitiveCollection(p => p.ContractTypes)
+            .HasColumnType("jsonb");
     }
 
     public DbSet<Job> Jobs { get; set; } = null!;
