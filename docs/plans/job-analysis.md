@@ -308,9 +308,9 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 | # | Item | Status |
 |---|---|---|
 | C1 | `ValidationConstants` + `ContractType`/`SalaryPeriod` enums + `PreferredLocationEntry`/`SalaryExpectation` classes | Done |
-| C2 | `UserProfile` entity — add the 5 fields | — |
-| C3 | Migration (new `text` + JSONB columns) | — |
-| C4 | `ProfileDTO` + `ProfileResponseDto` — validation + `ToProfile`/`ApplyTo`/`ToResponseDto` wiring | — |
+| C2 | `UserProfile` entity — add the 5 fields | Done |
+| C3 | Migration (new `text` + JSONB columns) | Done |
+| C4 | `ProfileDTO` + `ProfileResponseDto` — validation + `ToProfile`/`ApplyTo`/`ToResponseDto` wiring | Done |
 | C5 | `ProfileDTOTests` — new-field validation (currency/country regex, count caps, salary range, `AdditionalConditions` HTML-reject) + `WorkingRightEntry` omitted-`Status` now fails (nullable+`[Required]` fix in C1) | — |
 | C6 | `FormatUserMessage` + `AlignmentPrompt` + Alignment model `concern` (the analysis payoff) | — |
 | C7 | Frontend profile form — conditions section + country/currency suggestion lists | — |
