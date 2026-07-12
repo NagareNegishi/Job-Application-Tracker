@@ -62,6 +62,16 @@ public class ProfileDTO : IValidatableObject
             yield return new ValidationResult(
                 $"Each language must be {ValidationConstants.MaxProfileLanguageItemLength} characters or fewer.",
                 [nameof(Languages)]);
+
+        if (PreferredLocations?.Any(l => l.Areas.Any(a => a?.Length > ValidationConstants.MaxProfileLocationAreaItemLength)) == true)
+            yield return new ValidationResult(
+                $"Each location area must be {ValidationConstants.MaxProfileLocationAreaItemLength} characters or fewer.",
+                [nameof(PreferredLocations)]);
+
+        if (AdditionalConditions != null && System.Text.RegularExpressions.Regex.IsMatch(AdditionalConditions, @"<[a-zA-Z/]"))
+            yield return new ValidationResult(
+                "Additional conditions must not contain HTML.",
+                [nameof(AdditionalConditions)]);
     }
 
     /// <summary>Creates a new UserProfile entity from this DTO (used by PUT).</summary>
