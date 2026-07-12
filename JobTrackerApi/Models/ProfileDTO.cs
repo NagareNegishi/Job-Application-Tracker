@@ -8,6 +8,20 @@ public class ProfileDTO : IValidatableObject
     [MaxLength(ValidationConstants.MaxProfileTargetRolesCount)]
     public List<string>? TargetRoles { get; set; }
 
+    [MaxLength(ValidationConstants.MaxProfileWorkModesCount)]
+    public List<WorkMode>? WorkModes { get; set; }
+
+    [MaxLength(ValidationConstants.MaxProfileContractTypesCount)]
+    public List<ContractType>? ContractTypes { get; set; }
+
+    public SalaryExpectation? SalaryExpectation { get; set; }
+
+    [MaxLength(ValidationConstants.MaxProfileLocationsCount)]
+    public List<PreferredLocationEntry>? PreferredLocations { get; set; }
+
+    [MaxLength(ValidationConstants.MaxProfileAdditionalConditionsLength)]
+    public string? AdditionalConditions { get; set; }
+
     [MaxLength(ValidationConstants.MaxProfileSkillsCount)]
     public List<string>? Skills { get; set; }
 
