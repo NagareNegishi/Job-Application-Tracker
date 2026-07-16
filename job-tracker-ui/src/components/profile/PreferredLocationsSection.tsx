@@ -1,10 +1,15 @@
 // Preferred locations section — per-entry country + free-text areas ("anywhere in country" if empty).
+// View/edit mode and card chrome come from ProfileSectionCard.
+import { useEffect, useRef } from "react"
 import { Trash2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import TagInput from "@/components/ui/TagInput"
+import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
 import type { PreferredLocationEntry } from "@/types/profile"
+import { preferredLocationsInvalid } from "@/utils/profileValidation"
 import CountryCombobox from "./CountryCombobox"
+import { getCountryName } from "./countryCodes"
 import { MAX_LOCATION_AREAS_COUNT, MAX_LOCATION_AREA_ITEM_LENGTH } from "@/lib/validationConstants"
 
 type Props = {
@@ -13,16 +18,37 @@ type Props = {
   savedValue: PreferredLocationEntry[]
   saving: boolean
   onSave: () => void
+  editing: boolean
+  onEdit: () => void
+  onCancel: () => void
   error?: string
 }
 
 export default function PreferredLocationsSection({
-  value, onChange, savedValue, saving, onSave, error,
+  value, onChange, savedValue, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
   const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
 
+  // Scroll the entry appended by header-add into view once edit mode has rendered it
+  const lastEntryRef = useRef<HTMLDivElement | null>(null)
+  const scrollPending = useRef(false)
+
+  useEffect(() => {
+    if (scrollPending.current && lastEntryRef.current) {
+      lastEntryRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+      scrollPending.current = false
+    }
+  })
+
   function addEntry() {
     onChange([...value, { country: "", areas: [] }])
+  }
+
+  // Header + button: blank entry ready to fill, whether the section was empty or not
+  function handleAdd() {
+    addEntry()
+    onEdit()
+    scrollPending.current = true
   }
 
   function updateEntry(index: number, patch: Partial<PreferredLocationEntry>) {
@@ -34,11 +60,39 @@ export default function PreferredLocationsSection({
   }
 
   return (
-    <div className="bg-card rounded-lg border p-5 space-y-3">
-      <h2 className="text-sm font-medium">Preferred Locations</h2>
+    <ProfileSectionCard
+      title="Preferred Locations"
+      editing={editing}
+      dirty={dirty}
+      saving={saving}
+      saveBlocked={preferredLocationsInvalid(value)}
+      error={error}
+      onEdit={onEdit}
+      onSave={onSave}
+      onCancel={onCancel}
+      isEmpty={value.length === 0}
+      emptyText="No preferred locations added yet"
+      onAdd={handleAdd}
+      view={
+        <ul className="text-sm space-y-1">
+          {value.map((entry, i) => (
+            <li key={i}>
+              <span className="font-medium">{getCountryName(entry.country)}</span>
+              <span className="text-muted-foreground">
+                {" — "}{entry.areas.length > 0 ? entry.areas.join(", ") : "anywhere"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      }
+    >
       <div className="space-y-3">
         {value.map((entry, i) => (
-          <div key={i} className="flex items-start gap-2 bg-muted/50 border rounded-md p-3">
+          <div
+            key={i}
+            ref={i === value.length - 1 ? lastEntryRef : undefined}
+            className="flex items-start gap-2 bg-muted/50 border rounded-md p-3"
+          >
             <div className="flex-1 space-y-2">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">
@@ -72,22 +126,11 @@ export default function PreferredLocationsSection({
             </Button>
           </div>
         ))}
-      </div>
-      <Button size="sm" variant="outline" onClick={addEntry} className="gap-1">
-        <Plus className="h-4 w-4" />
-        Add location
-      </Button>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2">
-        {dirty && (
-          <Button size="sm" variant="ghost" onClick={() => onChange(savedValue)} disabled={saving}>
-            Cancel
-          </Button>
-        )}
-        <Button size="sm" onClick={onSave} disabled={saving || !dirty || value.some(e => !e.country)}>
-          {saving ? "Saving…" : "Save"}
+        <Button size="sm" variant="outline" onClick={addEntry} className="gap-1">
+          <Plus className="h-4 w-4" />
+          Add location
         </Button>
       </div>
-    </div>
+    </ProfileSectionCard>
   )
 }
