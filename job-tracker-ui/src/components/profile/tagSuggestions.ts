@@ -10578,3 +10578,11 @@ export const DEGREE_SUGGESTIONS: string[] = [
   // High school
   "High School Diploma",
 ]
+
+// Common ISO 4217 currency codes; NZD first since it's the default for a new SalaryExpectation.
+export const CURRENCY_SUGGESTIONS: string[] = [
+  "NZD", "AUD", "USD", "GBP", "EUR",
+  "CAD", "SGD", "JPY", "CNY", "HKD",
+  "INR", "CHF", "SEK", "NOK", "DKK",
+  "ZAR", "AED", "PHP", "MYR", "THB",
+]
