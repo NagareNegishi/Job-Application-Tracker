@@ -318,6 +318,23 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 
 Prompt-quality polish for the reworked `AlignmentPrompt` + the `concern` threshold folds into the existing Step 6 prompt-polish session.
 
+### C7 Breakdown (Frontend Conditions UI)
+
+`TargetRoles` moves under a new "What I'm looking for" heading alongside the five condition fields (per the Decisions table above); it stays its own `TagSection` card, just regrouped visually. Each new field keeps its own per-section Save (D14) — no change to the existing merge-patch wiring, only new cards.
+
+| # | Item | Why | Status |
+|---|---|---|---|
+| C7.1 | `types/profile.ts` — add `ContractType`, `SalaryPeriod` enums, `SalaryExpectation`, `PreferredLocationEntry` types; extend `UserProfile` | Types precede everything else; mirrors where `WorkingRight` already lives (profile-specific enums stay out of `types/enums.ts`) | Done |
+| C7.2 | `lib/validationConstants.ts` — mirror the new `ValidationConstants.cs` entries (work modes/contract types/locations/areas counts, area + additional-conditions lengths, max salary amount) | Keeps the existing "mirror the backend" convention intact | Done |
+| C7.3 | `tagSuggestions.ts` — add `CURRENCY_SUGGESTIONS` (curated ISO 4217 codes) | Matches the existing curated-list pattern (Roles/Skills/Certifications/Degrees); feeds the salary currency input | Done |
+| C7.4 | New `CheckboxGroup` (pure, `components/ui/`) + `MultiSelectSection` (save chrome), shared by WorkModes (3 options) and ContractTypes (6 options, `showSelectAll`) | First closed-set *multi*-select in the profile form (existing `WorkingRight` is single-select via `<Select>`); split into input/chrome layers mirrors `TagInput`/`TagSection` | Done |
+| C7.5 | New `SalaryExpectationSection` component — amount, currency (`SuggestionInput` + C7.3 list, defaults NZD), period (defaults Annual), set/clear | Whole-object-nullable field (D-decision): all three sub-fields required together or the object is absent, so it needs a "clear" affordance instead of add/remove-row | Done |
+| C7.6 | New `PreferredLocationsSection` component — per-entry `CountryCombobox` (reused from Work Rights) + an `Areas` tag list per row | First entry type with a nested array (`Areas` inside each location), unlike the scalar-only existing entries | — |
+| C7.7 | New `AdditionalConditionsSection` component — single `Textarea`, per-section save, client-side HTML-reject | Mirrors the backend's inline `<[a-zA-Z/]` regex check in `ProfileDTO.Validate()` | — |
+| C7.8a | Wire into `ProfilePage.tsx` — extend `EMPTY_PROFILE` with all 5 new fields; add "What I'm looking for" / "Background" headings; mount WorkModes, ContractTypes, SalaryExpectation + regrouped `TargetRoles` | Ties the built sections into the existing form state/save wiring without waiting on C7.6–C7.7 | Done |
+| C7.8b | Mount `PreferredLocationsSection` + `AdditionalConditionsSection` into the "What I'm looking for" group once C7.6–C7.7 land | Completes C7.8a's wiring | — |
+| C7.9 | Flip C7 to Done here once C7.1–C7.8b land | Same doc-hygiene as C1–C6 | — |
+
 ---
 
 ## Notes

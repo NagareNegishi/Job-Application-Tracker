@@ -138,6 +138,7 @@ public class ClaudeAnalysisService : IAnalysisService
         return json;
     }
 
+    /// <summary>Builds the user-turn message sent to Claude: profile summary, optionally conditions, then the job.</summary>
     private static string FormatUserMessage(UserProfile profile, string description, string? role, string? company, bool includeConditions = false)
     {
         var sb = new StringBuilder();
@@ -172,6 +173,7 @@ public class ClaudeAnalysisService : IAnalysisService
             }
         }
 
+        // Only Alignment weighs conditions (work mode/salary/location fit) — the other four types are background-only.
         if (includeConditions)
             sb.Append(FormatConditionsSection(profile));
 
@@ -186,6 +188,7 @@ public class ClaudeAnalysisService : IAnalysisService
         return sb.ToString();
     }
 
+    /// <summary>Renders the candidate's stated conditions as a prompt section; empty string if none are set.</summary>
     private static string FormatConditionsSection(UserProfile profile)
     {
         var hasConditions = profile.WorkModes.Count > 0
