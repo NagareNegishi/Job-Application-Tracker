@@ -1,6 +1,6 @@
-// Shared chrome for profile sections: title row, view↔edit mode switch, empty-state
-// "+ Add" prompt, error line, and the Save/Cancel footer. Sections supply the read-only
-// rendering via `view` and the edit form as children.
+// Shared structure for profile sections: title row with edit/add buttons, view↔edit
+// switch, empty-state placeholder, error line, and the Save/Cancel footer. Sections
+// supply the read-only rendering via `view` and the edit form as children.
 import type { ReactNode } from "react"
 import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,30 +15,44 @@ type Props = {
   onEdit: () => void
   onSave: () => void
   onCancel: () => void // reverts the section's value and exits edit mode (page-owned)
-  isEmpty: boolean     // no saved/typed content → show the "+ Add" prompt instead of `view`
-  addLabel: string     // empty-state button label, e.g. "Add skills"
+  isEmpty: boolean     // show `emptyText` instead of `view`; header icon becomes +
+  emptyText: string    // placeholder when empty, e.g. "No skills added yet"
+  onAdd?: () => void   // multi-entry sections: enter edit with a blank entry seeded
   view: ReactNode
   children: ReactNode
 }
 
 export default function ProfileSectionCard({
   title, editing, dirty, saving, saveBlocked, error,
-  onEdit, onSave, onCancel, isEmpty, addLabel, view, children,
+  onEdit, onSave, onCancel, isEmpty, emptyText, onAdd, view, children,
 }: Props) {
   return (
     <div className="bg-card rounded-lg border p-5 space-y-3">
       {/* min-h keeps the header height stable whether or not the pencil button renders */}
       <div className="flex items-center justify-between min-h-7">
         <h2 className="text-sm font-medium">{title}</h2>
-        {!editing && !isEmpty && (
-          <Button
-            size="icon" variant="ghost"
-            className="h-7 w-7 text-muted-foreground"
-            aria-label={`Edit ${title}`}
-            onClick={onEdit}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
+        {!editing && (
+          <div className="flex items-center gap-1">
+            {/* Multi-entry sections get a separate add-another button once entries exist */}
+            {onAdd && !isEmpty && (
+              <Button
+                size="icon" variant="ghost"
+                className="h-7 w-7 text-muted-foreground"
+                aria-label={`Add ${title}`}
+                onClick={onAdd}
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button
+              size="icon" variant="ghost"
+              className="h-7 w-7 text-muted-foreground"
+              aria-label={isEmpty ? `Add ${title}` : `Edit ${title}`}
+              onClick={isEmpty && onAdd ? onAdd : onEdit} // empty multi-entry: seed a blank entry too
+            >
+              {isEmpty ? <Plus className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
         )}
       </div>
       {editing ? (
@@ -55,10 +69,7 @@ export default function ProfileSectionCard({
           </div>
         </>
       ) : isEmpty ? (
-        <Button size="sm" variant="outline" onClick={onEdit} className="gap-1">
-          <Plus className="h-4 w-4" />
-          {addLabel}
-        </Button>
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
       ) : (
         view
       )}
