@@ -48,6 +48,9 @@ const ENUM_DISPLAY_OVERRIDES: Record<string, string> = {
   CoverLetter: "Cover Letter",
   ReferenceLetter: "Reference Letter",
   NoResponse: "No Response",
+  FullTimePermanent: "Full-time (Permanent)",
+  FullTimeContract: "Full-time (Contract)",
+  PartTime: "Part-time",
 };
 
 export function formatEnumLabel(value: string): string {
