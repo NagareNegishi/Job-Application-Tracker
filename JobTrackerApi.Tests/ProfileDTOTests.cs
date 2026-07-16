@@ -172,6 +172,33 @@ public class ProfileDTOTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Languages)));
     }
 
+    // A location area item exceeding the per-item length cap must fail validation
+    [Fact]
+    public void ProfileDTO_ItemLength_LocationAreaTooLong_Fails()
+    {
+        // Arrange: one area that is one character over the 100-char cap
+        var dto = new ProfileDTO
+        {
+            PreferredLocations =
+            [
+                new PreferredLocationEntry
+                {
+                    Country = "NZ",
+                    Areas = [new string('a', ValidationConstants.MaxProfileLocationAreaItemLength + 1)]
+                }
+            ]
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.PreferredLocations)));
+    }
+
     // Country codes must be uppercase — lowercase must fail the regex
     [Fact]
     public void WorkingRightEntry_Country_Lowercase_Fails()
