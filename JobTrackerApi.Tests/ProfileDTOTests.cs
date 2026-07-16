@@ -223,6 +223,57 @@ public class ProfileDTOTests
         Assert.Empty(results);
     }
 
+    // Country codes must be uppercase — lowercase must fail the regex
+    [Fact]
+    public void PreferredLocationEntry_Country_Lowercase_Fails()
+    {
+        // Arrange: "nz" is valid ISO format but lowercase — regex requires [A-Z]{2}
+        var entry = new PreferredLocationEntry { Country = "nz" };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(PreferredLocationEntry.Country)));
+    }
+
+    // Country codes longer than 2 characters must fail validation
+    [Fact]
+    public void PreferredLocationEntry_Country_ThreeChars_Fails()
+    {
+        // Arrange: "NZL" is the ISO 3166-1 alpha-3 code — wrong standard, too long
+        var entry = new PreferredLocationEntry { Country = "NZL" };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(PreferredLocationEntry.Country)));
+    }
+
+    // A valid ISO 3166-1 alpha-2 code must pass validation
+    [Fact]
+    public void PreferredLocationEntry_Country_ValidCode_Passes()
+    {
+        // Arrange
+        var entry = new PreferredLocationEntry { Country = "NZ" };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
+
     // FromYear in the future must fail the IValidatableObject check
     [Fact]
     public void WorkHistoryEntry_FromYear_FutureYear_Fails()
