@@ -15,7 +15,9 @@ import WorkHistorySection from "@/components/profile/WorkHistorySection"
 import EducationSection from "@/components/profile/EducationSection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
 import { computeProfileScore } from "@/utils/profileScore"
+import { sectionInvalid } from "@/utils/profileValidation"
 import { ScoreRing } from "@/components/ui/ScoreRing"
+import { Button } from "@/components/ui/button"
 import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
   MAX_SKILL_ITEM_LENGTH,
@@ -41,12 +43,16 @@ const EMPTY_PROFILE: UserProfile = {
   workingRights: [], workHistory: [], education: [],
 }
 
+// All 12 section keys — drives Edit all / Save all and the first-run auto-open
+const ALL_SECTION_KEYS = Object.keys(EMPTY_PROFILE) as (keyof UserProfile)[]
+
 // Only the four string[] fields render as tag sections; keyed so state/save wire up generically.
 type TagFieldKey = "targetRoles" | "skills" | "certifications" | "languages"
 
 type TagSectionConfig = {
   key: TagFieldKey
   title: string
+  emptyText: string   // placeholder shown in view mode while the section is empty
   placeholder: string
   maxItems: number
   maxItemLength: number
@@ -57,13 +63,17 @@ type TagSectionConfig = {
 
 // Per-section data only — the wiring (value/onChange/save/dirty) is identical and lives in the map below.
 const TAG_SECTIONS: TagSectionConfig[] = [
-  { key: "targetRoles", title: "Desired Roles", placeholder: "Type a role and press Enter",
+  { key: "targetRoles", title: "Desired Roles", emptyText: "No desired roles added yet",
+    placeholder: "Type a role and press Enter",
     maxItems: MAX_TARGET_ROLES_COUNT, maxItemLength: MAX_TARGET_ROLE_ITEM_LENGTH, layout: "stack", suggestions: TARGET_ROLE_SUGGESTIONS },
-  { key: "skills", title: "Skills", placeholder: "Type a skill and press Enter",
+  { key: "skills", title: "Skills", emptyText: "No skills added yet",
+    placeholder: "Type a skill and press Enter",
     maxItems: MAX_SKILLS_COUNT, maxItemLength: MAX_SKILL_ITEM_LENGTH, suggestions: SKILL_SUGGESTIONS },
-  { key: "certifications", title: "Certifications", placeholder: "Type a certification and press Enter",
+  { key: "certifications", title: "Certifications", emptyText: "No certifications added yet",
+    placeholder: "Type a certification and press Enter",
     maxItems: MAX_CERTIFICATIONS_COUNT, maxItemLength: MAX_CERTIFICATION_ITEM_LENGTH, layout: "stack", suggestions: CERTIFICATION_SUGGESTIONS },
-  { key: "languages", title: "Languages", placeholder: "Type a language and press Enter",
+  { key: "languages", title: "Languages", emptyText: "No languages added yet",
+    placeholder: "Type a language and press Enter",
     maxItems: MAX_LANGUAGES_COUNT, maxItemLength: MAX_LANGUAGE_ITEM_LENGTH, suggestions: LANGUAGE_SUGGESTIONS, matchStrategy: "prefix" },
 ]
 
@@ -81,12 +91,64 @@ export default function ProfilePage() {
   const [savingSection, setSavingSection] = useState<keyof UserProfile | null>(null)
   const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({})
 
-  // Populate the form once the query settles; re-syncs after a save invalidates and refetches
+  // Sections currently in edit mode; everything else renders read-only
+  const [editingSections, setEditingSections] = useState<Set<keyof UserProfile>>(new Set())
+
+  // Mirror for the data-sync effect below — reading it there must not re-trigger the effect
+  const editingRef = useRef(editingSections)
+  editingRef.current = editingSections
+
+  const [savingAll, setSavingAll] = useState(false)
+  const [saveAllError, setSaveAllError] = useState("")
+
+  function openSection(key: keyof UserProfile) {
+    setEditingSections(prev => new Set(prev).add(key))
+  }
+
+  function closeSection(key: keyof UserProfile) {
+    setEditingSections(prev => {
+      const next = new Set(prev)
+      next.delete(key)
+      return next
+    })
+  }
+
+  // Cancel = revert the section's form value to the last saved state, then exit edit mode
+  function cancelSection(key: keyof UserProfile) {
+    updateField(key, (data ?? EMPTY_PROFILE)[key])
+    closeSection(key)
+  }
+
+  function openAll() {
+    setEditingSections(new Set(ALL_SECTION_KEYS))
+  }
+
+  // Cancel all = revert the whole form to the last saved state and close every section
+  function cancelAll() {
+    setForm(data ?? EMPTY_PROFILE)
+    setEditingSections(new Set())
+    setSaveAllError("")
+  }
+
+  // Populate the form once the query settles; re-syncs after a save invalidates and refetches.
+  // Sections still in edit mode keep their in-progress values — a per-section save must not
+  // wipe unsaved edits elsewhere on the page.
   useEffect(() => {
     if (data === undefined) return
-    if (data === null) { profileExists.current = false; return }
+    if (data === null) {
+      profileExists.current = false
+      // First run — no profile row yet, so open everything for the initial fill
+      setEditingSections(new Set(ALL_SECTION_KEYS))
+      return
+    }
     profileExists.current = true
-    setForm(data)
+    setForm(f => {
+      const merged: UserProfile = { ...data }
+      for (const key of editingRef.current) {
+        (merged as Record<string, unknown>)[key] = f[key]
+      }
+      return merged
+    })
   }, [data])
 
   // Update exactly one field; every other field is carried over unchanged, so other sections stay non-dirty
@@ -109,10 +171,39 @@ export default function ProfilePage() {
       } else {
         await patchProfile({ [key]: form[key] } as ProfilePatch)
       }
+      // Successful save returns the section to view mode; failures keep it open with the error
+      closeSection(key)
     } catch {
       setSectionErrors(prev => ({ ...prev, [key]: "Failed to save. Please try again." }))
     } finally {
       setSavingSection(null)
+    }
+  }
+
+  // Fields whose form value differs from the last saved state (same JSON-compare the sections use)
+  const dirtyKeys = ALL_SECTION_KEYS.filter(
+    k => JSON.stringify(form[k]) !== JSON.stringify((data ?? EMPTY_PROFILE)[k])
+  )
+  // Only dirty fields get saved, so validity of the rest never blocks Save all
+  const saveAllBlocked = dirtyKeys.some(k => sectionInvalid(k, form))
+  const anyEditing = editingSections.size > 0
+
+  /** Saves every dirty field at once — PUT on first save, a single merge-PATCH afterwards. */
+  async function saveAll() {
+    setSavingAll(true)
+    setSaveAllError("")
+    try {
+      if (!profileExists.current) {
+        await createProfile(form)
+        profileExists.current = true
+      } else {
+        await patchProfile(Object.fromEntries(dirtyKeys.map(k => [k, form[k]])) as ProfilePatch)
+      }
+      setEditingSections(new Set())
+    } catch {
+      setSaveAllError("Failed to save. Please try again.")
+    } finally {
+      setSavingAll(false)
     }
   }
 
@@ -124,11 +215,15 @@ export default function ProfilePage() {
       <TagSection
         key={s.key}
         title={s.title}
+        emptyText={s.emptyText}
         value={form[s.key]}
         onChange={val => updateField(s.key, val)}
         savedValue={data?.[s.key] ?? []}
         saving={savingSection === s.key}
         onSave={() => saveSection(s.key)}
+        editing={editingSections.has(s.key)}
+        onEdit={() => openSection(s.key)}
+        onCancel={() => cancelSection(s.key)}
         error={sectionErrors[s.key]}
         placeholder={s.placeholder}
         maxItems={s.maxItems}
@@ -156,12 +251,31 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-muted">
       <NavBar />
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold">Profile</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Your career profile is used as context for AI job analysis.
-          </p>
-          <ScoreRing score={profileScore} />
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold">Profile</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your career profile is used as context for AI job analysis.
+            </p>
+            <ScoreRing score={profileScore} />
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            {anyEditing ? (
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" onClick={cancelAll} disabled={savingAll}>
+                  Cancel all
+                </Button>
+                <Button size="sm" onClick={saveAll} disabled={savingAll || dirtyKeys.length === 0 || saveAllBlocked}>
+                  {savingAll ? "Saving…" : "Save all"}
+                </Button>
+              </div>
+            ) : (
+              <Button size="sm" variant="outline" onClick={openAll}>
+                Edit all
+              </Button>
+            )}
+            {saveAllError && <p className="text-xs text-destructive">{saveAllError}</p>}
+          </div>
         </div>
 
         {/* What I'm looking for: conditions/preferences, read only by Alignment analysis */}
@@ -170,22 +284,30 @@ export default function ProfilePage() {
           {renderTagSection("targetRoles")}
           <MultiSelectSection
             title="Work Modes"
+            emptyText="No work modes selected"
             options={Object.values(WorkMode)}
             value={form.workModes}
             onChange={val => updateField("workModes", val)}
             savedValue={data?.workModes ?? []}
             saving={savingSection === "workModes"}
             onSave={() => saveSection("workModes")}
+            editing={editingSections.has("workModes")}
+            onEdit={() => openSection("workModes")}
+            onCancel={() => cancelSection("workModes")}
             error={sectionErrors["workModes"]}
           />
           <MultiSelectSection
             title="Contract Types"
+            emptyText="No contract types selected"
             options={Object.values(ContractType)}
             value={form.contractTypes}
             onChange={val => updateField("contractTypes", val)}
             savedValue={data?.contractTypes ?? []}
             saving={savingSection === "contractTypes"}
             onSave={() => saveSection("contractTypes")}
+            editing={editingSections.has("contractTypes")}
+            onEdit={() => openSection("contractTypes")}
+            onCancel={() => cancelSection("contractTypes")}
             error={sectionErrors["contractTypes"]}
             showSelectAll
           />
@@ -195,6 +317,9 @@ export default function ProfilePage() {
             savedValue={data?.salaryExpectation ?? null}
             saving={savingSection === "salaryExpectation"}
             onSave={() => saveSection("salaryExpectation")}
+            editing={editingSections.has("salaryExpectation")}
+            onEdit={() => openSection("salaryExpectation")}
+            onCancel={() => cancelSection("salaryExpectation")}
             error={sectionErrors["salaryExpectation"]}
           />
           <PreferredLocationsSection
@@ -203,6 +328,9 @@ export default function ProfilePage() {
             savedValue={data?.preferredLocations ?? []}
             saving={savingSection === "preferredLocations"}
             onSave={() => saveSection("preferredLocations")}
+            editing={editingSections.has("preferredLocations")}
+            onEdit={() => openSection("preferredLocations")}
+            onCancel={() => cancelSection("preferredLocations")}
             error={sectionErrors["preferredLocations"]}
           />
           <AdditionalConditionsSection
@@ -211,6 +339,9 @@ export default function ProfilePage() {
             savedValue={data?.additionalConditions ?? ""}
             saving={savingSection === "additionalConditions"}
             onSave={() => saveSection("additionalConditions")}
+            editing={editingSections.has("additionalConditions")}
+            onEdit={() => openSection("additionalConditions")}
+            onCancel={() => cancelSection("additionalConditions")}
             error={sectionErrors["additionalConditions"]}
           />
         </div>
@@ -224,6 +355,9 @@ export default function ProfilePage() {
             savedValue={data?.workHistory ?? []}
             saving={savingSection === "workHistory"}
             onSave={() => saveSection("workHistory")}
+            editing={editingSections.has("workHistory")}
+            onEdit={() => openSection("workHistory")}
+            onCancel={() => cancelSection("workHistory")}
             error={sectionErrors["workHistory"]}
           />
           <EducationSection
@@ -232,6 +366,9 @@ export default function ProfilePage() {
             savedValue={data?.education ?? []}
             saving={savingSection === "education"}
             onSave={() => saveSection("education")}
+            editing={editingSections.has("education")}
+            onEdit={() => openSection("education")}
+            onCancel={() => cancelSection("education")}
             error={sectionErrors["education"]}
           />
 
@@ -245,6 +382,9 @@ export default function ProfilePage() {
             savedValue={data?.workingRights ?? []}
             saving={savingSection === "workingRights"}
             onSave={() => saveSection("workingRights")}
+            editing={editingSections.has("workingRights")}
+            onEdit={() => openSection("workingRights")}
+            onCancel={() => cancelSection("workingRights")}
             error={sectionErrors["workingRights"]}
           />
         </div>
