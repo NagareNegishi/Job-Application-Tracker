@@ -1,4 +1,5 @@
 // Salary expectation — single amount + currency + period; a whole nullable owned object, not an array.
+// View/edit mode and card chrome come from ProfileSectionCard.
 import { Trash2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,13 +8,21 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import SuggestionInput from "@/components/ui/SuggestionInput"
+import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
 import { SalaryPeriod, type SalaryExpectation } from "@/types/profile"
 import { formatEnumLabel } from "@/types/enums"
+import { salaryExpectationInvalid } from "@/utils/profileValidation"
 import { CURRENCY_SUGGESTIONS } from "./tagSuggestions"
 import { MAX_SALARY_AMOUNT } from "@/lib/validationConstants"
 
 function emptySalaryExpectation(): SalaryExpectation {
   return { minAmount: 0, currency: "NZD", period: SalaryPeriod.Annual }
+}
+
+const PERIOD_SUFFIX: Record<SalaryPeriod, string> = {
+  Annual: "per year",
+  Monthly: "per month",
+  Hourly: "per hour",
 }
 
 type Props = {
@@ -22,18 +31,40 @@ type Props = {
   savedValue: SalaryExpectation | null
   saving: boolean
   onSave: () => void
+  editing: boolean
+  onEdit: () => void
+  onCancel: () => void
   error?: string
 }
 
 export default function SalaryExpectationSection({
-  value, onChange, savedValue, saving, onSave, error,
+  value, onChange, savedValue, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
   const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
-  const saveBlocked = value !== null && (value.minAmount <= 0 || !/^[A-Z]{3}$/.test(value.currency))
+  const saveBlocked = salaryExpectationInvalid(value)
 
   return (
-    <div className="bg-card rounded-lg border p-5 space-y-3">
-      <h2 className="text-sm font-medium">Salary Expectation</h2>
+    <ProfileSectionCard
+      title="Salary Expectation"
+      editing={editing}
+      dirty={dirty}
+      saving={saving}
+      saveBlocked={saveBlocked}
+      error={error}
+      onEdit={onEdit}
+      onSave={onSave}
+      onCancel={onCancel}
+      isEmpty={value === null}
+      emptyText="No salary expectation set"
+      // Seed on add-from-empty so inputs appear in one click; no onAdd when filled (single object)
+      onAdd={value === null ? () => { onChange(emptySalaryExpectation()); onEdit() } : undefined}
+      view={value !== null && (
+        <p className="text-sm">
+          From <span className="font-medium">{value.currency} {value.minAmount.toLocaleString()}</span>
+          {" "}{PERIOD_SUFFIX[value.period]}
+        </p>
+      )}
+    >
       {value === null ? (
         <Button size="sm" variant="outline" onClick={() => onChange(emptySalaryExpectation())} className="gap-1">
           <Plus className="h-4 w-4" />
@@ -88,17 +119,6 @@ export default function SalaryExpectationSection({
           </Button>
         </div>
       )}
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2">
-        {dirty && (
-          <Button size="sm" variant="ghost" onClick={() => onChange(savedValue)} disabled={saving}>
-            Cancel
-          </Button>
-        )}
-        <Button size="sm" onClick={onSave} disabled={saving || !dirty || saveBlocked}>
-          {saving ? "Saving…" : "Save"}
-        </Button>
-      </div>
-    </div>
+    </ProfileSectionCard>
   )
 }
