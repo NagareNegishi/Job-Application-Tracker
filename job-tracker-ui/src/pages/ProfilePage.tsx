@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react"
 import TagSection from "@/components/profile/TagSection"
 import MultiSelectSection from "@/components/profile/MultiSelectSection"
 import SalaryExpectationSection from "@/components/profile/SalaryExpectationSection"
+import PreferredLocationsSection from "@/components/profile/PreferredLocationsSection"
 import WorkingRightsSection from "@/components/profile/WorkingRightsSection"
 import WorkHistorySection from "@/components/profile/WorkHistorySection"
 import EducationSection from "@/components/profile/EducationSection"
@@ -195,7 +196,15 @@ export default function ProfilePage() {
             onSave={() => saveSection("salaryExpectation")}
             error={sectionErrors["salaryExpectation"]}
           />
-          {/* PreferredLocationsSection + AdditionalConditionsSection land in C7.6/C7.7 */}
+          <PreferredLocationsSection
+            value={form.preferredLocations}
+            onChange={val => updateField("preferredLocations", val)}
+            savedValue={data?.preferredLocations ?? []}
+            saving={savingSection === "preferredLocations"}
+            onSave={() => saveSection("preferredLocations")}
+            error={sectionErrors["preferredLocations"]}
+          />
+          {/* AdditionalConditionsSection lands in C7.7 */}
         </div>
 
         {/* Background: experience → education → supporting → logistics */}
