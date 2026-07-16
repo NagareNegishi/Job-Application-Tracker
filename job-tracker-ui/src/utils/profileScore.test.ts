@@ -7,6 +7,9 @@ import type { UserProfile, WorkHistoryEntry } from "@/types/profile"
 const emptyProfile: UserProfile = {
   targetRoles: [], skills: [], certifications: [], languages: [],
   workingRights: [], workHistory: [], education: [],
+  // Not scored yet — present only to satisfy the UserProfile shape
+  workModes: [], contractTypes: [], salaryExpectation: null,
+  preferredLocations: [], additionalConditions: "",
 }
 
 // n placeholder skill strings — only the count matters to the score.
@@ -46,6 +49,9 @@ describe("computeProfileScore", () => {
       workingRights: [{ country: "NZ", status: "Citizen" }],
       workHistory: history(DESC_COMPLETE, DESC_COMPLETE),
       education: [{ institution: "UoA", degree: "BSc", from: 2018, to: 2021 }],
+      // Not scored yet, so they don't affect the 100 — see PROFILE_SCORE_CONFIG TODO
+      workModes: [], contractTypes: [], salaryExpectation: null,
+      preferredLocations: [], additionalConditions: "",
     }
     expect(computeProfileScore(full).score).toBe(100)
   })
