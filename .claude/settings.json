@@ -9,11 +9,27 @@
     "allow": [
       "Bash(git status)",
       "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git rev-parse *)",
+      "Bash(git ls-remote *)",
+      "Bash(git fetch origin main)",
+      "Bash(git add *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr edit *)",
+      "Bash(gh pr list *)",
+      "Bash(gh issue create *)",
+      "Bash(gh issue edit *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list)",
+      "Bash(gh label create *)",
+      "Bash(gh label edit *)",
+      "Bash(gh label list *)",
+      "Bash(gh repo view *)",
       "Write(/.comment-audit/processed.json)",
       "Edit(/.comment-audit/processed.json)"
     ],
     "ask": [
-      "Bash(git add *)",
       "Bash(git commit *)"
     ],
     "deny": [
@@ -41,7 +57,6 @@
       "Bash(git add --force *)",
       "Bash(git push *)",
       "Bash(git pull *)",
-      "Bash(git fetch *)",
       "Bash(git checkout *)",
       "Bash(git switch *)",
       "Bash(git merge *)",
