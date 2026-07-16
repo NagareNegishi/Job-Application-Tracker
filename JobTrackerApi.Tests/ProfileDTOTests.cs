@@ -25,6 +25,73 @@ public class ProfileDTOTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.TargetRoles)));
     }
 
+    // Exceeding the array count cap on WorkModes must fail validation
+    [Fact]
+    public void ProfileDTO_ArrayCap_WorkModes_Fails()
+    {
+        // Arrange: 4 items — one over the 3-item cap
+        var dto = new ProfileDTO
+        {
+            WorkModes = [WorkMode.OnSite, WorkMode.Remote, WorkMode.Hybrid, WorkMode.OnSite]
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.WorkModes)));
+    }
+
+    // Exceeding the array count cap on ContractTypes must fail validation
+    [Fact]
+    public void ProfileDTO_ArrayCap_ContractTypes_Fails()
+    {
+        // Arrange: 7 items — one over the 6-item cap
+        var dto = new ProfileDTO
+        {
+            ContractTypes =
+            [
+                ContractType.FullTimePermanent, ContractType.FullTimeContract, ContractType.PartTime,
+                ContractType.Casual, ContractType.Internship, ContractType.Temporary,
+                ContractType.FullTimePermanent
+            ]
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.ContractTypes)));
+    }
+
+    // Exceeding the array count cap on PreferredLocations must fail validation
+    [Fact]
+    public void ProfileDTO_ArrayCap_PreferredLocations_Fails()
+    {
+        // Arrange: 11 items — one over the 10-item cap
+        var dto = new ProfileDTO
+        {
+            PreferredLocations = Enumerable.Range(0, 11)
+                .Select(i => new PreferredLocationEntry { Country = "NZ" })
+                .ToList()
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.PreferredLocations)));
+    }
+
     // A skill item exceeding the per-item length cap must fail validation
     [Fact]
     public void ProfileDTO_ItemLength_SkillTooLong_Fails()
