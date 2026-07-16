@@ -12,6 +12,7 @@ function arraysEqual(a: string[], b: string[]) {
 
 type TagSectionProps = {
   title: string
+  emptyText: string
   value: string[]
   onChange: (tags: string[]) => void
   savedValue: string[]
@@ -31,6 +32,7 @@ type TagSectionProps = {
 
 export default function TagSection({
   title,
+  emptyText,
   value,
   onChange,
   savedValue,
@@ -60,7 +62,7 @@ export default function TagSection({
       onSave={onSave}
       onCancel={onCancel}
       isEmpty={value.length === 0}
-      addLabel={`Add ${title.toLowerCase()}`}
+      emptyText={emptyText}
       view={<ViewChips items={value} />}
     >
       <TagInput
