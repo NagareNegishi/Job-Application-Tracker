@@ -361,6 +361,24 @@ public class ProfileDTOTests
         Assert.Empty(results);
     }
 
+    // Status left null (omitted) must fail the [Required] attribute, not silently default to Citizen
+    [Fact]
+    public void WorkingRightEntry_Status_Omitted_Fails()
+    {
+        // Arrange: Status is nullable specifically so a missing value fails instead of
+        // defaulting to WorkingRight.Citizen (enum value 0)
+        var entry = new WorkingRightEntry { Country = "NZ" };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(WorkingRightEntry.Status)));
+    }
+
     // A negative MinAmount must fail the [Range] attribute
     [Fact]
     public void SalaryExpectation_MinAmount_Negative_Fails()
