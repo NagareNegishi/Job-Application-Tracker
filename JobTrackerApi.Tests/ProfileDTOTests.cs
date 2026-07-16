@@ -199,6 +199,66 @@ public class ProfileDTOTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.PreferredLocations)));
     }
 
+    // AdditionalConditions over the character cap must fail the [MaxLength] attribute
+    [Fact]
+    public void ProfileDTO_AdditionalConditions_TooLong_Fails()
+    {
+        // Arrange: one character over the 500-char cap
+        var dto = new ProfileDTO
+        {
+            AdditionalConditions = new string('a', ValidationConstants.MaxProfileAdditionalConditionsLength + 1)
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.AdditionalConditions)));
+    }
+
+    // AdditionalConditions containing HTML-like markup must fail the IValidatableObject check
+    [Fact]
+    public void ProfileDTO_AdditionalConditions_HtmlRejected_Fails()
+    {
+        // Arrange: a script-injection-shaped string
+        var dto = new ProfileDTO
+        {
+            AdditionalConditions = "Open to relocation <script>alert(1)</script>"
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.AdditionalConditions)));
+    }
+
+    // Plain text AdditionalConditions must pass validation
+    [Fact]
+    public void ProfileDTO_AdditionalConditions_PlainText_Passes()
+    {
+        // Arrange
+        var dto = new ProfileDTO
+        {
+            AdditionalConditions = "Open to relocation only within NZ/AU; no unpaid trial work."
+        };
+
+        // Act
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
+
     // Country codes must be uppercase — lowercase must fail the regex
     [Fact]
     public void WorkingRightEntry_Country_Lowercase_Fails()
