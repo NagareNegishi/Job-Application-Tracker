@@ -301,6 +301,107 @@ public class ProfileDTOTests
         Assert.Empty(results);
     }
 
+    // A negative MinAmount must fail the [Range] attribute
+    [Fact]
+    public void SalaryExpectation_MinAmount_Negative_Fails()
+    {
+        var entry = new SalaryExpectation { MinAmount = -1, Currency = "NZD", Period = SalaryPeriod.Annual };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(SalaryExpectation.MinAmount)));
+    }
+
+    // A MinAmount over the ceiling must fail the [Range] attribute
+    [Fact]
+    public void SalaryExpectation_MinAmount_OverMax_Fails()
+    {
+        var entry = new SalaryExpectation
+        {
+            MinAmount = ValidationConstants.MaxSalaryAmount + 1,
+            Currency = "NZD",
+            Period = SalaryPeriod.Annual
+        };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(SalaryExpectation.MinAmount)));
+    }
+
+    // Lowercase currency must fail the regex
+    [Fact]
+    public void SalaryExpectation_Currency_Lowercase_Fails()
+    {
+        var entry = new SalaryExpectation { MinAmount = 50000, Currency = "nzd", Period = SalaryPeriod.Annual };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(SalaryExpectation.Currency)));
+    }
+
+    // A currency code of the wrong length must fail the regex
+    [Fact]
+    public void SalaryExpectation_Currency_WrongLength_Fails()
+    {
+        var entry = new SalaryExpectation { MinAmount = 50000, Currency = "NZD1", Period = SalaryPeriod.Annual };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(SalaryExpectation.Currency)));
+    }
+
+    // An omitted Period must fail the [Required] attribute
+    [Fact]
+    public void SalaryExpectation_Period_Omitted_Fails()
+    {
+        var entry = new SalaryExpectation { MinAmount = 50000, Currency = "NZD" };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(SalaryExpectation.Period)));
+    }
+
+    // A fully valid SalaryExpectation must pass validation
+    [Fact]
+    public void SalaryExpectation_Valid_Passes()
+    {
+        var entry = new SalaryExpectation { MinAmount = 90000, Currency = "NZD", Period = SalaryPeriod.Annual };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
+
     // FromYear in the future must fail the IValidatableObject check
     [Fact]
     public void WorkHistoryEntry_FromYear_FutureYear_Fails()
