@@ -311,7 +311,7 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 | C2 | `UserProfile` entity — add the 5 fields | Done |
 | C3 | Migration (new `text` + JSONB columns) | Done |
 | C4 | `ProfileDTO` + `ProfileResponseDto` — validation + `ToProfile`/`ApplyTo`/`ToResponseDto` wiring | Done |
-| C5 | `ProfileDTOTests` — new-field validation (currency/country regex, count caps, salary range, `AdditionalConditions` HTML-reject) + `WorkingRightEntry` omitted-`Status` now fails (nullable+`[Required]` fix in C1) | — |
+| C5 | `ProfileDTOTests` — new-field validation (currency/country regex, count caps, salary range, `AdditionalConditions` HTML-reject) + `WorkingRightEntry` omitted-`Status` now fails (nullable+`[Required]` fix in C1) | Done |
 | C6 | `FormatUserMessage` + `AlignmentPrompt` + Alignment model `concern` (the analysis payoff) | — |
 | C7 | Frontend profile form — conditions section + country/currency suggestion lists | — |
 | C8 | Frontend alignment display — show `concern` when present | — |
