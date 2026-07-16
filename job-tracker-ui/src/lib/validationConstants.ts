@@ -33,3 +33,14 @@ export const MAX_WORK_HISTORY_DESCRIPTION_LENGTH = 2000
 // Education per-item limits
 export const MAX_EDUCATION_INSTITUTION_LENGTH = 100
 export const MAX_EDUCATION_DEGREE_LENGTH = 100
+
+// Profile conditions — array-count caps
+export const MAX_WORK_MODES_COUNT = 3
+export const MAX_CONTRACT_TYPES_COUNT = 6
+export const MAX_LOCATIONS_COUNT = 10
+export const MAX_LOCATION_AREAS_COUNT = 10
+
+// Profile conditions — per-item limits
+export const MAX_LOCATION_AREA_ITEM_LENGTH = 100
+export const MAX_ADDITIONAL_CONDITIONS_LENGTH = 500
+export const MAX_SALARY_AMOUNT = 100_000_000
