@@ -6,6 +6,7 @@ import { formatEnumLabel } from "@/types/enums"
 
 type Props<T extends string> = {
   title: string
+  emptyText: string
   options: readonly T[]
   value: T[]
   onChange: (values: T[]) => void
@@ -20,7 +21,7 @@ type Props<T extends string> = {
 }
 
 export default function MultiSelectSection<T extends string>({
-  title, options, value, onChange, savedValue, saving, onSave,
+  title, emptyText, options, value, onChange, savedValue, saving, onSave,
   editing, onEdit, onCancel, error, showSelectAll,
 }: Props<T>) {
   const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
@@ -37,7 +38,7 @@ export default function MultiSelectSection<T extends string>({
       onSave={onSave}
       onCancel={onCancel}
       isEmpty={value.length === 0}
-      addLabel={`Add ${title.toLowerCase()}`}
+      emptyText={emptyText}
       view={<ViewChips items={value.map(formatEnumLabel)} />}
     >
       <CheckboxGroup
