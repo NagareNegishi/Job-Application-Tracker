@@ -3,8 +3,9 @@ using System.Text.Json.Serialization;
 namespace JobTrackerApi.Models;
 
 public record AlignmentResult(
-    [property: JsonPropertyName("score")]     int    Score,
-    [property: JsonPropertyName("reasoning")] string Reasoning
+    [property: JsonPropertyName("score")]     int     Score,
+    [property: JsonPropertyName("reasoning")] string  Reasoning,
+    [property: JsonPropertyName("concern")]   string? Concern
 );
 
 public record SkillsResult(
