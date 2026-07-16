@@ -312,28 +312,15 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 | C3 | Migration (new `text` + JSONB columns) | Done |
 | C4 | `ProfileDTO` + `ProfileResponseDto` — validation + `ToProfile`/`ApplyTo`/`ToResponseDto` wiring | Done |
 | C5 | `ProfileDTOTests` — new-field validation (currency/country regex, count caps, salary range, `AdditionalConditions` HTML-reject) + `WorkingRightEntry` omitted-`Status` now fails (nullable+`[Required]` fix in C1) | Done |
-| C6 | `FormatUserMessage` + `AlignmentPrompt` + Alignment model `concern` (the analysis payoff) | — |
-| C7 | Frontend profile form — conditions section + country/currency suggestion lists | — |
+| C6 | `FormatUserMessage` + `AlignmentPrompt` + Alignment model `concern` (the analysis payoff) | Done |
+| C7 | Frontend profile form — conditions section + country/currency suggestion lists | Done |
 | C8 | Frontend alignment display — show `concern` when present | — |
 
 Prompt-quality polish for the reworked `AlignmentPrompt` + the `concern` threshold folds into the existing Step 6 prompt-polish session.
 
-### C7 Breakdown (Frontend Conditions UI)
+### C7 Breakdown (Frontend Conditions UI) — Done
 
-`TargetRoles` moves under a new "What I'm looking for" heading alongside the five condition fields (per the Decisions table above); it stays its own `TagSection` card, just regrouped visually. Each new field keeps its own per-section Save (D14) — no change to the existing merge-patch wiring, only new cards.
-
-| # | Item | Why | Status |
-|---|---|---|---|
-| C7.1 | `types/profile.ts` — add `ContractType`, `SalaryPeriod` enums, `SalaryExpectation`, `PreferredLocationEntry` types; extend `UserProfile` | Types precede everything else; mirrors where `WorkingRight` already lives (profile-specific enums stay out of `types/enums.ts`) | Done |
-| C7.2 | `lib/validationConstants.ts` — mirror the new `ValidationConstants.cs` entries (work modes/contract types/locations/areas counts, area + additional-conditions lengths, max salary amount) | Keeps the existing "mirror the backend" convention intact | Done |
-| C7.3 | `tagSuggestions.ts` — add `CURRENCY_SUGGESTIONS` (curated ISO 4217 codes) | Matches the existing curated-list pattern (Roles/Skills/Certifications/Degrees); feeds the salary currency input | Done |
-| C7.4 | New `CheckboxGroup` (pure, `components/ui/`) + `MultiSelectSection` (save chrome), shared by WorkModes (3 options) and ContractTypes (6 options, `showSelectAll`) | First closed-set *multi*-select in the profile form (existing `WorkingRight` is single-select via `<Select>`); split into input/chrome layers mirrors `TagInput`/`TagSection` | Done |
-| C7.5 | New `SalaryExpectationSection` component — amount, currency (`SuggestionInput` + C7.3 list, defaults NZD), period (defaults Annual), set/clear | Whole-object-nullable field (D-decision): all three sub-fields required together or the object is absent, so it needs a "clear" affordance instead of add/remove-row | Done |
-| C7.6 | New `PreferredLocationsSection` component — per-entry `CountryCombobox` (reused from Work Rights) + an `Areas` tag list per row | First entry type with a nested array (`Areas` inside each location), unlike the scalar-only existing entries | — |
-| C7.7 | New `AdditionalConditionsSection` component — single `Textarea`, per-section save, client-side HTML-reject | Mirrors the backend's inline `<[a-zA-Z/]` regex check in `ProfileDTO.Validate()` | — |
-| C7.8a | Wire into `ProfilePage.tsx` — extend `EMPTY_PROFILE` with all 5 new fields; add "What I'm looking for" / "Background" headings; mount WorkModes, ContractTypes, SalaryExpectation + regrouped `TargetRoles` | Ties the built sections into the existing form state/save wiring without waiting on C7.6–C7.7 | Done |
-| C7.8b | Mount `PreferredLocationsSection` + `AdditionalConditionsSection` into the "What I'm looking for" group once C7.6–C7.7 land | Completes C7.8a's wiring | — |
-| C7.9 | Flip C7 to Done here once C7.1–C7.8b land | Same doc-hygiene as C1–C6 | — |
+All of C7.1–C7.8b landed: types/constants/suggestions (`types/profile.ts`, `lib/validationConstants.ts`, `tagSuggestions.ts`), `CheckboxGroup`/`MultiSelectSection` (WorkModes, ContractTypes), `SalaryExpectationSection`, `PreferredLocationsSection` (per-entry `CountryCombobox` + nested `Areas` tag list), `AdditionalConditionsSection` (`Textarea` + client-side HTML-reject mirroring `ProfileDTO.Validate()`) — all mounted in `ProfilePage.tsx` under "What I'm looking for" / "Background". Component-level polish (layout, spacing) still pending — not blocking, tracked as follow-up below.
 
 ---
 
@@ -348,11 +335,11 @@ Prompt-quality polish for the reworked `AlignmentPrompt` + the `concern` thresho
 - **Shared Claude helper refactor:** `ClaudeParsingService` and `ClaudeAnalysisService` both duplicate `ExtractJson`. `ClaudeParsingService` also has `LogContractIssues` (logs unexpected/null keys to help tune prompts) that `ClaudeAnalysisService` lacks. Consider extracting both into a shared internal static helper (e.g. `ClaudeResponseHelper`) and adding contract-issue logging to the analysis service.
 
 ### Deferred / follow-up work
+- **C7 component polish:** `PreferredLocationsSection` and `AdditionalConditionsSection` (and possibly the earlier C7.4/C7.5 components) need a visual/layout pass — built to match existing patterns functionally but not yet polished. Follow `.claude/skills/frontend-design/SKILL.md` when picking this up.
 - **Demo profile reset (pairs with D16):** the demo user can edit their seeded profile, so the periodic demo-data reset + login re-seed (Demo/Auth step 2) must be extended to cover `UserProfile` — add the sample profile to `DemoSeed` and include it in the reset path.
 - **Save analysis to job (separate scope):** *Questions to ask* and *Likely interview questions* get an optional "Save to job" action persisting them onto new optional `Job` fields (e.g. `QuestionsToAsk`, `InterviewQuestions`). Partially overrides "on-demand, not saved" for those two types only; the three assessment types stay ephemeral (D15). Adds `Job` fields + migration + save UI.
-- **Profile quality score (in progress 2026-07-10):** scoring util done — `utils/profileScore.ts`, config-driven, returns `{ score, breakdown }`; tests in `profileScore.test.ts`. Grading: WorkHistory 25, Skills 25, TargetRoles 15, Education/WorkingRights/Languages 10, Certs 5. `ScoreRing` component done (`components/ui/ScoreRing.tsx`) — SVG ring, OKLCH colour via shared `utils/scoreColor.ts` (also used by `ResponseRateCard`), animated fill on mount and score change; props: `size`, `strokeWidth`, `bgColor`. **Next session:** position ring in ProfilePage header; add per-section improvement hints from `breakdown`.
+- **Profile quality score:** scoring util done — `utils/profileScore.ts`, config-driven, returns `{ score, breakdown }`; tests in `profileScore.test.ts`. Grading: WorkHistory 25, Skills 25, TargetRoles 15, Education/WorkingRights/Languages 10, Certs 5. `ScoreRing` component done (`components/ui/ScoreRing.tsx`) — SVG ring, OKLCH colour via shared `utils/scoreColor.ts` (also used by `ResponseRateCard`), animated fill on mount and score change; props: `size`, `strokeWidth`, `bgColor`; mounted in `ProfilePage` header. **Remaining:** per-section improvement hints from `breakdown`.
 - **Form re-hydration (known issue):** `ProfilePage`'s effect re-runs `setForm(data)` on every refetch, so saving one section wipes unsaved edits in another mid-edit section. Left as-is (rare). Fix: hydrate once via a `hydrated` ref guard — per-section `savedValue` already comes from `data`.
-- **Profile save error messages (resolved 2026-07-10):** the last client/server validation gap — a future month within the current year in Work History — is now blocked client-side via `checkNotFuture`. The generic "Failed to save." is unreachable through normal UI use, so richer per-error messaging is not needed.
 
 ### Reference (profile page, done)
 - Suggestion pools live in `components/profile/tagSuggestions.ts`. Sources: Languages → `iso-639-1`; Institutions → Hipolabs `world_universities_and_domains.json` (MIT); Roles / Skills / Certifications / Degrees → curated static lists. Custom free-text input is always allowed — lists only suggest.
