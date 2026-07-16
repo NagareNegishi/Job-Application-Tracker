@@ -18,9 +18,26 @@ public class UserProfile
     public List<WorkHistoryEntry> WorkHistory { get; set; } = [];
     public List<EducationEntry> Education { get; set; } = [];
 
+    // JSONB via PrimitiveCollection — see JobTrackerContext
+    public List<WorkMode> WorkModes { get; set; } = [];
+    public List<ContractType> ContractTypes { get; set; } = [];
+
+    // JSONB via OwnsOne — see JobTrackerContext
+    public SalaryExpectation? SalaryExpectation { get; set; }
+
+    // JSONB via OwnsMany — see JobTrackerContext
+    public List<PreferredLocationEntry> PreferredLocations { get; set; } = [];
+
+    public string? AdditionalConditions { get; set; }
+
     public ProfileResponseDto ToResponseDto() => new()
     {
         TargetRoles = TargetRoles,
+        WorkModes = WorkModes,
+        ContractTypes = ContractTypes,
+        SalaryExpectation = SalaryExpectation,
+        PreferredLocations = PreferredLocations,
+        AdditionalConditions = AdditionalConditions,
         Skills = Skills,
         Certifications = Certifications,
         Languages = Languages,

@@ -13,6 +13,7 @@ The dev environment runs in a Dev Container (`.devcontainer/`) with the PostgreS
 - `docs/progress.md` — read at session start; update after each major feature completes.
 - `docs/plans/` — per-feature plan/decision files; read only the relevant file when working on a feature.
 - `docs/company-verification-api-reference.md` — contract for the external company verification API.
+- `memory/` — Claude session memory (gitignored). Read/write here, not the default hidden auto-memory location. Promote durable decisions to CLAUDE.md or a skill only with user review.
 
 ## Commands
 

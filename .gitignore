@@ -38,6 +38,7 @@ docker-compose.override.yml
 
 # Development notes and sample files
 notes/
+memory/
 SampleFile/
 
 # Local configuration files from Backend

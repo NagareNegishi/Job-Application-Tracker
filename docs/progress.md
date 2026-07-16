@@ -111,7 +111,7 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs | Done |
 | Interview reminder email | Scheduled job emails user day-before interviewAt via IEmailService | Early planning |
 | Stale application indicator | `StaleIndicator` component — amber Clock icon + tooltip in jobs list and Kanban card; `staleDaysSince` helper extracted in `dashboardUtils.ts` | Done |
-| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Profile (Steps 1–5, backend + `/profile` page + all suggestion lists) done, incl. tests. Analysis (Steps 6–10: `IAnalysisService`, `AnalysisController`, detail-page UI, ad-hoc triage) not started. See `docs/plans/job-analysis.md`. |
+| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Profile (Steps 1–5) done. Step 6 done: `IAnalysisService`, `ClaudeAnalysisService`, `ClaudeAnalysisConfig`, `AnalysisModels`. Next: polish Step 6 (prompt quality + `ExtractJson`/`LogContractIssues` shared helper refactor), then Steps 7–10. See `docs/plans/job-analysis.md`. |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |

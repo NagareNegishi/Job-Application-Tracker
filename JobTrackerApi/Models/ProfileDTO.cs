@@ -8,6 +8,20 @@ public class ProfileDTO : IValidatableObject
     [MaxLength(ValidationConstants.MaxProfileTargetRolesCount)]
     public List<string>? TargetRoles { get; set; }
 
+    [MaxLength(ValidationConstants.MaxProfileWorkModesCount)]
+    public List<WorkMode>? WorkModes { get; set; }
+
+    [MaxLength(ValidationConstants.MaxProfileContractTypesCount)]
+    public List<ContractType>? ContractTypes { get; set; }
+
+    public SalaryExpectation? SalaryExpectation { get; set; }
+
+    [MaxLength(ValidationConstants.MaxProfileLocationsCount)]
+    public List<PreferredLocationEntry>? PreferredLocations { get; set; }
+
+    [MaxLength(ValidationConstants.MaxProfileAdditionalConditionsLength)]
+    public string? AdditionalConditions { get; set; }
+
     [MaxLength(ValidationConstants.MaxProfileSkillsCount)]
     public List<string>? Skills { get; set; }
 
@@ -48,6 +62,16 @@ public class ProfileDTO : IValidatableObject
             yield return new ValidationResult(
                 $"Each language must be {ValidationConstants.MaxProfileLanguageItemLength} characters or fewer.",
                 [nameof(Languages)]);
+
+        if (PreferredLocations?.Any(l => l.Areas.Any(a => a?.Length > ValidationConstants.MaxProfileLocationAreaItemLength)) == true)
+            yield return new ValidationResult(
+                $"Each location area must be {ValidationConstants.MaxProfileLocationAreaItemLength} characters or fewer.",
+                [nameof(PreferredLocations)]);
+
+        if (AdditionalConditions != null && System.Text.RegularExpressions.Regex.IsMatch(AdditionalConditions, @"<[a-zA-Z/]"))
+            yield return new ValidationResult(
+                "Additional conditions must not contain HTML.",
+                [nameof(AdditionalConditions)]);
     }
 
     /// <summary>Creates a new UserProfile entity from this DTO (used by PUT).</summary>
@@ -55,6 +79,11 @@ public class ProfileDTO : IValidatableObject
     {
         UserId = userId,
         TargetRoles = TargetRoles ?? [],
+        WorkModes = WorkModes ?? [],
+        ContractTypes = ContractTypes ?? [],
+        SalaryExpectation = SalaryExpectation,   // nullable on entity; null = not set
+        PreferredLocations = PreferredLocations ?? [],
+        AdditionalConditions = AdditionalConditions, // nullable on entity; null = not set
         Skills = Skills ?? [],
         Certifications = Certifications ?? [],
         Languages = Languages ?? [],
@@ -67,6 +96,11 @@ public class ProfileDTO : IValidatableObject
     public void ApplyTo(UserProfile profile)
     {
         if (TargetRoles != null) profile.TargetRoles = TargetRoles;
+        if (WorkModes != null) profile.WorkModes = WorkModes;
+        if (ContractTypes != null) profile.ContractTypes = ContractTypes;
+        if (SalaryExpectation != null) profile.SalaryExpectation = SalaryExpectation;
+        if (PreferredLocations != null) profile.PreferredLocations = PreferredLocations;
+        if (AdditionalConditions != null) profile.AdditionalConditions = AdditionalConditions;
         if (Skills != null) profile.Skills = Skills;
         if (Certifications != null) profile.Certifications = Certifications;
         if (Languages != null) profile.Languages = Languages;
