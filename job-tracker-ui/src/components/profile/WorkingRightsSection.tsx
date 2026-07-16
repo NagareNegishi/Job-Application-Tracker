@@ -1,11 +1,16 @@
-// Working rights section — per-entry (country, status) rows with add/remove and per-section save.
+// Working rights section — per-entry (country, status) rows with add/remove.
+// View/edit mode and card chrome come from ProfileSectionCard.
+import { useEffect, useRef } from "react"
 import { Trash2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
+import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
 import { WorkingRight, type WorkingRightEntry } from "@/types/profile"
+import { workingRightsInvalid } from "@/utils/profileValidation"
 import CountryCombobox from "./CountryCombobox"
+import { getCountryName } from "./countryCodes"
 
 const STATUS_LABELS: Record<WorkingRight, string> = {
   Citizen: "Citizen",
@@ -21,16 +26,37 @@ type Props = {
   savedValue: WorkingRightEntry[]
   saving: boolean
   onSave: () => void
+  editing: boolean
+  onEdit: () => void
+  onCancel: () => void
   error?: string
 }
 
 export default function WorkingRightsSection({
-  value, onChange, savedValue, saving, onSave, error,
+  value, onChange, savedValue, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
   const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
 
+  // Scroll the entry appended by header-add into view once edit mode has rendered it
+  const lastEntryRef = useRef<HTMLDivElement | null>(null)
+  const scrollPending = useRef(false)
+
+  useEffect(() => {
+    if (scrollPending.current && lastEntryRef.current) {
+      lastEntryRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+      scrollPending.current = false
+    }
+  })
+
   function addEntry() {
     onChange([...value, { country: "", status: WorkingRight.RequiresSponsorship }])
+  }
+
+  // Header + button: blank entry ready to fill, whether the section was empty or not
+  function handleAdd() {
+    addEntry()
+    onEdit()
+    scrollPending.current = true
   }
 
   function updateEntry(index: number, patch: Partial<WorkingRightEntry>) {
@@ -42,11 +68,37 @@ export default function WorkingRightsSection({
   }
 
   return (
-    <div className="bg-card rounded-lg border p-5 space-y-3">
-      <h2 className="text-sm font-medium">Work Rights</h2>
+    <ProfileSectionCard
+      title="Work Rights"
+      editing={editing}
+      dirty={dirty}
+      saving={saving}
+      saveBlocked={workingRightsInvalid(value)}
+      error={error}
+      onEdit={onEdit}
+      onSave={onSave}
+      onCancel={onCancel}
+      isEmpty={value.length === 0}
+      emptyText="No work rights added yet"
+      onAdd={handleAdd}
+      view={
+        <ul className="text-sm space-y-1">
+          {value.map((entry, i) => (
+            <li key={i}>
+              <span className="font-medium">{getCountryName(entry.country)}</span>
+              <span className="text-muted-foreground">{" — "}{STATUS_LABELS[entry.status]}</span>
+            </li>
+          ))}
+        </ul>
+      }
+    >
       <div className="space-y-2">
         {value.map((entry, i) => (
-          <div key={i} className="flex items-center gap-2 bg-muted/50 border rounded-md p-2">
+          <div
+            key={i}
+            ref={i === value.length - 1 ? lastEntryRef : undefined}
+            className="flex items-center gap-2 bg-muted/50 border rounded-md p-2"
+          >
             <div className="flex flex-col sm:flex-row flex-1 gap-2">
               <div className="flex-1 min-w-0">
                 <CountryCombobox
@@ -81,22 +133,11 @@ export default function WorkingRightsSection({
             </Button>
           </div>
         ))}
-      </div>
-      <Button size="sm" variant="outline" onClick={addEntry} className="gap-1">
-        <Plus className="h-4 w-4" />
-        Add country
-      </Button>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2">
-        {dirty && (
-          <Button size="sm" variant="ghost" onClick={() => onChange(savedValue)} disabled={saving}>
-            Cancel
-          </Button>
-        )}
-        <Button size="sm" onClick={onSave} disabled={saving || !dirty || value.some(e => !e.country)}>
-          {saving ? "Saving…" : "Save"}
+        <Button size="sm" variant="outline" onClick={addEntry} className="gap-1">
+          <Plus className="h-4 w-4" />
+          Add country
         </Button>
       </div>
-    </div>
+    </ProfileSectionCard>
   )
 }
