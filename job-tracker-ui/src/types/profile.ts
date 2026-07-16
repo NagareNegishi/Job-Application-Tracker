@@ -1,3 +1,5 @@
+import type { WorkMode } from "@/types/enums";
+
 export const WorkingRight = {
   Citizen: "Citizen",
   PermanentResident: "PermanentResident",
@@ -8,9 +10,39 @@ export const WorkingRight = {
 
 export type WorkingRight = typeof WorkingRight[keyof typeof WorkingRight];
 
+export const ContractType = {
+  FullTimePermanent: "FullTimePermanent",
+  FullTimeContract: "FullTimeContract",
+  PartTime: "PartTime",
+  Casual: "Casual",
+  Internship: "Internship",
+  Temporary: "Temporary",
+} as const;
+
+export type ContractType = typeof ContractType[keyof typeof ContractType];
+
+export const SalaryPeriod = {
+  Annual: "Annual",
+  Monthly: "Monthly",
+  Hourly: "Hourly",
+} as const;
+
+export type SalaryPeriod = typeof SalaryPeriod[keyof typeof SalaryPeriod];
+
 export type WorkingRightEntry = {
   country: string;
   status: WorkingRight;
+};
+
+export type SalaryExpectation = {
+  minAmount: number;     // 0 = not yet entered
+  currency: string;      // defaults to "NZD" when a new entry is created
+  period: SalaryPeriod;  // defaults to Annual when a new entry is created
+};
+
+export type PreferredLocationEntry = {
+  country: string;
+  areas: string[];
 };
 
 export type WorkHistoryEntry = {
@@ -31,7 +63,15 @@ export type EducationEntry = {
 };
 
 export type UserProfile = {
+  // What I'm looking for
   targetRoles: string[];
+  workModes: WorkMode[];
+  contractTypes: ContractType[];
+  salaryExpectation: SalaryExpectation | null;
+  preferredLocations: PreferredLocationEntry[];
+  additionalConditions: string;
+
+  // Background
   skills: string[];
   certifications: string[];
   languages: string[];
