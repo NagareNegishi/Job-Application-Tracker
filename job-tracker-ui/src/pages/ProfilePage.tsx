@@ -9,6 +9,7 @@ import TagSection from "@/components/profile/TagSection"
 import MultiSelectSection from "@/components/profile/MultiSelectSection"
 import SalaryExpectationSection from "@/components/profile/SalaryExpectationSection"
 import PreferredLocationsSection from "@/components/profile/PreferredLocationsSection"
+import AdditionalConditionsSection from "@/components/profile/AdditionalConditionsSection"
 import WorkingRightsSection from "@/components/profile/WorkingRightsSection"
 import WorkHistorySection from "@/components/profile/WorkHistorySection"
 import EducationSection from "@/components/profile/EducationSection"
@@ -204,7 +205,14 @@ export default function ProfilePage() {
             onSave={() => saveSection("preferredLocations")}
             error={sectionErrors["preferredLocations"]}
           />
-          {/* AdditionalConditionsSection lands in C7.7 */}
+          <AdditionalConditionsSection
+            value={form.additionalConditions}
+            onChange={val => updateField("additionalConditions", val)}
+            savedValue={data?.additionalConditions ?? ""}
+            saving={savingSection === "additionalConditions"}
+            onSave={() => saveSection("additionalConditions")}
+            error={sectionErrors["additionalConditions"]}
+          />
         </div>
 
         {/* Background: experience → education → supporting → logistics */}
