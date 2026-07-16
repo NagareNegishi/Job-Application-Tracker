@@ -17,7 +17,7 @@ import { type MatchStrategy } from "@/utils/matchSuggestion"
 import { computeProfileScore } from "@/utils/profileScore"
 import { sectionInvalid } from "@/utils/profileValidation"
 import { ScoreRing } from "@/components/ui/ScoreRing"
-import { Button } from "@/components/ui/button"
+import FormActionBar from "@/components/ui/FormActionBar"
 import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
   MAX_SKILL_ITEM_LENGTH,
@@ -43,7 +43,7 @@ const EMPTY_PROFILE: UserProfile = {
   workingRights: [], workHistory: [], education: [],
 }
 
-// All 12 section keys — drives Edit all / Save all and the first-run auto-open
+// All 12 section keys — drives Save profile and the first-run auto-open
 const ALL_SECTION_KEYS = Object.keys(EMPTY_PROFILE) as (keyof UserProfile)[]
 
 // Only the four string[] fields render as tag sections; keyed so state/save wire up generically.
@@ -117,10 +117,6 @@ export default function ProfilePage() {
   function cancelSection(key: keyof UserProfile) {
     updateField(key, (data ?? EMPTY_PROFILE)[key])
     closeSection(key)
-  }
-
-  function openAll() {
-    setEditingSections(new Set(ALL_SECTION_KEYS))
   }
 
   // Cancel all = revert the whole form to the last saved state and close every section
@@ -251,31 +247,12 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-muted">
       <NavBar />
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold">Profile</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Your career profile is used as context for AI job analysis.
-            </p>
-            <ScoreRing score={profileScore} />
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            {anyEditing ? (
-              <div className="flex gap-2">
-                <Button size="sm" variant="ghost" onClick={cancelAll} disabled={savingAll}>
-                  Cancel all
-                </Button>
-                <Button size="sm" onClick={saveAll} disabled={savingAll || dirtyKeys.length === 0 || saveAllBlocked}>
-                  {savingAll ? "Saving…" : "Save all"}
-                </Button>
-              </div>
-            ) : (
-              <Button size="sm" variant="outline" onClick={openAll}>
-                Edit all
-              </Button>
-            )}
-            {saveAllError && <p className="text-xs text-destructive">{saveAllError}</p>}
-          </div>
+        <div>
+          <h1 className="text-xl font-semibold">Profile</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Your career profile is used as context for AI job analysis.
+          </p>
+          <ScoreRing score={profileScore} />
         </div>
 
         {/* What I'm looking for: conditions/preferences, read only by Alignment analysis */}
@@ -388,6 +365,19 @@ export default function ProfilePage() {
             error={sectionErrors["workingRights"]}
           />
         </div>
+
+        {/* Page-level actions while any section is open — sticky so they're reachable without scrolling */}
+        {anyEditing && (
+          <FormActionBar
+            sticky
+            onCancel={cancelAll}
+            onSave={saveAll}
+            saving={savingAll}
+            saveDisabled={dirtyKeys.length === 0 || saveAllBlocked}
+            error={saveAllError}
+            saveLabel="Save profile"
+          />
+        )}
       </div>
     </div>
   )
