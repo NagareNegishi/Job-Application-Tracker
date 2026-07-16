@@ -2,8 +2,12 @@
 import NavBar from "@/components/NavBar"
 import { useProfile, useCreateProfile, usePatchProfile } from "@/hooks/profileQuery"
 import type { UserProfile, ProfilePatch } from "@/types/profile"
+import { ContractType } from "@/types/profile"
+import { WorkMode } from "@/types/enums"
 import { useEffect, useRef, useState } from "react"
 import TagSection from "@/components/profile/TagSection"
+import MultiSelectSection from "@/components/profile/MultiSelectSection"
+import SalaryExpectationSection from "@/components/profile/SalaryExpectationSection"
 import WorkingRightsSection from "@/components/profile/WorkingRightsSection"
 import WorkHistorySection from "@/components/profile/WorkHistorySection"
 import EducationSection from "@/components/profile/EducationSection"
@@ -29,7 +33,9 @@ import {
 
 // Empty form used before the query settles and for the "no profile yet" case.
 const EMPTY_PROFILE: UserProfile = {
-  targetRoles: [], skills: [], certifications: [], languages: [],
+  targetRoles: [], workModes: [], contractTypes: [], salaryExpectation: null,
+  preferredLocations: [], additionalConditions: "",
+  skills: [], certifications: [], languages: [],
   workingRights: [], workHistory: [], education: [],
 }
 
@@ -155,38 +161,76 @@ export default function ProfilePage() {
           </p>
           <ScoreRing score={profileScore} />
         </div>
-        {/* Sections render in résumé order: goal → experience → education → supporting → logistics */}
-        {renderTagSection("targetRoles")}
 
-        <WorkHistorySection
-          value={form.workHistory}
-          onChange={val => updateField("workHistory", val)}
-          savedValue={data?.workHistory ?? []}
-          saving={savingSection === "workHistory"}
-          onSave={() => saveSection("workHistory")}
-          error={sectionErrors["workHistory"]}
-        />
-        <EducationSection
-          value={form.education}
-          onChange={val => updateField("education", val)}
-          savedValue={data?.education ?? []}
-          saving={savingSection === "education"}
-          onSave={() => saveSection("education")}
-          error={sectionErrors["education"]}
-        />
+        {/* What I'm looking for: conditions/preferences, read only by Alignment analysis */}
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold px-1">What I'm looking for</h2>
+          {renderTagSection("targetRoles")}
+          <MultiSelectSection
+            title="Work Modes"
+            options={Object.values(WorkMode)}
+            value={form.workModes}
+            onChange={val => updateField("workModes", val)}
+            savedValue={data?.workModes ?? []}
+            saving={savingSection === "workModes"}
+            onSave={() => saveSection("workModes")}
+            error={sectionErrors["workModes"]}
+          />
+          <MultiSelectSection
+            title="Contract Types"
+            options={Object.values(ContractType)}
+            value={form.contractTypes}
+            onChange={val => updateField("contractTypes", val)}
+            savedValue={data?.contractTypes ?? []}
+            saving={savingSection === "contractTypes"}
+            onSave={() => saveSection("contractTypes")}
+            error={sectionErrors["contractTypes"]}
+            showSelectAll
+          />
+          <SalaryExpectationSection
+            value={form.salaryExpectation}
+            onChange={val => updateField("salaryExpectation", val)}
+            savedValue={data?.salaryExpectation ?? null}
+            saving={savingSection === "salaryExpectation"}
+            onSave={() => saveSection("salaryExpectation")}
+            error={sectionErrors["salaryExpectation"]}
+          />
+          {/* PreferredLocationsSection + AdditionalConditionsSection land in C7.6/C7.7 */}
+        </div>
 
-        {renderTagSection("skills")}
-        {renderTagSection("certifications")}
-        {renderTagSection("languages")}
+        {/* Background: experience → education → supporting → logistics */}
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold px-1">Background</h2>
+          <WorkHistorySection
+            value={form.workHistory}
+            onChange={val => updateField("workHistory", val)}
+            savedValue={data?.workHistory ?? []}
+            saving={savingSection === "workHistory"}
+            onSave={() => saveSection("workHistory")}
+            error={sectionErrors["workHistory"]}
+          />
+          <EducationSection
+            value={form.education}
+            onChange={val => updateField("education", val)}
+            savedValue={data?.education ?? []}
+            saving={savingSection === "education"}
+            onSave={() => saveSection("education")}
+            error={sectionErrors["education"]}
+          />
 
-        <WorkingRightsSection
-          value={form.workingRights}
-          onChange={val => updateField("workingRights", val)}
-          savedValue={data?.workingRights ?? []}
-          saving={savingSection === "workingRights"}
-          onSave={() => saveSection("workingRights")}
-          error={sectionErrors["workingRights"]}
-        />
+          {renderTagSection("skills")}
+          {renderTagSection("certifications")}
+          {renderTagSection("languages")}
+
+          <WorkingRightsSection
+            value={form.workingRights}
+            onChange={val => updateField("workingRights", val)}
+            savedValue={data?.workingRights ?? []}
+            saving={savingSection === "workingRights"}
+            onSave={() => saveSection("workingRights")}
+            error={sectionErrors["workingRights"]}
+          />
+        </div>
       </div>
     </div>
   )
