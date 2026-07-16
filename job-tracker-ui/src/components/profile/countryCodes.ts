@@ -3,6 +3,8 @@
 const _displayNames = new Intl.DisplayNames(["en"], { type: "region" });
 
 export function getCountryName(code: string): string {
+  // of() throws on invalid codes like "" — only pass alpha-2 shaped input
+  if (!/^[A-Za-z]{2}$/.test(code)) return code;
   return _displayNames.of(code) ?? code;
 }
 

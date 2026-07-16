@@ -31,6 +31,7 @@ Commit after verification.
 
 ## Known follow-ups
 
+- **Eager `view` prop on `ProfileSectionCard`**: the `view={...}` JSX is evaluated on every render even while editing, so view-mode markup runs against half-filled draft entries. This is how the `getCountryName("")` crash happened (guarded in the helper since); any future view code assuming complete data can crash the same way. Fix by making the card render `view` lazily (render function, or mount only when `!editing`).
 - **Internal add-button dirty-lock inconsistency**: WorkHistory and Education disable their in-form add button while dirty (one new entry per save cycle); Locations and WorkRights never disable theirs. Pick one behavior.
 - **Scoring rules**: `profileScore.ts` does not cover the five newer profile fields (`workModes`, `contractTypes`, `salaryExpectation`, `preferredLocations`, `additionalConditions`). The exhaustive `satisfies Record<keyof UserProfile, SectionRule>` constraint is commented out (relaxed to `Partial`) until scoring rules for them are designed.
 
