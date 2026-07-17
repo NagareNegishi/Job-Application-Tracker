@@ -14,7 +14,8 @@ public class ProfileDTO : IValidatableObject
     [MaxLength(ValidationConstants.MaxProfileContractTypesCount)]
     public List<ContractType>? ContractTypes { get; set; }
 
-    public SalaryExpectation? SalaryExpectation { get; set; }
+    [MaxLength(ValidationConstants.MaxProfileSalaryExpectationsCount)]
+    public List<SalaryExpectation>? SalaryExpectations { get; set; }
 
     [MaxLength(ValidationConstants.MaxProfileLocationsCount)]
     public List<PreferredLocationEntry>? PreferredLocations { get; set; }
@@ -72,6 +73,13 @@ public class ProfileDTO : IValidatableObject
             yield return new ValidationResult(
                 "Additional conditions must not contain HTML.",
                 [nameof(AdditionalConditions)]);
+
+        // One expectation per currency
+        if (SalaryExpectations?.Where(s => s.Currency != null)
+                .GroupBy(s => s.Currency).Any(g => g.Count() > 1) == true)
+            yield return new ValidationResult(
+                "Each salary expectation must use a distinct currency.",
+                [nameof(SalaryExpectations)]);
     }
 
     /// <summary>Creates a new UserProfile entity from this DTO (used by PUT).</summary>
@@ -81,7 +89,7 @@ public class ProfileDTO : IValidatableObject
         TargetRoles = TargetRoles ?? [],
         WorkModes = WorkModes ?? [],
         ContractTypes = ContractTypes ?? [],
-        SalaryExpectation = SalaryExpectation,   // nullable on entity; null = not set
+        SalaryExpectations = SalaryExpectations ?? [],
         PreferredLocations = PreferredLocations ?? [],
         AdditionalConditions = AdditionalConditions, // nullable on entity; null = not set
         Skills = Skills ?? [],
@@ -98,7 +106,7 @@ public class ProfileDTO : IValidatableObject
         if (TargetRoles != null) profile.TargetRoles = TargetRoles;
         if (WorkModes != null) profile.WorkModes = WorkModes;
         if (ContractTypes != null) profile.ContractTypes = ContractTypes;
-        if (SalaryExpectation != null) profile.SalaryExpectation = SalaryExpectation;
+        if (SalaryExpectations != null) profile.SalaryExpectations = SalaryExpectations;
         if (PreferredLocations != null) profile.PreferredLocations = PreferredLocations;
         if (AdditionalConditions != null) profile.AdditionalConditions = AdditionalConditions;
         if (Skills != null) profile.Skills = Skills;
