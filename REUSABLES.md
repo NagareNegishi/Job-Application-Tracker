@@ -8,9 +8,11 @@ project, collected in `reusables/` so they can be lifted into another project.
 copies of each file is deliberate — this is a portfolio project and the snapshot
 is meant to travel on its own. Nothing here is wired into the build.
 
-Everything listed is free of job-tracker domain knowledge. Domain-specific
-helpers (`profileScore`, `dashboardUtils`, the `*Query` hooks, `StatusBadge`,
-`api`/`auth`, etc.) are intentionally left out.
+Everything listed is free of job-tracker domain knowledge. Most are verbatim
+copies; a few (`apiFetch`, `InlineEditCard`) were generalized from a
+domain-coupled original — noted per row. Domain-specific helpers (`profileScore`,
+`dashboardUtils`, the `*Query` hooks, `StatusBadge`, etc.) are intentionally left
+out.
 
 ## To reuse a piece
 
@@ -18,8 +20,8 @@ Copy its file, then pull in whatever it depends on (the "Needs" column). Two
 kinds of dependency:
 
 - **shadcn/ui** primitives (`button`, `input`, `dialog`, `calendar`, `popover`,
-  `checkbox`, `label`) are bundled under `shadcn/` — copy those too, or re-add a
-  fresh one with `npx shadcn@latest add <name>`.
+  `checkbox`, `label`, `select`, `command`) are bundled under `shadcn/` — copy
+  those too, or re-add a fresh one with `npx shadcn@latest add <name>`.
 - **In-collection** deps are other rows in these tables; grab them too.
 
 Import paths in the copies still use the app's `@/` alias
@@ -38,6 +40,7 @@ the files land in the target project.
 | `validateTag.ts` | Validate a tag/free-text entry (length, duplicates, max count, rejects HTML); returns an error string or null. | — |
 | `useScrollToNewItem.ts` | Hook: smooth-scroll a newly appended list item into view. Attach `lastItemRef`, call `requestScroll()` before appending. | `react` |
 | `useTheme.ts` | Hook: light/dark + colour-theme state persisted to `localStorage`, falling back to OS preference. Colour-theme list is app-editable. | `react` |
+| `apiFetch.ts` | *Generalized from `api.ts`.* `createApiClient(config)` → an authed fetch that attaches a Bearer token, sends cookies, and on 401 does a single-flight refresh + one retry; plus `ApiError` / `handleResponse` / `handleEmptyResponse`. Refresh endpoint + session-expiry callback are config. | — |
 
 ## component/
 
@@ -55,6 +58,12 @@ the files land in the target project.
 | `DatePicker.tsx` | Popover calendar date picker. | shadcn `button`, `calendar`, `popover`; util `cn` |
 | `SuggestionInput.tsx` | Text input with an autocomplete suggestion dropdown. | shadcn `input`; util `cn`, `matchSuggestion` |
 | `TagInput.tsx` | Tag/chip input: type-and-enter, validation, optional suggestions. | util `matchSuggestion`, `validateTag` |
+| `MonthSelect.tsx` | Month dropdown (`null` = unselected; month is optional). | shadcn `select` |
+| `YearSelect.tsx` | Year dropdown, 1900→current descending (`0` = unselected sentinel). | shadcn `select` |
+| `MonthYearPicker.tsx` | Labelled month + year row (month optional, year required). | in-collection `MonthSelect`, `YearSelect`; shadcn `label` |
+| `CountryCombobox.tsx` | Searchable ISO-country picker with flags and an `excludeCodes` prop. Needs the `flag-icons` CSS import for flags. | in-collection `countryCodes`; shadcn `button`, `command`, `popover`; util `cn`; npm `flag-icons` |
+| `countryCodes.ts` | ISO alpha-2 country list + `getCountryName` (via `Intl.DisplayNames`), sorted by display name. | — |
+| `InlineEditCard.tsx` | *Generalized from `ProfileSectionCard`.* LinkedIn-style titled card: read-only view + pencil, swaps to an edit form in place, Save/Cancel footer, empty-state placeholder, optional add (+). Also exports `ViewChips`. | shadcn `button` |
 
 ## shadcn/
 
@@ -73,3 +82,5 @@ against `radix-ui@1.5`, `react-day-picker@9`, `class-variance-authority@0.7`.
 | `dialog.tsx` | `radix-ui` (+ in-collection `button`) |
 | `popover.tsx` | `radix-ui` |
 | `calendar.tsx` | `react-day-picker` (+ in-collection `button`) |
+| `select.tsx` | `radix-ui` |
+| `command.tsx` | `cmdk` (+ in-collection `dialog`) |
