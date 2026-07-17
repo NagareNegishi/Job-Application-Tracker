@@ -11,6 +11,7 @@ import SalaryExpectationSection from "@/components/profile/SalaryExpectationSect
 import PreferredLocationsSection from "@/components/profile/PreferredLocationsSection"
 import AdditionalConditionsSection from "@/components/profile/AdditionalConditionsSection"
 import WorkingRightsSection from "@/components/profile/WorkingRightsSection"
+import LanguagesSection from "@/components/profile/LanguagesSection"
 import WorkHistorySection from "@/components/profile/WorkHistorySection"
 import EducationSection from "@/components/profile/EducationSection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
@@ -22,17 +23,14 @@ import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
   MAX_SKILL_ITEM_LENGTH,
   MAX_CERTIFICATION_ITEM_LENGTH,
-  MAX_LANGUAGE_ITEM_LENGTH,
   MAX_TARGET_ROLES_COUNT,
   MAX_SKILLS_COUNT,
   MAX_CERTIFICATIONS_COUNT,
-  MAX_LANGUAGES_COUNT,
 } from "@/lib/validationConstants"
 import {
   TARGET_ROLE_SUGGESTIONS,
   SKILL_SUGGESTIONS,
   CERTIFICATION_SUGGESTIONS,
-  LANGUAGE_SUGGESTIONS,
 } from "@/components/profile/tagSuggestions"
 
 // Empty form used before the query settles and for the "no profile yet" case.
@@ -46,8 +44,8 @@ const EMPTY_PROFILE: UserProfile = {
 // All 12 section keys — drives Save profile and the first-run auto-open
 const ALL_SECTION_KEYS = Object.keys(EMPTY_PROFILE) as (keyof UserProfile)[]
 
-// Only the four string[] fields render as tag sections; keyed so state/save wire up generically.
-type TagFieldKey = "targetRoles" | "skills" | "certifications" | "languages"
+// Only the three string[] fields render as tag sections; keyed so state/save wire up generically.
+type TagFieldKey = "targetRoles" | "skills" | "certifications"
 
 type TagSectionConfig = {
   title: string
@@ -71,9 +69,6 @@ const TAG_SECTIONS: Record<TagFieldKey, TagSectionConfig> = {
   certifications: { title: "Certifications", emptyText: "No certifications added yet",
     placeholder: "Type a certification and press Enter",
     maxItems: MAX_CERTIFICATIONS_COUNT, maxItemLength: MAX_CERTIFICATION_ITEM_LENGTH, layout: "stack", suggestions: CERTIFICATION_SUGGESTIONS },
-  languages: { title: "Languages", emptyText: "No languages added yet",
-    placeholder: "Type a language and press Enter",
-    maxItems: MAX_LANGUAGES_COUNT, maxItemLength: MAX_LANGUAGE_ITEM_LENGTH, suggestions: LANGUAGE_SUGGESTIONS, matchStrategy: "prefix" },
 }
 
 export default function ProfilePage() {
@@ -299,7 +294,7 @@ export default function ProfilePage() {
 
           {renderTagSection("skills")}
           {renderTagSection("certifications")}
-          {renderTagSection("languages")}
+          <LanguagesSection {...sectionProps("languages")} />
 
           <WorkingRightsSection {...sectionProps("workingRights")} />
         </div>
