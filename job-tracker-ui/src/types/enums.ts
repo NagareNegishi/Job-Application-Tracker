@@ -51,6 +51,10 @@ const ENUM_DISPLAY_OVERRIDES: Record<string, string> = {
   FullTimePermanent: "Full-time (Permanent)",
   FullTimeContract: "Full-time (Contract)",
   PartTime: "Part-time",
+  LimitedWorking: "Limited Working",
+  ProfessionalWorking: "Professional Working",
+  FullProfessional: "Full Professional",
+  NativeOrBilingual: "Native or Bilingual",
 };
 
 export function formatEnumLabel(value: string): string {
