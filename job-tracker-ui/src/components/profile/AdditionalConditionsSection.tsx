@@ -4,23 +4,13 @@ import { Textarea } from "@/components/ui/textarea"
 import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
 import { additionalConditionsInvalid } from "@/utils/profileValidation"
 import { MAX_ADDITIONAL_CONDITIONS_LENGTH } from "@/lib/validationConstants"
+import type { SectionProps } from "@/components/profile/sectionProps"
 
-type Props = {
-  value: string
-  onChange: (val: string) => void
-  savedValue: string
-  saving: boolean
-  onSave: () => void
-  editing: boolean
-  onEdit: () => void
-  onCancel: () => void
-  error?: string
-}
+type Props = SectionProps<string>
 
 export default function AdditionalConditionsSection({
-  value, onChange, savedValue, saving, onSave, editing, onEdit, onCancel, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
-  const dirty = value !== savedValue
   const htmlError = additionalConditionsInvalid(value) ? "Must not contain HTML." : null
 
   return (

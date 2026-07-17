@@ -12,6 +12,7 @@ import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
 import { SalaryPeriod, type SalaryExpectation } from "@/types/profile"
 import { formatEnumLabel } from "@/types/enums"
 import { salaryExpectationInvalid } from "@/utils/profileValidation"
+import type { SectionProps } from "@/components/profile/sectionProps"
 import { CURRENCY_SUGGESTIONS } from "./tagSuggestions"
 import { MAX_SALARY_AMOUNT } from "@/lib/validationConstants"
 
@@ -25,22 +26,11 @@ const PERIOD_SUFFIX: Record<SalaryPeriod, string> = {
   Hourly: "per hour",
 }
 
-type Props = {
-  value: SalaryExpectation | null
-  onChange: (val: SalaryExpectation | null) => void
-  savedValue: SalaryExpectation | null
-  saving: boolean
-  onSave: () => void
-  editing: boolean
-  onEdit: () => void
-  onCancel: () => void
-  error?: string
-}
+type Props = SectionProps<SalaryExpectation | null>
 
 export default function SalaryExpectationSection({
-  value, onChange, savedValue, saving, onSave, editing, onEdit, onCancel, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
-  const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
   const saveBlocked = salaryExpectationInvalid(value)
 
   return (

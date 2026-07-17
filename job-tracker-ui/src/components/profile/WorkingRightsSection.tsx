@@ -9,6 +9,7 @@ import {
 import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
 import { WorkingRight, type WorkingRightEntry } from "@/types/profile"
 import { workingRightsInvalid } from "@/utils/profileValidation"
+import type { SectionProps } from "@/components/profile/sectionProps"
 import CountryCombobox from "./CountryCombobox"
 import { getCountryName } from "./countryCodes"
 
@@ -20,23 +21,11 @@ const STATUS_LABELS: Record<WorkingRight, string> = {
   Other: "Other",
 }
 
-type Props = {
-  value: WorkingRightEntry[]
-  onChange: (entries: WorkingRightEntry[]) => void
-  savedValue: WorkingRightEntry[]
-  saving: boolean
-  onSave: () => void
-  editing: boolean
-  onEdit: () => void
-  onCancel: () => void
-  error?: string
-}
+type Props = SectionProps<WorkingRightEntry[]>
 
 export default function WorkingRightsSection({
-  value, onChange, savedValue, saving, onSave, editing, onEdit, onCancel, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
-  const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
-
   // Scroll the entry appended by header-add into view once edit mode has rendered it
   const lastEntryRef = useRef<HTMLDivElement | null>(null)
   const scrollPending = useRef(false)

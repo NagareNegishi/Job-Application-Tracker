@@ -12,31 +12,21 @@ import YearSelect from "./YearSelect"
 import { INSTITUTION_SUGGESTIONS, DEGREE_SUGGESTIONS } from "@/components/profile/tagSuggestions"
 import { checkDateOrder } from "@/utils/dateValidation"
 import { educationInvalid } from "@/utils/profileValidation"
+import type { SectionProps } from "@/components/profile/sectionProps"
 import {
   MAX_EDUCATION_INSTITUTION_LENGTH,
   MAX_EDUCATION_DEGREE_LENGTH,
 } from "@/lib/validationConstants"
 
-type Props = {
-  value: EducationEntry[]
-  onChange: (entries: EducationEntry[]) => void
-  savedValue: EducationEntry[]
-  saving: boolean
-  onSave: () => void
-  editing: boolean
-  onEdit: () => void
-  onCancel: () => void
-  error?: string
-}
+type Props = SectionProps<EducationEntry[]>
 
 function emptyEntry(): EducationEntry {
   return { institution: "", degree: "", from: 0, to: null }
 }
 
 export default function EducationSection({
-  value, onChange, savedValue, saving, onSave, editing, onEdit, onCancel, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
-  const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
   const errors = value.map(e => checkDateOrder(e.from, e.to))
 
   // Scroll the entry appended by header-add into view once edit mode has rendered it

@@ -4,24 +4,12 @@
 import TagInput from "@/components/ui/TagInput"
 import ProfileSectionCard, { ViewChips } from "@/components/profile/ProfileSectionCard"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
+import type { SectionProps } from "@/components/profile/sectionProps"
 
-// Order-sensitive shallow compare — tags preserve insertion order, so position matters
-function arraysEqual(a: string[], b: string[]) {
-  return a.length === b.length && a.every((v, i) => v === b[i])
-}
-
-type TagSectionProps = {
+type TagSectionProps = SectionProps<string[]> & {
   title: string
   emptyText: string
-  value: string[]
-  onChange: (tags: string[]) => void
-  savedValue: string[]
-  saving: boolean
-  onSave: () => void
-  editing: boolean
-  onEdit: () => void
-  onCancel: () => void
-  error?: string
+  savedValue: string[] // TagInput styles already-saved tags differently
   placeholder?: string
   maxItems?: number
   maxItemLength?: number
@@ -36,6 +24,7 @@ export default function TagSection({
   value,
   onChange,
   savedValue,
+  dirty,
   saving,
   onSave,
   editing,
@@ -49,8 +38,6 @@ export default function TagSection({
   suggestions,
   matchStrategy,
 }: TagSectionProps) {
-  const dirty = !arraysEqual(value, savedValue)
-
   return (
     <ProfileSectionCard
       title={title}

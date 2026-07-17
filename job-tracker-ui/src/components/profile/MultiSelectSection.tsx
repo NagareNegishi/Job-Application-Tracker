@@ -3,28 +3,19 @@
 import CheckboxGroup from "@/components/ui/CheckboxGroup"
 import ProfileSectionCard, { ViewChips } from "@/components/profile/ProfileSectionCard"
 import { formatEnumLabel } from "@/types/enums"
+import type { SectionProps } from "@/components/profile/sectionProps"
 
-type Props<T extends string> = {
+type Props<T extends string> = SectionProps<T[]> & {
   title: string
   emptyText: string
   options: readonly T[]
-  value: T[]
-  onChange: (values: T[]) => void
-  savedValue: T[]
-  saving: boolean
-  onSave: () => void
-  editing: boolean
-  onEdit: () => void
-  onCancel: () => void
-  error?: string
   showSelectAll?: boolean
 }
 
 export default function MultiSelectSection<T extends string>({
-  title, emptyText, options, value, onChange, savedValue, saving, onSave,
+  title, emptyText, options, value, onChange, dirty, saving, onSave,
   editing, onEdit, onCancel, error, showSelectAll,
 }: Props<T>) {
-  const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
   const idPrefix = title.replace(/\s+/g, "-").toLowerCase()
 
   return (

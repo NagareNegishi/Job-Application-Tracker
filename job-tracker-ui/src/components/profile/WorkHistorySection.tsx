@@ -15,23 +15,14 @@ import { TARGET_ROLE_SUGGESTIONS } from "@/components/profile/tagSuggestions"
 import { checkDateOrder, checkNotFuture } from "@/utils/dateValidation"
 import { workHistoryInvalid } from "@/utils/profileValidation"
 import { formatMonthYear } from "@/utils/dateFormat"
+import type { SectionProps } from "@/components/profile/sectionProps"
 import {
   MAX_WORK_HISTORY_TITLE_LENGTH,
   MAX_WORK_HISTORY_COMPANY_LENGTH,
   MAX_WORK_HISTORY_DESCRIPTION_LENGTH,
 } from "@/lib/validationConstants"
 
-type Props = {
-  value: WorkHistoryEntry[]
-  onChange: (entries: WorkHistoryEntry[]) => void
-  savedValue: WorkHistoryEntry[]
-  saving: boolean
-  onSave: () => void
-  editing: boolean
-  onEdit: () => void
-  onCancel: () => void
-  error?: string
-}
+type Props = SectionProps<WorkHistoryEntry[]>
 
 function emptyEntry(): WorkHistoryEntry {
   return { title: "", company: "", fromYear: 0, fromMonth: null, toYear: null, toMonth: null, description: "" }
@@ -45,9 +36,8 @@ function formatRange(e: WorkHistoryEntry): string {
 }
 
 export default function WorkHistorySection({
-  value, onChange, savedValue, saving, onSave, editing, onEdit, onCancel, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
-  const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
   // Future-date check (start, then end) precedes the ordering check; first failure wins per entry.
   const errors = value.map(e =>
     checkNotFuture(e.fromYear, e.fromMonth)
