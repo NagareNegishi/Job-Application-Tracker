@@ -30,7 +30,7 @@ public class ProfileDTO : IValidatableObject
     public List<string>? Certifications { get; set; }
 
     [MaxLength(ValidationConstants.MaxProfileLanguagesCount)]
-    public List<string>? Languages { get; set; }
+    public List<LanguageEntry>? Languages { get; set; }
 
     [MaxLength(ValidationConstants.MaxProfileWorkingRightsCount)]
     public List<WorkingRightEntry>? WorkingRights { get; set; }
@@ -58,11 +58,6 @@ public class ProfileDTO : IValidatableObject
             yield return new ValidationResult(
                 $"Each certification must be {ValidationConstants.MaxProfileCertificationItemLength} characters or fewer.",
                 [nameof(Certifications)]);
-
-        if (Languages?.Any(s => s?.Length > ValidationConstants.MaxProfileLanguageItemLength) == true)
-            yield return new ValidationResult(
-                $"Each language must be {ValidationConstants.MaxProfileLanguageItemLength} characters or fewer.",
-                [nameof(Languages)]);
 
         if (PreferredLocations?.Any(l => l.Areas.Any(a => a?.Length > ValidationConstants.MaxProfileLocationAreaItemLength)) == true)
             yield return new ValidationResult(
