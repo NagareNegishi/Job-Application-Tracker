@@ -45,7 +45,7 @@ const PROFILE_SCORE_CONFIG = {
   languages: { weight: 10, strategy: "presence" },
   // Certifications are genuinely optional in tech, so a low weight keeps an empty list from over-penalizing.
   certifications: { weight: 5, strategy: "presence" },
-  // TODO: the newer profile fields (workModes, contractTypes, salaryExpectation, preferredLocations,
+  // TODO: the newer profile fields (workModes, contractTypes, salaryExpectations, preferredLocations,
   // additionalConditions) are not scored yet. Restore the exhaustive constraint once rules exist:
   // } satisfies Record<keyof UserProfile, SectionRule>
 } satisfies Partial<Record<keyof UserProfile, SectionRule>>
