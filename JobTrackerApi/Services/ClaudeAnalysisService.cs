@@ -193,7 +193,7 @@ public class ClaudeAnalysisService : IAnalysisService
     {
         var hasConditions = profile.WorkModes.Count > 0
             || profile.ContractTypes.Count > 0
-            || profile.SalaryExpectation is not null
+            || profile.SalaryExpectations.Count > 0
             || profile.PreferredLocations.Count > 0
             || !string.IsNullOrWhiteSpace(profile.AdditionalConditions);
 
@@ -210,8 +210,17 @@ public class ClaudeAnalysisService : IAnalysisService
         if (profile.ContractTypes.Count > 0)
             sb.AppendLine($"Acceptable contract types: {string.Join(", ", profile.ContractTypes)}");
 
-        if (profile.SalaryExpectation is not null)
-            sb.AppendLine($"Minimum salary expectation: {profile.SalaryExpectation.MinAmount} {profile.SalaryExpectation.Currency} ({profile.SalaryExpectation.Period})");
+        if (profile.SalaryExpectations.Count == 1)
+        {
+            var s = profile.SalaryExpectations[0];
+            sb.AppendLine($"Minimum salary expectation: {s.MinAmount} {s.Currency} ({s.Period})");
+        }
+        else if (profile.SalaryExpectations.Count > 1)
+        {
+            sb.AppendLine("Minimum salary expectations (apply the one matching the role's market/currency):");
+            foreach (var s in profile.SalaryExpectations)
+                sb.AppendLine($"- {s.MinAmount} {s.Currency} ({s.Period})");
+        }
 
         if (profile.PreferredLocations.Count > 0)
         {
