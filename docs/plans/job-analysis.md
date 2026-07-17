@@ -270,11 +270,11 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 | Decision | Reasoning |
 |---|---|
 | Profile = Background + Conditions (global, not per-role) | Conditions apply across all target roles, not per-role; `TargetRoles` stays `string[]` and heads a new "What I'm looking for" section. Per-role conditions rejected — rare need, large model/UI/prompt cost |
-| New condition fields: `WorkModes`, `ContractTypes`, `SalaryExpectation`, `PreferredLocations`, `AdditionalConditions` | Structure the filterable conditions (mode/contract/salary/location) for consistent hard signals; one free-text field absorbs nuance that resists structure |
+| New condition fields: `WorkModes`, `ContractTypes`, `SalaryExpectations`, `PreferredLocations`, `AdditionalConditions` | Structure the filterable conditions (mode/contract/salary/location) for consistent hard signals; one free-text field absorbs nuance that resists structure |
 | Experience level → free text, not a structured field | Seniority is fuzzy and often role-dependent; an enum would fight reality. Reference treated junior-only as a hard filter — a soft free-text note fits this project better |
 | `WorkModes` reuses existing `WorkMode` enum (`OnSite`/`Remote`/`Hybrid`), multi-select | Remote is a work-mode, not a location — keeps geography and remote orthogonal (no "Remote country" hack) |
 | `ContractTypes` = unordered *acceptable set* (new enum) | Set answers "is this type acceptable?" — enough for alignment. Ranked preference deferred (nicer signal, more UI, low payoff now). Enum: `FullTimePermanent`, `FullTimeContract`, `PartTime`, `Casual`, `Internship`, `Temporary` |
-| `SalaryExpectation` = min floor only | Expectation is a floor; "any paid" = unset. Min+max range deferred. Owned object `{ MinAmount int?, Currency, Period }`, whole object nullable. Currency ISO 4217 alpha-3 (`^[A-Z]{3}$`); `SalaryPeriod` enum `Annual`/`Monthly`/`Hourly` |
+| `SalaryExpectations` = list of min floors, one per currency | Expectation is a floor; "any paid" = empty list. Min+max range deferred. `List<SalaryExpectation>` (`{ MinAmount int?, Currency, Period }`), max 3, distinct currencies (multi-market seekers); empty `[]` clears (was a nullable object — `null` couldn't be cleared via PATCH). Currency ISO 4217 alpha-3 (`^[A-Z]{3}$`); `SalaryPeriod` enum `Annual`/`Monthly`/`Hourly` |
 | `PreferredLocations` = `[{ Country, Areas[] }]`; empty `Areas` = anywhere in country | Country ISO-2 (reuse `^[A-Z]{2}$`) is a short autocomplete list — fixes "list too long"; `Areas` optional loose text (the infinite list stays unstructured). Multiple areas per country allowed. Cross-country regions ("Europe") go in free text, not a continent grouping |
 | `AdditionalConditions` = free text (`text`, max 500), HTML-rejected | Catch-all: experience level, "unpaid only if exceptional", region nuance. 500 fits a few preference notes, not an essay. Reject markup via the same inline `<[a-zA-Z/]` regex `ParseListingRequest` uses (no reusable attribute exists — it's an `IValidatableObject` check in `ProfileDTO.Validate()`) |
 | Conditions are optional — analysis gate unchanged | Requiring conditions would block a quick alignment run; they enrich output when present. The D9 profile-minimum stays background-only |
@@ -287,19 +287,19 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 |---|---|---|
 | `WorkModes` | `List<WorkMode>` | JSONB list |
 | `ContractTypes` | `List<ContractType>` | JSONB list |
-| `SalaryExpectation` | `SalaryExpectation?` (owned) | JSONB (like `WorkingRights`) |
+| `SalaryExpectations` | `List<SalaryExpectation>` (owned) | JSONB (like `WorkingRights`) |
 | `PreferredLocations` | `List<PreferredLocationEntry>` | JSONB owned (like `WorkingRightEntry`) |
 | `AdditionalConditions` | `string?` | `text` column |
 
 **New enums** (`Models/Enums/`): `ContractType` (`FullTimePermanent`, `FullTimeContract`, `PartTime`, `Casual`, `Internship`, `Temporary`); `SalaryPeriod` (`Annual`, `Monthly`, `Hourly`).
 
 **New entry classes** (`Models/`, DataAnnotations style like `WorkingRightEntry.cs`):
-- `SalaryExpectation` — `MinAmount int?` (`[Range(0, MaxSalaryAmount)]`), `Currency string` (`^[A-Z]{3}$`), `Period SalaryPeriod`.
+- `SalaryExpectation` — `MinAmount int?` (`[Range(0, MaxSalaryAmount)]`), `Currency string` (`^[A-Z]{3}$`), `Period SalaryPeriod`. Profile holds a `List<SalaryExpectation>` (one per currency; distinct-currency rule in `ProfileDTO.Validate`).
 - `PreferredLocationEntry` — `Country string` (required, `^[A-Z]{2}$`), `Areas List<string>` (optional; each item ≤ `MaxProfileLocationAreaItemLength`).
 
 ### Validation constants (new)
 
-- Counts: `MaxProfileWorkModesCount` 3, `MaxProfileContractTypesCount` 6, `MaxProfileLocationsCount` 10, `MaxProfileLocationAreasCount` 10.
+- Counts: `MaxProfileWorkModesCount` 3, `MaxProfileContractTypesCount` 6, `MaxProfileLocationsCount` 10, `MaxProfileLocationAreasCount` 10, `MaxProfileSalaryExpectationsCount` 3.
 - Lengths: `MaxProfileLocationAreaItemLength` 100, `MaxProfileAdditionalConditionsLength` 500.
 - Salary: `MaxSalaryAmount` (e.g. 100_000_000); currency regex `^[A-Z]{3}$` inline on the entry.
 
