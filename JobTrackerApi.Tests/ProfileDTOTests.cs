@@ -480,6 +480,67 @@ public class ProfileDTOTests
         Assert.Empty(results);
     }
 
+    // More salary expectations than the cap must fail the [MaxLength] attribute
+    [Fact]
+    public void ProfileDTO_ArrayCap_SalaryExpectations_Fails()
+    {
+        var dto = new ProfileDTO
+        {
+            SalaryExpectations = Enumerable.Range(0, ValidationConstants.MaxProfileSalaryExpectationsCount + 1)
+                .Select(i => new SalaryExpectation { MinAmount = 50000, Currency = "NZD", Period = SalaryPeriod.Annual })
+                .ToList()
+        };
+
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.SalaryExpectations)));
+    }
+
+    // Two expectations sharing a currency must fail the unique-currency check
+    [Fact]
+    public void ProfileDTO_SalaryExpectations_DuplicateCurrency_Fails()
+    {
+        var dto = new ProfileDTO
+        {
+            SalaryExpectations =
+            [
+                new SalaryExpectation { MinAmount = 80000, Currency = "NZD", Period = SalaryPeriod.Annual },
+                new SalaryExpectation { MinAmount = 90000, Currency = "NZD", Period = SalaryPeriod.Annual },
+            ]
+        };
+
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.SalaryExpectations)));
+    }
+
+    // Distinct currencies across expectations must pass
+    [Fact]
+    public void ProfileDTO_SalaryExpectations_DistinctCurrencies_Passes()
+    {
+        var dto = new ProfileDTO
+        {
+            SalaryExpectations =
+            [
+                new SalaryExpectation { MinAmount = 80000, Currency = "NZD", Period = SalaryPeriod.Annual },
+                new SalaryExpectation { MinAmount = 90000, Currency = "AUD", Period = SalaryPeriod.Annual },
+            ]
+        };
+
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
+
     // FromYear in the future must fail the IValidatableObject check
     [Fact]
     public void WorkHistoryEntry_FromYear_FutureYear_Fails()
