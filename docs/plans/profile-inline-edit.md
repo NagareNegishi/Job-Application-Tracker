@@ -17,7 +17,9 @@ The profile page originally rendered all 12 sections as permanently live forms. 
 
 ## Status + next session
 
-Feature committed on `feat/profile-analysis`. The section-wiring refactor below (2026-07-17) is **uncommitted**. `npm run build` green, all 53 frontend tests pass. Manual browser verification still to do:
+**This profile page + model track is the active priority — it must be completed before the deferred Job Analysis work (`docs/plans/job-analysis.md`, Steps 7–10 / C8) is picked up.**
+
+All of it is committed on `feat/profile-analysis` (section-wiring refactor, entry-list extraction, and the salary → per-currency array). `npm run build` green, all 53 frontend tests pass. Manual browser verification still to do:
 
 1. Per-section flow: pencil → edit → Save persists and returns to view; Cancel reverts and closes; empty sections show placeholder text with a + header button.
 1a. Add flows: + on an empty entry-based section (salary, locations, work history, education, work rights) opens edit with one blank entry — inputs in one click; + next to the pencil on a filled multi-entry section appends a blank entry and scrolls to it; Cancel reverts to the pre-add state.
@@ -60,9 +62,21 @@ Done, committed pending manual browser check. `salaryExpectation` (single nullab
 - Migration `SalaryExpectationsArray`: renames the jsonb column and reshapes existing rows (object → `[object]`, null → `[]`).
 - Backend 209 tests pass (3 new: cap, duplicate-currency, distinct-currency); frontend build + 53 tests pass.
 
+## Languages model: combine with fluency (planned — first task next session)
+
+Decided 2026-07-18, not started. `Languages` is currently a plain `string[]` rendered via the generic `TagSection` (same family as Skills/Certifications/TargetRoles). Changing to one general fluency level per language — no writing/speaking breakdown, a single scale per entry.
+
+- **Model**: `Languages: List<string>` → `Languages: List<LanguageEntry>`, mirroring the existing `WorkingRightEntry` pattern (`{ Country, Status }` → `{ Language, Fluency }`). New `LanguageFluency` enum — tentative levels `Basic` / `Conversational` / `Fluent` / `Native`; confirm before implementing.
+- **Backend**: new `Models/LanguageEntry.cs` + `Models/Enums/LanguageFluency.cs`; type change on `UserProfile`/`ProfileDTO`/`ProfileResponseDto`. `ValidationConstants.MaxProfileLanguageItemLength`(30)/`MaxProfileLanguagesCount`(15) carry over onto the `Language` sub-field and array count. Languages currently has no explicit `OnModelCreating` config (bare `text[]` primitive collection, unlike `WorkingRights`'s owned-jsonb) — needs the same jsonb owned-collection treatment as `WorkingRights`.
+- **Migration**: reshape existing data (`["English"]` → `[{ language: "English", fluency: ? }]`) — old rows carry no fluency signal, so pick a default (or add an `Unspecified` enum value) rather than lose data. Mirrors the `SalaryExpectationsArray` migration's reshape approach.
+- **Frontend**: moves out of the `TagSection`/`TAG_SECTIONS` family into the entry-list family (`useEntryList` + `EntryRow`, like `WorkingRightsSection`) — new `LanguagesSection` component. `LANGUAGE_SUGGESTIONS` (ISO 639-1 names, `tagSuggestions.ts`) stays as the autocomplete source but moves into a per-entry combobox (mirrors `CountryCombobox`) instead of free tag chips.
+- **Also touches**: `ClaudeAnalysisService.cs` prompt formatting (currently a plain joined list, ~line 150) should surface fluency; `profileScore.ts`'s `languages: { strategy: "presence" }` needs re-checking against the new shape; `ProfileDTOTests`' language-item-length test updates for the nested shape.
+
+Open decision to settle before starting: exact `LanguageFluency` levels (tentative above).
+
 ## Next session: remaining simplifications
 
-In suggested order. 1 changes the page's state architecture and needs manual testing.
+**First: the Languages model change above.** Then, in suggested order (1 changes the page's state architecture and needs manual testing):
 
 1. **Drafts state model.** Replace the full `form` mirror, the data-sync merge effect, `editingRef`, and the `editingSections` set with a single `drafts: Partial<UserProfile>` holding only sections being edited. View mode reads `data` directly, so a refetch can never clobber an open edit. Open copies `data[key]` into drafts, cancel deletes the key, `editing` = key in drafts, score = `computeProfileScore({ ...saved, ...drafts })`. Removes the sync-effect bug class entirely. Touches save/cancel/first-run (PUT) flows — test those by hand.
 2. **Carry-overs from Known follow-ups below**: lazy `view` prop on `ProfileSectionCard`, the add-button dirty-lock inconsistency, scoring rules for the five newer fields.
