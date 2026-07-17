@@ -35,6 +35,8 @@ public class JobTrackerContext : IdentityDbContext<ApplicationUser>
             .HasIndex(p => p.UserId)
             .IsUnique();
         modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.Languages, l => l.ToJson());
+        modelBuilder.Entity<UserProfile>()
             .OwnsMany(p => p.WorkingRights, wr => wr.ToJson());
         modelBuilder.Entity<UserProfile>()
             .OwnsMany(p => p.WorkHistory, wh => wh.ToJson());
