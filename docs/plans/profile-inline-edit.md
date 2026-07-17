@@ -40,14 +40,23 @@ The section components had accumulated copy-paste. First cleanup batch, behavior
 
 Net: 9 files, +69/−215 lines.
 
+## Refactor: entry-list machinery extracted (2026-07-17)
+
+Done, behavior unchanged (build green, 53 tests pass). Net: −144 lines across the 4 sections.
+
+- `hooks/useScrollToNewItem.ts` — app-generic scroll-to-appended-item hook (`lastItemRef` + `requestScroll()`); reusable outside profile.
+- `components/profile/useEntryList.ts` — composes it; owns `addEntry`/`handleAdd`/`updateEntry`/`removeEntry` for entry-based sections.
+- `components/profile/EntryRow.tsx` — entry box chrome + trash button (uses React 19 ref-as-prop; WorkRights overrides layout via `className`), plus `AddEntryButton` footer button. The WH/Edu `disabled={dirty}` add-lock inconsistency is preserved as-is (see Known follow-ups).
+
+Open decision: possibly switch entry-based sections to a per-entry modal/dialog (LinkedIn-faithful). Conflicts with Edit all / Save all and first-visit-all-open; decide before or together with the drafts state model below. Extracted handlers would move into the dialog largely unchanged.
+
 ## Next session: remaining simplifications
 
-In suggested order. 1 is behavior-preserving; 2 changes the page's state architecture and needs manual testing.
+In suggested order. 1 changes the page's state architecture and needs manual testing.
 
-1. **Extract entry-list machinery.** WorkHistory, Education, WorkingRights, and PreferredLocations each duplicate the scroll-into-view refs + effect, the `addEntry`/`handleAdd`/`updateEntry`/`removeEntry` handlers, the entry wrapper div with `lastEntryRef`, the trash button, and the footer add button (~50 lines × 4). Extract a `useEntryList<T>(value, onChange, emptyEntry)` hook plus an `EntryRow` wrapper component; each section shrinks to its form fields.
-2. **Drafts state model.** Replace the full `form` mirror, the data-sync merge effect, `editingRef`, and the `editingSections` set with a single `drafts: Partial<UserProfile>` holding only sections being edited. View mode reads `data` directly, so a refetch can never clobber an open edit. Open copies `data[key]` into drafts, cancel deletes the key, `editing` = key in drafts, score = `computeProfileScore({ ...saved, ...drafts })`. Removes the sync-effect bug class entirely. Touches save/cancel/first-run (PUT) flows — test those by hand.
-3. **Carry-overs from Known follow-ups below**: lazy `view` prop on `ProfileSectionCard`, the add-button dirty-lock inconsistency, scoring rules for the five newer fields.
-4. **Smaller**: `tagSuggestions.ts` is 10.6k lines of data eagerly imported into the page bundle — consider a dynamic `import()`; `SalaryExpectationSection` duplicates its add-from-empty button between `onAdd` seeding and the null branch of the edit form — one path can go.
+1. **Drafts state model.** Replace the full `form` mirror, the data-sync merge effect, `editingRef`, and the `editingSections` set with a single `drafts: Partial<UserProfile>` holding only sections being edited. View mode reads `data` directly, so a refetch can never clobber an open edit. Open copies `data[key]` into drafts, cancel deletes the key, `editing` = key in drafts, score = `computeProfileScore({ ...saved, ...drafts })`. Removes the sync-effect bug class entirely. Touches save/cancel/first-run (PUT) flows — test those by hand.
+2. **Carry-overs from Known follow-ups below**: lazy `view` prop on `ProfileSectionCard`, the add-button dirty-lock inconsistency, scoring rules for the five newer fields.
+3. **Smaller**: `tagSuggestions.ts` is 10.6k lines of data eagerly imported into the page bundle — consider a dynamic `import()`; `SalaryExpectationSection` duplicates its add-from-empty button between `onAdd` seeding and the null branch of the edit form — one path can go.
 
 ## Known follow-ups
 
