@@ -37,7 +37,7 @@ import {
 
 // Empty form used before the query settles and for the "no profile yet" case.
 const EMPTY_PROFILE: UserProfile = {
-  targetRoles: [], workModes: [], contractTypes: [], salaryExpectation: null,
+  targetRoles: [], workModes: [], contractTypes: [], salaryExpectations: [],
   preferredLocations: [], additionalConditions: "",
   skills: [], certifications: [], languages: [],
   workingRights: [], workHistory: [], education: [],
@@ -286,7 +286,7 @@ export default function ProfilePage() {
             showSelectAll
             {...sectionProps("contractTypes")}
           />
-          <SalaryExpectationSection {...sectionProps("salaryExpectation")} />
+          <SalaryExpectationSection {...sectionProps("salaryExpectations")} />
           <PreferredLocationsSection {...sectionProps("preferredLocations")} />
           <AdditionalConditionsSection {...sectionProps("additionalConditions")} />
         </div>

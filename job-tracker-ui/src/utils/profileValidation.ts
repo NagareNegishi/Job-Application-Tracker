@@ -13,9 +13,15 @@ import { checkDateOrder, checkNotFuture } from "@/utils/dateValidation"
 // Free text must not contain HTML — mirrors the backend's rejection rule.
 export const HTML_PATTERN = /<[a-zA-Z/]/
 
-/** Salary is optional (null), but once present needs a positive amount and a 3-letter currency code. */
-export function salaryExpectationInvalid(value: SalaryExpectation | null): boolean {
-  return value !== null && (value.minAmount <= 0 || !/^[A-Z]{3}$/.test(value.currency))
+/**
+ * Salary is optional (empty array), but each entry needs a positive amount and a
+ * 3-letter currency code, and no two entries may share a currency.
+ */
+export function salaryExpectationsInvalid(entries: SalaryExpectation[]): boolean {
+  const badEntry = entries.some(e => e.minAmount <= 0 || !/^[A-Z]{3}$/.test(e.currency))
+  const currencies = entries.map(e => e.currency)
+  const duplicateCurrency = new Set(currencies).size !== currencies.length
+  return badEntry || duplicateCurrency
 }
 
 /**
@@ -57,7 +63,7 @@ export function additionalConditionsInvalid(text: string): boolean {
 /** Dispatcher for page-level checks ("Save all"); fields without validation rules are always valid. */
 export function sectionInvalid(key: keyof UserProfile, form: UserProfile): boolean {
   switch (key) {
-    case "salaryExpectation": return salaryExpectationInvalid(form.salaryExpectation)
+    case "salaryExpectations": return salaryExpectationsInvalid(form.salaryExpectations)
     case "workHistory": return workHistoryInvalid(form.workHistory)
     case "education": return educationInvalid(form.education)
     case "preferredLocations": return preferredLocationsInvalid(form.preferredLocations)

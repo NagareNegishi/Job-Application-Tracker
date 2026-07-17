@@ -39,6 +39,7 @@ export const MAX_WORK_MODES_COUNT = 3
 export const MAX_CONTRACT_TYPES_COUNT = 6
 export const MAX_LOCATIONS_COUNT = 10
 export const MAX_LOCATION_AREAS_COUNT = 10
+export const MAX_SALARY_EXPECTATIONS_COUNT = 3
 
 // Profile conditions — per-item limits
 export const MAX_LOCATION_AREA_ITEM_LENGTH = 100

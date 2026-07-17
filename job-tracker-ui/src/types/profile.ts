@@ -67,7 +67,7 @@ export type UserProfile = {
   targetRoles: string[];
   workModes: WorkMode[];
   contractTypes: ContractType[];
-  salaryExpectation: SalaryExpectation | null;
+  salaryExpectations: SalaryExpectation[];
   preferredLocations: PreferredLocationEntry[];
   additionalConditions: string;
 
