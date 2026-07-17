@@ -17,7 +17,7 @@ The profile page originally rendered all 12 sections as permanently live forms. 
 
 ## Status + next session
 
-Code complete, **not committed**. `npm run build` green, all 53 frontend tests pass. Manual browser verification still to do:
+Feature committed on `feat/profile-analysis`. The section-wiring refactor below (2026-07-17) is **uncommitted**. `npm run build` green, all 53 frontend tests pass. Manual browser verification still to do:
 
 1. Per-section flow: pencil → edit → Save persists and returns to view; Cancel reverts and closes; empty sections show placeholder text with a + header button.
 1a. Add flows: + on an empty entry-based section (salary, locations, work history, education, work rights) opens edit with one blank entry — inputs in one click; + next to the pencil on a filled multi-entry section appends a blank entry and scrolls to it; Cancel reverts to the pre-add state.
@@ -28,6 +28,26 @@ Code complete, **not committed**. `npm run build` green, all 53 frontend tests p
 6. Dark mode + narrow viewport: read-view chips/text, header Edit all / Save all buttons.
 
 Commit after verification.
+
+## Refactor: shared section wiring (2026-07-17)
+
+The section components had accumulated copy-paste. First cleanup batch, behavior unchanged (build green, 53 tests pass):
+
+- `components/profile/sectionProps.ts` — shared `SectionProps<T>` prop contract. Every section now declares `type Props = SectionProps<X> & { ...extras }` instead of repeating the 9-field block.
+- `sectionProps(key)` helper in `ProfilePage` generates the shared wiring (value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error). Call sites collapsed to `<WorkHistorySection {...sectionProps("workHistory")} />`; only per-section props (title, options, tag config) stay explicit.
+- Dirty is computed once in the page (`dirtyKeys`, which Save all already needed) and passed down. The per-section `JSON.stringify` / `arraysEqual` checks are gone. `savedValue` now goes only to `TagSection`, which forwards it to `TagInput` for saved-chip styling.
+- `TAG_SECTIONS` keyed as a `Record<TagFieldKey, ...>` (drops the `.find()!`); `data ?? EMPTY_PROFILE` hoisted to a single `saved` const.
+
+Net: 9 files, +69/−215 lines.
+
+## Next session: remaining simplifications
+
+In suggested order. 1 is behavior-preserving; 2 changes the page's state architecture and needs manual testing.
+
+1. **Extract entry-list machinery.** WorkHistory, Education, WorkingRights, and PreferredLocations each duplicate the scroll-into-view refs + effect, the `addEntry`/`handleAdd`/`updateEntry`/`removeEntry` handlers, the entry wrapper div with `lastEntryRef`, the trash button, and the footer add button (~50 lines × 4). Extract a `useEntryList<T>(value, onChange, emptyEntry)` hook plus an `EntryRow` wrapper component; each section shrinks to its form fields.
+2. **Drafts state model.** Replace the full `form` mirror, the data-sync merge effect, `editingRef`, and the `editingSections` set with a single `drafts: Partial<UserProfile>` holding only sections being edited. View mode reads `data` directly, so a refetch can never clobber an open edit. Open copies `data[key]` into drafts, cancel deletes the key, `editing` = key in drafts, score = `computeProfileScore({ ...saved, ...drafts })`. Removes the sync-effect bug class entirely. Touches save/cancel/first-run (PUT) flows — test those by hand.
+3. **Carry-overs from Known follow-ups below**: lazy `view` prop on `ProfileSectionCard`, the add-button dirty-lock inconsistency, scoring rules for the five newer fields.
+4. **Smaller**: `tagSuggestions.ts` is 10.6k lines of data eagerly imported into the page bundle — consider a dynamic `import()`; `SalaryExpectationSection` duplicates its add-from-empty button between `onAdd` seeding and the null branch of the edit form — one path can go.
 
 ## Known follow-ups
 
