@@ -34,6 +34,22 @@ export type WorkingRightEntry = {
   status: WorkingRight;
 };
 
+export const LanguageFluency = {
+  Unspecified: "Unspecified",
+  Elementary: "Elementary",
+  LimitedWorking: "LimitedWorking",
+  ProfessionalWorking: "ProfessionalWorking",
+  FullProfessional: "FullProfessional",
+  NativeOrBilingual: "NativeOrBilingual",
+} as const;
+
+export type LanguageFluency = typeof LanguageFluency[keyof typeof LanguageFluency];
+
+export type LanguageEntry = {
+  language: string;
+  fluency: LanguageFluency;
+};
+
 export type SalaryExpectation = {
   minAmount: number;     // 0 = not yet entered
   currency: string;      // defaults to "NZD" when a new entry is created
@@ -74,7 +90,7 @@ export type UserProfile = {
   // Background
   skills: string[];
   certifications: string[];
-  languages: string[];
+  languages: LanguageEntry[];
   workingRights: WorkingRightEntry[];
   workHistory: WorkHistoryEntry[];
   education: EducationEntry[];
