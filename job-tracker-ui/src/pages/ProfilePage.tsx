@@ -50,7 +50,6 @@ const ALL_SECTION_KEYS = Object.keys(EMPTY_PROFILE) as (keyof UserProfile)[]
 type TagFieldKey = "targetRoles" | "skills" | "certifications" | "languages"
 
 type TagSectionConfig = {
-  key: TagFieldKey
   title: string
   emptyText: string   // placeholder shown in view mode while the section is empty
   placeholder: string
@@ -62,20 +61,20 @@ type TagSectionConfig = {
 }
 
 // Per-section data only — the wiring (value/onChange/save/dirty) is identical and lives in the map below.
-const TAG_SECTIONS: TagSectionConfig[] = [
-  { key: "targetRoles", title: "Desired Roles", emptyText: "No desired roles added yet",
+const TAG_SECTIONS: Record<TagFieldKey, TagSectionConfig> = {
+  targetRoles: { title: "Desired Roles", emptyText: "No desired roles added yet",
     placeholder: "Type a role and press Enter",
     maxItems: MAX_TARGET_ROLES_COUNT, maxItemLength: MAX_TARGET_ROLE_ITEM_LENGTH, layout: "stack", suggestions: TARGET_ROLE_SUGGESTIONS },
-  { key: "skills", title: "Skills", emptyText: "No skills added yet",
+  skills: { title: "Skills", emptyText: "No skills added yet",
     placeholder: "Type a skill and press Enter",
     maxItems: MAX_SKILLS_COUNT, maxItemLength: MAX_SKILL_ITEM_LENGTH, suggestions: SKILL_SUGGESTIONS },
-  { key: "certifications", title: "Certifications", emptyText: "No certifications added yet",
+  certifications: { title: "Certifications", emptyText: "No certifications added yet",
     placeholder: "Type a certification and press Enter",
     maxItems: MAX_CERTIFICATIONS_COUNT, maxItemLength: MAX_CERTIFICATION_ITEM_LENGTH, layout: "stack", suggestions: CERTIFICATION_SUGGESTIONS },
-  { key: "languages", title: "Languages", emptyText: "No languages added yet",
+  languages: { title: "Languages", emptyText: "No languages added yet",
     placeholder: "Type a language and press Enter",
     maxItems: MAX_LANGUAGES_COUNT, maxItemLength: MAX_LANGUAGE_ITEM_LENGTH, suggestions: LANGUAGE_SUGGESTIONS, matchStrategy: "prefix" },
-]
+}
 
 export default function ProfilePage() {
   const { data, isLoading } = useProfile()
@@ -101,6 +100,9 @@ export default function ProfilePage() {
   const [savingAll, setSavingAll] = useState(false)
   const [saveAllError, setSaveAllError] = useState("")
 
+  // Last saved state; EMPTY_PROFILE before the first save creates the row
+  const saved = data ?? EMPTY_PROFILE
+
   function openSection(key: keyof UserProfile) {
     setEditingSections(prev => new Set(prev).add(key))
   }
@@ -115,13 +117,13 @@ export default function ProfilePage() {
 
   // Cancel = revert the section's form value to the last saved state, then exit edit mode
   function cancelSection(key: keyof UserProfile) {
-    updateField(key, (data ?? EMPTY_PROFILE)[key])
+    updateField(key, saved[key])
     closeSection(key)
   }
 
   // Cancel all = revert the whole form to the last saved state and close every section
   function cancelAll() {
-    setForm(data ?? EMPTY_PROFILE)
+    setForm(saved)
     setEditingSections(new Set())
     setSaveAllError("")
   }
@@ -176,9 +178,10 @@ export default function ProfilePage() {
     }
   }
 
-  // Fields whose form value differs from the last saved state (same JSON-compare the sections use)
+  // Fields whose form value differs from the last saved state; the single source of
+  // dirty for both the per-section Save buttons (via sectionProps) and Save all
   const dirtyKeys = ALL_SECTION_KEYS.filter(
-    k => JSON.stringify(form[k]) !== JSON.stringify((data ?? EMPTY_PROFILE)[k])
+    k => JSON.stringify(form[k]) !== JSON.stringify(saved[k])
   )
   // Only dirty fields get saved, so validity of the rest never blocks Save all
   const saveAllBlocked = dirtyKeys.some(k => sectionInvalid(k, form))
@@ -203,30 +206,41 @@ export default function ProfilePage() {
     }
   }
 
+  /**
+   * State/callback wiring shared by every section — spread into each section component.
+   * Keyed by profile field so value, dirty, saving, editing, and the save/edit/cancel
+   * handlers all stay in lockstep without repeating the prop block per section.
+   */
+  function sectionProps<K extends keyof UserProfile>(key: K) {
+    return {
+      value: form[key],
+      onChange: (val: UserProfile[K]) => updateField(key, val),
+      dirty: dirtyKeys.includes(key),
+      saving: savingSection === key,
+      onSave: () => saveSection(key),
+      editing: editingSections.has(key),
+      onEdit: () => openSection(key),
+      onCancel: () => cancelSection(key),
+      error: sectionErrors[key],
+    }
+  }
+
   // Renders one tag section by key. Wiring is identical across all four; only the per-section
   // config differs, so we look it up rather than duplicate the prop block at each call site.
   function renderTagSection(key: TagFieldKey) {
-    const s = TAG_SECTIONS.find(c => c.key === key)!
+    const s = TAG_SECTIONS[key]
     return (
       <TagSection
-        key={s.key}
         title={s.title}
         emptyText={s.emptyText}
-        value={form[s.key]}
-        onChange={val => updateField(s.key, val)}
-        savedValue={data?.[s.key] ?? []}
-        saving={savingSection === s.key}
-        onSave={() => saveSection(s.key)}
-        editing={editingSections.has(s.key)}
-        onEdit={() => openSection(s.key)}
-        onCancel={() => cancelSection(s.key)}
-        error={sectionErrors[s.key]}
+        savedValue={saved[key]}
         placeholder={s.placeholder}
         maxItems={s.maxItems}
         maxItemLength={s.maxItemLength}
         layout={s.layout}
         suggestions={s.suggestions}
         matchStrategy={s.matchStrategy}
+        {...sectionProps(key)}
       />
     )
   }
@@ -263,107 +277,31 @@ export default function ProfilePage() {
             title="Work Modes"
             emptyText="No work modes selected"
             options={Object.values(WorkMode)}
-            value={form.workModes}
-            onChange={val => updateField("workModes", val)}
-            savedValue={data?.workModes ?? []}
-            saving={savingSection === "workModes"}
-            onSave={() => saveSection("workModes")}
-            editing={editingSections.has("workModes")}
-            onEdit={() => openSection("workModes")}
-            onCancel={() => cancelSection("workModes")}
-            error={sectionErrors["workModes"]}
+            {...sectionProps("workModes")}
           />
           <MultiSelectSection
             title="Contract Types"
             emptyText="No contract types selected"
             options={Object.values(ContractType)}
-            value={form.contractTypes}
-            onChange={val => updateField("contractTypes", val)}
-            savedValue={data?.contractTypes ?? []}
-            saving={savingSection === "contractTypes"}
-            onSave={() => saveSection("contractTypes")}
-            editing={editingSections.has("contractTypes")}
-            onEdit={() => openSection("contractTypes")}
-            onCancel={() => cancelSection("contractTypes")}
-            error={sectionErrors["contractTypes"]}
             showSelectAll
+            {...sectionProps("contractTypes")}
           />
-          <SalaryExpectationSection
-            value={form.salaryExpectation}
-            onChange={val => updateField("salaryExpectation", val)}
-            savedValue={data?.salaryExpectation ?? null}
-            saving={savingSection === "salaryExpectation"}
-            onSave={() => saveSection("salaryExpectation")}
-            editing={editingSections.has("salaryExpectation")}
-            onEdit={() => openSection("salaryExpectation")}
-            onCancel={() => cancelSection("salaryExpectation")}
-            error={sectionErrors["salaryExpectation"]}
-          />
-          <PreferredLocationsSection
-            value={form.preferredLocations}
-            onChange={val => updateField("preferredLocations", val)}
-            savedValue={data?.preferredLocations ?? []}
-            saving={savingSection === "preferredLocations"}
-            onSave={() => saveSection("preferredLocations")}
-            editing={editingSections.has("preferredLocations")}
-            onEdit={() => openSection("preferredLocations")}
-            onCancel={() => cancelSection("preferredLocations")}
-            error={sectionErrors["preferredLocations"]}
-          />
-          <AdditionalConditionsSection
-            value={form.additionalConditions}
-            onChange={val => updateField("additionalConditions", val)}
-            savedValue={data?.additionalConditions ?? ""}
-            saving={savingSection === "additionalConditions"}
-            onSave={() => saveSection("additionalConditions")}
-            editing={editingSections.has("additionalConditions")}
-            onEdit={() => openSection("additionalConditions")}
-            onCancel={() => cancelSection("additionalConditions")}
-            error={sectionErrors["additionalConditions"]}
-          />
+          <SalaryExpectationSection {...sectionProps("salaryExpectation")} />
+          <PreferredLocationsSection {...sectionProps("preferredLocations")} />
+          <AdditionalConditionsSection {...sectionProps("additionalConditions")} />
         </div>
 
         {/* Background: experience → education → supporting → logistics */}
         <div className="space-y-3">
           <h2 className="text-base font-semibold px-1">Background</h2>
-          <WorkHistorySection
-            value={form.workHistory}
-            onChange={val => updateField("workHistory", val)}
-            savedValue={data?.workHistory ?? []}
-            saving={savingSection === "workHistory"}
-            onSave={() => saveSection("workHistory")}
-            editing={editingSections.has("workHistory")}
-            onEdit={() => openSection("workHistory")}
-            onCancel={() => cancelSection("workHistory")}
-            error={sectionErrors["workHistory"]}
-          />
-          <EducationSection
-            value={form.education}
-            onChange={val => updateField("education", val)}
-            savedValue={data?.education ?? []}
-            saving={savingSection === "education"}
-            onSave={() => saveSection("education")}
-            editing={editingSections.has("education")}
-            onEdit={() => openSection("education")}
-            onCancel={() => cancelSection("education")}
-            error={sectionErrors["education"]}
-          />
+          <WorkHistorySection {...sectionProps("workHistory")} />
+          <EducationSection {...sectionProps("education")} />
 
           {renderTagSection("skills")}
           {renderTagSection("certifications")}
           {renderTagSection("languages")}
 
-          <WorkingRightsSection
-            value={form.workingRights}
-            onChange={val => updateField("workingRights", val)}
-            savedValue={data?.workingRights ?? []}
-            saving={savingSection === "workingRights"}
-            onSave={() => saveSection("workingRights")}
-            editing={editingSections.has("workingRights")}
-            onEdit={() => openSection("workingRights")}
-            onCancel={() => cancelSection("workingRights")}
-            error={sectionErrors["workingRights"]}
-          />
+          <WorkingRightsSection {...sectionProps("workingRights")} />
         </div>
 
         {/* Page-level actions while any section is open — sticky so they're reachable without scrolling */}
