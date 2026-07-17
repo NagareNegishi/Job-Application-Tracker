@@ -7,6 +7,7 @@ import type {
   EducationEntry,
   PreferredLocationEntry,
   WorkingRightEntry,
+  LanguageEntry,
 } from "@/types/profile"
 import { checkDateOrder, checkNotFuture } from "@/utils/dateValidation"
 
@@ -56,6 +57,11 @@ export function workingRightsInvalid(entries: WorkingRightEntry[]): boolean {
   return entries.some(e => !e.country)
 }
 
+/** Every language entry needs a language name. */
+export function languagesInvalid(entries: LanguageEntry[]): boolean {
+  return entries.some(e => !e.language)
+}
+
 export function additionalConditionsInvalid(text: string): boolean {
   return HTML_PATTERN.test(text)
 }
@@ -68,6 +74,7 @@ export function sectionInvalid(key: keyof UserProfile, form: UserProfile): boole
     case "education": return educationInvalid(form.education)
     case "preferredLocations": return preferredLocationsInvalid(form.preferredLocations)
     case "workingRights": return workingRightsInvalid(form.workingRights)
+    case "languages": return languagesInvalid(form.languages)
     case "additionalConditions": return additionalConditionsInvalid(form.additionalConditions)
     default: return false
   }
