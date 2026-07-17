@@ -75,9 +75,13 @@ export default function LanguagesSection({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.values(LanguageFluency).map(f => (
-                      <SelectItem key={f} value={f}>{formatEnumLabel(f)}</SelectItem>
-                    ))}
+                    {Object.values(LanguageFluency)
+                      // Unspecified is a legacy migration sentinel, not a user choice
+                      // offer it only when a migrated row already carries it
+                      .filter(f => f !== LanguageFluency.Unspecified || entry.fluency === LanguageFluency.Unspecified)
+                      .map(f => (
+                        <SelectItem key={f} value={f}>{formatEnumLabel(f)}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
