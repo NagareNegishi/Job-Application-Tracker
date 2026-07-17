@@ -1,11 +1,10 @@
 // Preferred locations section — per-entry country + free-text areas ("anywhere in country" if empty).
 // View/edit mode and card chrome come from ProfileSectionCard.
-import { useEffect, useRef } from "react"
-import { Trash2, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import TagInput from "@/components/ui/TagInput"
 import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
+import EntryRow, { AddEntryButton } from "@/components/profile/EntryRow"
+import { useEntryList } from "@/components/profile/useEntryList"
 import type { PreferredLocationEntry } from "@/types/profile"
 import { preferredLocationsInvalid } from "@/utils/profileValidation"
 import CountryCombobox from "./CountryCombobox"
@@ -15,38 +14,15 @@ import type { SectionProps } from "@/components/profile/sectionProps"
 
 type Props = SectionProps<PreferredLocationEntry[]>
 
+function emptyEntry(): PreferredLocationEntry {
+  return { country: "", areas: [] }
+}
+
 export default function PreferredLocationsSection({
   value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
-  // Scroll the entry appended by header-add into view once edit mode has rendered it
-  const lastEntryRef = useRef<HTMLDivElement | null>(null)
-  const scrollPending = useRef(false)
-
-  useEffect(() => {
-    if (scrollPending.current && lastEntryRef.current) {
-      lastEntryRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
-      scrollPending.current = false
-    }
-  })
-
-  function addEntry() {
-    onChange([...value, { country: "", areas: [] }])
-  }
-
-  // Header + button: blank entry ready to fill, whether the section was empty or not
-  function handleAdd() {
-    addEntry()
-    onEdit()
-    scrollPending.current = true
-  }
-
-  function updateEntry(index: number, patch: Partial<PreferredLocationEntry>) {
-    onChange(value.map((e, i) => i === index ? { ...e, ...patch } : e))
-  }
-
-  function removeEntry(index: number) {
-    onChange(value.filter((_, i) => i !== index))
-  }
+  const { lastEntryRef, addEntry, handleAdd, updateEntry, removeEntry } =
+    useEntryList(value, onChange, emptyEntry, onEdit)
 
   return (
     <ProfileSectionCard
@@ -77,10 +53,10 @@ export default function PreferredLocationsSection({
     >
       <div className="space-y-3">
         {value.map((entry, i) => (
-          <div
+          <EntryRow
             key={i}
             ref={i === value.length - 1 ? lastEntryRef : undefined}
-            className="flex items-start gap-2 bg-muted/50 border rounded-md p-3"
+            onRemove={() => removeEntry(i)}
           >
             <div className="flex-1 space-y-2">
               <div className="space-y-1">
@@ -106,19 +82,9 @@ export default function PreferredLocationsSection({
                 />
               </div>
             </div>
-            <Button
-              size="icon" variant="ghost"
-              className="text-muted-foreground hover:text-destructive shrink-0"
-              onClick={() => removeEntry(i)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          </EntryRow>
         ))}
-        <Button size="sm" variant="outline" onClick={addEntry} className="gap-1">
-          <Plus className="h-4 w-4" />
-          Add location
-        </Button>
+        <AddEntryButton label="Add location" onClick={addEntry} />
       </div>
     </ProfileSectionCard>
   )

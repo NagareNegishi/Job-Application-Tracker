@@ -1,12 +1,11 @@
 // Education section — per-entry form rows for structured education history.
 // View/edit mode and card chrome come from ProfileSectionCard.
-import { useEffect, useRef } from "react"
-import { Trash2, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import SuggestionInput from "@/components/ui/SuggestionInput"
 import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
+import EntryRow, { AddEntryButton } from "@/components/profile/EntryRow"
+import { useEntryList } from "@/components/profile/useEntryList"
 import type { EducationEntry } from "@/types/profile"
 import YearSelect from "./YearSelect"
 import { INSTITUTION_SUGGESTIONS, DEGREE_SUGGESTIONS } from "@/components/profile/tagSuggestions"
@@ -29,35 +28,8 @@ export default function EducationSection({
 }: Props) {
   const errors = value.map(e => checkDateOrder(e.from, e.to))
 
-  // Scroll the entry appended by header-add into view once edit mode has rendered it
-  const lastEntryRef = useRef<HTMLDivElement | null>(null)
-  const scrollPending = useRef(false)
-
-  useEffect(() => {
-    if (scrollPending.current && lastEntryRef.current) {
-      lastEntryRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
-      scrollPending.current = false
-    }
-  })
-
-  function addEntry() {
-    onChange([...value, emptyEntry()])
-  }
-
-  // Header + button: blank entry ready to fill, whether the section was empty or not
-  function handleAdd() {
-    addEntry()
-    onEdit()
-    scrollPending.current = true
-  }
-
-  function updateEntry(index: number, patch: Partial<EducationEntry>) {
-    onChange(value.map((e, i) => i === index ? { ...e, ...patch } : e))
-  }
-
-  function removeEntry(index: number) {
-    onChange(value.filter((_, i) => i !== index))
-  }
+  const { lastEntryRef, addEntry, handleAdd, updateEntry, removeEntry } =
+    useEntryList(value, onChange, emptyEntry, onEdit)
 
   return (
     <ProfileSectionCard
@@ -91,10 +63,10 @@ export default function EducationSection({
           const isCurrent = entry.to === null
 
           return (
-            <div
+            <EntryRow
               key={i}
               ref={i === value.length - 1 ? lastEntryRef : undefined}
-              className="flex items-start gap-2 bg-muted/50 border rounded-md p-3"
+              onRemove={() => removeEntry(i)}
             >
               <div className="flex-1 space-y-2">
                 <div className="space-y-1">
@@ -161,20 +133,10 @@ export default function EducationSection({
                   <p className="text-xs text-destructive">{errors[i]}</p>
                 )}
               </div>
-              <Button
-                size="icon" variant="ghost"
-                className="text-muted-foreground hover:text-destructive shrink-0"
-                onClick={() => removeEntry(i)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+            </EntryRow>
           )
         })}
-        <Button size="sm" variant="outline" onClick={addEntry} disabled={dirty} className="gap-1">
-          <Plus className="h-4 w-4" />
-          Add education
-        </Button>
+        <AddEntryButton label="Add education" onClick={addEntry} disabled={dirty} />
       </div>
     </ProfileSectionCard>
   )

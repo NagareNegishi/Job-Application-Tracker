@@ -1,12 +1,11 @@
 // Working rights section — per-entry (country, status) rows with add/remove.
 // View/edit mode and card chrome come from ProfileSectionCard.
-import { useEffect, useRef } from "react"
-import { Trash2, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
+import EntryRow, { AddEntryButton } from "@/components/profile/EntryRow"
+import { useEntryList } from "@/components/profile/useEntryList"
 import { WorkingRight, type WorkingRightEntry } from "@/types/profile"
 import { workingRightsInvalid } from "@/utils/profileValidation"
 import type { SectionProps } from "@/components/profile/sectionProps"
@@ -23,38 +22,15 @@ const STATUS_LABELS: Record<WorkingRight, string> = {
 
 type Props = SectionProps<WorkingRightEntry[]>
 
+function emptyEntry(): WorkingRightEntry {
+  return { country: "", status: WorkingRight.RequiresSponsorship }
+}
+
 export default function WorkingRightsSection({
   value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
-  // Scroll the entry appended by header-add into view once edit mode has rendered it
-  const lastEntryRef = useRef<HTMLDivElement | null>(null)
-  const scrollPending = useRef(false)
-
-  useEffect(() => {
-    if (scrollPending.current && lastEntryRef.current) {
-      lastEntryRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
-      scrollPending.current = false
-    }
-  })
-
-  function addEntry() {
-    onChange([...value, { country: "", status: WorkingRight.RequiresSponsorship }])
-  }
-
-  // Header + button: blank entry ready to fill, whether the section was empty or not
-  function handleAdd() {
-    addEntry()
-    onEdit()
-    scrollPending.current = true
-  }
-
-  function updateEntry(index: number, patch: Partial<WorkingRightEntry>) {
-    onChange(value.map((e, i) => i === index ? { ...e, ...patch } : e))
-  }
-
-  function removeEntry(index: number) {
-    onChange(value.filter((_, i) => i !== index))
-  }
+  const { lastEntryRef, addEntry, handleAdd, updateEntry, removeEntry } =
+    useEntryList(value, onChange, emptyEntry, onEdit)
 
   return (
     <ProfileSectionCard
@@ -83,10 +59,11 @@ export default function WorkingRightsSection({
     >
       <div className="space-y-2">
         {value.map((entry, i) => (
-          <div
+          <EntryRow
             key={i}
             ref={i === value.length - 1 ? lastEntryRef : undefined}
-            className="flex items-center gap-2 bg-muted/50 border rounded-md p-2"
+            onRemove={() => removeEntry(i)}
+            className="items-center p-2"
           >
             <div className="flex flex-col sm:flex-row flex-1 gap-2">
               <div className="flex-1 min-w-0">
@@ -112,20 +89,9 @@ export default function WorkingRightsSection({
                 </Select>
               </div>
             </div>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-muted-foreground hover:text-destructive shrink-0"
-              onClick={() => removeEntry(i)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          </EntryRow>
         ))}
-        <Button size="sm" variant="outline" onClick={addEntry} className="gap-1">
-          <Plus className="h-4 w-4" />
-          Add country
-        </Button>
+        <AddEntryButton label="Add country" onClick={addEntry} />
       </div>
     </ProfileSectionCard>
   )
