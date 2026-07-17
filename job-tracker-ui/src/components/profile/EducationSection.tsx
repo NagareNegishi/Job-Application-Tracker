@@ -1,59 +1,73 @@
 // Education section — per-entry form rows for structured education history.
-import { Trash2, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
+// View/edit mode and card chrome come from ProfileSectionCard.
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import SuggestionInput from "@/components/ui/SuggestionInput"
+import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
+import EntryRow, { AddEntryButton } from "@/components/profile/EntryRow"
+import { useEntryList } from "@/components/profile/useEntryList"
 import type { EducationEntry } from "@/types/profile"
 import YearSelect from "./YearSelect"
 import { INSTITUTION_SUGGESTIONS, DEGREE_SUGGESTIONS } from "@/components/profile/tagSuggestions"
 import { checkDateOrder } from "@/utils/dateValidation"
+import { educationInvalid } from "@/utils/profileValidation"
+import type { SectionProps } from "@/components/profile/sectionProps"
 import {
   MAX_EDUCATION_INSTITUTION_LENGTH,
   MAX_EDUCATION_DEGREE_LENGTH,
 } from "@/lib/validationConstants"
 
-type Props = {
-  value: EducationEntry[]
-  onChange: (entries: EducationEntry[]) => void
-  savedValue: EducationEntry[]
-  saving: boolean
-  onSave: () => void
-  error?: string
-}
+type Props = SectionProps<EducationEntry[]>
 
 function emptyEntry(): EducationEntry {
   return { institution: "", degree: "", from: 0, to: null }
 }
 
-export default function EducationSection({ value, onChange, savedValue, saving, onSave, error }: Props) {
-  const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
+export default function EducationSection({
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
+}: Props) {
   const errors = value.map(e => checkDateOrder(e.from, e.to))
-  const saveBlocked = value.some((e, i) =>
-    !e.institution.trim() || !e.degree.trim() || e.from === 0 || e.to === 0 || errors[i] !== null
-  )
 
-  function addEntry() {
-    onChange([...value, emptyEntry()])
-  }
-
-  function updateEntry(index: number, patch: Partial<EducationEntry>) {
-    onChange(value.map((e, i) => i === index ? { ...e, ...patch } : e))
-  }
-
-  function removeEntry(index: number) {
-    onChange(value.filter((_, i) => i !== index))
-  }
+  const { lastEntryRef, addEntry, handleAdd, updateEntry, removeEntry } =
+    useEntryList(value, onChange, emptyEntry, onEdit)
 
   return (
-    <div className="bg-card rounded-lg border p-5 space-y-3">
-      <h2 className="text-sm font-medium">Education</h2>
+    <ProfileSectionCard
+      title="Education"
+      editing={editing}
+      dirty={dirty}
+      saving={saving}
+      saveBlocked={educationInvalid(value)}
+      error={error}
+      onEdit={onEdit}
+      onSave={onSave}
+      onCancel={onCancel}
+      isEmpty={value.length === 0}
+      emptyText="No education added yet"
+      onAdd={handleAdd}
+      view={
+        <ul className="space-y-3">
+          {value.map((entry, i) => (
+            <li key={i}>
+              <p className="text-sm font-medium">{entry.degree}</p>
+              <p className="text-sm text-muted-foreground">
+                {entry.institution} · {entry.from} – {entry.to ?? "Present"}
+              </p>
+            </li>
+          ))}
+        </ul>
+      }
+    >
       <div className="space-y-3">
         {value.map((entry, i) => {
           const isCurrent = entry.to === null
 
           return (
-            <div key={i} className="flex items-start gap-2 bg-muted/50 border rounded-md p-3">
+            <EntryRow
+              key={i}
+              ref={i === value.length - 1 ? lastEntryRef : undefined}
+              onRemove={() => removeEntry(i)}
+            >
               <div className="flex-1 space-y-2">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">
@@ -119,32 +133,11 @@ export default function EducationSection({ value, onChange, savedValue, saving, 
                   <p className="text-xs text-destructive">{errors[i]}</p>
                 )}
               </div>
-              <Button
-                size="icon" variant="ghost"
-                className="text-muted-foreground hover:text-destructive shrink-0"
-                onClick={() => removeEntry(i)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+            </EntryRow>
           )
         })}
+        <AddEntryButton label="Add education" onClick={addEntry} disabled={dirty} />
       </div>
-      <Button size="sm" variant="outline" onClick={addEntry} disabled={dirty} className="gap-1">
-        <Plus className="h-4 w-4" />
-        Add education
-      </Button>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2">
-        {dirty && (
-          <Button size="sm" variant="ghost" onClick={() => onChange(savedValue)} disabled={saving}>
-            Cancel
-          </Button>
-        )}
-        <Button size="sm" onClick={onSave} disabled={saving || !dirty || saveBlocked}>
-          {saving ? "Saving…" : "Save"}
-        </Button>
-      </div>
-    </div>
+    </ProfileSectionCard>
   )
 }

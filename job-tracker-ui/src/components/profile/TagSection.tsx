@@ -1,22 +1,15 @@
-// One profile card: a tag list with per-section dirty detection and Save/Cancel.
+// One profile card: a tag list with per-section dirty detection.
 // Controlled — value/onChange live in the page so first-save can PUT the whole form.
+// View/edit mode and card chrome come from ProfileSectionCard.
 import TagInput from "@/components/ui/TagInput"
-import { Button } from "@/components/ui/button"
+import ProfileSectionCard, { ViewChips } from "@/components/profile/ProfileSectionCard"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
+import type { SectionProps } from "@/components/profile/sectionProps"
 
-// Order-sensitive shallow compare — tags preserve insertion order, so position matters
-function arraysEqual(a: string[], b: string[]) {
-  return a.length === b.length && a.every((v, i) => v === b[i])
-}
-
-type TagSectionProps = {
+type TagSectionProps = SectionProps<string[]> & {
   title: string
-  value: string[]
-  onChange: (tags: string[]) => void
-  savedValue: string[]
-  saving: boolean
-  onSave: () => void
-  error?: string
+  emptyText: string
+  savedValue: string[] // TagInput styles already-saved tags differently
   placeholder?: string
   maxItems?: number
   maxItemLength?: number
@@ -27,11 +20,16 @@ type TagSectionProps = {
 
 export default function TagSection({
   title,
+  emptyText,
   value,
   onChange,
   savedValue,
+  dirty,
   saving,
   onSave,
+  editing,
+  onEdit,
+  onCancel,
   error,
   placeholder,
   maxItems,
@@ -40,11 +38,20 @@ export default function TagSection({
   suggestions,
   matchStrategy,
 }: TagSectionProps) {
-  const dirty = !arraysEqual(value, savedValue)
-
   return (
-    <div className="bg-card rounded-lg border p-5 space-y-3">
-      <h2 className="text-sm font-medium">{title}</h2>
+    <ProfileSectionCard
+      title={title}
+      editing={editing}
+      dirty={dirty}
+      saving={saving}
+      error={error}
+      onEdit={onEdit}
+      onSave={onSave}
+      onCancel={onCancel}
+      isEmpty={value.length === 0}
+      emptyText={emptyText}
+      view={<ViewChips items={value} />}
+    >
       <TagInput
         value={value}
         onChange={onChange}
@@ -56,17 +63,6 @@ export default function TagSection({
         suggestions={suggestions}
         matchStrategy={matchStrategy}
       />
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2">
-        {dirty && (
-          <Button size="sm" variant="ghost" onClick={() => onChange(savedValue)} disabled={saving}>
-            Cancel
-          </Button>
-        )}
-        <Button size="sm" onClick={onSave} disabled={saving || !dirty}>
-          {saving ? "Saving…" : "Save"}
-        </Button>
-      </div>
-    </div>
+    </ProfileSectionCard>
   )
 }

@@ -17,16 +17,12 @@ public class UserProfile
     public List<WorkingRightEntry> WorkingRights { get; set; } = [];
     public List<WorkHistoryEntry> WorkHistory { get; set; } = [];
     public List<EducationEntry> Education { get; set; } = [];
+    public List<SalaryExpectation> SalaryExpectations { get; set; } = [];
+    public List<PreferredLocationEntry> PreferredLocations { get; set; } = [];
 
     // JSONB via PrimitiveCollection — see JobTrackerContext
     public List<WorkMode> WorkModes { get; set; } = [];
     public List<ContractType> ContractTypes { get; set; } = [];
-
-    // JSONB via OwnsOne — see JobTrackerContext
-    public SalaryExpectation? SalaryExpectation { get; set; }
-
-    // JSONB via OwnsMany — see JobTrackerContext
-    public List<PreferredLocationEntry> PreferredLocations { get; set; } = [];
 
     public string? AdditionalConditions { get; set; }
 
@@ -35,7 +31,7 @@ public class UserProfile
         TargetRoles = TargetRoles,
         WorkModes = WorkModes,
         ContractTypes = ContractTypes,
-        SalaryExpectation = SalaryExpectation,
+        SalaryExpectations = SalaryExpectations,
         PreferredLocations = PreferredLocations,
         AdditionalConditions = AdditionalConditions,
         Skills = Skills,

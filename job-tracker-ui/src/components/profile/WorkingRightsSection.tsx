@@ -1,11 +1,16 @@
-// Working rights section — per-entry (country, status) rows with add/remove and per-section save.
-import { Trash2, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
+// Working rights section — per-entry (country, status) rows with add/remove.
+// View/edit mode and card chrome come from ProfileSectionCard.
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
+import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
+import EntryRow, { AddEntryButton } from "@/components/profile/EntryRow"
+import { useEntryList } from "@/components/profile/useEntryList"
 import { WorkingRight, type WorkingRightEntry } from "@/types/profile"
+import { workingRightsInvalid } from "@/utils/profileValidation"
+import type { SectionProps } from "@/components/profile/sectionProps"
 import CountryCombobox from "./CountryCombobox"
+import { getCountryName } from "./countryCodes"
 
 const STATUS_LABELS: Record<WorkingRight, string> = {
   Citizen: "Citizen",
@@ -15,38 +20,51 @@ const STATUS_LABELS: Record<WorkingRight, string> = {
   Other: "Other",
 }
 
-type Props = {
-  value: WorkingRightEntry[]
-  onChange: (entries: WorkingRightEntry[]) => void
-  savedValue: WorkingRightEntry[]
-  saving: boolean
-  onSave: () => void
-  error?: string
+type Props = SectionProps<WorkingRightEntry[]>
+
+function emptyEntry(): WorkingRightEntry {
+  return { country: "", status: WorkingRight.RequiresSponsorship }
 }
 
 export default function WorkingRightsSection({
-  value, onChange, savedValue, saving, onSave, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
 }: Props) {
-  const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
-
-  function addEntry() {
-    onChange([...value, { country: "", status: WorkingRight.RequiresSponsorship }])
-  }
-
-  function updateEntry(index: number, patch: Partial<WorkingRightEntry>) {
-    onChange(value.map((e, i) => i === index ? { ...e, ...patch } : e))
-  }
-
-  function removeEntry(index: number) {
-    onChange(value.filter((_, i) => i !== index))
-  }
+  const { lastEntryRef, addEntry, handleAdd, updateEntry, removeEntry } =
+    useEntryList(value, onChange, emptyEntry, onEdit)
 
   return (
-    <div className="bg-card rounded-lg border p-5 space-y-3">
-      <h2 className="text-sm font-medium">Work Rights</h2>
+    <ProfileSectionCard
+      title="Work Rights"
+      editing={editing}
+      dirty={dirty}
+      saving={saving}
+      saveBlocked={workingRightsInvalid(value)}
+      error={error}
+      onEdit={onEdit}
+      onSave={onSave}
+      onCancel={onCancel}
+      isEmpty={value.length === 0}
+      emptyText="No work rights added yet"
+      onAdd={handleAdd}
+      view={
+        <ul className="text-sm space-y-1">
+          {value.map((entry, i) => (
+            <li key={i}>
+              <span className="font-medium">{getCountryName(entry.country)}</span>
+              <span className="text-muted-foreground">{" — "}{STATUS_LABELS[entry.status]}</span>
+            </li>
+          ))}
+        </ul>
+      }
+    >
       <div className="space-y-2">
         {value.map((entry, i) => (
-          <div key={i} className="flex items-center gap-2 bg-muted/50 border rounded-md p-2">
+          <EntryRow
+            key={i}
+            ref={i === value.length - 1 ? lastEntryRef : undefined}
+            onRemove={() => removeEntry(i)}
+            className="items-center p-2"
+          >
             <div className="flex flex-col sm:flex-row flex-1 gap-2">
               <div className="flex-1 min-w-0">
                 <CountryCombobox
@@ -71,32 +89,10 @@ export default function WorkingRightsSection({
                 </Select>
               </div>
             </div>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-muted-foreground hover:text-destructive shrink-0"
-              onClick={() => removeEntry(i)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          </EntryRow>
         ))}
+        <AddEntryButton label="Add country" onClick={addEntry} />
       </div>
-      <Button size="sm" variant="outline" onClick={addEntry} className="gap-1">
-        <Plus className="h-4 w-4" />
-        Add country
-      </Button>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2">
-        {dirty && (
-          <Button size="sm" variant="ghost" onClick={() => onChange(savedValue)} disabled={saving}>
-            Cancel
-          </Button>
-        )}
-        <Button size="sm" onClick={onSave} disabled={saving || !dirty || value.some(e => !e.country)}>
-          {saving ? "Saving…" : "Save"}
-        </Button>
-      </div>
-    </div>
+    </ProfileSectionCard>
   )
 }

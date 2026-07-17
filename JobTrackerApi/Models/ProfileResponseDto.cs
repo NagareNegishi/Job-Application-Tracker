@@ -7,7 +7,7 @@ public class ProfileResponseDto
     public List<string> TargetRoles { get; set; } = [];
     public List<WorkMode> WorkModes { get; set; } = [];
     public List<ContractType> ContractTypes { get; set; } = [];
-    public SalaryExpectation? SalaryExpectation { get; set; }
+    public List<SalaryExpectation> SalaryExpectations { get; set; } = [];
     public List<PreferredLocationEntry> PreferredLocations { get; set; } = [];
     public string? AdditionalConditions { get; set; }
 

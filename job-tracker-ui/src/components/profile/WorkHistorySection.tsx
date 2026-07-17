@@ -1,68 +1,90 @@
 // Work history section — per-entry form rows for structured work experience.
-import { Trash2, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
+// View/edit mode and card chrome come from ProfileSectionCard.
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import SuggestionInput from "@/components/ui/SuggestionInput"
+import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
+import EntryRow, { AddEntryButton } from "@/components/profile/EntryRow"
+import { useEntryList } from "@/components/profile/useEntryList"
 import type { WorkHistoryEntry } from "@/types/profile"
 import MonthYearPicker from "./MonthYearPicker"
 import { TARGET_ROLE_SUGGESTIONS } from "@/components/profile/tagSuggestions"
 import { checkDateOrder, checkNotFuture } from "@/utils/dateValidation"
+import { workHistoryInvalid } from "@/utils/profileValidation"
+import { formatMonthYear } from "@/utils/dateFormat"
+import type { SectionProps } from "@/components/profile/sectionProps"
 import {
   MAX_WORK_HISTORY_TITLE_LENGTH,
   MAX_WORK_HISTORY_COMPANY_LENGTH,
   MAX_WORK_HISTORY_DESCRIPTION_LENGTH,
 } from "@/lib/validationConstants"
 
-type Props = {
-  value: WorkHistoryEntry[]
-  onChange: (entries: WorkHistoryEntry[]) => void
-  savedValue: WorkHistoryEntry[]
-  saving: boolean
-  onSave: () => void
-  error?: string
-}
+type Props = SectionProps<WorkHistoryEntry[]>
 
 function emptyEntry(): WorkHistoryEntry {
   return { title: "", company: "", fromYear: 0, fromMonth: null, toYear: null, toMonth: null, description: "" }
 }
 
-export default function WorkHistorySection({ value, onChange, savedValue, saving, onSave, error }: Props) {
-  const dirty = JSON.stringify(value) !== JSON.stringify(savedValue)
+// "Mar 2021 – Present" / "Mar 2021 – Jun 2023" for the read view
+function formatRange(e: WorkHistoryEntry): string {
+  const from = formatMonthYear(e.fromYear, e.fromMonth)
+  const to = e.toYear === null ? "Present" : formatMonthYear(e.toYear, e.toMonth)
+  return `${from} – ${to}`
+}
+
+export default function WorkHistorySection({
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
+}: Props) {
   // Future-date check (start, then end) precedes the ordering check; first failure wins per entry.
   const errors = value.map(e =>
     checkNotFuture(e.fromYear, e.fromMonth)
     ?? checkNotFuture(e.toYear, e.toMonth)
     ?? checkDateOrder(e.fromYear, e.toYear, e.fromMonth, e.toMonth)
   )
-  // fromYear === 0: no start year chosen. toYear === 0: unchecked but no end year chosen.
-  const saveBlocked = value.some((e, i) =>
-    !e.title.trim() || !e.company.trim() || e.fromYear === 0 || e.toYear === 0 || errors[i] !== null
-  )
 
-  function addEntry() {
-    onChange([...value, emptyEntry()])
-  }
-
-  function updateEntry(index: number, patch: Partial<WorkHistoryEntry>) {
-    onChange(value.map((e, i) => i === index ? { ...e, ...patch } : e))
-  }
-
-  function removeEntry(index: number) {
-    onChange(value.filter((_, i) => i !== index))
-  }
+  const { lastEntryRef, addEntry, handleAdd, updateEntry, removeEntry } =
+    useEntryList(value, onChange, emptyEntry, onEdit)
 
   return (
-    <div className="bg-card rounded-lg border p-5 space-y-3">
-      <h2 className="text-sm font-medium">Work History</h2>
+    <ProfileSectionCard
+      title="Work History"
+      editing={editing}
+      dirty={dirty}
+      saving={saving}
+      saveBlocked={workHistoryInvalid(value)}
+      error={error}
+      onEdit={onEdit}
+      onSave={onSave}
+      onCancel={onCancel}
+      isEmpty={value.length === 0}
+      emptyText="No work history added yet"
+      onAdd={handleAdd}
+      view={
+        <ul className="space-y-3">
+          {value.map((entry, i) => (
+            <li key={i}>
+              <p className="text-sm font-medium">{entry.title}</p>
+              <p className="text-sm text-muted-foreground">{entry.company} · {formatRange(entry)}</p>
+              {entry.description && (
+                <p className="text-sm whitespace-pre-wrap mt-1">{entry.description}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      }
+    >
       <div className="space-y-3">
         {value.map((entry, i) => {
           const isCurrent = entry.toYear === null
 
           return (
-            <div key={i} className="flex items-start gap-2 bg-muted/50 border rounded-md p-3">
+            <EntryRow
+              key={i}
+              ref={i === value.length - 1 ? lastEntryRef : undefined}
+              onRemove={() => removeEntry(i)}
+            >
               <div className="flex-1 space-y-2">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">
@@ -129,32 +151,11 @@ export default function WorkHistorySection({ value, onChange, savedValue, saving
                   />
                 </div>
               </div>
-              <Button
-                size="icon" variant="ghost"
-                className="text-muted-foreground hover:text-destructive shrink-0"
-                onClick={() => removeEntry(i)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+            </EntryRow>
           )
         })}
+        <AddEntryButton label="Add role" onClick={addEntry} disabled={dirty} />
       </div>
-      <Button size="sm" variant="outline" onClick={addEntry} disabled={dirty} className="gap-1">
-        <Plus className="h-4 w-4" />
-        Add role
-      </Button>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2">
-        {dirty && (
-          <Button size="sm" variant="ghost" onClick={() => onChange(savedValue)} disabled={saving}>
-            Cancel
-          </Button>
-        )}
-        <Button size="sm" onClick={onSave} disabled={saving || !dirty || saveBlocked}>
-          {saving ? "Saving…" : "Save"}
-        </Button>
-      </div>
-    </div>
+    </ProfileSectionCard>
   )
 }

@@ -18,13 +18,19 @@ internal static class ClaudeAnalysisConfig
 
     // TODO: prompts are placeholder quality — polish in a dedicated session before shipping.
     public static readonly string AlignmentPrompt = """
-        You are a career advisor assessing how well a candidate's profile matches a job.
-        Rate the alignment on a scale of 1–5 (1 = poor fit, 5 = excellent fit) and give a one-sentence reason.
+        You are a career advisor assessing both how well a candidate's profile matches a job, and whether they'd actually want it.
+
+        Rate the alignment on a scale of 1–5 (1 = poor fit, 5 = excellent fit), weighing the candidate's skills and background against the role, and — when given — their stated conditions (work mode, contract type, salary expectation, preferred locations, other conditions) against what the listing offers. Give a one-sentence reason.
+
+        Separately, check whether the job description reads like a genuine job listing. If it resembles something else — a CV-writing/career-coaching service, a scam or pyramid-scheme pitch, or text too vague or garbled to be a real listing — set "concern" to a short, neutral one-sentence note describing the issue. Otherwise set "concern" to null. Always still return your best score and reasoning, even when a concern is present — never refuse to answer.
+
         Return valid JSON only. No markdown fences, no prose before or after.
 
-        {"score": 4, "reasoning": "Strong frontend skills match the role, though limited backend experience is a gap."}
+        {"score": 4, "reasoning": "Strong frontend skills match the role, though limited backend experience is a gap.", "concern": null}
 
-        score must be an integer 1–5. reasoning must be a single sentence.
+        {"score": 2, "reasoning": "Skills partially match, but the salary expectation is likely well above what's offered.", "concern": "This reads more like an ad for a CV-writing service than an actual job listing."}
+
+        score must be an integer 1–5. reasoning must be a single sentence. concern must be a single sentence, or the literal JSON null — never an empty string or the word "null" as text.
         """;
 
     public static readonly string SkillsPrompt = $$"""

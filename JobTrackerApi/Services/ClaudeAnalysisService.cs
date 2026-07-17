@@ -27,7 +27,7 @@ public class ClaudeAnalysisService : IAnalysisService
     {
         var result = await CallClaudeAsync<AlignmentResult>(
             ClaudeAnalysisConfig.AlignmentPrompt,
-            FormatUserMessage(profile, description, role, company));
+            FormatUserMessage(profile, description, role, company, includeConditions: true));
 
         if (result.Score < 1 || result.Score > 5 || string.IsNullOrWhiteSpace(result.Reasoning))
             throw new AnalysisFormatException($"Alignment response failed field validation. Score={result.Score}");
@@ -138,7 +138,8 @@ public class ClaudeAnalysisService : IAnalysisService
         return json;
     }
 
-    private static string FormatUserMessage(UserProfile profile, string description, string? role, string? company)
+    /// <summary>Builds the user-turn message sent to Claude: profile summary, optionally conditions, then the job.</summary>
+    private static string FormatUserMessage(UserProfile profile, string description, string? role, string? company, bool includeConditions = false)
     {
         var sb = new StringBuilder();
 
@@ -172,6 +173,10 @@ public class ClaudeAnalysisService : IAnalysisService
             }
         }
 
+        // Only Alignment weighs conditions (work mode/salary/location fit) — the other four types are background-only.
+        if (includeConditions)
+            sb.Append(FormatConditionsSection(profile));
+
         sb.AppendLine();
         sb.AppendLine("## Job");
         if (role    is not null) sb.AppendLine($"Role: {role}");
@@ -179,6 +184,53 @@ public class ClaudeAnalysisService : IAnalysisService
         sb.AppendLine();
         sb.AppendLine("## Job Description");
         sb.Append(description);
+
+        return sb.ToString();
+    }
+
+    /// <summary>Renders the candidate's stated conditions as a prompt section; empty string if none are set.</summary>
+    private static string FormatConditionsSection(UserProfile profile)
+    {
+        var hasConditions = profile.WorkModes.Count > 0
+            || profile.ContractTypes.Count > 0
+            || profile.SalaryExpectations.Count > 0
+            || profile.PreferredLocations.Count > 0
+            || !string.IsNullOrWhiteSpace(profile.AdditionalConditions);
+
+        if (!hasConditions)
+            return string.Empty;
+
+        var sb = new StringBuilder();
+        sb.AppendLine();
+        sb.AppendLine("## Candidate Conditions");
+
+        if (profile.WorkModes.Count > 0)
+            sb.AppendLine($"Acceptable work modes: {string.Join(", ", profile.WorkModes)}");
+
+        if (profile.ContractTypes.Count > 0)
+            sb.AppendLine($"Acceptable contract types: {string.Join(", ", profile.ContractTypes)}");
+
+        if (profile.SalaryExpectations.Count == 1)
+        {
+            var s = profile.SalaryExpectations[0];
+            sb.AppendLine($"Minimum salary expectation: {s.MinAmount} {s.Currency} ({s.Period})");
+        }
+        else if (profile.SalaryExpectations.Count > 1)
+        {
+            sb.AppendLine("Minimum salary expectations (apply the one matching the role's market/currency):");
+            foreach (var s in profile.SalaryExpectations)
+                sb.AppendLine($"- {s.MinAmount} {s.Currency} ({s.Period})");
+        }
+
+        if (profile.PreferredLocations.Count > 0)
+        {
+            var locations = profile.PreferredLocations.Select(l =>
+                l.Areas.Count > 0 ? $"{l.Country} ({string.Join("/", l.Areas)})" : l.Country);
+            sb.AppendLine($"Preferred locations: {string.Join(", ", locations)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.AdditionalConditions))
+            sb.AppendLine($"Additional conditions: {profile.AdditionalConditions}");
 
         return sb.ToString();
     }

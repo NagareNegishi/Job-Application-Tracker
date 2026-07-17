@@ -53,10 +53,11 @@ public static class ValidationConstants
     public const int MaxProfileEducationDegreeLength = 100;
 
     // Profile conditions — array count limits
-    public const int MaxProfileWorkModesCount     = 3;
-    public const int MaxProfileContractTypesCount = 6;
-    public const int MaxProfileLocationsCount     = 10;
-    public const int MaxProfileLocationAreasCount = 10;
+    public const int MaxProfileWorkModesCount          = 3;
+    public const int MaxProfileContractTypesCount      = 6;
+    public const int MaxProfileLocationsCount          = 10;
+    public const int MaxProfileLocationAreasCount      = 10;
+    public const int MaxProfileSalaryExpectationsCount = 3;
 
     // Profile conditions — string length limits
     public const int MaxProfileLocationAreaItemLength    = 100;

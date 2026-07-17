@@ -270,11 +270,11 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 | Decision | Reasoning |
 |---|---|
 | Profile = Background + Conditions (global, not per-role) | Conditions apply across all target roles, not per-role; `TargetRoles` stays `string[]` and heads a new "What I'm looking for" section. Per-role conditions rejected — rare need, large model/UI/prompt cost |
-| New condition fields: `WorkModes`, `ContractTypes`, `SalaryExpectation`, `PreferredLocations`, `AdditionalConditions` | Structure the filterable conditions (mode/contract/salary/location) for consistent hard signals; one free-text field absorbs nuance that resists structure |
+| New condition fields: `WorkModes`, `ContractTypes`, `SalaryExpectations`, `PreferredLocations`, `AdditionalConditions` | Structure the filterable conditions (mode/contract/salary/location) for consistent hard signals; one free-text field absorbs nuance that resists structure |
 | Experience level → free text, not a structured field | Seniority is fuzzy and often role-dependent; an enum would fight reality. Reference treated junior-only as a hard filter — a soft free-text note fits this project better |
 | `WorkModes` reuses existing `WorkMode` enum (`OnSite`/`Remote`/`Hybrid`), multi-select | Remote is a work-mode, not a location — keeps geography and remote orthogonal (no "Remote country" hack) |
 | `ContractTypes` = unordered *acceptable set* (new enum) | Set answers "is this type acceptable?" — enough for alignment. Ranked preference deferred (nicer signal, more UI, low payoff now). Enum: `FullTimePermanent`, `FullTimeContract`, `PartTime`, `Casual`, `Internship`, `Temporary` |
-| `SalaryExpectation` = min floor only | Expectation is a floor; "any paid" = unset. Min+max range deferred. Owned object `{ MinAmount int?, Currency, Period }`, whole object nullable. Currency ISO 4217 alpha-3 (`^[A-Z]{3}$`); `SalaryPeriod` enum `Annual`/`Monthly`/`Hourly` |
+| `SalaryExpectations` = list of min floors, one per currency | Expectation is a floor; "any paid" = empty list. Min+max range deferred. `List<SalaryExpectation>` (`{ MinAmount int?, Currency, Period }`), max 3, distinct currencies (multi-market seekers); empty `[]` clears (was a nullable object — `null` couldn't be cleared via PATCH). Currency ISO 4217 alpha-3 (`^[A-Z]{3}$`); `SalaryPeriod` enum `Annual`/`Monthly`/`Hourly` |
 | `PreferredLocations` = `[{ Country, Areas[] }]`; empty `Areas` = anywhere in country | Country ISO-2 (reuse `^[A-Z]{2}$`) is a short autocomplete list — fixes "list too long"; `Areas` optional loose text (the infinite list stays unstructured). Multiple areas per country allowed. Cross-country regions ("Europe") go in free text, not a continent grouping |
 | `AdditionalConditions` = free text (`text`, max 500), HTML-rejected | Catch-all: experience level, "unpaid only if exceptional", region nuance. 500 fits a few preference notes, not an essay. Reject markup via the same inline `<[a-zA-Z/]` regex `ParseListingRequest` uses (no reusable attribute exists — it's an `IValidatableObject` check in `ProfileDTO.Validate()`) |
 | Conditions are optional — analysis gate unchanged | Requiring conditions would block a quick alignment run; they enrich output when present. The D9 profile-minimum stays background-only |
@@ -287,19 +287,19 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 |---|---|---|
 | `WorkModes` | `List<WorkMode>` | JSONB list |
 | `ContractTypes` | `List<ContractType>` | JSONB list |
-| `SalaryExpectation` | `SalaryExpectation?` (owned) | JSONB (like `WorkingRights`) |
+| `SalaryExpectations` | `List<SalaryExpectation>` (owned) | JSONB (like `WorkingRights`) |
 | `PreferredLocations` | `List<PreferredLocationEntry>` | JSONB owned (like `WorkingRightEntry`) |
 | `AdditionalConditions` | `string?` | `text` column |
 
 **New enums** (`Models/Enums/`): `ContractType` (`FullTimePermanent`, `FullTimeContract`, `PartTime`, `Casual`, `Internship`, `Temporary`); `SalaryPeriod` (`Annual`, `Monthly`, `Hourly`).
 
 **New entry classes** (`Models/`, DataAnnotations style like `WorkingRightEntry.cs`):
-- `SalaryExpectation` — `MinAmount int?` (`[Range(0, MaxSalaryAmount)]`), `Currency string` (`^[A-Z]{3}$`), `Period SalaryPeriod`.
+- `SalaryExpectation` — `MinAmount int?` (`[Range(0, MaxSalaryAmount)]`), `Currency string` (`^[A-Z]{3}$`), `Period SalaryPeriod`. Profile holds a `List<SalaryExpectation>` (one per currency; distinct-currency rule in `ProfileDTO.Validate`).
 - `PreferredLocationEntry` — `Country string` (required, `^[A-Z]{2}$`), `Areas List<string>` (optional; each item ≤ `MaxProfileLocationAreaItemLength`).
 
 ### Validation constants (new)
 
-- Counts: `MaxProfileWorkModesCount` 3, `MaxProfileContractTypesCount` 6, `MaxProfileLocationsCount` 10, `MaxProfileLocationAreasCount` 10.
+- Counts: `MaxProfileWorkModesCount` 3, `MaxProfileContractTypesCount` 6, `MaxProfileLocationsCount` 10, `MaxProfileLocationAreasCount` 10, `MaxProfileSalaryExpectationsCount` 3.
 - Lengths: `MaxProfileLocationAreaItemLength` 100, `MaxProfileAdditionalConditionsLength` 500.
 - Salary: `MaxSalaryAmount` (e.g. 100_000_000); currency regex `^[A-Z]{3}$` inline on the entry.
 
@@ -311,12 +311,16 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 | C2 | `UserProfile` entity — add the 5 fields | Done |
 | C3 | Migration (new `text` + JSONB columns) | Done |
 | C4 | `ProfileDTO` + `ProfileResponseDto` — validation + `ToProfile`/`ApplyTo`/`ToResponseDto` wiring | Done |
-| C5 | `ProfileDTOTests` — new-field validation (currency/country regex, count caps, salary range, `AdditionalConditions` HTML-reject) + `WorkingRightEntry` omitted-`Status` now fails (nullable+`[Required]` fix in C1) | — |
-| C6 | `FormatUserMessage` + `AlignmentPrompt` + Alignment model `concern` (the analysis payoff) | — |
-| C7 | Frontend profile form — conditions section + country/currency suggestion lists | — |
+| C5 | `ProfileDTOTests` — new-field validation (currency/country regex, count caps, salary range, `AdditionalConditions` HTML-reject) + `WorkingRightEntry` omitted-`Status` now fails (nullable+`[Required]` fix in C1) | Done |
+| C6 | `FormatUserMessage` + `AlignmentPrompt` + Alignment model `concern` (the analysis payoff) | Done |
+| C7 | Frontend profile form — conditions section + country/currency suggestion lists | Done |
 | C8 | Frontend alignment display — show `concern` when present | — |
 
 Prompt-quality polish for the reworked `AlignmentPrompt` + the `concern` threshold folds into the existing Step 6 prompt-polish session.
+
+### C7 Breakdown (Frontend Conditions UI) — Done
+
+All of C7.1–C7.8b landed: types/constants/suggestions (`types/profile.ts`, `lib/validationConstants.ts`, `tagSuggestions.ts`), `CheckboxGroup`/`MultiSelectSection` (WorkModes, ContractTypes), `SalaryExpectationSection`, `PreferredLocationsSection` (per-entry `CountryCombobox` + nested `Areas` tag list), `AdditionalConditionsSection` (`Textarea` + client-side HTML-reject mirroring `ProfileDTO.Validate()`) — all mounted in `ProfilePage.tsx` under "What I'm looking for" / "Background". Component-level polish (layout, spacing) still pending — not blocking, tracked as follow-up below.
 
 ---
 
@@ -331,11 +335,11 @@ Prompt-quality polish for the reworked `AlignmentPrompt` + the `concern` thresho
 - **Shared Claude helper refactor:** `ClaudeParsingService` and `ClaudeAnalysisService` both duplicate `ExtractJson`. `ClaudeParsingService` also has `LogContractIssues` (logs unexpected/null keys to help tune prompts) that `ClaudeAnalysisService` lacks. Consider extracting both into a shared internal static helper (e.g. `ClaudeResponseHelper`) and adding contract-issue logging to the analysis service.
 
 ### Deferred / follow-up work
+- **C7 component polish:** `PreferredLocationsSection` and `AdditionalConditionsSection` (and possibly the earlier C7.4/C7.5 components) need a visual/layout pass — built to match existing patterns functionally but not yet polished. Follow `.claude/skills/frontend-design/SKILL.md` when picking this up.
 - **Demo profile reset (pairs with D16):** the demo user can edit their seeded profile, so the periodic demo-data reset + login re-seed (Demo/Auth step 2) must be extended to cover `UserProfile` — add the sample profile to `DemoSeed` and include it in the reset path.
 - **Save analysis to job (separate scope):** *Questions to ask* and *Likely interview questions* get an optional "Save to job" action persisting them onto new optional `Job` fields (e.g. `QuestionsToAsk`, `InterviewQuestions`). Partially overrides "on-demand, not saved" for those two types only; the three assessment types stay ephemeral (D15). Adds `Job` fields + migration + save UI.
-- **Profile quality score (in progress 2026-07-10):** scoring util done — `utils/profileScore.ts`, config-driven, returns `{ score, breakdown }`; tests in `profileScore.test.ts`. Grading: WorkHistory 25, Skills 25, TargetRoles 15, Education/WorkingRights/Languages 10, Certs 5. `ScoreRing` component done (`components/ui/ScoreRing.tsx`) — SVG ring, OKLCH colour via shared `utils/scoreColor.ts` (also used by `ResponseRateCard`), animated fill on mount and score change; props: `size`, `strokeWidth`, `bgColor`. **Next session:** position ring in ProfilePage header; add per-section improvement hints from `breakdown`.
+- **Profile quality score:** scoring util done — `utils/profileScore.ts`, config-driven, returns `{ score, breakdown }`; tests in `profileScore.test.ts`. Grading: WorkHistory 25, Skills 25, TargetRoles 15, Education/WorkingRights/Languages 10, Certs 5. `ScoreRing` component done (`components/ui/ScoreRing.tsx`) — SVG ring, OKLCH colour via shared `utils/scoreColor.ts` (also used by `ResponseRateCard`), animated fill on mount and score change; props: `size`, `strokeWidth`, `bgColor`; mounted in `ProfilePage` header. **Remaining:** per-section improvement hints from `breakdown`.
 - **Form re-hydration (known issue):** `ProfilePage`'s effect re-runs `setForm(data)` on every refetch, so saving one section wipes unsaved edits in another mid-edit section. Left as-is (rare). Fix: hydrate once via a `hydrated` ref guard — per-section `savedValue` already comes from `data`.
-- **Profile save error messages (resolved 2026-07-10):** the last client/server validation gap — a future month within the current year in Work History — is now blocked client-side via `checkNotFuture`. The generic "Failed to save." is unreachable through normal UI use, so richer per-error messaging is not needed.
 
 ### Reference (profile page, done)
 - Suggestion pools live in `components/profile/tagSuggestions.ts`. Sources: Languages → `iso-639-1`; Institutions → Hipolabs `world_universities_and_domains.json` (MIT); Roles / Skills / Certifications / Degrees → curated static lists. Custom free-text input is always allowed — lists only suggest.

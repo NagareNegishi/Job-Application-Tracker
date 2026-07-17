@@ -541,9 +541,12 @@ namespace JobTrackerApi.Migrations
                                 .HasForeignKey("UserProfileId");
                         });
 
-                    b.OwnsOne("JobTrackerApi.Models.SalaryExpectation", "SalaryExpectation", b1 =>
+                    b.OwnsMany("JobTrackerApi.Models.SalaryExpectation", "SalaryExpectations", b1 =>
                         {
                             b1.Property<int>("UserProfileId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
 
                             b1.Property<string>("Currency")
                                 .IsRequired()
@@ -553,12 +556,12 @@ namespace JobTrackerApi.Migrations
 
                             b1.Property<int>("Period");
 
-                            b1.HasKey("UserProfileId");
+                            b1.HasKey("UserProfileId", "__synthesizedOrdinal");
 
                             b1.ToTable("UserProfiles");
 
                             b1
-                                .ToJson("SalaryExpectation")
+                                .ToJson("SalaryExpectations")
                                 .HasColumnType("jsonb");
 
                             b1.WithOwner()
@@ -632,7 +635,7 @@ namespace JobTrackerApi.Migrations
 
                     b.Navigation("PreferredLocations");
 
-                    b.Navigation("SalaryExpectation");
+                    b.Navigation("SalaryExpectations");
 
                     b.Navigation("User");
 
