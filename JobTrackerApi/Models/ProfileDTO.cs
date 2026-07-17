@@ -75,7 +75,44 @@ public class ProfileDTO : IValidatableObject
             yield return new ValidationResult(
                 "Each salary expectation must use a distinct currency.",
                 [nameof(SalaryExpectations)]);
+
+        // No multi-value field may repeat a value — the client dedups too, but the server is
+        // the authority. WorkHistory/Education have no single-value key, so they are excluded.
+        if (HasCaseInsensitiveDuplicate(TargetRoles))
+            yield return new ValidationResult("Target roles must not repeat.", [nameof(TargetRoles)]);
+
+        if (HasCaseInsensitiveDuplicate(Skills))
+            yield return new ValidationResult("Skills must not repeat.", [nameof(Skills)]);
+
+        if (HasCaseInsensitiveDuplicate(Certifications))
+            yield return new ValidationResult("Certifications must not repeat.", [nameof(Certifications)]);
+
+        if (HasDuplicate(WorkModes))
+            yield return new ValidationResult("Work modes must not repeat.", [nameof(WorkModes)]);
+
+        if (HasDuplicate(ContractTypes))
+            yield return new ValidationResult("Contract types must not repeat.", [nameof(ContractTypes)]);
+
+        if (HasCaseInsensitiveDuplicate(Languages?.Where(l => l != null).Select(l => l.Language)))
+            yield return new ValidationResult("Each language may appear only once.", [nameof(Languages)]);
+
+        if (HasCaseInsensitiveDuplicate(WorkingRights?.Where(w => w != null).Select(w => w.Country)))
+            yield return new ValidationResult("Each country may appear only once in working rights.", [nameof(WorkingRights)]);
+
+        if (HasCaseInsensitiveDuplicate(PreferredLocations?.Where(l => l != null).Select(l => l.Country)))
+            yield return new ValidationResult("Each country may appear only once in preferred locations.", [nameof(PreferredLocations)]);
     }
+
+    // True when two items are equal ignoring case (after trimming); null items are ignored.
+    private static bool HasCaseInsensitiveDuplicate(IEnumerable<string?>? items) =>
+        items is not null && items
+            .Where(i => i is not null)
+            .GroupBy(i => i!.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Any(g => g.Count() > 1);
+
+    // True when the same value appears more than once — used for the enum lists.
+    private static bool HasDuplicate<T>(IEnumerable<T>? items) =>
+        items is not null && items.GroupBy(i => i).Any(g => g.Count() > 1);
 
     /// <summary>Creates a new UserProfile entity from this DTO (used by PUT).</summary>
     public UserProfile ToProfile(string userId) => new()
