@@ -147,7 +147,7 @@ public class ClaudeAnalysisService : IAnalysisService
         sb.AppendLine($"Target roles: {(profile.TargetRoles.Count > 0 ? string.Join(", ", profile.TargetRoles) : "None listed")}");
         sb.AppendLine($"Skills: {(profile.Skills.Count > 0 ? string.Join(", ", profile.Skills) : "None listed")}");
         sb.AppendLine($"Certifications: {(profile.Certifications.Count > 0 ? string.Join(", ", profile.Certifications) : "None listed")}");
-        sb.AppendLine($"Languages: {(profile.Languages.Count > 0 ? string.Join(", ", profile.Languages) : "None listed")}");
+        sb.AppendLine($"Languages: {(profile.Languages.Count > 0 ? string.Join(", ", profile.Languages.Select(l => $"{l.Language} ({l.Fluency})")) : "None listed")}");
 
         if (profile.WorkingRights.Count > 0)
             sb.AppendLine($"Working rights: {string.Join(", ", profile.WorkingRights.Select(r => $"{r.Country}: {r.Status}"))}");

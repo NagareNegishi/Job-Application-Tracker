@@ -2,7 +2,7 @@
 // the Work History description cutoff, weight normalization, and rounding.
 import { describe, it, expect } from "vitest"
 import { computeProfileScore } from "./profileScore"
-import type { UserProfile, WorkHistoryEntry } from "@/types/profile"
+import { LanguageFluency, type UserProfile, type WorkHistoryEntry } from "@/types/profile"
 
 const emptyProfile: UserProfile = {
   targetRoles: [], skills: [], certifications: [], languages: [],
@@ -45,7 +45,7 @@ describe("computeProfileScore", () => {
       targetRoles: ["Engineer"],
       skills: skills(5),
       certifications: ["AWS"],
-      languages: ["English"],
+      languages: [{ language: "English", fluency: LanguageFluency.NativeOrBilingual }],
       workingRights: [{ country: "NZ", status: "Citizen" }],
       workHistory: history(DESC_COMPLETE, DESC_COMPLETE),
       education: [{ institution: "UoA", degree: "BSc", from: 2018, to: 2021 }],
@@ -69,7 +69,7 @@ describe("presence sections", () => {
     expect(scoreOf({ workingRights: [{ country: "NZ", status: "Citizen" }] })).toBe(10)
   })
   it("awards full weight for one language (10)", () => {
-    expect(scoreOf({ languages: ["English"] })).toBe(10)
+    expect(scoreOf({ languages: [{ language: "English", fluency: LanguageFluency.NativeOrBilingual }] })).toBe(10)
   })
   it("awards the lenient certifications weight (5)", () => {
     expect(scoreOf({ certifications: ["AWS"] })).toBe(5)
@@ -124,7 +124,7 @@ describe("normalization and breakdown", () => {
     expect(scoreOf({ skills: skills(5) })).toBe(25)
   })
   it("returns a per-section breakdown that sums (rounded) to the score", () => {
-    const result = computeProfileScore({ ...emptyProfile, skills: skills(5), languages: ["English"] })
+    const result = computeProfileScore({ ...emptyProfile, skills: skills(5), languages: [{ language: "English", fluency: LanguageFluency.NativeOrBilingual }] })
     expect(result.score).toBe(35)  // 25 + 10
     const skillsRow = result.breakdown.find(b => b.section === "skills")
     expect(skillsRow).toMatchObject({ weight: 25, fraction: 1, points: 25 })

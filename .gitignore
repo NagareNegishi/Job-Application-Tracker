@@ -51,3 +51,25 @@ creds.json
 
 # Document Storage for dev version
 uploads
+
+# Session baton — session-end/session-start handoff; local per-session state.
+# The template (docs/session/template.md) stays tracked to hold the shape.
+docs/session/baton.md
+
+# Subagent prompt captures + deferred analysis from build-orchestration
+# sessions — local data; the README and capture template stay tracked
+build-orchestration/prompt-log/*
+!build-orchestration/prompt-log/README.md
+!build-orchestration/prompt-log/_template.md
+
+# Escalation strike count — live scratch
+build-orchestration/strike-count.md
+
+# SubagentStop route-guard loop-guard — live scratch
+build-orchestration/route-block-count
+
+# Per-subagent path-jail scope root (agent-scope-jail.sh); throwaway staging + log
+.agent-scope/
+
+# Bash-agent isolation worktrees (agent-worktree.sh); throwaway
+.agent-worktrees/

@@ -239,10 +239,6 @@ namespace JobTrackerApi.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
-                    b.PrimitiveCollection<List<string>>("Languages")
-                        .IsRequired()
-                        .HasColumnType("text[]");
-
                     b.PrimitiveCollection<List<string>>("Skills")
                         .IsRequired()
                         .HasColumnType("text[]");
@@ -514,6 +510,31 @@ namespace JobTrackerApi.Migrations
                                 .HasForeignKey("UserProfileId");
                         });
 
+                    b.OwnsMany("JobTrackerApi.Models.LanguageEntry", "Languages", b1 =>
+                        {
+                            b1.Property<int>("UserProfileId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<int>("Fluency");
+
+                            b1.Property<string>("Language")
+                                .IsRequired()
+                                .HasMaxLength(30);
+
+                            b1.HasKey("UserProfileId", "__synthesizedOrdinal");
+
+                            b1.ToTable("UserProfiles");
+
+                            b1
+                                .ToJson("Languages")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserProfileId");
+                        });
+
                     b.OwnsMany("JobTrackerApi.Models.PreferredLocationEntry", "PreferredLocations", b1 =>
                         {
                             b1.Property<int>("UserProfileId");
@@ -632,6 +653,8 @@ namespace JobTrackerApi.Migrations
                         });
 
                     b.Navigation("Education");
+
+                    b.Navigation("Languages");
 
                     b.Navigation("PreferredLocations");
 

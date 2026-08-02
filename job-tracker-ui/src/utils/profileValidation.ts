@@ -7,6 +7,7 @@ import type {
   EducationEntry,
   PreferredLocationEntry,
   WorkingRightEntry,
+  LanguageEntry,
 } from "@/types/profile"
 import { checkDateOrder, checkNotFuture } from "@/utils/dateValidation"
 
@@ -46,14 +47,25 @@ export function educationInvalid(entries: EducationEntry[]): boolean {
   )
 }
 
-/** Every location entry needs a country; areas are optional (empty = anywhere in country). */
-export function preferredLocationsInvalid(entries: PreferredLocationEntry[]): boolean {
-  return entries.some(e => !e.country)
+/** True when a value repeats (case-insensitive, trimmed); blanks are ignored. Mirrors the backend. */
+function hasDuplicate(values: string[]): boolean {
+  const seen = values.map(v => v.trim().toLowerCase()).filter(Boolean)
+  return new Set(seen).size !== seen.length
 }
 
-/** Every working-right entry needs a country. */
+/** Every location entry needs a unique country; areas are optional (empty = anywhere in country). */
+export function preferredLocationsInvalid(entries: PreferredLocationEntry[]): boolean {
+  return entries.some(e => !e.country) || hasDuplicate(entries.map(e => e.country))
+}
+
+/** Every working-right entry needs a unique country. */
 export function workingRightsInvalid(entries: WorkingRightEntry[]): boolean {
-  return entries.some(e => !e.country)
+  return entries.some(e => !e.country) || hasDuplicate(entries.map(e => e.country))
+}
+
+/** Every language entry needs a language name, and no language may repeat. */
+export function languagesInvalid(entries: LanguageEntry[]): boolean {
+  return entries.some(e => !e.language) || hasDuplicate(entries.map(e => e.language))
 }
 
 export function additionalConditionsInvalid(text: string): boolean {
@@ -68,6 +80,7 @@ export function sectionInvalid(key: keyof UserProfile, form: UserProfile): boole
     case "education": return educationInvalid(form.education)
     case "preferredLocations": return preferredLocationsInvalid(form.preferredLocations)
     case "workingRights": return workingRightsInvalid(form.workingRights)
+    case "languages": return languagesInvalid(form.languages)
     case "additionalConditions": return additionalConditionsInvalid(form.additionalConditions)
     default: return false
   }

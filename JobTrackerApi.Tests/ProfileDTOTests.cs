@@ -152,24 +152,60 @@ public class ProfileDTOTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Certifications)));
     }
 
-    // A language item exceeding the per-item length cap must fail validation
+    // A language name exceeding the per-item length cap must fail validation
     [Fact]
-    public void ProfileDTO_ItemLength_LanguageTooLong_Fails()
+    public void LanguageEntry_Language_TooLong_Fails()
     {
-        // Arrange: one language that is one character over the 30-char cap
-        var dto = new ProfileDTO
+        // Arrange: a language name one character over the 30-char cap
+        var entry = new LanguageEntry
         {
-            Languages = [new string('a', ValidationConstants.MaxProfileLanguageItemLength + 1)]
+            Language = new string('a', ValidationConstants.MaxProfileLanguageItemLength + 1),
+            Fluency = LanguageFluency.ProfessionalWorking
         };
 
         // Act
-        var context = new ValidationContext(dto);
+        var context = new ValidationContext(entry);
         var results = new List<ValidationResult>();
-        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
 
         // Assert
         Assert.False(isValid);
-        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Languages)));
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(LanguageEntry.Language)));
+    }
+
+    // Fluency left null (omitted) must fail the [Required] attribute
+    [Fact]
+    public void LanguageEntry_Fluency_Omitted_Fails()
+    {
+        // Arrange: Fluency is nullable specifically so a missing value fails instead of
+        // defaulting to LanguageFluency.Unspecified (enum value 0)
+        var entry = new LanguageEntry { Language = "English" };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(LanguageEntry.Fluency)));
+    }
+
+    // A valid language + fluency pair must pass validation
+    [Fact]
+    public void LanguageEntry_Valid_Passes()
+    {
+        // Arrange
+        var entry = new LanguageEntry { Language = "English", Fluency = LanguageFluency.NativeOrBilingual };
+
+        // Act
+        var context = new ValidationContext(entry);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(entry, context, results, true);
+
+        // Assert
+        Assert.True(isValid);
+        Assert.Empty(results);
     }
 
     // A location area item exceeding the per-item length cap must fail validation
@@ -764,5 +800,150 @@ public class ProfileDTOTests
         // Assert
         Assert.False(isValid);
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(EducationEntry.From)));
+    }
+
+    // Helper: validate a whole ProfileDTO and return the collected results.
+    private static (bool isValid, List<ValidationResult> results) ValidateProfile(ProfileDTO dto)
+    {
+        var context = new ValidationContext(dto);
+        var results = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(dto, context, results, true);
+        return (isValid, results);
+    }
+
+    // A repeated target role (case-insensitive) must fail the no-duplicate check
+    [Fact]
+    public void ProfileDTO_TargetRoles_Duplicate_Fails()
+    {
+        var dto = new ProfileDTO { TargetRoles = ["Engineer", "engineer"] };
+
+        var (isValid, results) = ValidateProfile(dto);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.TargetRoles)));
+    }
+
+    // A repeated skill (case-insensitive) must fail the no-duplicate check
+    [Fact]
+    public void ProfileDTO_Skills_Duplicate_Fails()
+    {
+        var dto = new ProfileDTO { Skills = ["React", "react"] };
+
+        var (isValid, results) = ValidateProfile(dto);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Skills)));
+    }
+
+    // A repeated certification (case-insensitive) must fail the no-duplicate check
+    [Fact]
+    public void ProfileDTO_Certifications_Duplicate_Fails()
+    {
+        var dto = new ProfileDTO { Certifications = ["AWS SAA", "aws saa"] };
+
+        var (isValid, results) = ValidateProfile(dto);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Certifications)));
+    }
+
+    // A repeated work mode must fail the no-duplicate check
+    [Fact]
+    public void ProfileDTO_WorkModes_Duplicate_Fails()
+    {
+        var dto = new ProfileDTO { WorkModes = [WorkMode.Remote, WorkMode.Remote] };
+
+        var (isValid, results) = ValidateProfile(dto);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.WorkModes)));
+    }
+
+    // A repeated contract type must fail the no-duplicate check
+    [Fact]
+    public void ProfileDTO_ContractTypes_Duplicate_Fails()
+    {
+        var dto = new ProfileDTO { ContractTypes = [ContractType.PartTime, ContractType.PartTime] };
+
+        var (isValid, results) = ValidateProfile(dto);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.ContractTypes)));
+    }
+
+    // The same language twice (case-insensitive) must fail the no-duplicate check
+    [Fact]
+    public void ProfileDTO_Languages_DuplicateLanguage_Fails()
+    {
+        var dto = new ProfileDTO
+        {
+            Languages =
+            [
+                new LanguageEntry { Language = "English", Fluency = LanguageFluency.NativeOrBilingual },
+                new LanguageEntry { Language = "english", Fluency = LanguageFluency.Elementary },
+            ]
+        };
+
+        var (isValid, results) = ValidateProfile(dto);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.Languages)));
+    }
+
+    // Distinct languages must pass — differing only in fluency is fine
+    [Fact]
+    public void ProfileDTO_Languages_DistinctLanguages_Passes()
+    {
+        var dto = new ProfileDTO
+        {
+            Languages =
+            [
+                new LanguageEntry { Language = "English", Fluency = LanguageFluency.NativeOrBilingual },
+                new LanguageEntry { Language = "Japanese", Fluency = LanguageFluency.Elementary },
+            ]
+        };
+
+        var (isValid, results) = ValidateProfile(dto);
+
+        Assert.True(isValid);
+        Assert.Empty(results);
+    }
+
+    // The same country twice in working rights must fail the no-duplicate check
+    [Fact]
+    public void ProfileDTO_WorkingRights_DuplicateCountry_Fails()
+    {
+        var dto = new ProfileDTO
+        {
+            WorkingRights =
+            [
+                new WorkingRightEntry { Country = "NZ", Status = WorkingRight.Citizen },
+                new WorkingRightEntry { Country = "NZ", Status = WorkingRight.WorkVisa },
+            ]
+        };
+
+        var (isValid, results) = ValidateProfile(dto);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.WorkingRights)));
+    }
+
+    // The same country twice in preferred locations must fail the no-duplicate check
+    [Fact]
+    public void ProfileDTO_PreferredLocations_DuplicateCountry_Fails()
+    {
+        var dto = new ProfileDTO
+        {
+            PreferredLocations =
+            [
+                new PreferredLocationEntry { Country = "NZ", Areas = ["Auckland"] },
+                new PreferredLocationEntry { Country = "NZ", Areas = ["Wellington"] },
+            ]
+        };
+
+        var (isValid, results) = ValidateProfile(dto);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProfileDTO.PreferredLocations)));
     }
 }

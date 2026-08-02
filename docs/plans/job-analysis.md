@@ -1,5 +1,12 @@
 # Job Analysis (AI Insights)
 
+> **Sequencing (updated 2026-07-18): DEFERRED — do not pick up yet.**
+> The profile page refactor and profile data-model cleanup come first (see
+> `docs/plans/profile-inline-edit.md`). Do **not** start the remaining Job
+> Analysis work — Steps 7–10 and C8 — until that profile track is complete and
+> merged. When choosing upcoming work, profile is the active priority; Job
+> Analysis is next-after, not now.
+
 ## Overview
 
 Two connected features: **Profile** (user's background stored in the app) and **Job Analysis** (on-demand AI insights comparing profile against a specific job). Five separate analysis types, each triggered independently on the job detail page.
