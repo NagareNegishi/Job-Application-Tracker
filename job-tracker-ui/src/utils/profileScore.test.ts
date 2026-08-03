@@ -1,13 +1,15 @@
 // Tests for computeProfileScore — verifies each grading strategy, tier boundaries,
 // the Work History description cutoff, weight normalization, and rounding.
+// Total weight is 108 (100 background/experience + 4 preference fields at 2 each), so
+// normalized values are earned-points / 108 * 100, rounded.
 import { describe, it, expect } from "vitest"
 import { computeProfileScore } from "./profileScore"
-import { LanguageFluency, type UserProfile, type WorkHistoryEntry } from "@/types/profile"
+import { LanguageFluency, ContractType, type UserProfile, type WorkHistoryEntry } from "@/types/profile"
+import { WorkMode } from "@/types/enums"
 
 const emptyProfile: UserProfile = {
   targetRoles: [], skills: [], certifications: [], languages: [],
   workingRights: [], workHistory: [], education: [],
-  // Not scored yet — present only to satisfy the UserProfile shape
   workModes: [], contractTypes: [], salaryExpectations: [],
   preferredLocations: [], additionalConditions: "",
 }
@@ -49,30 +51,51 @@ describe("computeProfileScore", () => {
       workingRights: [{ country: "NZ", status: "Citizen" }],
       workHistory: history(DESC_COMPLETE, DESC_COMPLETE),
       education: [{ institution: "UoA", degree: "BSc", from: 2018, to: 2021 }],
-      // Not scored yet, so they don't affect the 100 — see PROFILE_SCORE_CONFIG TODO
-      workModes: [], contractTypes: [], salaryExpectations: [],
-      preferredLocations: [], additionalConditions: "",
+      // Preference fields must be filled too — they carry weight now, so 100 needs all scored sections.
+      workModes: [WorkMode.Remote],
+      contractTypes: [ContractType.FullTimePermanent],
+      salaryExpectations: [{ minAmount: 100000, currency: "NZD", period: "Annual" }],
+      preferredLocations: [{ country: "NZ", areas: [] }],
+      additionalConditions: "",
     }
     expect(computeProfileScore(full).score).toBe(100)
   })
 })
 
 describe("presence sections", () => {
-  // Each presence section earns its full weight from a single entry.
-  it("awards full weight for one target role (15)", () => {
-    expect(scoreOf({ targetRoles: ["Engineer"] })).toBe(15)
+  // Each presence section earns its full weight from a single entry; values are normalized over 108.
+  it("awards full weight for one target role (15 → 14)", () => {
+    expect(scoreOf({ targetRoles: ["Engineer"] })).toBe(14)  // 15/108 → 13.9
   })
-  it("awards full weight for one education entry (10)", () => {
-    expect(scoreOf({ education: [{ institution: "UoA", degree: "BSc", from: 2018, to: 2021 }] })).toBe(10)
+  it("awards full weight for one education entry (10 → 9)", () => {
+    expect(scoreOf({ education: [{ institution: "UoA", degree: "BSc", from: 2018, to: 2021 }] })).toBe(9)
   })
-  it("awards full weight for one working-rights entry (10)", () => {
-    expect(scoreOf({ workingRights: [{ country: "NZ", status: "Citizen" }] })).toBe(10)
+  it("awards full weight for one working-rights entry (10 → 9)", () => {
+    expect(scoreOf({ workingRights: [{ country: "NZ", status: "Citizen" }] })).toBe(9)
   })
-  it("awards full weight for one language (10)", () => {
-    expect(scoreOf({ languages: [{ language: "English", fluency: LanguageFluency.NativeOrBilingual }] })).toBe(10)
+  it("awards full weight for one language (10 → 9)", () => {
+    expect(scoreOf({ languages: [{ language: "English", fluency: LanguageFluency.NativeOrBilingual }] })).toBe(9)
   })
-  it("awards the lenient certifications weight (5)", () => {
-    expect(scoreOf({ certifications: ["AWS"] })).toBe(5)
+  it("awards the lenient certifications weight (5 → 5)", () => {
+    expect(scoreOf({ certifications: ["AWS"] })).toBe(5)  // 5/108 → 4.6 → 5
+  })
+})
+
+describe("preference sections — minimal weight (2 each), normalized over 108", () => {
+  it("awards the minimal weight for one work mode", () => {
+    expect(scoreOf({ workModes: [WorkMode.Remote] })).toBe(2)  // 2/108 → 1.9 → 2
+  })
+  it("awards the minimal weight for one contract type", () => {
+    expect(scoreOf({ contractTypes: [ContractType.FullTimePermanent] })).toBe(2)
+  })
+  it("awards the minimal weight for one salary expectation", () => {
+    expect(scoreOf({ salaryExpectations: [{ minAmount: 100000, currency: "NZD", period: "Annual" }] })).toBe(2)
+  })
+  it("awards the minimal weight for one preferred location", () => {
+    expect(scoreOf({ preferredLocations: [{ country: "NZ", areas: [] }] })).toBe(2)
+  })
+  it("does not score additionalConditions — free text never moves the score", () => {
+    expect(scoreOf({ additionalConditions: "Open to relocation for the right role" })).toBe(0)
   })
 })
 
@@ -81,52 +104,52 @@ describe("skills — three tiers over weight 25", () => {
     expect(scoreOf({ skills: skills(0) })).toBe(0)
   })
   it("earns one third (8) for 1–2 skills", () => {
-    expect(scoreOf({ skills: skills(1) })).toBe(8)  // 25/3 = 8.33 → 8
+    expect(scoreOf({ skills: skills(1) })).toBe(8)  // 25/3 = 8.33 → /108 → 7.7 → 8
     expect(scoreOf({ skills: skills(2) })).toBe(8)
   })
-  it("earns two thirds (17) for 3–4 skills", () => {
-    expect(scoreOf({ skills: skills(3) })).toBe(17)  // 25 * 2/3 = 16.67 → 17
-    expect(scoreOf({ skills: skills(4) })).toBe(17)
+  it("earns two thirds (15) for 3–4 skills", () => {
+    expect(scoreOf({ skills: skills(3) })).toBe(15)  // 25*2/3 = 16.67 → /108 → 15.4 → 15
+    expect(scoreOf({ skills: skills(4) })).toBe(15)
   })
-  it("earns full weight (25) for 5+ skills", () => {
-    expect(scoreOf({ skills: skills(5) })).toBe(25)
-    expect(scoreOf({ skills: skills(12) })).toBe(25)
+  it("earns full weight (23) for 5+ skills", () => {
+    expect(scoreOf({ skills: skills(5) })).toBe(23)  // 25/108 → 23.1 → 23
+    expect(scoreOf({ skills: skills(12) })).toBe(23)
   })
 })
 
 describe("work history — quality and count over weight 25", () => {
-  it("earns the present floor (10) for an entry with a thin description", () => {
-    expect(scoreOf({ workHistory: history(DESC_SHORT) })).toBe(10)   // 0.4 * 25
-    expect(scoreOf({ workHistory: history("") })).toBe(10)
+  it("earns the present floor (9) for an entry with a thin description", () => {
+    expect(scoreOf({ workHistory: history(DESC_SHORT) })).toBe(9)   // 0.4*25=10 → /108 → 9.3 → 9
+    expect(scoreOf({ workHistory: history("") })).toBe(9)
   })
   it("treats a whitespace-only description as thin", () => {
-    expect(scoreOf({ workHistory: history("   ") })).toBe(10)
+    expect(scoreOf({ workHistory: history("   ") })).toBe(9)
   })
-  it("earns 0.8 (20) for one complete entry", () => {
-    expect(scoreOf({ workHistory: history(DESC_COMPLETE) })).toBe(20)
+  it("earns 0.8 (19) for one complete entry", () => {
+    expect(scoreOf({ workHistory: history(DESC_COMPLETE) })).toBe(19)  // 0.8*25=20 → /108 → 18.5 → 19
   })
   it("counts a description exactly at the 40-char cutoff as complete", () => {
     // DESC_SHORT (39) → floor; DESC_COMPLETE (40) → complete, confirming the boundary is inclusive.
-    expect(scoreOf({ workHistory: history(DESC_SHORT) })).toBe(10)
-    expect(scoreOf({ workHistory: history(DESC_COMPLETE) })).toBe(20)
+    expect(scoreOf({ workHistory: history(DESC_SHORT) })).toBe(9)
+    expect(scoreOf({ workHistory: history(DESC_COMPLETE) })).toBe(19)
   })
-  it("earns full weight (25) for two complete entries", () => {
-    expect(scoreOf({ workHistory: history(DESC_COMPLETE, DESC_COMPLETE) })).toBe(25)
+  it("earns full weight (23) for two complete entries", () => {
+    expect(scoreOf({ workHistory: history(DESC_COMPLETE, DESC_COMPLETE) })).toBe(23)  // 25/108 → 23
   })
-  it("earns 0.8 (20) when only one of several entries is complete", () => {
-    expect(scoreOf({ workHistory: history(DESC_COMPLETE, "") })).toBe(20)
+  it("earns 0.8 (19) when only one of several entries is complete", () => {
+    expect(scoreOf({ workHistory: history(DESC_COMPLETE, "") })).toBe(19)
   })
 })
 
 describe("normalization and breakdown", () => {
-  it("normalizes to the total weight, not a hard-coded 100", () => {
-    // Skills full (25) with everything else empty → 25 / 100 total → 25.
-    expect(scoreOf({ skills: skills(5) })).toBe(25)
+  it("normalizes to the total weight (108), not a hard-coded 100", () => {
+    // Skills full (25) with everything else empty → 25 / 108 total → 23.
+    expect(scoreOf({ skills: skills(5) })).toBe(23)
   })
-  it("returns a per-section breakdown that sums (rounded) to the score", () => {
+  it("returns a per-section breakdown whose points feed the normalized score", () => {
     const result = computeProfileScore({ ...emptyProfile, skills: skills(5), languages: [{ language: "English", fluency: LanguageFluency.NativeOrBilingual }] })
-    expect(result.score).toBe(35)  // 25 + 10
+    expect(result.score).toBe(32)  // (25 + 10) / 108 → 32.4 → 32
     const skillsRow = result.breakdown.find(b => b.section === "skills")
-    expect(skillsRow).toMatchObject({ weight: 25, fraction: 1, points: 25 })
+    expect(skillsRow).toMatchObject({ weight: 25, fraction: 1, points: 25 })  // points is pre-normalization
   })
 })
