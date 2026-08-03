@@ -45,9 +45,12 @@ const PROFILE_SCORE_CONFIG = {
   languages: { weight: 10, strategy: "presence" },
   // Certifications are genuinely optional in tech, so a low weight keeps an empty list from over-penalizing.
   certifications: { weight: 5, strategy: "presence" },
-  // TODO: the newer profile fields (workModes, contractTypes, salaryExpectations, preferredLocations,
-  // additionalConditions) are not scored yet. Restore the exhaustive constraint once rules exist:
-  // } satisfies Record<keyof UserProfile, SectionRule>
+  // Preference fields: minimal weight — useful AI context, but weak signals of profile maturity.
+  workModes: { weight: 2, strategy: "presence" },
+  contractTypes: { weight: 2, strategy: "presence" },
+  salaryExpectations: { weight: 2, strategy: "presence" },
+  preferredLocations: { weight: 2, strategy: "presence" },
+  // `additionalConditions` deliberately unscored (optional free-text) — hence `Partial`, not exhaustive.
 } satisfies Partial<Record<keyof UserProfile, SectionRule>>
 
 type SectionKey = keyof typeof PROFILE_SCORE_CONFIG
