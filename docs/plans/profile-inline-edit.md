@@ -44,8 +44,9 @@ Profile originally rendered all 12 sections as permanently-live forms — the pa
 Feature work first — the drafts refactor is deferred (see **Deferred** below).
 
 1. **Scoring rules for the 5 newer fields.** `profileScore.ts` doesn't cover `workModes`, `contractTypes`, `salaryExpectations`, `preferredLocations`, `additionalConditions`. The exhaustive `satisfies Record<keyof UserProfile, SectionRule>` constraint is relaxed to `Partial` until these are designed.
-2. **Language free-text validation** — gated on risk review; see the dedicated section below.
-3. **Smaller:** `tagSuggestions.ts` (10.6k lines) is eagerly imported into the page bundle — consider a dynamic `import()`.
+2. **Smaller:** `tagSuggestions.ts` (10.6k lines) is eagerly imported into the page bundle — consider a dynamic `import()`.
+
+Language free-text validation — **dropped** (see below).
 
 ## Deferred
 
@@ -60,25 +61,6 @@ The refactor's value is therefore *simplification*: collapse the full `form` mir
 - **Add-entry not blocked at max count:** the footer `AddEntryButton` disables at the cap (salary: 3), but the header `+` (`handleAdd`) still appends past it (the extra entry just can't save). Prefer *hiding* add (header + footer) at max over disabling; likely affects all multi-entry sections.
 - **Duplicate value has no feedback:** a repeated currency/value blocks Save correctly but shows no message — same silent-block as other save-blocking validation. Consider a hint.
 
-## Language free-text validation (researched 2026-07-18 — not yet implemented)
+## Language free-text validation — dropped (2026-08-04)
 
-**Why:** the creatable `LanguageCombobox` now lets users type any string. We want it to cover real languages the suggestion list misses, without letting users enter arbitrary/garbage text. The suggestion list is only ISO 639-1 (`ISO6391.getAllNames()`, 183 names, longest "Old Church Slavonic" at 19 chars); the comprehensive set is ISO 639-3 (~7,900 languages).
-
-**Findings (ISO 639-3 reference-name rules):**
-- Names are multi-word and run longer than the suggestions. Confirmed: "Saint Lucian Creole French" (26), "Algerian Saharan Arabic" (23); with ISO 639-3 parenthetical disambiguators (e.g. `Malay (individual language)`) they exceed 30. **The current 30-char cap (`MaxProfileLanguageItemLength`) is too tight for exactly the long regional/creole names free-text exists to cover.**
-- ISO 639-3 restricts reference names to: the 26 basic-Latin letters + diacritics, and five punctuation marks — space, hyphen-minus `-`, apostrophe `'`, and parentheses `( )`; inside parens also `.` and digits. Real names use all of these: apostrophes/glottal stops (`K'iche'`, Hawaiian `ʻŌlelo Hawaiʻi` — the ʻokina is U+02BB or `’`, not just ASCII `'`), hyphens (`Luba-Katanga`), diacritics (`Bokmål`, `Volapük`, `Arbëreshë`).
-- **Repeated letters cannot be blocked** — real names double letters constantly (`Kalaallisut`, `Wolaytta`). The only safe anti-garbage signal is a run of **3+ identical consecutive chars** (no natural name has `aaa`).
-
-**Proposed change (deferred pending risk review):**
-1. Raise `MaxProfileLanguageItemLength` 30 → ~55 (JSON column — **no migration**; update backend const + frontend const + any tests referencing 30).
-2. Validation rule, **mirrored both sides**: allowed chars = `\p{L}\p{M}`, space, `-`, `'` `’` `ʻ`, `()`, `.`, digits; must contain ≥1 letter; no 3+ identical consecutive chars; ≤ cap.
-3. **Extract as its own reusable util** (e.g. `isValidLanguageName`), consumed by both the combobox `canCreate` gate and `profileValidation.ts` — deserves standalone treatment, not an inline check.
-
-**Risks to verify before implementing:**
-- **Legacy/seed data:** a stored language that fails the new rule would block the *next save of the whole profile* (server `ProfileDTO.Validate()` runs on the full DTO even when another section is edited). Check demo-seed languages and any existing rows.
-- **Suggestion-list conformance:** confirm all 183 `ISO6391.getAllNames()` values pass the rule — some name lists carry commas/semicolons (`"Chinese, Mandarin"`, `"Haitian; Haitian Creole"`) which the ISO 639-3 rule would reject; a failing suggestion would be unpickable. Widen the rule or accept it.
-- **False positives from the 3+-repeat rule:** sanity-check against the suggestion list + known long ISO 639-3 names for any legitimate triple.
-- **ʻokina/apostrophe variants:** allowing `'`/`’`/`ʻ` means `Hawaiʻi` and `Hawai'i` count as distinct languages — dedup won't merge them. Probably acceptable; note it.
-- **Rule drift:** frontend (TS `\p{L}`, needs the `u` regex flag) and backend (.NET regex) are separate implementations — must be kept in sync; add tests on both sides.
-
-Sources: [ISO 639-3 — Wikipedia](https://en.wikipedia.org/wiki/ISO_639-3), [ISO 639-3 code tables — SIL](https://iso639-3.sil.org/code_tables/download_tables), [ʻOkina — Wikipedia](https://en.wikipedia.org/wiki/%CA%BBOkina).
+The creatable `LanguageCombobox` lets users type any language name. Decided not to validate it: English-first app, few non-English users, and a bad value only degrades the user's *own* AI analysis (self-inflicted, no security or multi-user risk). The existing backend `[MaxLength(30)]` guard is enough. Revisit only if a real user hits a problem — e.g. a legitimate name over 30 chars. If ever needed, the one cheap anti-garbage check worth adding is "no 3+ identical consecutive chars".
