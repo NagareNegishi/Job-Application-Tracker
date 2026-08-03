@@ -1,6 +1,6 @@
 # Profile page: inline view/edit refactor
 
-Date: 2026-07-16, updated 2026-07-18. Branch: `feat/profile-analysis`.
+Date: 2026-07-16, updated 2026-08-04. Branch: `feat/profile-analysis`.
 
 **This profile page + model track is the active priority — finish it before the deferred Job Analysis work (`docs/plans/job-analysis.md`, Steps 7–10 / C8).**
 
@@ -29,7 +29,7 @@ Profile originally rendered all 12 sections as permanently-live forms — the pa
 - **Creatable language combobox (07-18).** Restored the free-text-language ability lost when Languages moved off `TagInput` onto `LanguageCombobox`. The cmdk `Command` now tracks the `CommandInput` value; when the trimmed query is non-empty and matches no suggestion or excluded value (case-insensitive, mirroring server dedup), it renders an `Add "<typed>"` item that commits the typed text. `CountryCombobox` stays closed-set (no such item). Frontend-only — backend already accepts any `[MaxLength(30)]` string.
 - **`Unspecified` fluency = legacy-only (07-18).** Reversed the earlier "user-selectable" call. `LanguagesSection.tsx` filters `Unspecified` out of the fluency `Select`, keeping it only when the current entry already holds it — else editing a migrated row shows a blank dropdown (radix `Select` renders nothing for a value absent from its items). New entries default to `ProfessionalWorking`; the read view still shows `Unspecified` via `formatEnumLabel`.
 
-## Manual browser verification (still to do, then commit)
+## Manual browser verification (pre-merge checklist)
 
 1. Per-section: pencil → edit → Save persists + returns to view; Cancel reverts + closes; empty sections show placeholder + a + header button.
 1a. Add flows: + on an empty entry-based section opens edit with one blank entry; + next to a pencil on a filled multi-entry section appends and scrolls; Cancel reverts to the pre-add state.
@@ -41,10 +41,17 @@ Profile originally rendered all 12 sections as permanently-live forms — the pa
 
 ## Next session (in order)
 
-1. **Drafts state model** (changes page state architecture — test by hand). Replace the full `form` mirror, the data-sync merge effect, `editingRef`, and the `editingSections` set with one `drafts: Partial<UserProfile>` holding only sections being edited. View mode reads `data` directly, so a refetch can't clobber an open edit. Open copies `data[key]` into drafts; cancel deletes the key; `editing` = key in drafts; score = `computeProfileScore({ ...saved, ...drafts })`. Removes the sync-effect bug class. Touches save/cancel/first-run (PUT) flows.
-2. **Scoring rules for the 5 newer fields.** `profileScore.ts` doesn't cover `workModes`, `contractTypes`, `salaryExpectations`, `preferredLocations`, `additionalConditions`. The exhaustive `satisfies Record<keyof UserProfile, SectionRule>` constraint is relaxed to `Partial` until these are designed.
-3. **Language free-text validation** — gated on risk review; see the dedicated section below.
-4. **Smaller:** `tagSuggestions.ts` (10.6k lines) is eagerly imported into the page bundle — consider a dynamic `import()`.
+Feature work first — the drafts refactor is deferred (see **Deferred** below).
+
+1. **Scoring rules for the 5 newer fields.** `profileScore.ts` doesn't cover `workModes`, `contractTypes`, `salaryExpectations`, `preferredLocations`, `additionalConditions`. The exhaustive `satisfies Record<keyof UserProfile, SectionRule>` constraint is relaxed to `Partial` until these are designed.
+2. **Language free-text validation** — gated on risk review; see the dedicated section below.
+3. **Smaller:** `tagSuggestions.ts` (10.6k lines) is eagerly imported into the page bundle — consider a dynamic `import()`.
+
+## Deferred
+
+**Drafts state model — simplification, not a bug fix.** Originally slated as the top task on the belief that saving one section could clobber unsaved edits in another open section. Re-checked 2026-08-04: that case is already handled. The data-sync effect in `ProfilePage.tsx` rebuilds `form` from fresh server `data` but preserves every key still in `editingRef`, so the concurrent-save path does **not** lose edits. There is no currently-reproducible data-loss bug here.
+
+The refactor's value is therefore *simplification*: collapse the full `form` mirror + the data-sync merge effect + `editingRef` + the `editingSections` set into one `drafts: Partial<UserProfile>` holding only sections being edited. View mode would read `data` directly; open copies `data[key]` into drafts; cancel deletes the key; `editing` = key in drafts; score = `computeProfileScore({ ...saved, ...drafts })`. Upside: fewer moving parts, and it removes the eager-`view`-prop hazard (see Known follow-ups) by construction. Touches save/cancel/first-run (PUT) flows — verify by hand. Deferred until the feature work above lands; still worth doing before Job Analysis if picked up.
 
 ## Known follow-ups
 
@@ -52,7 +59,6 @@ Profile originally rendered all 12 sections as permanently-live forms — the pa
 - **Add-button dirty-lock inconsistency:** WorkHistory/Education disable their in-form add button while dirty; Locations/WorkRights never do. Pick one.
 - **Add-entry not blocked at max count:** the footer `AddEntryButton` disables at the cap (salary: 3), but the header `+` (`handleAdd`) still appends past it (the extra entry just can't save). Prefer *hiding* add (header + footer) at max over disabling; likely affects all multi-entry sections.
 - **Duplicate value has no feedback:** a repeated currency/value blocks Save correctly but shows no message — same silent-block as other save-blocking validation. Consider a hint.
-- **Per-entry modal (open decision):** possibly switch entry-based sections to a per-entry dialog (LinkedIn-faithful). Conflicts with Edit all / Save all and first-visit-all-open — decide with the drafts model. The extracted handlers would move in largely unchanged.
 
 ## Language free-text validation (researched 2026-07-18 — not yet implemented)
 
@@ -76,7 +82,3 @@ Profile originally rendered all 12 sections as permanently-live forms — the pa
 - **Rule drift:** frontend (TS `\p{L}`, needs the `u` regex flag) and backend (.NET regex) are separate implementations — must be kept in sync; add tests on both sides.
 
 Sources: [ISO 639-3 — Wikipedia](https://en.wikipedia.org/wiki/ISO_639-3), [ISO 639-3 code tables — SIL](https://iso639-3.sil.org/code_tables/download_tables), [ʻOkina — Wikipedia](https://en.wikipedia.org/wiki/%CA%BBOkina).
-
-## Recovery
-
-Pre-refactor code (always-live forms, per-section `value/onChange/savedValue/saving/onSave/error` contract, PUT-then-PATCH save flow) is recoverable at commit `173a5fd`.
