@@ -187,4 +187,72 @@ public class AnalysisControllerTests : IDisposable
         var value = Assert.IsType<AlignmentResult>(ok.Value);
         Assert.Equal(expected, value);
     }
+
+    [Fact]
+    public async Task Skills_ReturnsOk_WithMockedResult()
+    {
+        await SeedGatedProfileAsync();
+        var expected = new SkillsResult(["TypeScript", "React", "REST APIs"]);
+        _analysisMock
+            .Setup(s => s.AnalyseSkillsAsync(It.IsAny<UserProfile>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>()))
+            .ReturnsAsync(expected);
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription) };
+
+        var result = await _controller.Skills(request);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<SkillsResult>(ok.Value);
+        Assert.Equal(expected, value);
+    }
+
+    [Fact]
+    public async Task Gaps_ReturnsOk_WithMockedResult()
+    {
+        await SeedGatedProfileAsync();
+        var expected = new GapsResult([new GapItem("No Go experience", "Mention transferable systems knowledge.")]);
+        _analysisMock
+            .Setup(s => s.AnalyseGapsAsync(It.IsAny<UserProfile>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>()))
+            .ReturnsAsync(expected);
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription) };
+
+        var result = await _controller.Gaps(request);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<GapsResult>(ok.Value);
+        Assert.Equal(expected, value);
+    }
+
+    [Fact]
+    public async Task QuestionsToAsk_ReturnsOk_WithMockedResult()
+    {
+        await SeedGatedProfileAsync();
+        var expected = new QuestionsResult(["What does the on-call rotation look like?"]);
+        _analysisMock
+            .Setup(s => s.AnalyseQuestionsToAskAsync(It.IsAny<UserProfile>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>()))
+            .ReturnsAsync(expected);
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription) };
+
+        var result = await _controller.QuestionsToAsk(request);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<QuestionsResult>(ok.Value);
+        Assert.Equal(expected, value);
+    }
+
+    [Fact]
+    public async Task InterviewQuestions_ReturnsOk_WithMockedResult()
+    {
+        await SeedGatedProfileAsync();
+        var expected = new QuestionsResult(["Tell me about a time you dealt with a difficult stakeholder."]);
+        _analysisMock
+            .Setup(s => s.AnalyseInterviewQuestionsAsync(It.IsAny<UserProfile>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>()))
+            .ReturnsAsync(expected);
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription) };
+
+        var result = await _controller.InterviewQuestions(request);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<QuestionsResult>(ok.Value);
+        Assert.Equal(expected, value);
+    }
 }
