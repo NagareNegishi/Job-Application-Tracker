@@ -241,6 +241,15 @@ builder.Services.AddRateLimiter(options =>
         config.QueueLimit = 0;
         config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
     });
+
+    // Shared across all 5 analysis types — each request hits the Claude API
+    options.AddFixedWindowLimiter("analyse", config =>
+    {
+        config.Window = TimeSpan.FromMinutes(1);
+        config.PermitLimit = 5;
+        config.QueueLimit = 0;
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
 });
 
 // CORS only needed in dev — in production, Nginx proxies /api/* so frontend and backend share one origin
