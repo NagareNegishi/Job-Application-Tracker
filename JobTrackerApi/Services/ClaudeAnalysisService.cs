@@ -27,7 +27,8 @@ public class ClaudeAnalysisService : IAnalysisService
     {
         var result = await CallClaudeAsync<AlignmentResult>(
             ClaudeAnalysisConfig.AlignmentPrompt,
-            FormatUserMessage(profile, description, role, company, includeConditions: true));
+            FormatUserMessage(profile, description, role, company, includeConditions: true),
+            "Alignment");
 
         if (result.Score < 1 || result.Score > 5 || string.IsNullOrWhiteSpace(result.Reasoning))
             throw new AnalysisFormatException($"Alignment response failed field validation. Score={result.Score}");
@@ -39,7 +40,8 @@ public class ClaudeAnalysisService : IAnalysisService
     {
         var result = await CallClaudeAsync<SkillsResult>(
             ClaudeAnalysisConfig.SkillsPrompt,
-            FormatUserMessage(profile, description, role, company));
+            FormatUserMessage(profile, description, role, company),
+            "Skills");
 
         if (result.Skills is not { Length: >= 1 })
             throw new AnalysisFormatException("Skills response is empty or missing.");
@@ -51,7 +53,8 @@ public class ClaudeAnalysisService : IAnalysisService
     {
         var result = await CallClaudeAsync<GapsResult>(
             ClaudeAnalysisConfig.GapsPrompt,
-            FormatUserMessage(profile, description, role, company));
+            FormatUserMessage(profile, description, role, company),
+            "Gaps");
 
         if (result.Gaps is not { Length: >= 1 })
             throw new AnalysisFormatException("Gaps response is empty or missing.");
@@ -63,7 +66,8 @@ public class ClaudeAnalysisService : IAnalysisService
     {
         var result = await CallClaudeAsync<QuestionsResult>(
             ClaudeAnalysisConfig.QuestionsToAskPrompt,
-            FormatUserMessage(profile, description, role, company));
+            FormatUserMessage(profile, description, role, company),
+            "QuestionsToAsk");
 
         if (result.Questions is not { Length: >= 1 })
             throw new AnalysisFormatException("Questions-to-ask response is empty or missing.");
@@ -75,7 +79,8 @@ public class ClaudeAnalysisService : IAnalysisService
     {
         var result = await CallClaudeAsync<QuestionsResult>(
             ClaudeAnalysisConfig.InterviewQuestionsPrompt,
-            FormatUserMessage(profile, description, role, company));
+            FormatUserMessage(profile, description, role, company),
+            "InterviewQuestions");
 
         if (result.Questions is not { Length: >= 1 })
             throw new AnalysisFormatException("Interview questions response is empty or missing.");
@@ -83,7 +88,7 @@ public class ClaudeAnalysisService : IAnalysisService
         return result;
     }
 
-    private async Task<T> CallClaudeAsync<T>(string systemPrompt, string userMessage)
+    private async Task<T> CallClaudeAsync<T>(string systemPrompt, string userMessage, string context)
     {
         string raw;
         try
@@ -103,7 +108,9 @@ public class ClaudeAnalysisService : IAnalysisService
             throw new AnalysisFormatException("Claude API request failed.", ex);
         }
 
-        var json = ExtractJson(raw);
+        var json = ClaudeResponseHelper.ExtractJson(raw, _logger, context);
+        ClaudeResponseHelper.LogContractIssues(json, ClaudeResponseHelper.GetKnownKeys<T>(), _logger, context);
+
         try
         {
             return JsonSerializer.Deserialize<T>(json)
@@ -114,28 +121,6 @@ public class ClaudeAnalysisService : IAnalysisService
             _logger.LogWarning(ex, "Failed to deserialize analysis response. Raw: {Raw}", raw);
             throw new AnalysisFormatException("Claude analysis response could not be parsed.", ex);
         }
-    }
-
-    // Claude may return prose around the JSON despite instructions — extract the first { } block.
-    // Falls back to "{}" so deserialization always runs; field validation in each public method catches the empty result.
-    private string ExtractJson(string raw)
-    {
-        var trimmed = raw.Trim();
-        var start   = trimmed.IndexOf('{');
-        var end     = trimmed.LastIndexOf('}');
-
-        if (start == -1 || end == -1 || end < start)
-        {
-            _logger.LogWarning("Analysis response contains no JSON object. Raw: {Raw}", raw);
-            return "{}";
-        }
-
-        var json = trimmed[start..(end + 1)];
-
-        if (start > 0 || end < trimmed.Length - 1)
-            _logger.LogWarning("Analysis response contains text outside JSON. Raw: {Raw}", raw);
-
-        return json;
     }
 
     /// <summary>Builds the user-turn message sent to Claude: profile summary, optionally conditions, then the job.</summary>
