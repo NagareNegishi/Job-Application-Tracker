@@ -63,4 +63,52 @@ public class AnalysisControllerTests : IDisposable
         await _context.SaveChangesAsync();
         return profile;
     }
+
+    [Fact]
+    public void AnalysisRequest_EmptyDescription_FailsValidation()
+    {
+        var request = new AnalysisRequest { Description = "" };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        Assert.False(isValid);
+    }
+
+    [Fact]
+    public void AnalysisRequest_DescriptionUnderMinimum_FailsValidation()
+    {
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription - 1) };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        Assert.False(isValid);
+    }
+
+    [Fact]
+    public void AnalysisRequest_DescriptionOverMaximum_FailsValidation()
+    {
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MaxDescriptionLength + 1) };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        Assert.False(isValid);
+    }
+
+    [Fact]
+    public void AnalysisRequest_ValidDescription_PassesValidation_WithoutRoleOrCompany()
+    {
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription) };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        Assert.True(isValid);
+    }
 }
