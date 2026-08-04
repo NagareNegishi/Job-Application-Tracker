@@ -111,4 +111,44 @@ public class AnalysisControllerTests : IDisposable
 
         Assert.True(isValid);
     }
+
+    [Fact]
+    public async Task Alignment_ReturnsForbidden_ForDemoUser()
+    {
+        SetUser(email: DemoUser.Email);
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription) };
+
+        var result = await _controller.Alignment(request);
+
+        var objectResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task Alignment_ReturnsBadRequest_WhenNoProfileExists()
+    {
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription) };
+
+        var result = await _controller.Alignment(request);
+
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task Alignment_ReturnsBadRequest_WhenProfileDoesNotMeetMinimum()
+    {
+        // Missing WorkingRights — otherwise-populated profile still fails the gate
+        _context.UserProfiles.Add(new UserProfile
+        {
+            UserId = TestUserId,
+            TargetRoles = ["Backend Engineer"],
+            Skills = ["C#"]
+        });
+        await _context.SaveChangesAsync();
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription) };
+
+        var result = await _controller.Alignment(request);
+
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
 }
