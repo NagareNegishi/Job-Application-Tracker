@@ -261,9 +261,9 @@ Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine l
 |---|---|---|
 | 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | Done |
 | 6a | Shared `ClaudeResponseHelper` (`ExtractJson`/`LogContractIssues`/`GetKnownKeys<T>`) — used by both `ClaudeParsingService` and `ClaudeAnalysisService`; `ClaudeResponseHelperTests` (11 tests) | Done |
-| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min policy | — |
-| 8 | Register `ClaudeAnalysisService` in `Program.cs` | — |
-| 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | — |
+| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min policy | Done |
+| 8 | Register `ClaudeAnalysisService` in `Program.cs` | Done |
+| 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | Done |
 | 8b | Prompt-quality polish — all 5 prompts in `ClaudeAnalysisConfig.cs` are still placeholder quality (`TODO` comment); test against real job descriptions through the live endpoint from Step 7/8 and iterate before shipping | — |
 | 9 | Add analysis UI to Job Detail page — 5 independent buttons; pre-fill `description` from the job (prompt if empty); each shows its own result inline | — |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
