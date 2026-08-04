@@ -3,6 +3,7 @@ using JobTrackerApi.Data;
 using JobTrackerApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -21,6 +22,28 @@ public class AnalysisController : ControllerBase
     {
         _context = context;
         _analysis = analysis;
+    }
+
+    [HttpPost("alignment")]
+    [Authorize(Policy = "AiEnabled")]
+    [EnableRateLimiting("analyse")]
+    public async Task<ActionResult<AlignmentResult>> Alignment([FromBody] AnalysisRequest request)
+    {
+        if (IsDemo())
+            return StatusCode(403, new { message = "Analysis is not available in demo mode. Create a free account to try this feature." });
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var (profile, error) = await GetGatedProfileAsync(userId!);
+        if (error != null) return error;
+
+        try
+        {
+            return Ok(await _analysis.AnalyseAlignmentAsync(profile!, request.Description, request.Role, request.Company));
+        }
+        catch (AnalysisFormatException ex)
+        {
+            return StatusCode(502, new { error = ex.Message });
+        }
     }
 
     // Returns true if the current request is authenticated as the demo account
