@@ -35,7 +35,7 @@ CV integration is deferred — analysis uses profile text only.
 | WorkHistory dates: separate `fromYear`/`fromMonth`/`toYear`/`toMonth` int fields; month optional | Year-only entries are common on CVs. Separate fields eliminate partial-state bugs in the frontend (no combining/splitting logic needed). `[Range]` on each field; `IValidatableObject` enforces not-future and ordering. Month ordering only checked when both months present. Education keeps plain `from`/`to` year ints (already matched this pattern). |
 | Save is permissive; the analysis gate is strict | Profiles are built incrementally — PUT/PATCH accept sparse or empty input; required-content is enforced only at analysis time (the 400 gate), not at save |
 | Return 400 if profile not set | Analysis has no input without a profile; clear error, not a silent empty response |
-| One shared `"analyse"` rate-limit policy, 5/min per IP | Real use is slow (~5s latency + ~10s reading ≈ 4/min natural ceiling), so 5/min maps to "run the full 5-type suite once per minute" — never blocks first-pass use, caps abuse an order of magnitude tighter. Per-IP matches existing `auth`/`parse` policies; shared (not per-endpoint) because users burst across types, not repeat one |
+| One shared `"analyse"` rate-limit policy, 5/min | Real use is slow (~5s latency + ~10s reading ≈ 4/min natural ceiling), so 5/min maps to "run the full 5-type suite once per minute" — never blocks first-pass use, caps abuse an order of magnitude tighter. Matches existing `auth`/`parse` policies (global bucket, not per-IP — see `progress.md` backlog note); shared (not per-endpoint) because users burst across types, not repeat one |
 | Analysis requires the `AiEnabled` policy | Every Claude-backed feature sits behind AI access (same as auto-fill parsing), so the admin AI-access switch governs the whole paid surface — no ungated hole where a non-AI user burns API budget |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
 | `claude-haiku-4-5` model | Fast and cheap; each call is a single focused extraction, not reasoning |
@@ -190,7 +190,7 @@ Request body (minimal — only `description` is required):
 
 All endpoints:
 - Require `[Authorize]` **and the `AiEnabled` policy** (same as auto-fill parsing — every Claude-backed feature requires AI access); block demo user (403)
-- Rate-limited by a single shared `"analyse"` policy — **5/min per IP** across all 5 types (enough to run the full suite once a minute; an abuse backstop, not a UX limit)
+- Rate-limited by a single shared `"analyse"` policy — **5/min** across all 5 types (enough to run the full suite once a minute; an abuse backstop, not a UX limit)
 - Return 400 if `description` is null/empty, shorter than `MinAnalysisDescription` (30 chars), or longer than the existing `Description` max (reused so the ad-hoc paste is bounded like a saved job). This length check is the only job-side gate — it bounds accidental/trivial input ("test", "asdf"), not quality; deliberate abuse is handled by rate limiting (D10). Enforced client-side too. `role`/`company` are optional context, never gated. A description that clears the minimum but is still thin is *not* a 400; the analysis itself returns a "not enough information" style answer.
 - Return 400 unless the profile meets the analysis minimum — ALL of: `TargetRoles` non-empty, `Skills` non-empty, `WorkingRights` non-empty (≥1 entry, any status incl. `RequiresSponsorship`), and at least one of `Certifications` / `WorkHistory` / `Education` non-empty. `Languages` not required. Same rule enforced client-side (analysis buttons disabled until met); defined once, identical both sides.
 
@@ -261,7 +261,7 @@ Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine l
 |---|---|---|
 | 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | Done |
 | 6a | Shared `ClaudeResponseHelper` (`ExtractJson`/`LogContractIssues`/`GetKnownKeys<T>`) — used by both `ClaudeParsingService` and `ClaudeAnalysisService`; `ClaudeResponseHelperTests` (11 tests) | Done |
-| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min-per-IP policy | — |
+| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min policy | — |
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | — |
 | 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | — |
 | 8b | Prompt-quality polish — all 5 prompts in `ClaudeAnalysisConfig.cs` are still placeholder quality (`TODO` comment); test against real job descriptions through the live endpoint from Step 7/8 and iterate before shipping | — |

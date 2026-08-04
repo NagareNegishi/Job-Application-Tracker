@@ -12,7 +12,7 @@ C#/.NET job application tracker project. Full-stack ASP.NET Core 10 Web API + Re
 - `SameSite` cookie controlled by `IWebHostEnvironment`: None in dev, Strict in prod
 - Demo user (`demo@jobtracker.com`) — password never used; `/api/auth/demo` bypasses password check; always `EmailConfirmed = true`
 - Email verification required before login — `EmailConfirmed` flag on `IdentityUser`
-- Rate limiting: `"auth"` policy (5 req/min per IP), `"resend-confirmation"` policy (3 req/hour per IP)
+- Rate limiting: `"auth"` (5 req/min), `"resend-confirmation"` (3 req/hour), `"parse"` (2 req/min) — global per policy, not per IP (`AddFixedWindowLimiter` never reads the caller's IP); per-IP fix is backlog, covers all policies incl. the planned `"analyse"` one
 
 ### Backend
 - Controllers inject `JobTrackerContext` directly — no repository/service layer
