@@ -90,6 +90,28 @@ public class AnalysisController : ControllerBase
         }
     }
 
+    [HttpPost("questions-to-ask")]
+    [Authorize(Policy = "AiEnabled")]
+    [EnableRateLimiting("analyse")]
+    public async Task<ActionResult<QuestionsResult>> QuestionsToAsk([FromBody] AnalysisRequest request)
+    {
+        if (IsDemo())
+            return StatusCode(403, new { message = "Analysis is not available in demo mode. Create a free account to try this feature." });
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var (profile, error) = await GetGatedProfileAsync(userId!);
+        if (error != null) return error;
+
+        try
+        {
+            return Ok(await _analysis.AnalyseQuestionsToAskAsync(profile!, request.Description, request.Role, request.Company));
+        }
+        catch (AnalysisFormatException ex)
+        {
+            return StatusCode(502, new { error = ex.Message });
+        }
+    }
+
     // Returns true if the current request is authenticated as the demo account
     // JWT middleware maps "email" → ClaimTypes.Email — "email" (short name) no longer exists in User.Claims
     private bool IsDemo() =>
