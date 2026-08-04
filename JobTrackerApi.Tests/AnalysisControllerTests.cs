@@ -47,8 +47,7 @@ public class AnalysisControllerTests : IDisposable
         };
     }
 
-    // Seeds a profile that clears the analysis gate (D9): TargetRoles, Skills, WorkingRights,
-    // and at least one of Certifications/WorkHistory/Education.
+    // Seeds a profile that clears the analysis gate.
     private async Task<UserProfile> SeedGatedProfileAsync(string userId = TestUserId)
     {
         var profile = new UserProfile
@@ -150,5 +149,42 @@ public class AnalysisControllerTests : IDisposable
         var result = await _controller.Alignment(request);
 
         Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task Alignment_ReturnsBadGateway_WhenServiceThrowsAnalysisFormatException()
+    {
+        await SeedGatedProfileAsync();
+        _analysisMock
+            .Setup(s => s.AnalyseAlignmentAsync(It.IsAny<UserProfile>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>()))
+            .ThrowsAsync(new AnalysisFormatException("bad json"));
+        var request = new AnalysisRequest { Description = new string('x', ValidationConstants.MinAnalysisDescription) };
+
+        var result = await _controller.Alignment(request);
+
+        var objectResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(502, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task Alignment_ReturnsOk_WithMockedResult()
+    {
+        await SeedGatedProfileAsync();
+        var expected = new AlignmentResult(4, "Strong match.", null);
+        _analysisMock
+            .Setup(s => s.AnalyseAlignmentAsync(It.IsAny<UserProfile>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string?>()))
+            .ReturnsAsync(expected);
+        var request = new AnalysisRequest
+        {
+            Description = new string('x', ValidationConstants.MinAnalysisDescription),
+            Role = "Backend Engineer",
+            Company = "Acme"
+        };
+
+        var result = await _controller.Alignment(request);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<AlignmentResult>(ok.Value);
+        Assert.Equal(expected, value);
     }
 }
