@@ -155,6 +155,9 @@ else
 // AI parsing: extracts job fields from pasted listing text via Claude API
 builder.Services.AddScoped<IParsingService, ClaudeParsingService>();
 
+// AI analysis: compares a job listing against the user's profile via Claude API
+builder.Services.AddScoped<IAnalysisService, ClaudeAnalysisService>();
+
 // Registers Identity's core services
 builder.Services.AddIdentityCore<ApplicationUser>()
     .AddRoles<IdentityRole>()
