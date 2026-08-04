@@ -8,6 +8,7 @@ public static class ValidationConstants
     public const int MaxCompanyLength = 100;
     public const int MaxRoleLength = 100;
     public const int MaxDescriptionLength = 5000;
+    public const int MinAnalysisDescription = 30; // assumed floor for genuine text
     public const int MaxNotesLength = 5000;
     public const int MaxContactSize = 10;
     public const int MaxCorrespondenceSize = 10;
