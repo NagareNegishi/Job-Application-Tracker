@@ -3,6 +3,7 @@ using JobTrackerApi.Data;
 using JobTrackerApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace JobTrackerApi.Controllers;
 
@@ -20,4 +21,9 @@ public class AnalysisController : ControllerBase
         _context = context;
         _analysis = analysis;
     }
+
+    // Returns true if the current request is authenticated as the demo account
+    // JWT middleware maps "email" → ClaimTypes.Email — "email" (short name) no longer exists in User.Claims
+    private bool IsDemo() =>
+        User.FindFirstValue(ClaimTypes.Email) == DemoUser.Email;
 }
