@@ -155,6 +155,9 @@ else
 // AI parsing: extracts job fields from pasted listing text via Claude API
 builder.Services.AddScoped<IParsingService, ClaudeParsingService>();
 
+// AI analysis: compares a job listing against the user's profile via Claude API
+builder.Services.AddScoped<IAnalysisService, ClaudeAnalysisService>();
+
 // Registers Identity's core services
 builder.Services.AddIdentityCore<ApplicationUser>()
     .AddRoles<IdentityRole>()
@@ -238,6 +241,15 @@ builder.Services.AddRateLimiter(options =>
     {
         config.Window = TimeSpan.FromMinutes(1);
         config.PermitLimit = 2;
+        config.QueueLimit = 0;
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
+
+    // Shared across all 5 analysis types — each request hits the Claude API
+    options.AddFixedWindowLimiter("analyse", config =>
+    {
+        config.Window = TimeSpan.FromMinutes(1);
+        config.PermitLimit = 5;
         config.QueueLimit = 0;
         config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
     });

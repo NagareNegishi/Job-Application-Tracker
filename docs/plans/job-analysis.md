@@ -35,7 +35,7 @@ CV integration is deferred — analysis uses profile text only.
 | WorkHistory dates: separate `fromYear`/`fromMonth`/`toYear`/`toMonth` int fields; month optional | Year-only entries are common on CVs. Separate fields eliminate partial-state bugs in the frontend (no combining/splitting logic needed). `[Range]` on each field; `IValidatableObject` enforces not-future and ordering. Month ordering only checked when both months present. Education keeps plain `from`/`to` year ints (already matched this pattern). |
 | Save is permissive; the analysis gate is strict | Profiles are built incrementally — PUT/PATCH accept sparse or empty input; required-content is enforced only at analysis time (the 400 gate), not at save |
 | Return 400 if profile not set | Analysis has no input without a profile; clear error, not a silent empty response |
-| One shared `"analyse"` rate-limit policy, 5/min per IP | Real use is slow (~5s latency + ~10s reading ≈ 4/min natural ceiling), so 5/min maps to "run the full 5-type suite once per minute" — never blocks first-pass use, caps abuse an order of magnitude tighter. Per-IP matches existing `auth`/`parse` policies; shared (not per-endpoint) because users burst across types, not repeat one |
+| One shared `"analyse"` rate-limit policy, 5/min | Real use is slow (~5s latency + ~10s reading ≈ 4/min natural ceiling), so 5/min maps to "run the full 5-type suite once per minute" — never blocks first-pass use, caps abuse an order of magnitude tighter. Matches existing `auth`/`parse` policies (global bucket, not per-IP — see `progress.md` backlog note); shared (not per-endpoint) because users burst across types, not repeat one |
 | Analysis requires the `AiEnabled` policy | Every Claude-backed feature sits behind AI access (same as auto-fill parsing), so the admin AI-access switch governs the whole paid surface — no ungated hole where a non-AI user burns API budget |
 | Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
 | `claude-haiku-4-5` model | Fast and cheap; each call is a single focused extraction, not reasoning |
@@ -190,7 +190,7 @@ Request body (minimal — only `description` is required):
 
 All endpoints:
 - Require `[Authorize]` **and the `AiEnabled` policy** (same as auto-fill parsing — every Claude-backed feature requires AI access); block demo user (403)
-- Rate-limited by a single shared `"analyse"` policy — **5/min per IP** across all 5 types (enough to run the full suite once a minute; an abuse backstop, not a UX limit)
+- Rate-limited by a single shared `"analyse"` policy — **5/min** across all 5 types (enough to run the full suite once a minute; an abuse backstop, not a UX limit)
 - Return 400 if `description` is null/empty, shorter than `MinAnalysisDescription` (30 chars), or longer than the existing `Description` max (reused so the ad-hoc paste is bounded like a saved job). This length check is the only job-side gate — it bounds accidental/trivial input ("test", "asdf"), not quality; deliberate abuse is handled by rate limiting (D10). Enforced client-side too. `role`/`company` are optional context, never gated. A description that clears the minimum but is still thin is *not* a 400; the analysis itself returns a "not enough information" style answer.
 - Return 400 unless the profile meets the analysis minimum — ALL of: `TargetRoles` non-empty, `Skills` non-empty, `WorkingRights` non-empty (≥1 entry, any status incl. `RequiresSponsorship`), and at least one of `Certifications` / `WorkHistory` / `Education` non-empty. `Languages` not required. Same rule enforced client-side (analysis buttons disabled until met); defined once, identical both sides.
 
@@ -260,9 +260,11 @@ Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine l
 | # | Item | Status |
 |---|---|---|
 | 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | Done |
-| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min-per-IP policy | — |
-| 8 | Register `ClaudeAnalysisService` in `Program.cs` | — |
-| 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | — |
+| 6a | Shared `ClaudeResponseHelper` (`ExtractJson`/`LogContractIssues`/`GetKnownKeys<T>`) — used by both `ClaudeParsingService` and `ClaudeAnalysisService`; `ClaudeResponseHelperTests` (11 tests) | Done |
+| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min policy | Done |
+| 8 | Register `ClaudeAnalysisService` in `Program.cs` | Done |
+| 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | Done |
+| 8b | Prompt-quality polish — all 5 prompts in `ClaudeAnalysisConfig.cs` are still placeholder quality (`TODO` comment); test against real job descriptions through the live endpoint from Step 7/8 and iterate before shipping | — |
 | 9 | Add analysis UI to Job Detail page — 5 independent buttons; pre-fill `description` from the job (prompt if empty); each shows its own result inline | — |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
 
@@ -286,7 +288,7 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 | `AdditionalConditions` = free text (`text`, max 500), HTML-rejected | Catch-all: experience level, "unpaid only if exceptional", region nuance. 500 fits a few preference notes, not an essay. Reject markup via the same inline `<[a-zA-Z/]` regex `ParseListingRequest` uses (no reusable attribute exists — it's an `IValidatableObject` check in `ProfileDTO.Validate()`) |
 | Conditions are optional — analysis gate unchanged | Requiring conditions would block a quick alignment run; they enrich output when present. The D9 profile-minimum stays background-only |
 | Only Alignment (of the 5) reads conditions | The other four are background-only (skills/gaps/interview prep); conditions are about fit/desire, which is Alignment's job |
-| Alignment gains soft `concern: string?` (not-a-job detection) | Surfaces "looks like a CV service / scam / unclear listing" without refusing — score + reasoning still return, the user decides. Non-strict by choice (some users want unclear listings). Threshold/wording tuned in the Step 6 prompt-polish session |
+| Alignment gains soft `concern: string?` (not-a-job detection) | Surfaces "looks like a CV service / scam / unclear listing" without refusing — score + reasoning still return, the user decides. Non-strict by choice (some users want unclear listings). Threshold/wording tuned in Step 8b |
 
 ### New fields (on `UserProfile`, `ProfileDTO`, `ProfileResponseDto`)
 
@@ -323,7 +325,7 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 | C7 | Frontend profile form — conditions section + country/currency suggestion lists | Done |
 | C8 | Frontend alignment display — show `concern` when present | — |
 
-Prompt-quality polish for the reworked `AlignmentPrompt` + the `concern` threshold folds into the existing Step 6 prompt-polish session.
+Prompt-quality polish for the reworked `AlignmentPrompt` + the `concern` threshold folds into Step 8b.
 
 ### C7 Breakdown (Frontend Conditions UI) — Done
 
@@ -336,10 +338,6 @@ All of C7.1–C7.8b landed: types/constants/suggestions (`types/profile.ts`, `li
 ### For the Analysis build (Steps 6–10)
 - `Anthropic:ApiKey` is shared with the auto-fill parsing feature — no duplicate config key needed.
 - Tests: mock `IAnalysisService` in controller tests; no live Claude calls in CI.
-
-### Step 6 polish (before Step 7)
-- **Prompt quality:** all 5 prompts in `ClaudeAnalysisConfig.cs` are placeholder quality — marked with a `TODO` comment. Dedicate a session to test each against real job descriptions and iterate before shipping.
-- **Shared Claude helper refactor:** `ClaudeParsingService` and `ClaudeAnalysisService` both duplicate `ExtractJson`. `ClaudeParsingService` also has `LogContractIssues` (logs unexpected/null keys to help tune prompts) that `ClaudeAnalysisService` lacks. Consider extracting both into a shared internal static helper (e.g. `ClaudeResponseHelper`) and adding contract-issue logging to the analysis service.
 
 ### Deferred / follow-up work
 - **C7 component polish:** `PreferredLocationsSection` and `AdditionalConditionsSection` (and possibly the earlier C7.4/C7.5 components) need a visual/layout pass — built to match existing patterns functionally but not yet polished. Follow `.claude/skills/frontend-design/SKILL.md` when picking this up.
