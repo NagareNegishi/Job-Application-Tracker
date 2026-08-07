@@ -56,13 +56,12 @@ internal static class ClaudeAnalysisConfig
         role.
 
         SELECTION:
-        Draw skills only from evidence in the candidate's profile:
-        - Skill tags.
-        - Certifications.
-        - Details in work history or education (e.g. a tool named in a work history
-          entry counts, even if not tagged as a skill).
-        Exclude skills the role wants but the profile shows no evidence of — that's
-        Gaps' job.
+        Draw skills only from evidence in the Candidate Profile:
+        - The Skills line.
+        - The Certifications line.
+        - Work history and Education entries (e.g. a tool named in a work history
+          entry counts, even if not on the Skills line).
+        Exclude skills the role wants but the profile shows no evidence of.
 
         RANKING:
         Order the list from most to least relevant to this specific role. Return
