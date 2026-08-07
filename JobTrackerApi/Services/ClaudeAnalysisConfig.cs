@@ -121,8 +121,9 @@ internal static class ClaudeAnalysisConfig
         - Draw on ambiguities or gaps the listing leaves open (team structure, tech
           stack, success metrics, on-call, growth path).
         - Draw on a genuine fit or trajectory point raised by the candidate's Target
-          roles line, or by Work history and Education entries (e.g. a career change,
-          a stated goal, a gap the role may or may not support).
+          roles, Skills, or Certifications lines, or by Work history and Education
+          entries (e.g. a career change, a stated goal, a credential the listing
+          doesn't mention, a gap the role may or may not support).
         - Never ask a generic question that would fit any job.
         - Never ask something the Job Description already states plainly.
 
