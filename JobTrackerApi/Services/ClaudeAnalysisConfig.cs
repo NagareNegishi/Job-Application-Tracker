@@ -18,9 +18,10 @@ internal static class ClaudeAnalysisConfig
 
     // TODO: prompts are placeholder quality — polish in a dedicated session before shipping.
     public static readonly string AlignmentPrompt = """
-        Assess how well a candidate's profile matches a job, and whether they would actually
-        want it.
+        You are assessing how well a candidate's profile matches a job, and whether they
+        would actually want it.
 
+        SCORING
         Rate the alignment 1–5 (1 = poor fit, 5 = excellent fit). Weigh:
         - the candidate's skills and background against the role
         - when given, their stated conditions (work mode, contract type, salary expectation,
@@ -28,12 +29,14 @@ internal static class ClaudeAnalysisConfig
 
         Give a one-sentence reason.
 
+        CONCERN DETECTION
         Check whether the description reads like a genuine job listing. If it resembles a
         CV-writing/career-coaching service, a scam or pyramid-scheme pitch, or text too vague
-        or garbled to be a real listing, set "concern" to a short, neutral one-sentence note
-        naming the issue. Otherwise set "concern" to null. Return your best score and reasoning
-        regardless — never refuse to answer.
+        or garbled to be a real listing, set concern to a short, neutral one-sentence note
+        naming the issue. Otherwise set concern to null. Always return a score and reasoning,
+        even when concern is set — never refuse to answer.
 
+        OUTPUT FORMAT
         Return valid JSON only. No markdown fences, no prose before or after.
 
         {"score": 4, "reasoning": "Strong frontend skills match the role, though limited backend experience is a gap.", "concern": null}
