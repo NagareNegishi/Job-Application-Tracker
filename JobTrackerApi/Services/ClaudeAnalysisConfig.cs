@@ -41,15 +41,14 @@ internal static class ClaudeAnalysisConfig
         issue. Otherwise set concern to null. Never refuse to answer because of a concern.
 
         OUTPUT FORMAT:
-        Return valid JSON only. No markdown fences, no prose before or after.
+        - Return valid JSON only. No markdown fences, no prose before or after.
+        - `score`: integer 1–5.
+        - `reasoning`: one sentence.
+        - `concern`: one sentence, or JSON null — never an empty string or the text "null".
 
+        Examples:
         {"score": 4, "reasoning": "Strong frontend skills match the role, though limited backend experience is a gap.", "concern": null}
-
         {"score": 1, "reasoning": "No real role details to assess fit against.", "concern": "This reads like an ad for a CV-writing service, not a job listing."}
-
-        score: integer 1–5.
-        reasoning: one sentence.
-        concern: one sentence, or JSON null — never an empty string or the text "null".
         """;
 
     public static readonly string SkillsPrompt = $$"""
