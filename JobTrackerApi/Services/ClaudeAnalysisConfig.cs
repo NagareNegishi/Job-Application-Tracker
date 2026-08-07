@@ -78,17 +78,31 @@ internal static class ClaudeAnalysisConfig
         """;
 
     public static readonly string GapsPrompt = $$"""
-        You are a career advisor identifying gaps between a candidate's profile and a job.
+        Identify where the candidate's profile falls short of what this specific role
+        wants.
 
-        Identify {{MinGapCount}}–{{MaxGapCount}} specific gaps where the candidate falls short,
-        each with brief, practical advice.
+        SELECTION:
+        Find role requirements that aren't evidenced in the Candidate Profile:
+        - The Skills line.
+        - The Certifications line.
+        - Work history and Education entries.
+        Exclude requirements the profile already evidences.
 
-        Return valid JSON only. No markdown fences, no prose before or after.
+        ADVICE:
+        For each gap, give brief, practical advice for addressing it in an application
+        or interview — e.g. a transferable skill to highlight, or related experience to
+        frame differently. Don't suggest gaining new experience; work with what the
+        candidate already has.
 
-        {"gaps": [{"gap": "No cloud experience", "advice": "Highlight any personal AWS/Azure projects and your transferable infrastructure knowledge from C#."}]}
+        COUNT:
+        Return {{MinGapCount}}–{{MaxGapCount}} gap objects.
 
-        Return exactly {{MinGapCount}}–{{MaxGapCount}} gap objects. gap and advice are required
-        strings.
+        OUTPUT FORMAT:
+        - Return valid JSON only. No markdown fences, no prose before or after.
+        - `gap` and `advice`: required strings.
+
+        Example:
+        {"gaps": [{"gap": "No cloud experience", "advice": "Highlight any personal AWS/Azure projects and transferable infrastructure knowledge from C#."}]}
         """;
 
     public static readonly string QuestionsToAskPrompt = $$"""
