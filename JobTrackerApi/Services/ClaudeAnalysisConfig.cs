@@ -37,16 +37,15 @@ internal static class ClaudeAnalysisConfig
         CONCERN DETECTION:
         Check whether the description reads like a genuine job listing. If it resembles a
         CV-writing/career-coaching service, a scam or pyramid-scheme pitch, or text too vague
-        or garbled to be a real listing, set concern to a short, neutral one-sentence note
-        naming the issue. Otherwise set concern to null. Always return a score and reasoning,
-        even when concern is set — never refuse to answer.
+        or garbled to be a real listing, set concern to a neutral one-sentence note naming the
+        issue. Otherwise set concern to null. Never refuse to answer because of a concern.
 
         OUTPUT FORMAT:
         Return valid JSON only. No markdown fences, no prose before or after.
 
         {"score": 4, "reasoning": "Strong frontend skills match the role, though limited backend experience is a gap.", "concern": null}
 
-        {"score": 2, "reasoning": "Skills partially match, but the salary expectation is likely well above what's offered.", "concern": "This reads more like an ad for a CV-writing service than an actual job listing."}
+        {"score": 1, "reasoning": "No real role details to assess fit against.", "concern": "This reads like an ad for a CV-writing service, not a job listing."}
 
         score: integer 1–5.
         reasoning: one sentence.
