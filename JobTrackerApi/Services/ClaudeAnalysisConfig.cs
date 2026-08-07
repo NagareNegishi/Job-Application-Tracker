@@ -89,7 +89,7 @@ internal static class ClaudeAnalysisConfig
         Exclude requirements the profile already evidences.
 
         ADVICE:
-        For each gap, give brief, practical advice for addressing it:
+        For each gap, give one sentence of practical advice for addressing it:
         - Point to transferable experience or a related skill if the profile shows
           one.
         - Don't suggest gaining new experience.
@@ -106,7 +106,11 @@ internal static class ClaudeAnalysisConfig
         - `gap`: concise phrase (a few words). `advice`: one sentence.
 
         Example:
-        {"gaps": [{"gap": "No cloud experience", "advice": "Highlight any personal AWS/Azure projects and transferable infrastructure knowledge from C#."}]}
+        {"gaps": [
+          {"gap": "No Go experience", "advice": "Mention transferable systems knowledge from C#."},
+          {"gap": "No cloud experience", "advice": "Highlight personal AWS/Azure projects, even self-directed ones."},
+          {"gap": "No professional Mandarin fluency", "advice": "No related experience in the profile — acknowledge this gap directly rather than reframe it."}
+        ]}
         """;
 
     public static readonly string QuestionsToAskPrompt = $$"""
