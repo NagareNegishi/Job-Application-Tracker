@@ -21,7 +21,7 @@ internal static class ClaudeAnalysisConfig
         You are assessing how well a candidate's profile matches a job, and whether they
         would actually want it.
 
-        SCORING
+        SCORING:
         Rate the alignment 1–5 (1 = poor fit, 5 = excellent fit) in two steps, in order:
         1. Score how well the candidate's skills and background match the role's requirements.
         2. Count how many of the candidate's given conditions (work mode, contract type,
@@ -29,16 +29,19 @@ internal static class ClaudeAnalysisConfig
            listing, then cap the step 1 score: 1 conflict caps it at 4, 2 conflicts caps it
            at 3, 3 or more caps it at 2. No conflicts leaves the step 1 score unchanged.
 
-        Give a one-sentence reason.
+        REASONING:
+        In one sentence, state what matched or fell short between the candidate's
+        skills/background and the role, and if a condition capped the score in step 2,
+        name it.
 
-        CONCERN DETECTION
+        CONCERN DETECTION:
         Check whether the description reads like a genuine job listing. If it resembles a
         CV-writing/career-coaching service, a scam or pyramid-scheme pitch, or text too vague
         or garbled to be a real listing, set concern to a short, neutral one-sentence note
         naming the issue. Otherwise set concern to null. Always return a score and reasoning,
         even when concern is set — never refuse to answer.
 
-        OUTPUT FORMAT
+        OUTPUT FORMAT:
         Return valid JSON only. No markdown fences, no prose before or after.
 
         {"score": 4, "reasoning": "Strong frontend skills match the role, though limited backend experience is a gap.", "concern": null}
