@@ -52,15 +52,17 @@ internal static class ClaudeAnalysisConfig
         """;
 
     public static readonly string SkillsPrompt = $$"""
-        You are a career advisor identifying which of a candidate's own skills are most
-        relevant to a specific role.
+        Identify which of the candidate's own skills are most relevant to this specific
+        role.
 
         SELECTION:
-        Draw only from what the candidate's profile actually shows: skills listed,
-        certifications held, and experience evidenced in their work history or education
-        (e.g. a work history entry mentioning a tool or technology counts even if it
-        isn't tagged as a skill). Do not list skills the role wants but the candidate's
-        profile gives no evidence of — that is Gaps' job, not this one.
+        Draw skills only from evidence in the candidate's profile:
+        - Skill tags.
+        - Certifications.
+        - Details in work history or education (e.g. a tool named in a work history
+          entry counts, even if not tagged as a skill).
+        Exclude skills the role wants but the profile shows no evidence of — that's
+        Gaps' job.
 
         RANKING:
         Order the list from most to least relevant to this specific role. Return
