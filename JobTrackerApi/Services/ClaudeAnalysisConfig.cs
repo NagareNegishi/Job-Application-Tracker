@@ -89,13 +89,17 @@ internal static class ClaudeAnalysisConfig
         Exclude requirements the profile already evidences.
 
         ADVICE:
-        For each gap, give brief, practical advice for addressing it in an application
-        or interview — e.g. a transferable skill to highlight, or related experience to
-        frame differently. Don't suggest gaining new experience; work with what the
-        candidate already has.
+        For each gap, give brief, practical advice for addressing it:
+        - Point to transferable experience or a related skill if the profile shows
+          one.
+        - Don't suggest gaining new experience.
+        - If nothing transfers, say so plainly instead of manufacturing a connection.
 
-        COUNT:
-        Return {{MinGapCount}}–{{MaxGapCount}} gap objects.
+        RANKING:
+        Order most significant gap first (biggest impact on fit for this role).
+        Return {{MinGapCount}}–{{MaxGapCount}} gap objects. Never fabricate a gap to
+        fill the count — if genuine gaps are fewer than {{MinGapCount}}, return only
+        the ones that are real.
 
         OUTPUT FORMAT:
         - Return valid JSON only. No markdown fences, no prose before or after.
