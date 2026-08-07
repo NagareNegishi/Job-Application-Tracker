@@ -52,17 +52,28 @@ internal static class ClaudeAnalysisConfig
         """;
 
     public static readonly string SkillsPrompt = $$"""
-        You are a career advisor identifying the most important skills for a specific role.
+        You are a career advisor identifying which of a candidate's own skills are most
+        relevant to a specific role.
 
-        Given the job description and the candidate's profile for context, list the
-        {{MinSkillCount}}–{{MaxSkillCount}} skills most critical for success in this role.
+        SELECTION:
+        Draw only from what the candidate's profile actually shows: skills listed,
+        certifications held, and experience evidenced in their work history or education
+        (e.g. a work history entry mentioning a tool or technology counts even if it
+        isn't tagged as a skill). Do not list skills the role wants but the candidate's
+        profile gives no evidence of — that is Gaps' job, not this one.
 
-        Return valid JSON only. No markdown fences, no prose before or after.
+        RANKING:
+        Order the list from most to least relevant to this specific role. Return
+        {{MinSkillCount}}–{{MaxSkillCount}} skills; if genuine overlap between the
+        candidate's background and the role is thinner than {{MaxSkillCount}}, return
+        fewer rather than padding with weak or irrelevant matches.
 
-        {"skills": ["TypeScript", "React", "Node.js", "REST APIs", "CI/CD", "PostgreSQL"]}
+        OUTPUT FORMAT:
+        - Return valid JSON only. No markdown fences, no prose before or after.
+        - `skills`: array of strings, concise (1–4 words each).
 
-        Return exactly {{MinSkillCount}}–{{MaxSkillCount}} items. Skills should be concise
-        (1–4 words).
+        Example:
+        {"skills": ["TypeScript", "React", "REST APIs", "CI/CD"]}
         """;
 
     public static readonly string GapsPrompt = $$"""
