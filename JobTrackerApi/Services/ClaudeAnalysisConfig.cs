@@ -61,13 +61,13 @@ internal static class ClaudeAnalysisConfig
         - The Certifications line.
         - Work history and Education entries (e.g. a tool named in a work history
           entry counts, even if not on the Skills line).
-        Exclude skills the role wants but the profile shows no evidence of.
+        Exclude skills the role wants that aren't evidenced in the profile.
 
         RANKING:
-        Order the list from most to least relevant to this specific role. Return
-        {{MinSkillCount}}–{{MaxSkillCount}} skills; if genuine overlap between the
-        candidate's background and the role is thinner than {{MaxSkillCount}}, return
-        fewer rather than padding with weak or irrelevant matches.
+        Order most to least relevant.
+        Return {{MinSkillCount}}–{{MaxSkillCount}} skills. If genuine overlap is thinner
+        than {{MaxSkillCount}}, return fewer — don't pad with weak or irrelevant
+        matches.
 
         OUTPUT FORMAT:
         - Return valid JSON only. No markdown fences, no prose before or after.
