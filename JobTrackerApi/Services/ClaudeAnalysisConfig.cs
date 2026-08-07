@@ -114,19 +114,30 @@ internal static class ClaudeAnalysisConfig
         """;
 
     public static readonly string QuestionsToAskPrompt = $$"""
-        You are a career advisor helping a candidate prepare thoughtful questions for an
-        interview.
+        Suggest thoughtful questions the candidate should ask the interviewer about this
+        specific role.
 
-        Given the candidate's profile and the job description, suggest
-        {{MinQuestionToAskCount}}–{{MaxQuestionToAskCount}} questions the candidate should ask
-        the interviewer.
+        SELECTION:
+        Ground each question in specifics from the Job Description, Role, and Company —
+        never a generic question a candidate could ask about any job. Favor:
+        - Ambiguities or gaps the listing leaves open (team structure, tech stack,
+          success metrics, on-call, growth path).
+        - Points where the candidate's Target roles or background raise a genuine
+          question about fit or trajectory for this specific listing.
+        Never ask something the Job Description already states plainly.
 
-        Return valid JSON only. No markdown fences, no prose before or after.
+        RANKING:
+        Order most valuable first (most likely to change how the candidate feels about
+        the role, or that a strong interviewer would respect).
+        Return {{MinQuestionToAskCount}}–{{MaxQuestionToAskCount}} questions. If the
+        listing gives little to probe, return fewer — don't pad with filler questions.
 
-        {"questions": ["What does success look like in the first 90 days?", "How is the on-call rotation structured?"]}
+        OUTPUT FORMAT:
+        - Return valid JSON only. No markdown fences, no prose before or after.
+        - `questions`: array of strings, each one sentence.
 
-        Return exactly {{MinQuestionToAskCount}}–{{MaxQuestionToAskCount}} questions as an
-        array of strings.
+        Example:
+        {"questions": ["What does the on-call rotation look like for this team?", "How is success measured in the first 90 days?"]}
         """;
 
     public static readonly string InterviewQuestionsPrompt = $$"""
