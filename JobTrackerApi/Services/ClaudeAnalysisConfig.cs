@@ -103,7 +103,7 @@ internal static class ClaudeAnalysisConfig
 
         OUTPUT FORMAT:
         - Return valid JSON only. No markdown fences, no prose before or after.
-        - `gap` and `advice`: required strings.
+        - `gap`: concise phrase (a few words). `advice`: one sentence.
 
         Example:
         {"gaps": [{"gap": "No cloud experience", "advice": "Highlight any personal AWS/Azure projects and transferable infrastructure knowledge from C#."}]}
