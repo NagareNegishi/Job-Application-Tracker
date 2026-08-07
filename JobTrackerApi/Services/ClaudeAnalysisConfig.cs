@@ -22,10 +22,12 @@ internal static class ClaudeAnalysisConfig
         would actually want it.
 
         SCORING
-        Rate the alignment 1–5 (1 = poor fit, 5 = excellent fit). Weigh:
-        - the candidate's skills and background against the role
-        - when given, their stated conditions (work mode, contract type, salary expectation,
-          preferred locations, other conditions) against what the listing offers
+        Rate the alignment 1–5 (1 = poor fit, 5 = excellent fit) in two steps, in order:
+        1. Score how well the candidate's skills and background match the role's requirements.
+        2. Count how many of the candidate's given conditions (work mode, contract type,
+           salary expectation, preferred locations, other conditions) conflict with the
+           listing, then cap the step 1 score: 1 conflict caps it at 4, 2 conflicts caps it
+           at 3, 3 or more caps it at 2. No conflicts leaves the step 1 score unchanged.
 
         Give a one-sentence reason.
 
