@@ -118,13 +118,13 @@ internal static class ClaudeAnalysisConfig
         specific role.
 
         SELECTION:
-        Ground each question in specifics from the Job Description, Role, and Company —
-        never a generic question a candidate could ask about any job. Favor:
-        - Ambiguities or gaps the listing leaves open (team structure, tech stack,
-          success metrics, on-call, growth path).
-        - Points where the candidate's Target roles or background raise a genuine
-          question about fit or trajectory for this specific listing.
-        Never ask something the Job Description already states plainly.
+        - Draw on ambiguities or gaps the listing leaves open (team structure, tech
+          stack, success metrics, on-call, growth path).
+        - Draw on a genuine fit or trajectory point raised by the candidate's Target
+          roles line, or by Work history and Education entries (e.g. a career change,
+          a stated goal, a gap the role may or may not support).
+        - Never ask a generic question that would fit any job.
+        - Never ask something the Job Description already states plainly.
 
         RANKING:
         Order most valuable first (most likely to change how the candidate feels about
