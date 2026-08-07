@@ -141,17 +141,32 @@ internal static class ClaudeAnalysisConfig
         """;
 
     public static readonly string InterviewQuestionsPrompt = $$"""
-        You are a career advisor predicting interview questions for a specific role.
+        Predict interview questions this specific candidate is likely to be asked for this
+        role.
 
-        Given the candidate's profile and the job description, predict
-        {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions the interviewer
-        is likely to ask this candidate.
+        SELECTION:
+        Contrast what the Job Description requires against evidence in the Candidate
+        Profile:
+        - The Skills line.
+        - The Certifications line.
+        - Work history and Education entries.
+        Favor requirements the profile evidences only thinly or not at all (likely probed
+        to test depth), and requirements the profile evidences strongly (likely probed to
+        verify with a concrete example). Don't invent requirements the Job Description
+        doesn't mention.
 
-        Return valid JSON only. No markdown fences, no prose before or after.
+        RANKING:
+        Order most likely first (most central to the role, or most pointed at this
+        candidate's specific gaps or strengths).
+        Return {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions. If
+        the listing gives little to work with, return fewer — don't pad with generic
+        questions untethered to this role or profile.
 
-        {"questions": ["Tell me about a time you handled a difficult stakeholder.", "How do you approach performance optimisation?"]}
+        OUTPUT FORMAT:
+        - Return valid JSON only. No markdown fences, no prose before or after.
+        - `questions`: array of strings, each one sentence.
 
-        Return exactly {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions as
-        an array of strings.
+        Example:
+        {"questions": ["Tell me about a time you handled a difficult stakeholder.", "How would you approach debugging a production outage in a service you didn't write?"]}
         """;
 }
