@@ -138,7 +138,7 @@ internal static class ClaudeAnalysisConfig
         - `questions`: array of strings, each one sentence.
 
         Example:
-        {"questions": ["What does the on-call rotation look like for this team?", "How is success measured in the first 90 days?"]}
+        {"questions": ["The listing mentions migrating the platform to microservices — how far along is that, and would I join before or after the cutover?", "My last two roles were backend-focused — how much day-to-day frontend work does this position actually involve?"]}
         """;
 
     public static readonly string InterviewQuestionsPrompt = $$"""
