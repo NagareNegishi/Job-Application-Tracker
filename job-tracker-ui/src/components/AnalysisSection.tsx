@@ -39,6 +39,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   const [loadingType, setLoadingType] = useState<AnalysisType | null>(null)
   const [requestError, setRequestError] = useState<string | null>(null)
   const [alignmentResult, setAlignmentResult] = useState<AlignmentResult | null>(null)
+  const [skillsResult, setSkillsResult] = useState<SkillsResult | null>(null)
 
   if (!hasRole("AiUser")) return null
 
@@ -56,16 +57,13 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   async function handleSelect(type: AnalysisType) {
     setActiveType(type)
     setRequestError(null)
-    if (type !== "alignment") return
+    if (type !== "alignment" && type !== "skills") return
 
-    setLoadingType("alignment")
+    const request = { description: job.description!, role: job.role, company: job.company }
+    setLoadingType(type)
     try {
-      const result = await analyseAlignment({
-        description: job.description!,
-        role: job.role,
-        company: job.company,
-      })
-      setAlignmentResult(result)
+      if (type === "alignment") setAlignmentResult(await analyseAlignment(request))
+      else setSkillsResult(await analyseSkills(request))
     } catch (err) {
       setRequestError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.")
     } finally {
