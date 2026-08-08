@@ -48,6 +48,7 @@ internal static class ClaudeAnalysisConfig
 
         Examples:
         {"score": 4, "reasoning": "Strong frontend skills match the role, though limited backend experience is a gap.", "concern": null}
+        {"score": 3, "reasoning": "Skills and experience are an excellent match, but the role's contract type and location don't match what you're looking for.", "concern": null}
         {"score": 1, "reasoning": "No real role details to assess fit against.", "concern": "This reads like an ad for a CV-writing service, not a job listing."}
         """;
 
