@@ -1,8 +1,17 @@
+import { Button } from "@/components/ui/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { useProfile } from "@/hooks/profileQuery"
 import { hasRole } from "@/lib/auth"
 import { MIN_ANALYSIS_DESCRIPTION } from "@/lib/validationConstants"
 import type { Job } from "@/types/job"
 import { isProfileReady } from "@/utils/profileReady"
+import { Sparkles } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router"
 
@@ -22,6 +31,7 @@ type AnalysisType = typeof ANALYSIS_TYPES[number]["type"]
 
 export function AnalysisSection({ job }: AnalysisSectionProps) {
   const { data: profile } = useProfile()
+  const [open, setOpen] = useState(false)
   const [activeType, setActiveType] = useState<AnalysisType | null>(null)
 
   if (!hasRole("AiUser")) return null
@@ -36,30 +46,46 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
       : null
 
   return (
-    <div className="space-y-3">
-      <h2 className="text-sm uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">
-        AI Insights
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {ANALYSIS_TYPES.map(({ type, label, blurb }) => (
-          <button
-            key={type}
-            type="button"
-            disabled={disabled}
-            onClick={() => setActiveType(type)}
-            className="text-left border rounded-lg p-3 space-y-1 hover:bg-accent disabled:opacity-50 disabled:pointer-events-none transition-colors"
-          >
-            <p className="text-sm font-medium">{label}</p>
-            <p className="text-xs text-muted-foreground">{blurb}</p>
-          </button>
-        ))}
-      </div>
-      {gateMessage && <p className="text-sm text-muted-foreground">{gateMessage}</p>}
-      {activeType && (
-        <div className="border rounded-lg p-4 text-sm text-muted-foreground">
-          Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          size="icon-lg"
+          className="fixed bottom-6 right-6 z-40 size-14 rounded-full shadow-lg hover:scale-105 transition-transform"
+          aria-label="AI Insights"
+        >
+          <Sparkles className="size-6" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="bottom" className="max-h-[80vh]">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            AI Insights
+          </SheetTitle>
+        </SheetHeader>
+        <div className="px-4 pb-4 space-y-3 overflow-y-auto flex-1 min-h-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {ANALYSIS_TYPES.map(({ type, label, blurb }) => (
+              <button
+                key={type}
+                type="button"
+                disabled={disabled}
+                onClick={() => setActiveType(type)}
+                className="text-left border rounded-lg p-3 space-y-1 hover:bg-accent disabled:opacity-50 disabled:pointer-events-none transition-colors"
+              >
+                <p className="text-sm font-medium">{label}</p>
+                <p className="text-xs text-muted-foreground">{blurb}</p>
+              </button>
+            ))}
+          </div>
+          {gateMessage && <p className="text-sm text-muted-foreground">{gateMessage}</p>}
+          {activeType && (
+            <div className="border rounded-lg p-4 text-sm text-muted-foreground">
+              Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }
