@@ -7,8 +7,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { useProfile } from "@/hooks/profileQuery"
+import { ApiError } from "@/lib/api"
 import { hasRole } from "@/lib/auth"
 import { MIN_ANALYSIS_DESCRIPTION } from "@/lib/validationConstants"
+import { analyseAlignment, type AlignmentResult } from "@/services/analysisService"
 import type { Job } from "@/types/job"
 import { isProfileReady } from "@/utils/profileReady"
 import { Sparkles } from "lucide-react"
