@@ -18,21 +18,21 @@ internal static class ClaudeAnalysisConfig
 
     // TODO: prompts are placeholder quality — polish in a dedicated session before shipping.
     public static readonly string AlignmentPrompt = """
-        You are assessing how well a candidate's profile matches a job, and whether they
-        would actually want it.
+        Assess how well the candidate's profile matches this specific job, and whether
+        they would actually want it.
 
         SCORING:
         Rate the alignment 1–5 (1 = poor fit, 5 = excellent fit) in two steps, in order:
         1. Score how well the candidate's skills and background match the role's requirements.
-        2. Count how many of the candidate's given conditions (work mode, contract type,
+        2. Count how many of the candidate's conditions (work mode, contract type,
            salary expectation, preferred locations, other conditions) conflict with the
            listing, then cap the step 1 score: 1 conflict caps it at 4, 2 conflicts caps it
            at 3, 3 or more caps it at 2. No conflicts leaves the step 1 score unchanged.
 
         REASONING:
         In one sentence, state what matched or fell short between the candidate's
-        skills/background and the role, and if a condition capped the score in step 2,
-        name it.
+        skills/background and the role, naming any condition mismatch that lowered the
+        score — without leaking scoring terms like "cap" or "conflict" to the user.
 
         CONCERN DETECTION:
         Check whether the description reads like a genuine job listing. If it resembles a
