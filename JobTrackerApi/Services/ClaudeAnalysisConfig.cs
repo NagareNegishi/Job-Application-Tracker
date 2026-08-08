@@ -128,8 +128,8 @@ internal static class ClaudeAnalysisConfig
         - Never ask something the Job Description already states plainly.
 
         RANKING:
-        Order most valuable first (most likely to change how the candidate feels about
-        the role, or that a strong interviewer would respect).
+        Order highest-impact first — most likely to change whether the candidate
+        wants this role.
         Return {{MinQuestionToAskCount}}–{{MaxQuestionToAskCount}} questions. If the
         listing gives little to probe, return fewer — don't pad with filler questions.
 
