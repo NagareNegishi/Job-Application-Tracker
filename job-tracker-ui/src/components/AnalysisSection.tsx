@@ -21,8 +21,8 @@ interface AnalysisSectionProps {
 
 const ANALYSIS_TYPES = [
   { type: "alignment", label: "Alignment", blurb: "How well your profile matches this job" },
-  { type: "skills", label: "Top Skills", blurb: "Skills to highlight for this role" },
-  { type: "gaps", label: "Gaps", blurb: "Where your profile falls short, and how to address it" },
+  { type: "skills", label: "Matched Skills", blurb: "Skills to highlight for this role" },
+  { type: "gaps", label: "Skill Gaps", blurb: "Where your profile falls short, and how to address it" },
   { type: "questionsToAsk", label: "Questions to Ask", blurb: "Good questions for the interviewer" },
   { type: "interviewQuestions", label: "Interview Questions", blurb: "Questions you're likely to be asked" },
 ] as const
@@ -70,7 +70,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
           </SheetTitle>
         </SheetHeader>
         <div className="px-4 pb-4 space-y-3 overflow-y-auto flex-1 min-h-0 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          <div className="flex flex-wrap gap-2">
             {ANALYSIS_TYPES.map(({ type, label }) => (
               <button
                 key={type}
