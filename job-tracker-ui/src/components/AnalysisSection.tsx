@@ -36,6 +36,9 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   const [open, setOpen] = useState(false)
   const [activeType, setActiveType] = useState<AnalysisType | null>(null)
   const [previewType, setPreviewType] = useState<AnalysisType | null>(null)
+  const [loadingType, setLoadingType] = useState<AnalysisType | null>(null)
+  const [requestError, setRequestError] = useState<string | null>(null)
+  const [alignmentResult, setAlignmentResult] = useState<AlignmentResult | null>(null)
 
   if (!hasRole("AiUser")) return null
 
@@ -49,6 +52,26 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
       : null
   const displayedType = previewType ?? activeType
   const displayedBlurb = ANALYSIS_TYPES.find(a => a.type === displayedType)?.blurb
+
+  async function handleSelect(type: AnalysisType) {
+    setActiveType(type)
+    setRequestError(null)
+    if (type !== "alignment") return
+
+    setLoadingType("alignment")
+    try {
+      const result = await analyseAlignment({
+        description: job.description!,
+        role: job.role,
+        company: job.company,
+      })
+      setAlignmentResult(result)
+    } catch (err) {
+      setRequestError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.")
+    } finally {
+      setLoadingType(null)
+    }
+  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
