@@ -39,6 +39,8 @@ CV integration is deferred — analysis uses profile text only.
 | Profile page: per-section Save (D14) | Each section (Skills, Work History, Education, …) has its own Save that PATCHes only that section's field(s). Fits how profiles are actually edited — small partial updates over time — and avoids a single bottom Save that forces scrolling past everything to change one tag. Merge-patch (D3b) makes it natural: each PATCH carries one field, untouched sections are never sent (no accidental-`[]` wipe). **First save** of an as-yet-unsaved profile (GET returned empty) uses PUT with the whole current form (mostly-empty arrays, save is permissive); every save after uses PATCH |
 | Analysis result lifetime: page-durable (D15) | All 5 results live only in Job Detail page state — kept while on the page (switching among the types preserves prior results), reset on refresh or navigate-away; re-running a type replaces its result with a fresh call. No client cache or persistence — simplest, and reinforces "on-demand, always fresh". Persisting a result long-term is out of scope here (see the *Save analysis to job* follow-up in Notes) |
 | Nav link + demo user (D16) | Profile is a **top-level nav link** (peer of Jobs/Dashboard), not tucked under Settings/account menu — analysis buttons are gated on a filled profile, so discoverability matters (a buried link leaves users stuck on "why are the analysis buttons disabled?"). The **demo user sees Profile and can edit it**, seeded with a sample profile via `DemoSeed` (like demo jobs) so the feature shows fully; analysis endpoints still 403 for demo (D11, API-cost block). Because the demo profile is editable, the periodic demo-reset + login re-seed must also reset/re-seed it — see the *demo profile reset* follow-up in Notes |
+| Job Detail analysis section gated by `hasRole("AiUser")` only, no separate demo check (D18) | Demo account is seeded without the `AiUser` role (`Program.cs`), so hiding the section for non-AI users already hides it for demo too — same pattern `JobTable`/`SettingsPage` use elsewhere. The server-side 403 demo block (D11) remains as defense in depth, just never hit in normal use |
+| Client mirrors the server's profile-minimum boolean via a new shared predicate, not `profileScore.ts` (D19) | `profileScore.ts` is a weighted 0–100 completeness gauge for `ProfilePage`'s progress ring — a different purpose with different criteria. The analysis gate is a strict boolean (`TargetRoles>0 && Skills>0 && WorkingRights>0 && (Certifications>0 \|\| WorkHistory>0 \|\| Education>0)`) that must match `AnalysisController.GetGatedProfileAsync` exactly, so it gets its own small predicate rather than reusing the score util |
 | Test coverage scope (D17) | Three test files, mirroring existing conventions (in-memory EF, direct controller instantiation, manual `ClaimsPrincipal`, service mocked at the controller boundary — same as `IParsingService` in `JobsControllerTests`). **(1) `ProfileDTOTests`** (new, mirrors `JobDTOTests`) — array-count caps, per-item string caps, `country` regex `^[A-Z]{2}$`, date attributes (YYYY-MM regex / `[Range(1900,2099)]`), and `IValidatableObject` cross-field rules (`from` not future, `to ≥ from`, `to` null = current). **(2) Profile tests in `AccountControllerTests`** (extend) — GET empty `{}` vs full; PUT creates + 409 if exists; PATCH merge semantics (`[]` clears, omitted untouched) + 404 if none; own-profile-only. **(3) `AnalysisControllerTests`** (new, mocks `IAnalysisService`, no live Claude) — 400 on description too short/empty/over-max, 400 on profile-gate fail, 400 on no profile, 403 demo, 502 when service throws `AnalysisFormatException`, 200 happy path returns mocked result. **Out of scope** (consistent with existing suite): no `ClaudeAnalysisServiceTests` (AI service mocked at controller, never live-tested — same as `ClaudeParsingService`); no tests for `[Authorize]`, the `AiEnabled` policy, or the `"analyse"` rate-limit (pipeline concerns, untested everywhere else) |
 
 ---
@@ -258,8 +260,28 @@ Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine l
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | Done |
 | 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | Done |
 | 8b | Prompt-quality polish — wording/structure pass (SELECTION/RANKING/OUTPUT FORMAT, examples) for all 5 prompts in `ClaudeAnalysisConfig.cs`; wording verified through the UI once Steps 9–10 land | Done |
-| 9 | Add analysis UI to Job Detail page — 5 independent buttons; pre-fill `description` from the job (prompt if empty); each shows its own result inline | — |
+| 9 | Add analysis UI to Job Detail page — `AnalysisSection`, 5 buttons + shared error/result area (see breakdown below) | — |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
+
+---
+
+### Step 9 Breakdown (Job Detail Analysis UI)
+
+New `AnalysisSection` component, mounted in `JobDetailPage`'s existing section stack as a peer of `ContactList`/`CorrespondenceList`/`DocumentList` — self-contained, no popup/sheet, moves as one unit like the others.
+
+- Renders nothing if `!hasRole("AiUser")` (D18 — also covers the demo user, which has no `AiUser` role).
+- Section title (`h2`, same convention as `DocumentList`'s "Documents" heading).
+- 5 buttons, each labeled with the analysis type plus a one-line explainer of what it returns:
+  - Alignment — how well your profile matches this job
+  - Top Skills — skills to highlight for this role
+  - Gaps — where your profile falls short, and how to address it
+  - Questions to Ask — good questions for the interviewer
+  - Interview Questions — questions you're likely to be asked
+- All 5 buttons share one disabled state, computed from two client-side gates mirroring the server (in order):
+  1. `job.description` present and ≥ `MinAnalysisDescription` (30 chars) — no upper-bound check needed, job descriptions are already capped at save time.
+  2. Profile meets the analysis minimum — new shared predicate (D19), read via the existing `useProfile()` (`hooks/profileQuery.ts`), no new fetch needed.
+- One shared error/status line below the buttons: shows the specific unmet-gate reason when disabled ("Add a description to this job to run analysis." / "Complete your profile to run analysis."); reused as the reactive error slot for POST failures (429/502/network) after a click, same generic-message pattern as `ParseListingDialog`.
+- One shared result "screen" below that: renders whichever type is currently active. Each of the 5 types keeps its own result in page state per D15 (switching buttons swaps the displayed result, doesn't refetch) — starts as plain text rendering of the JSON response; per-type formatting (score display, list, gap pairs) is a later pass once the shape is wired end to end.
 
 ---
 
