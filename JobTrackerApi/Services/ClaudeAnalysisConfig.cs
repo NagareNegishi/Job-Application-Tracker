@@ -65,16 +65,17 @@ internal static class ClaudeAnalysisConfig
 
         RANKING:
         Order most to least relevant.
-        Return {{MinSkillCount}}–{{MaxSkillCount}} skills. If genuine overlap is thinner
-        than {{MaxSkillCount}}, return fewer — don't pad with weak or irrelevant
-        matches.
+        Return {{MinSkillCount}}–{{MaxSkillCount}} skills. If overlap is thinner than
+        {{MaxSkillCount}}, return fewer — don't pad with weak or irrelevant matches.
+        If none apply, return an empty array.
 
         OUTPUT FORMAT:
-        - Return valid JSON only. No markdown fences, no prose before or after.
+        - Return valid JSON only, even when empty. No markdown fences, no prose.
         - `skills`: array of strings, concise (1–4 words each).
 
-        Example:
+        Examples:
         {"skills": ["TypeScript", "React", "REST APIs", "CI/CD"]}
+        {"skills": []}
         """;
 
     public static readonly string GapsPrompt = $$"""
@@ -99,18 +100,19 @@ internal static class ClaudeAnalysisConfig
         Order most significant gap first (biggest impact on fit for this role).
         Return {{MinGapCount}}–{{MaxGapCount}} gap objects. Never fabricate a gap to
         fill the count — if genuine gaps are fewer than {{MinGapCount}}, return only
-        the ones that are real.
+        the ones that are real. If none exist, return an empty array.
 
         OUTPUT FORMAT:
-        - Return valid JSON only. No markdown fences, no prose before or after.
+        - Return valid JSON only, even when empty. No markdown fences, no prose.
         - `gap`: concise phrase (a few words). `advice`: one sentence.
 
-        Example:
+        Examples:
         {"gaps": [
           {"gap": "No Go experience", "advice": "Mention transferable systems knowledge from C#."},
           {"gap": "No cloud experience", "advice": "Highlight personal AWS/Azure projects, even self-directed ones."},
           {"gap": "No professional Mandarin fluency", "advice": "No related experience in the profile — acknowledge this gap directly rather than reframe it."}
         ]}
+        {"gaps": []}
         """;
 
     public static readonly string QuestionsToAskPrompt = $$"""
@@ -132,16 +134,18 @@ internal static class ClaudeAnalysisConfig
         wants this role.
         Return {{MinQuestionToAskCount}}–{{MaxQuestionToAskCount}} questions. If the
         listing gives little to probe, return fewer — don't pad with filler questions.
+        If nothing applies, return an empty array.
 
         OUTPUT FORMAT:
-        - Return valid JSON only. No markdown fences, no prose before or after.
+        - Return valid JSON only, even when empty. No markdown fences, no prose.
         - `questions`: array of strings, each one sentence.
 
-        Example:
+        Examples:
         {"questions": [
           "The listing mentions migrating the platform to microservices — how far along is that, and would I join before or after the cutover?",
           "My last two roles were backend-focused — how much day-to-day frontend work does this position actually involve?"
         ]}
+        {"questions": []}
         """;
 
     public static readonly string InterviewQuestionsPrompt = $$"""
@@ -168,17 +172,19 @@ internal static class ClaudeAnalysisConfig
         regardless of type, up to {{MaxInterviewQuestionCount}}.
         Return {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions, in
         rank order. If fewer than {{MinInterviewQuestionCount}} genuine candidates exist
-        in total, return only those — don't pad with generic questions.
+        in total, return only those — don't pad with generic questions. If none exist,
+        return an empty array.
 
         OUTPUT FORMAT:
-        - Return valid JSON only. No markdown fences, no prose before or after.
+        - Return valid JSON only, even when empty. No markdown fences, no prose.
         - `questions`: array of strings, each one sentence.
 
-        Example:
+        Examples:
         {"questions": [
           "The role calls for Kubernetes in production, but your profile only shows a personal project with it — how would you approach running it at scale on a live system?",
           "You led two TypeScript migrations in your last roles — walk me through a decision from one of those you'd make differently now.",
           "This role owns the checkout service end-to-end — how would you design it to handle a 10x traffic spike during a flash sale?"
         ]}
+        {"questions": []}
         """;
 }
