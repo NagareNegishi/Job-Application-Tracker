@@ -125,9 +125,13 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
                 )}
               </div>
             ) : activeType === "skills" && skillsResult ? (
-              <ul className="list-disc pl-5 space-y-1 text-foreground">
-                {skillsResult.skills.map(skill => <li key={skill}>{skill}</li>)}
-              </ul>
+              skillsResult.skills.length > 0 ? (
+                <ul className="list-disc pl-5 space-y-1 text-foreground">
+                  {skillsResult.skills.map(skill => <li key={skill}>{skill}</li>)}
+                </ul>
+              ) : (
+                "No matching skills found for this role."
+              )
             ) : activeType ? (
               <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
             ) : (
