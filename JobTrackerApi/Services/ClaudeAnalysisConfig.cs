@@ -149,14 +149,13 @@ internal static class ClaudeAnalysisConfig
         Contrast what the Job Description requires against evidence in the Candidate
         Profile. Generate 2–3 candidates per applicable type:
         - Gap probe: a requirement barely or not evidenced in the profile — likely
-          probed to test whether the candidate can pick it up.
-        - Experience check: a requirement strongly evidenced in the profile (Skills,
-          Certifications, Work history, Education) — likely probed to verify depth
-          with a concrete example.
-        - Core requirement: a requirement central to the role itself — likely asked
-          as a standalone technical check, regardless of what the profile shows.
-        Don't invent requirements the Job Description doesn't mention. Skip a type
-        that doesn't apply (e.g. no real gap) rather than forcing a candidate for it.
+          probed to see how the candidate would handle it.
+        - Experience check: a requirement strongly evidenced in the profile — likely
+          probed to verify depth with a concrete example.
+        - Core requirement: a requirement central to the role — likely probed as a
+          standalone technical check, regardless of what the profile shows.
+        Don't invent requirements the Job Description doesn't mention, and skip any
+        type that doesn't apply rather than forcing a candidate.
 
         RANKING:
         Rank all candidates together, most likely first (most central to the role, or
