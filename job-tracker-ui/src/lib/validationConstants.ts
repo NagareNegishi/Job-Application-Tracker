@@ -3,6 +3,7 @@
 export const MAX_COMPANY_LENGTH = 100
 export const MAX_ROLE_LENGTH = 100
 export const MAX_DESCRIPTION_LENGTH = 5000
+export const MIN_ANALYSIS_DESCRIPTION = 30
 export const MAX_NOTES_LENGTH = 5000
 
 export const MAX_CONTACT_NAME_LENGTH = 50
