@@ -9,6 +9,7 @@
 // │   └── CorrespondenceEntry
 // └── DocumentList       # uploaded files
 //     └── DocumentCard   # filename, type, upload date, download/delete
+import { AnalysisSection } from "@/components/AnalysisSection";
 import { ContactList } from "@/components/ContactList";
 import { CorrespondenceList } from "@/components/CorrespondenceList";
 import { DocumentList } from "@/components/DocumentList";
@@ -42,6 +43,7 @@ function JobDetailPage() {
           <hr className="border-t border-border mb-6" />
           <div className="px-1 sm:px-4 space-y-6">
             <JobInfoCard job={job} />
+            <AnalysisSection job={job} />
             <ContactList
               contacts={job.contacts ?? []}
               jobId={jobId}
