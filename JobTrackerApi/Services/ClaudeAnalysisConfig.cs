@@ -16,7 +16,6 @@ internal static class ClaudeAnalysisConfig
     public const int MinInterviewQuestionCount = 4;
     public const int MaxInterviewQuestionCount = 6;
 
-    // TODO: prompts are placeholder quality — polish in a dedicated session before shipping.
     public static readonly string AlignmentPrompt = """
         Assess how well the candidate's profile matches this specific job, and whether
         they would actually want it.
@@ -25,7 +24,7 @@ internal static class ClaudeAnalysisConfig
         Rate the alignment 1–5 (1 = poor fit, 5 = excellent fit) in two steps, in order:
         1. Score how well the candidate's skills and background match the role's requirements.
         2. Count how many of the candidate's conditions (work mode, contract type,
-           salary expectation, preferred locations, other conditions) conflict with the
+           salary expectation, preferred locations, additional conditions) conflict with the
            listing, then cap the step 1 score: 1 conflict caps it at 4, 2 conflicts caps it
            at 3, 3 or more caps it at 2. No conflicts leaves the step 1 score unchanged.
 
