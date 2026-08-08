@@ -89,11 +89,11 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
           </div>
           <p className="text-md text-muted-foreground h-12 line-clamp-2">{displayedBlurb}</p>
           {gateMessage && <p className="text-sm text-muted-foreground">{gateMessage}</p>}
-          {activeType && (
-            <div className="border rounded-lg p-4 text-sm text-muted-foreground">
-              Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.
-            </div>
-          )}
+          <div className="border rounded-lg p-4 min-h-32 text-sm text-muted-foreground">
+            {activeType
+              ? <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
+              : "Pick an analysis type above to see results here."}
+          </div>
         </div>
       </SheetContent>
     </Sheet>
