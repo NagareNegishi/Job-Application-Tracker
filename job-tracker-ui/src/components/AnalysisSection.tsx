@@ -33,6 +33,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   const { data: profile } = useProfile()
   const [open, setOpen] = useState(false)
   const [activeType, setActiveType] = useState<AnalysisType | null>(null)
+  const [previewType, setPreviewType] = useState<AnalysisType | null>(null)
 
   if (!hasRole("AiUser")) return null
 
@@ -44,6 +45,8 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
     : !profileReady
       ? <>Complete your <Link to="/profile" className="underline">profile</Link> to run analysis.</>
       : null
+  const displayedType = previewType ?? activeType
+  const displayedBlurb = ANALYSIS_TYPES.find(a => a.type === displayedType)?.blurb
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -67,20 +70,24 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
           </SheetTitle>
         </SheetHeader>
         <div className="px-4 pb-4 space-y-3 overflow-y-auto flex-1 min-h-0 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {ANALYSIS_TYPES.map(({ type, label, blurb }) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {ANALYSIS_TYPES.map(({ type, label }) => (
               <button
                 key={type}
                 type="button"
                 disabled={disabled}
                 onClick={() => setActiveType(type)}
-                className="text-left border rounded-lg p-3 space-y-1 hover:bg-accent disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                onMouseEnter={() => setPreviewType(type)}
+                onMouseLeave={() => setPreviewType(null)}
+                onFocus={() => setPreviewType(type)}
+                onBlur={() => setPreviewType(null)}
+                className="text-center border rounded-lg px-3 py-2 hover:bg-accent disabled:opacity-50 disabled:pointer-events-none transition-colors"
               >
                 <p className="text-sm font-medium">{label}</p>
-                <p className="text-xs text-muted-foreground">{blurb}</p>
               </button>
             ))}
           </div>
+          <p className="text-md text-muted-foreground h-12 line-clamp-2">{displayedBlurb}</p>
           {gateMessage && <p className="text-sm text-muted-foreground">{gateMessage}</p>}
           {activeType && (
             <div className="border rounded-lg p-4 text-sm text-muted-foreground">
