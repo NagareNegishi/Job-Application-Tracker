@@ -1,12 +1,5 @@
 # Job Analysis (AI Insights)
 
-> **Sequencing (updated 2026-07-18): DEFERRED — do not pick up yet.**
-> The profile page refactor and profile data-model cleanup come first (see
-> `docs/plans/profile-inline-edit.md`). Do **not** start the remaining Job
-> Analysis work — Steps 7–10 and C8 — until that profile track is complete and
-> merged. When choosing upcoming work, profile is the active priority; Job
-> Analysis is next-after, not now.
-
 ## Overview
 
 Two connected features: **Profile** (user's background stored in the app) and **Job Analysis** (on-demand AI insights comparing profile against a specific job). Five separate analysis types, each triggered independently on the job detail page.
@@ -264,7 +257,7 @@ Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine l
 | 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min policy | Done |
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | Done |
 | 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | Done |
-| 8b | Prompt-quality polish — wording/structure pass (SELECTION/RANKING/OUTPUT FORMAT, examples) done for all 5 prompts in `ClaudeAnalysisConfig.cs`. Remaining: test against real job descriptions through the live endpoint from Step 7/8 and iterate before shipping | — |
+| 8b | Prompt-quality polish — wording/structure pass (SELECTION/RANKING/OUTPUT FORMAT, examples) for all 5 prompts in `ClaudeAnalysisConfig.cs`; wording verified through the UI once Steps 9–10 land | Done |
 | 9 | Add analysis UI to Job Detail page — 5 independent buttons; pre-fill `description` from the job (prompt if empty); each shows its own result inline | — |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
 
@@ -325,7 +318,7 @@ Adds a "What I'm looking for" dimension to the profile — the user's **conditio
 | C7 | Frontend profile form — conditions section + country/currency suggestion lists | Done |
 | C8 | Frontend alignment display — show `concern` when present | — |
 
-Wording/structure polish for the reworked `AlignmentPrompt` is done (three-branch example set covering skill-gap/condition-cap/concern, plain-language REASONING guard so scoring-mechanism terms never reach the user). The `concern` threshold still needs tuning against real listings, which folds into Step 8b's live-testing pass.
+Wording/structure polish for the reworked `AlignmentPrompt` is done (three-branch example set covering skill-gap/condition-cap/concern, plain-language REASONING guard so scoring-mechanism terms never reach the user). The `concern` threshold still needs tuning against real listings — verify once C8 (frontend display) and Steps 9–10 (analysis UI) are usable end to end.
 
 ### C7 Breakdown (Frontend Conditions UI) — Done
 
