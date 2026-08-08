@@ -100,8 +100,8 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
               <button
                 key={type}
                 type="button"
-                disabled={disabled}
-                onClick={() => setActiveType(type)}
+                disabled={disabled || loadingType !== null}
+                onClick={() => handleSelect(type)}
                 onMouseEnter={() => setPreviewType(type)}
                 onMouseLeave={() => setPreviewType(null)}
                 onFocus={() => setPreviewType(type)}
@@ -114,10 +114,23 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
           </div>
           <p className="text-md text-muted-foreground h-12 line-clamp-2">{displayedBlurb}</p>
           {gateMessage && <p className="text-sm text-muted-foreground">{gateMessage}</p>}
+          {requestError && <p className="text-sm text-destructive">{requestError}</p>}
           <div className="border rounded-lg p-4 min-h-32 text-sm text-muted-foreground">
-            {activeType
-              ? <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
-              : "Pick an analysis type above to see results here."}
+            {loadingType === "alignment" ? (
+              "Analysing..."
+            ) : activeType === "alignment" && alignmentResult ? (
+              <div className="space-y-2 text-foreground">
+                <p className="font-medium">Alignment score: {alignmentResult.score} / 5</p>
+                <p>{alignmentResult.reasoning}</p>
+                {alignmentResult.concern && (
+                  <p className="text-amber-600 dark:text-amber-400">{alignmentResult.concern}</p>
+                )}
+              </div>
+            ) : activeType ? (
+              <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
+            ) : (
+              "Pick an analysis type above to see results here."
+            )}
           </div>
         </div>
       </SheetContent>
