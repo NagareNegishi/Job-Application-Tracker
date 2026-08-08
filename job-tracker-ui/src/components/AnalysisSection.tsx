@@ -56,14 +56,17 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
           <Sparkles className="size-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[80vh]">
-        <SheetHeader>
+      <SheetContent
+        side="bottom"
+        className="max-h-[80vh] sm:inset-x-8 sm:rounded-t-xl md:inset-x-16 lg:inset-x-32 xl:inset-x-48"
+      >
+        <SheetHeader className="sm:px-6 lg:px-8">
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
             AI Insights
           </SheetTitle>
         </SheetHeader>
-        <div className="px-4 pb-4 space-y-3 overflow-y-auto flex-1 min-h-0">
+        <div className="px-4 pb-4 space-y-3 overflow-y-auto flex-1 min-h-0 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {ANALYSIS_TYPES.map(({ type, label, blurb }) => (
               <button
