@@ -162,8 +162,7 @@ internal static class ClaudeAnalysisConfig
         most pointed at this candidate's specific gaps or strengths).
         Build the output by taking the top-ranked candidate from every type that
         produced one, then fill remaining slots with the next-best-ranked candidates
-        regardless of type, up to {{MaxInterviewQuestionCount}}. Never drop a type
-        entirely if it produced at least one candidate.
+        regardless of type, up to {{MaxInterviewQuestionCount}}.
         Return {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions, in
         rank order. If fewer than {{MinInterviewQuestionCount}} genuine candidates exist
         in total, return only those — don't pad with generic questions.
