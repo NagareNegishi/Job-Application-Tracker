@@ -147,7 +147,7 @@ internal static class ClaudeAnalysisConfig
 
         SELECTION:
         Contrast what the Job Description requires against evidence in the Candidate
-        Profile. Generate candidates from all three types that apply:
+        Profile. Generate 2–3 candidates per applicable type:
         - Gap probe: a requirement barely or not evidenced in the profile — likely
           probed to test whether the candidate can pick it up.
         - Experience check: a requirement strongly evidenced in the profile (Skills,
