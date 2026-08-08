@@ -114,7 +114,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
           {gateMessage && <p className="text-sm text-muted-foreground">{gateMessage}</p>}
           {requestError && <p className="text-sm text-destructive">{requestError}</p>}
           <div className="border rounded-lg p-4 min-h-32 text-sm text-muted-foreground">
-            {loadingType === "alignment" ? (
+            {loadingType ? (
               "Analysing..."
             ) : activeType === "alignment" && alignmentResult ? (
               <div className="space-y-2 text-foreground">
@@ -124,6 +124,10 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
                   <p className="text-amber-600 dark:text-amber-400">{alignmentResult.concern}</p>
                 )}
               </div>
+            ) : activeType === "skills" && skillsResult ? (
+              <ul className="list-disc pl-5 space-y-1 text-foreground">
+                {skillsResult.skills.map(skill => <li key={skill}>{skill}</li>)}
+              </ul>
             ) : activeType ? (
               <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
             ) : (
