@@ -147,27 +147,33 @@ internal static class ClaudeAnalysisConfig
 
         SELECTION:
         Contrast what the Job Description requires against evidence in the Candidate
-        Profile:
-        - The Skills line.
-        - The Certifications line.
-        - Work history and Education entries.
-        Favor requirements the profile evidences only thinly or not at all (likely probed
-        to test depth), and requirements the profile evidences strongly (likely probed to
-        verify with a concrete example). Don't invent requirements the Job Description
-        doesn't mention.
+        Profile. Generate candidates from all three types that apply:
+        - Gap probe: a requirement barely or not evidenced in the profile — likely
+          probed to test whether the candidate can pick it up.
+        - Experience check: a requirement strongly evidenced in the profile (Skills,
+          Certifications, Work history, Education) — likely probed to verify depth
+          with a concrete example.
+        - Core requirement: a requirement central to the role itself — likely asked
+          as a standalone technical check, regardless of what the profile shows.
+        Don't invent requirements the Job Description doesn't mention. Skip a type
+        that doesn't apply (e.g. no real gap) rather than forcing a candidate for it.
 
         RANKING:
-        Order most likely first (most central to the role, or most pointed at this
-        candidate's specific gaps or strengths).
-        Return {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions. If
-        the listing gives little to work with, return fewer — don't pad with generic
-        questions untethered to this role or profile.
+        Rank all candidates together, most likely first (most central to the role, or
+        most pointed at this candidate's specific gaps or strengths).
+        Build the output by taking the top-ranked candidate from every type that
+        produced one, then fill remaining slots with the next-best-ranked candidates
+        regardless of type, up to {{MaxInterviewQuestionCount}}. Never drop a type
+        entirely if it produced at least one candidate.
+        Return {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions, in
+        rank order. If fewer than {{MinInterviewQuestionCount}} genuine candidates exist
+        in total, return only those — don't pad with generic questions.
 
         OUTPUT FORMAT:
         - Return valid JSON only. No markdown fences, no prose before or after.
         - `questions`: array of strings, each one sentence.
 
         Example:
-        {"questions": ["Tell me about a time you handled a difficult stakeholder.", "How would you approach debugging a production outage in a service you didn't write?"]}
+        {"questions": ["The role calls for Kubernetes in production, but your profile only shows a personal project with it — how would you approach running it at scale on a live system?", "You led two TypeScript migrations in your last roles — walk me through a decision from one of those you'd make differently now.", "This role owns the checkout service end-to-end — how would you design it to handle a 10x traffic spike during a flash sale?"]}
         """;
 }
