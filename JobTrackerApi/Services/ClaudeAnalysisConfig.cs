@@ -138,7 +138,10 @@ internal static class ClaudeAnalysisConfig
         - `questions`: array of strings, each one sentence.
 
         Example:
-        {"questions": ["The listing mentions migrating the platform to microservices — how far along is that, and would I join before or after the cutover?", "My last two roles were backend-focused — how much day-to-day frontend work does this position actually involve?"]}
+        {"questions": [
+          "The listing mentions migrating the platform to microservices — how far along is that, and would I join before or after the cutover?",
+          "My last two roles were backend-focused — how much day-to-day frontend work does this position actually involve?"
+        ]}
         """;
 
     public static readonly string InterviewQuestionsPrompt = $$"""
@@ -172,6 +175,10 @@ internal static class ClaudeAnalysisConfig
         - `questions`: array of strings, each one sentence.
 
         Example:
-        {"questions": ["The role calls for Kubernetes in production, but your profile only shows a personal project with it — how would you approach running it at scale on a live system?", "You led two TypeScript migrations in your last roles — walk me through a decision from one of those you'd make differently now.", "This role owns the checkout service end-to-end — how would you design it to handle a 10x traffic spike during a flash sale?"]}
+        {"questions": [
+          "The role calls for Kubernetes in production, but your profile only shows a personal project with it — how would you approach running it at scale on a live system?",
+          "You led two TypeScript migrations in your last roles — walk me through a decision from one of those you'd make differently now.",
+          "This role owns the checkout service end-to-end — how would you design it to handle a 10x traffic spike during a flash sale?"
+        ]}
         """;
 }
