@@ -130,26 +130,26 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
           <div className="border rounded-lg p-4 min-h-32 text-sm text-muted-foreground">
             {loadingType ? (
               "Analysing..."
-            ) : activeType === "alignment" && alignmentResult ? (
+            ) : activeType === "alignment" && results.alignment ? (
               <div className="space-y-2 text-foreground">
-                <p className="font-medium">Alignment score: {alignmentResult.score} / 5</p>
-                <p>{alignmentResult.reasoning}</p>
-                {alignmentResult.concern && (
-                  <p className="text-amber-600 dark:text-amber-400">{alignmentResult.concern}</p>
+                <p className="font-medium">Alignment score: {results.alignment.score} / 5</p>
+                <p>{results.alignment.reasoning}</p>
+                {results.alignment.concern && (
+                  <p className="text-amber-600 dark:text-amber-400">{results.alignment.concern}</p>
                 )}
               </div>
-            ) : activeType === "skills" && skillsResult ? (
-              skillsResult.skills.length > 0 ? (
+            ) : activeType === "skills" && results.skills ? (
+              results.skills.skills.length > 0 ? (
                 <ul className="list-disc pl-5 space-y-1 text-foreground">
-                  {skillsResult.skills.map(skill => <li key={skill}>{skill}</li>)}
+                  {results.skills.skills.map(skill => <li key={skill}>{skill}</li>)}
                 </ul>
               ) : (
                 "No matching skills found for this role."
               )
-            ) : activeType === "gaps" && gapsResult ? (
-              gapsResult.gaps.length > 0 ? (
+            ) : activeType === "gaps" && results.gaps ? (
+              results.gaps.gaps.length > 0 ? (
                 <ul className="space-y-3 text-foreground">
-                  {gapsResult.gaps.map(({ gap, advice }) => (
+                  {results.gaps.gaps.map(({ gap, advice }) => (
                     <li key={gap}>
                       <p className="font-medium">{gap}</p>
                       <p className="text-muted-foreground">{advice}</p>
@@ -159,18 +159,18 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
               ) : (
                 "No notable gaps found for this role."
               )
-            ) : activeType === "questionsToAsk" && questionsToAskResult ? (
-              questionsToAskResult.questions.length > 0 ? (
+            ) : activeType === "questionsToAsk" && results.questionsToAsk ? (
+              results.questionsToAsk.questions.length > 0 ? (
                 <ul className="list-disc pl-5 space-y-1 text-foreground">
-                  {questionsToAskResult.questions.map(question => <li key={question}>{question}</li>)}
+                  {results.questionsToAsk.questions.map(question => <li key={question}>{question}</li>)}
                 </ul>
               ) : (
                 "No suggested questions for this role."
               )
-            ) : activeType === "interviewQuestions" && interviewQuestionsResult ? (
-              interviewQuestionsResult.questions.length > 0 ? (
+            ) : activeType === "interviewQuestions" && results.interviewQuestions ? (
+              results.interviewQuestions.questions.length > 0 ? (
                 <ul className="list-disc pl-5 space-y-1 text-foreground">
-                  {interviewQuestionsResult.questions.map(question => <li key={question}>{question}</li>)}
+                  {results.interviewQuestions.questions.map(question => <li key={question}>{question}</li>)}
                 </ul>
               ) : (
                 "No suggested interview questions for this role."
