@@ -21,6 +21,10 @@ export type GapsResult = {
   gaps: GapItem[]
 }
 
+export type QuestionsResult = {
+  questions: string[]
+}
+
 export type AnalysisRequest = {
   description: string
   role?: string
@@ -52,4 +56,13 @@ export async function analyseGaps(request: AnalysisRequest): Promise<GapsResult>
     body: JSON.stringify(request),
   })
   return handleResponse<GapsResult>(response)
+}
+
+export async function analyseQuestionsToAsk(request: AnalysisRequest): Promise<QuestionsResult> {
+  const response = await apiFetch(`${BASE_URL}/analyse/questions-to-ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  })
+  return handleResponse<QuestionsResult>(response)
 }
