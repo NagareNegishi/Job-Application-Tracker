@@ -12,7 +12,10 @@ import { useProfile } from "@/hooks/profileQuery"
 import { ApiError } from "@/lib/api"
 import { MIN_ANALYSIS_DESCRIPTION } from "@/lib/validationConstants"
 import { analyseAlignment, type AlignmentResult } from "@/services/analysisService"
+import { parseListing } from "@/services/parseService"
+import type { FormState } from "@/types/formTypes"
 import { isProfileReady } from "@/utils/profileReady"
+import { toFormFields } from "@/utils/parsedJobFields"
 import { Sparkles } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router"
@@ -20,7 +23,7 @@ import { Link } from "react-router"
 interface AlignmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAutoFill: (text: string) => void
+  onAutoFill: (data: Partial<FormState>) => void
 }
 
 export function AlignmentDialog({ open, onOpenChange, onAutoFill }: AlignmentDialogProps) {
@@ -63,9 +66,19 @@ export function AlignmentDialog({ open, onOpenChange, onAutoFill }: AlignmentDia
     }
   }
 
-  function handleAutoFill() {
-    handleOpenChange(false)
-    onAutoFill(text)
+  async function handleAutoFill() {
+    setError(null)
+    setLoading(true)
+    try {
+      const fields = await parseListing(text)
+      const data = toFormFields(fields)
+      handleOpenChange(false)
+      onAutoFill(data)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -99,8 +112,8 @@ export function AlignmentDialog({ open, onOpenChange, onAutoFill }: AlignmentDia
             Close
           </Button>
           {result ? (
-            <Button onClick={handleAutoFill}>
-              Auto-fill this job
+            <Button onClick={handleAutoFill} disabled={loading}>
+              {loading ? "Filling..." : "Auto-fill this job"}
             </Button>
           ) : (
             <Button onClick={handleCheck} disabled={disabled || loading}>
