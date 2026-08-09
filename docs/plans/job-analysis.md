@@ -233,7 +233,7 @@ All endpoints:
 - One shared error/status line: unmet-gate reason when disabled, or POST failure (429/502/network) after a click.
 - One shared result area below: renders whichever type is active. Each type keeps its own result in page state (D15) — switching buttons swaps the display, doesn't refetch.
 
-Shared plumbing (`src/services/analysisService.ts`, `AnalysisSection.tsx`): `AnalysisRequest` type; per-type result state (`alignmentResult`, `skillsResult`, `gapsResult`, `questionsToAskResult`, `interviewQuestionsResult`); single `loadingType`/`requestError` pair; `handleSelect(type)` dispatches to the right service call. `QuestionsResult` (`{ questions: string[] }`) is shared between Questions-to-ask and Interview-questions, matching the backend's shared DTO.
+Shared plumbing (`src/services/analysisService.ts`, `AnalysisSection.tsx`): `AnalysisRequest` type; single `results` state keyed by `AnalysisType` (`Partial<ResultMap>`) instead of one `useState` per type; single `loadingType`/`requestError` pair; `handleSelect<T extends AnalysisType>(type)` dispatches via a typed `ANALYSIS_FETCHERS` lookup instead of an if/else chain. `analysisService.ts`'s 5 endpoint functions are thin wrappers over one `postAnalysis<T>(endpoint, request)`. Result rendering goes through a `renderResult()` switch (one case per type) plus a shared `StringListResult` component for the bullet-list-or-empty-message shape common to Skills/Questions-to-ask/Interview-questions; Gaps keeps its own case (title+advice pairs, not a plain string list). `QuestionsResult` (`{ questions: string[] }`) is shared between Questions-to-ask and Interview-questions, matching the backend's shared DTO. (Deduplication pass, post-Step-9.)
 
 ---
 
