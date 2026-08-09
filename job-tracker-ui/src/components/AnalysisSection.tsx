@@ -23,10 +23,10 @@ interface AnalysisSectionProps {
 
 const ANALYSIS_TYPES = [
   { type: "alignment", label: "Alignment", blurb: "How well your profile matches this job" },
-  { type: "skills", label: "Matched Skills", blurb: "Skills to highlight for this role" },
-  { type: "gaps", label: "Skill Gaps", blurb: "Where your profile falls short, and how to address it" },
-  { type: "questionsToAsk", label: "Questions to Ask", blurb: "Good questions for the interviewer" },
-  { type: "interviewQuestions", label: "Interview Questions", blurb: "Questions you're likely to be asked" },
+  { type: "skills", label: "Matched Skills", blurb: "Skills to highlight for this role", emptyMessage: "No matching skills found for this role." },
+  { type: "gaps", label: "Skill Gaps", blurb: "Where your profile falls short, and how to address it", emptyMessage: "No notable gaps found for this role." },
+  { type: "questionsToAsk", label: "Questions to Ask", blurb: "Good questions for the interviewer", emptyMessage: "No suggested questions for this role." },
+  { type: "interviewQuestions", label: "Interview Questions", blurb: "Questions you're likely to be asked", emptyMessage: "No suggested interview questions for this role." },
 ] as const
 
 type AnalysisType = typeof ANALYSIS_TYPES[number]["type"]
@@ -45,6 +45,15 @@ const ANALYSIS_FETCHERS: { [K in AnalysisType]: (request: AnalysisRequest) => Pr
   gaps: analyseGaps,
   questionsToAsk: analyseQuestionsToAsk,
   interviewQuestions: analyseInterviewQuestions,
+}
+
+function StringListResult({ items, emptyMessage }: { items: string[]; emptyMessage: string }) {
+  if (items.length === 0) return <>{emptyMessage}</>
+  return (
+    <ul className="list-disc pl-5 space-y-1 text-foreground">
+      {items.map(item => <li key={item}>{item}</li>)}
+    </ul>
+  )
 }
 
 export function AnalysisSection({ job }: AnalysisSectionProps) {
