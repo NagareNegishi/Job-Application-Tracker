@@ -157,7 +157,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
             <SheetTrigger asChild>
               <Button
                 size="icon-lg"
-                className="fixed bottom-6 right-10 z-40 size-14 rounded-full shadow-lg hover:scale-105 transition-transform"
+                className="fixed bottom-6 right-10 z-40 size-14 rounded-full bg-ai-accent text-ai-accent-foreground shadow-lg hover:bg-ai-accent/90 hover:scale-105 transition-transform"
                 aria-label="AI Insights"
               >
                 <Bot className="size-6" />
