@@ -1,3 +1,4 @@
+import { AlignmentResultView } from "@/components/AlignmentResultView"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -115,9 +116,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
         if (!r) break
         return (
           <div className="space-y-2 text-foreground">
-            <p className="font-medium">Alignment score: {r.score} / 5</p>
-            <p>{r.reasoning}</p>
-            {r.concern && <p className="text-amber-600 dark:text-amber-400">{r.concern}</p>}
+            <AlignmentResultView result={r} />
           </div>
         )
       }
