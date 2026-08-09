@@ -56,6 +56,10 @@ function StringListResult({ items, emptyMessage }: { items: string[]; emptyMessa
   )
 }
 
+function emptyMessageFor(type: Exclude<AnalysisType, "alignment">) {
+  return ANALYSIS_TYPES.find(a => a.type === type)!.emptyMessage
+}
+
 export function AnalysisSection({ job }: AnalysisSectionProps) {
   const { data: profile } = useProfile()
   const [open, setOpen] = useState(false)
@@ -92,6 +96,55 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
     } finally {
       setLoadingType(null)
     }
+  }
+
+  function renderResult() {
+    if (loadingType) return "Analysing..."
+    if (!activeType) return "Pick an analysis type above to see results here."
+
+    switch (activeType) {
+      case "alignment": {
+        const r = results.alignment
+        if (!r) break
+        return (
+          <div className="space-y-2 text-foreground">
+            <p className="font-medium">Alignment score: {r.score} / 5</p>
+            <p>{r.reasoning}</p>
+            {r.concern && <p className="text-amber-600 dark:text-amber-400">{r.concern}</p>}
+          </div>
+        )
+      }
+      case "skills": {
+        const r = results.skills
+        if (!r) break
+        return <StringListResult items={r.skills} emptyMessage={emptyMessageFor("skills")} />
+      }
+      case "gaps": {
+        const r = results.gaps
+        if (!r) break
+        return r.gaps.length > 0 ? (
+          <ul className="space-y-3 text-foreground">
+            {r.gaps.map(({ gap, advice }) => (
+              <li key={gap}>
+                <p className="font-medium">{gap}</p>
+                <p className="text-muted-foreground">{advice}</p>
+              </li>
+            ))}
+          </ul>
+        ) : emptyMessageFor("gaps")
+      }
+      case "questionsToAsk": {
+        const r = results.questionsToAsk
+        if (!r) break
+        return <StringListResult items={r.questions} emptyMessage={emptyMessageFor("questionsToAsk")} />
+      }
+      case "interviewQuestions": {
+        const r = results.interviewQuestions
+        if (!r) break
+        return <StringListResult items={r.questions} emptyMessage={emptyMessageFor("interviewQuestions")} />
+      }
+    }
+    return <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
   }
 
   return (
