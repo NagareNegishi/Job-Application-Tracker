@@ -10,7 +10,7 @@ import { useProfile } from "@/hooks/profileQuery"
 import { ApiError } from "@/lib/api"
 import { hasRole } from "@/lib/auth"
 import { MIN_ANALYSIS_DESCRIPTION } from "@/lib/validationConstants"
-import { analyseAlignment, analyseGaps, analyseSkills, type AlignmentResult, type GapsResult, type SkillsResult } from "@/services/analysisService"
+import { analyseAlignment, analyseGaps, analyseQuestionsToAsk, analyseSkills, type AlignmentResult, type GapsResult, type QuestionsResult, type SkillsResult } from "@/services/analysisService"
 import type { Job } from "@/types/job"
 import { isProfileReady } from "@/utils/profileReady"
 import { Sparkles } from "lucide-react"
@@ -41,6 +41,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   const [alignmentResult, setAlignmentResult] = useState<AlignmentResult | null>(null)
   const [skillsResult, setSkillsResult] = useState<SkillsResult | null>(null)
   const [gapsResult, setGapsResult] = useState<GapsResult | null>(null)
+  const [questionsToAskResult, setQuestionsToAskResult] = useState<QuestionsResult | null>(null)
 
   if (!hasRole("AiUser")) return null
 
@@ -58,14 +59,15 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   async function handleSelect(type: AnalysisType) {
     setActiveType(type)
     setRequestError(null)
-    if (type !== "alignment" && type !== "skills" && type !== "gaps") return
+    if (type !== "alignment" && type !== "skills" && type !== "gaps" && type !== "questionsToAsk") return
 
     const request = { description: job.description!, role: job.role, company: job.company }
     setLoadingType(type)
     try {
       if (type === "alignment") setAlignmentResult(await analyseAlignment(request))
       else if (type === "skills") setSkillsResult(await analyseSkills(request))
-      else setGapsResult(await analyseGaps(request))
+      else if (type === "gaps") setGapsResult(await analyseGaps(request))
+      else setQuestionsToAskResult(await analyseQuestionsToAsk(request))
     } catch (err) {
       setRequestError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.")
     } finally {
