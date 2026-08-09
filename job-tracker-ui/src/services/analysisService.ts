@@ -31,47 +31,30 @@ export type AnalysisRequest = {
   company?: string
 }
 
-export async function analyseAlignment(request: AnalysisRequest): Promise<AlignmentResult> {
-  const response = await apiFetch(`${BASE_URL}/analyse/alignment`, {
+function postAnalysis<T>(endpoint: string, request: AnalysisRequest): Promise<T> {
+  return apiFetch(`${BASE_URL}/analyse/${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
-  })
-  return handleResponse<AlignmentResult>(response)
+  }).then(handleResponse<T>)
 }
 
-export async function analyseSkills(request: AnalysisRequest): Promise<SkillsResult> {
-  const response = await apiFetch(`${BASE_URL}/analyse/skills`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  })
-  return handleResponse<SkillsResult>(response)
+export function analyseAlignment(request: AnalysisRequest): Promise<AlignmentResult> {
+  return postAnalysis<AlignmentResult>("alignment", request)
 }
 
-export async function analyseGaps(request: AnalysisRequest): Promise<GapsResult> {
-  const response = await apiFetch(`${BASE_URL}/analyse/gaps`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  })
-  return handleResponse<GapsResult>(response)
+export function analyseSkills(request: AnalysisRequest): Promise<SkillsResult> {
+  return postAnalysis<SkillsResult>("skills", request)
 }
 
-export async function analyseQuestionsToAsk(request: AnalysisRequest): Promise<QuestionsResult> {
-  const response = await apiFetch(`${BASE_URL}/analyse/questions-to-ask`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  })
-  return handleResponse<QuestionsResult>(response)
+export function analyseGaps(request: AnalysisRequest): Promise<GapsResult> {
+  return postAnalysis<GapsResult>("gaps", request)
 }
 
-export async function analyseInterviewQuestions(request: AnalysisRequest): Promise<QuestionsResult> {
-  const response = await apiFetch(`${BASE_URL}/analyse/interview-questions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  })
-  return handleResponse<QuestionsResult>(response)
+export function analyseQuestionsToAsk(request: AnalysisRequest): Promise<QuestionsResult> {
+  return postAnalysis<QuestionsResult>("questions-to-ask", request)
+}
+
+export function analyseInterviewQuestions(request: AnalysisRequest): Promise<QuestionsResult> {
+  return postAnalysis<QuestionsResult>("interview-questions", request)
 }
