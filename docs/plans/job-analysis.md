@@ -262,7 +262,7 @@ Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine l
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | Done |
 | 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | Done |
 | 8b | Prompt-quality polish — wording/structure pass (SELECTION/RANKING/OUTPUT FORMAT, examples) for all 5 prompts in `ClaudeAnalysisConfig.cs`; wording verified through the UI once Steps 9–10 land | Done |
-| 9 | Add analysis UI to Job Detail page — `AnalysisSection`, 5 buttons + shared error/result area (see breakdown below) | In progress (2/5 wired) |
+| 9 | Add analysis UI to Job Detail page — `AnalysisSection`, 5 buttons + shared error/result area (see breakdown below) | In progress (3/5 wired) |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
 
 ---
@@ -291,7 +291,7 @@ New `AnalysisSection` component (D20): a floating bottom-right FAB (`Sparkles` i
 |---|---|---|
 | Alignment | `POST /api/analyse/alignment` | Done — loading state, score/reasoning/concern rendering, error handling |
 | Matched Skills | `POST /api/analyse/skills` | Done — loading state, list rendering incl. empty-result message, error handling (surfaced the D21 empty-array fix) |
-| Skill Gaps | `POST /api/analyse/gaps` | Not started |
+| Skill Gaps | `POST /api/analyse/gaps` | Done — loading state, gap/advice list rendering incl. empty-result message, error handling |
 | Questions to Ask | `POST /api/analyse/questions-to-ask` | Not started |
 | Interview Questions | `POST /api/analyse/interview-questions` | Not started |
 

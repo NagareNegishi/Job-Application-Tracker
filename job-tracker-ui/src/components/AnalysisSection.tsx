@@ -134,6 +134,19 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
               ) : (
                 "No matching skills found for this role."
               )
+            ) : activeType === "gaps" && gapsResult ? (
+              gapsResult.gaps.length > 0 ? (
+                <ul className="space-y-3 text-foreground">
+                  {gapsResult.gaps.map(({ gap, advice }) => (
+                    <li key={gap}>
+                      <p className="font-medium">{gap}</p>
+                      <p className="text-muted-foreground">{advice}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                "No notable gaps found for this role."
+              )
             ) : activeType ? (
               <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
             ) : (
