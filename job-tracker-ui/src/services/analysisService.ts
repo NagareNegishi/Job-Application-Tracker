@@ -12,6 +12,15 @@ export type SkillsResult = {
   skills: string[]
 }
 
+export type GapItem = {
+  gap: string
+  advice: string
+}
+
+export type GapsResult = {
+  gaps: GapItem[]
+}
+
 export type AnalysisRequest = {
   description: string
   role?: string
@@ -34,4 +43,13 @@ export async function analyseSkills(request: AnalysisRequest): Promise<SkillsRes
     body: JSON.stringify(request),
   })
   return handleResponse<SkillsResult>(response)
+}
+
+export async function analyseGaps(request: AnalysisRequest): Promise<GapsResult> {
+  const response = await apiFetch(`${BASE_URL}/analyse/gaps`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  })
+  return handleResponse<GapsResult>(response)
 }
