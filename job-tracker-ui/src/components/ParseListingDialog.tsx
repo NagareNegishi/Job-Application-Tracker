@@ -79,10 +79,10 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
         </div>
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={handleFillManually} disabled={loading}>
-            Fill manually
+            Skip, I'll type
           </Button>
           <Button onClick={handleFill} disabled={loading || !text.trim()}>
-            {loading ? "Filling..." : "Fill fields"}
+            {loading ? "Auto-filling..." : "Auto-fill"}
           </Button>
         </DialogFooter>
       </DialogContent>

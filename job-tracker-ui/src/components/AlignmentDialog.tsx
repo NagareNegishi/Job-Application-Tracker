@@ -87,10 +87,13 @@ export function AlignmentDialog({ open, onOpenChange, onAutoFill }: AlignmentDia
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            See if it's worth applying
+            See if this job is worth applying
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
+          <p className="text-sm text-muted-foreground">
+            Paste the job listing text below to see how well it matches your profile.
+          </p>
           <Textarea
             value={text}
             onChange={e => setText(e.target.value)}
@@ -113,7 +116,7 @@ export function AlignmentDialog({ open, onOpenChange, onAutoFill }: AlignmentDia
           </Button>
           {result ? (
             <Button onClick={handleAutoFill} disabled={loading}>
-              {loading ? "Filling..." : "Auto-fill this job"}
+              {loading ? "Adding..." : "Add this job"}
             </Button>
           ) : (
             <Button onClick={handleCheck} disabled={disabled || loading}>
