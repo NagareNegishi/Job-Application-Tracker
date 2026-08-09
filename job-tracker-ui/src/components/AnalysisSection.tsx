@@ -23,10 +23,10 @@ interface AnalysisSectionProps {
 
 const ANALYSIS_TYPES = [
   { type: "alignment", label: "Alignment", blurb: "How well your profile matches this job" },
-  { type: "skills", label: "Matched Skills", blurb: "Skills to highlight for this role", emptyMessage: "No matching skills found for this role." },
-  { type: "gaps", label: "Skill Gaps", blurb: "Where your profile falls short, and how to address it", emptyMessage: "No notable gaps found for this role." },
-  { type: "questionsToAsk", label: "Questions to Ask", blurb: "Good questions for the interviewer", emptyMessage: "No suggested questions for this role." },
-  { type: "interviewQuestions", label: "Interview Questions", blurb: "Questions you're likely to be asked", emptyMessage: "No suggested interview questions for this role." },
+  { type: "skills", label: "Matched Skills", blurb: "Skills to highlight for this role" },
+  { type: "gaps", label: "Skill Gaps", blurb: "Where your profile falls short, and how to address it" },
+  { type: "questionsToAsk", label: "Questions to Ask", blurb: "Good questions for the interviewer" },
+  { type: "interviewQuestions", label: "Interview Questions", blurb: "Questions you're likely to be asked" },
 ] as const
 
 type AnalysisType = typeof ANALYSIS_TYPES[number]["type"]
@@ -54,10 +54,6 @@ function StringListResult({ items, emptyMessage }: { items: string[]; emptyMessa
       {items.map(item => <li key={item}>{item}</li>)}
     </ul>
   )
-}
-
-function emptyMessageFor(type: Exclude<AnalysisType, "alignment">) {
-  return ANALYSIS_TYPES.find(a => a.type === type)!.emptyMessage
 }
 
 export function AnalysisSection({ job }: AnalysisSectionProps) {
@@ -117,7 +113,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
       case "skills": {
         const r = results.skills
         if (!r) break
-        return <StringListResult items={r.skills} emptyMessage={emptyMessageFor("skills")} />
+        return <StringListResult items={r.skills} emptyMessage="No matching skills found for this role." />
       }
       case "gaps": {
         const r = results.gaps
@@ -131,17 +127,17 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
               </li>
             ))}
           </ul>
-        ) : emptyMessageFor("gaps")
+        ) : "No notable gaps found for this role."
       }
       case "questionsToAsk": {
         const r = results.questionsToAsk
         if (!r) break
-        return <StringListResult items={r.questions} emptyMessage={emptyMessageFor("questionsToAsk")} />
+        return <StringListResult items={r.questions} emptyMessage="No suggested questions for this role." />
       }
       case "interviewQuestions": {
         const r = results.interviewQuestions
         if (!r) break
-        return <StringListResult items={r.questions} emptyMessage={emptyMessageFor("interviewQuestions")} />
+        return <StringListResult items={r.questions} emptyMessage="No suggested interview questions for this role." />
       }
     }
     return <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
@@ -190,58 +186,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
           {gateMessage && <p className="text-sm text-muted-foreground">{gateMessage}</p>}
           {requestError && <p className="text-sm text-destructive">{requestError}</p>}
           <div className="border rounded-lg p-4 min-h-32 text-sm text-muted-foreground">
-            {loadingType ? (
-              "Analysing..."
-            ) : activeType === "alignment" && results.alignment ? (
-              <div className="space-y-2 text-foreground">
-                <p className="font-medium">Alignment score: {results.alignment.score} / 5</p>
-                <p>{results.alignment.reasoning}</p>
-                {results.alignment.concern && (
-                  <p className="text-amber-600 dark:text-amber-400">{results.alignment.concern}</p>
-                )}
-              </div>
-            ) : activeType === "skills" && results.skills ? (
-              results.skills.skills.length > 0 ? (
-                <ul className="list-disc pl-5 space-y-1 text-foreground">
-                  {results.skills.skills.map(skill => <li key={skill}>{skill}</li>)}
-                </ul>
-              ) : (
-                "No matching skills found for this role."
-              )
-            ) : activeType === "gaps" && results.gaps ? (
-              results.gaps.gaps.length > 0 ? (
-                <ul className="space-y-3 text-foreground">
-                  {results.gaps.gaps.map(({ gap, advice }) => (
-                    <li key={gap}>
-                      <p className="font-medium">{gap}</p>
-                      <p className="text-muted-foreground">{advice}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                "No notable gaps found for this role."
-              )
-            ) : activeType === "questionsToAsk" && results.questionsToAsk ? (
-              results.questionsToAsk.questions.length > 0 ? (
-                <ul className="list-disc pl-5 space-y-1 text-foreground">
-                  {results.questionsToAsk.questions.map(question => <li key={question}>{question}</li>)}
-                </ul>
-              ) : (
-                "No suggested questions for this role."
-              )
-            ) : activeType === "interviewQuestions" && results.interviewQuestions ? (
-              results.interviewQuestions.questions.length > 0 ? (
-                <ul className="list-disc pl-5 space-y-1 text-foreground">
-                  {results.interviewQuestions.questions.map(question => <li key={question}>{question}</li>)}
-                </ul>
-              ) : (
-                "No suggested interview questions for this role."
-              )
-            ) : activeType ? (
-              <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
-            ) : (
-              "Pick an analysis type above to see results here."
-            )}
+            {renderResult()}
           </div>
         </div>
       </SheetContent>
