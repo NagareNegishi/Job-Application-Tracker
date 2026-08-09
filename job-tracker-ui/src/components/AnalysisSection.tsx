@@ -158,6 +158,14 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
               ) : (
                 "No suggested questions for this role."
               )
+            ) : activeType === "interviewQuestions" && interviewQuestionsResult ? (
+              interviewQuestionsResult.questions.length > 0 ? (
+                <ul className="list-disc pl-5 space-y-1 text-foreground">
+                  {interviewQuestionsResult.questions.map(question => <li key={question}>{question}</li>)}
+                </ul>
+              ) : (
+                "No suggested interview questions for this role."
+              )
             ) : activeType ? (
               <>Result for {ANALYSIS_TYPES.find(a => a.type === activeType)?.label} will appear here.</>
             ) : (
