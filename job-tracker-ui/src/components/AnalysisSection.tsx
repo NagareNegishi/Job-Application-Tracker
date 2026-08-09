@@ -10,7 +10,7 @@ import { useProfile } from "@/hooks/profileQuery"
 import { ApiError } from "@/lib/api"
 import { hasRole } from "@/lib/auth"
 import { MIN_ANALYSIS_DESCRIPTION } from "@/lib/validationConstants"
-import { analyseAlignment, analyseGaps, analyseInterviewQuestions, analyseQuestionsToAsk, analyseSkills, type AlignmentResult, type GapsResult, type QuestionsResult, type SkillsResult } from "@/services/analysisService"
+import { analyseAlignment, analyseGaps, analyseInterviewQuestions, analyseQuestionsToAsk, analyseSkills, type AlignmentResult, type AnalysisRequest, type GapsResult, type QuestionsResult, type SkillsResult } from "@/services/analysisService"
 import type { Job } from "@/types/job"
 import { isProfileReady } from "@/utils/profileReady"
 import { Sparkles } from "lucide-react"
@@ -31,6 +31,22 @@ const ANALYSIS_TYPES = [
 
 type AnalysisType = typeof ANALYSIS_TYPES[number]["type"]
 
+type ResultMap = {
+  alignment: AlignmentResult
+  skills: SkillsResult
+  gaps: GapsResult
+  questionsToAsk: QuestionsResult
+  interviewQuestions: QuestionsResult
+}
+
+const ANALYSIS_FETCHERS: { [K in AnalysisType]: (request: AnalysisRequest) => Promise<ResultMap[K]> } = {
+  alignment: analyseAlignment,
+  skills: analyseSkills,
+  gaps: analyseGaps,
+  questionsToAsk: analyseQuestionsToAsk,
+  interviewQuestions: analyseInterviewQuestions,
+}
+
 export function AnalysisSection({ job }: AnalysisSectionProps) {
   const { data: profile } = useProfile()
   const [open, setOpen] = useState(false)
@@ -38,11 +54,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   const [previewType, setPreviewType] = useState<AnalysisType | null>(null)
   const [loadingType, setLoadingType] = useState<AnalysisType | null>(null)
   const [requestError, setRequestError] = useState<string | null>(null)
-  const [alignmentResult, setAlignmentResult] = useState<AlignmentResult | null>(null)
-  const [skillsResult, setSkillsResult] = useState<SkillsResult | null>(null)
-  const [gapsResult, setGapsResult] = useState<GapsResult | null>(null)
-  const [questionsToAskResult, setQuestionsToAskResult] = useState<QuestionsResult | null>(null)
-  const [interviewQuestionsResult, setInterviewQuestionsResult] = useState<QuestionsResult | null>(null)
+  const [results, setResults] = useState<Partial<ResultMap>>({})
 
   if (!hasRole("AiUser")) return null
 
@@ -57,18 +69,15 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   const displayedType = previewType ?? activeType
   const displayedBlurb = ANALYSIS_TYPES.find(a => a.type === displayedType)?.blurb
 
-  async function handleSelect(type: AnalysisType) {
+  async function handleSelect<T extends AnalysisType>(type: T) {
     setActiveType(type)
     setRequestError(null)
 
-    const request = { description: job.description!, role: job.role, company: job.company }
+    const request: AnalysisRequest = { description: job.description!, role: job.role, company: job.company }
     setLoadingType(type)
     try {
-      if (type === "alignment") setAlignmentResult(await analyseAlignment(request))
-      else if (type === "skills") setSkillsResult(await analyseSkills(request))
-      else if (type === "gaps") setGapsResult(await analyseGaps(request))
-      else if (type === "questionsToAsk") setQuestionsToAskResult(await analyseQuestionsToAsk(request))
-      else setInterviewQuestionsResult(await analyseInterviewQuestions(request))
+      const result = await ANALYSIS_FETCHERS[type](request)
+      setResults(prev => ({ ...prev, [type]: result }))
     } catch (err) {
       setRequestError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.")
     } finally {
