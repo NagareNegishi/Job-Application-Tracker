@@ -43,6 +43,7 @@ CV integration is deferred — analysis uses profile text only.
 | Client mirrors the server's profile-minimum boolean via a new shared predicate, not `profileScore.ts` (D19) | `profileScore.ts` is a weighted 0–100 completeness gauge for `ProfilePage`'s progress ring — a different purpose with different criteria. The analysis gate is a strict boolean (`TargetRoles>0 && Skills>0 && WorkingRights>0 && (Certifications>0 \|\| WorkHistory>0 \|\| Education>0)`) that must match `AnalysisController.GetGatedProfileAsync` exactly, so it gets its own small predicate rather than reusing the score util |
 | Job Detail analysis UI: floating trigger + bottom-sliding Sheet, not a stacked section (D20, supersedes Step 9's original "no popup/sheet" call) | Analysis is an on-demand AI action, not stored job data like Contacts/Correspondence/Documents — it doesn't belong permanently stacked in the page flow, and list-shaped results (Gaps, Interview Questions) need room without lengthening the page on every click. A `Popover` was considered and rejected as too cramped for list results. Reuses the existing `Sheet` primitive (already proven in `JobEditSheet`) rather than a new one. `side="bottom"` (not `right`, unlike `JobEditSheet`) both visually distinguishes an AI *action* from a data-*editing* drawer, and reads naturally as rising from the bottom-right FAB that opens it |
 | Test coverage scope (D17) | Three test files, mirroring existing conventions (in-memory EF, direct controller instantiation, manual `ClaimsPrincipal`, service mocked at the controller boundary — same as `IParsingService` in `JobsControllerTests`). **(1) `ProfileDTOTests`** (new, mirrors `JobDTOTests`) — array-count caps, per-item string caps, `country` regex `^[A-Z]{2}$`, date attributes (YYYY-MM regex / `[Range(1900,2099)]`), and `IValidatableObject` cross-field rules (`from` not future, `to ≥ from`, `to` null = current). **(2) Profile tests in `AccountControllerTests`** (extend) — GET empty `{}` vs full; PUT creates + 409 if exists; PATCH merge semantics (`[]` clears, omitted untouched) + 404 if none; own-profile-only. **(3) `AnalysisControllerTests`** (new, mocks `IAnalysisService`, no live Claude) — 400 on description too short/empty/over-max, 400 on profile-gate fail, 400 on no profile, 403 demo, 502 when service throws `AnalysisFormatException`, 200 happy path returns mocked result. **Out of scope** (consistent with existing suite): no `ClaudeAnalysisServiceTests` (AI service mocked at controller, never live-tested — same as `ClaudeParsingService`); no tests for `[Authorize]`, the `AiEnabled` policy, or the `"analyse"` rate-limit (pipeline concerns, untested everywhere else) |
+| Empty list results are valid, not malformed (D21, found wiring Skills) | A live Skills call against a profile with zero real overlap (all software-engineering skills, job = Sales Development Representative) made Claude write a prose refusal instead of JSON — `ExtractJson` fell back to `"{}"`, and the service's old `Length >= 1` floor then rejected that as a 502. The `Length >= 1` check already contradicted each prompt's own "never fabricate/pad" instruction, which implies a genuine answer can be empty (zero overlap, zero gaps for a perfect match, etc). Fix: `ClaudeAnalysisService` now only rejects a `null` field (Claude broke the JSON contract) for Skills/Gaps/QuestionsToAsk/InterviewQuestions — an empty array passes through as a real result. Each of those four prompts' OUTPUT FORMAT section was updated to say so explicitly, with an empty-array example alongside the normal one, so Claude reaches for `[]` instead of prose. Alignment is unaffected — it always has a score |
 
 ---
 
@@ -261,7 +262,7 @@ Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine l
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | Done |
 | 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | Done |
 | 8b | Prompt-quality polish — wording/structure pass (SELECTION/RANKING/OUTPUT FORMAT, examples) for all 5 prompts in `ClaudeAnalysisConfig.cs`; wording verified through the UI once Steps 9–10 land | Done |
-| 9 | Add analysis UI to Job Detail page — `AnalysisSection`, 5 buttons + shared error/result area (see breakdown below) | — |
+| 9 | Add analysis UI to Job Detail page — `AnalysisSection`, 5 buttons + shared error/result area (see breakdown below) | In progress (2/5 wired) |
 | 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
 
 ---
@@ -283,6 +284,18 @@ New `AnalysisSection` component (D20): a floating bottom-right FAB (`Sparkles` i
   2. Profile meets the analysis minimum — new shared predicate (D19), read via the existing `useProfile()` (`hooks/profileQuery.ts`), no new fetch needed.
 - One shared error/status line below the buttons: shows the specific unmet-gate reason when disabled ("Add a description to this job to run analysis." / "Complete your profile to run analysis."); reused as the reactive error slot for POST failures (429/502/network) after a click, same generic-message pattern as `ParseListingDialog`.
 - One shared result "screen" below that: renders whichever type is currently active. Each of the 5 types keeps its own result in page state per D15 (switching buttons swaps the displayed result, doesn't refetch) — starts as plain text rendering of the JSON response; per-type formatting (score display, list, gap pairs) is a later pass once the shape is wired end to end.
+
+**Wiring progress** (one button at a time, per the Frontend Component Workflow rule in CLAUDE.md — stop and get approval after each before starting the next):
+
+| Button | Endpoint | Status |
+|---|---|---|
+| Alignment | `POST /api/analyse/alignment` | Done — loading state, score/reasoning/concern rendering, error handling |
+| Matched Skills | `POST /api/analyse/skills` | Done — loading state, list rendering incl. empty-result message, error handling (surfaced the D21 empty-array fix) |
+| Skill Gaps | `POST /api/analyse/gaps` | Not started |
+| Questions to Ask | `POST /api/analyse/questions-to-ask` | Not started |
+| Interview Questions | `POST /api/analyse/interview-questions` | Not started |
+
+Shared plumbing added so far, in `src/services/analysisService.ts` and `AnalysisSection.tsx`: `AnalysisRequest` request type; per-type result state (`alignmentResult`, `skillsResult`, …), a single `loadingType`/`requestError` pair shared across buttons, `handleSelect(type)` dispatches to the right service call. The remaining three buttons follow the same shape — add a `analyse<Type>` service fn + result state + a branch in `handleSelect` and the result-rendering block.
 
 ---
 
