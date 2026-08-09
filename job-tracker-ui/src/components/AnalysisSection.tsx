@@ -6,6 +6,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useProfile } from "@/hooks/profileQuery"
 import { ApiError } from "@/lib/api"
 import { hasRole } from "@/lib/auth"
@@ -13,7 +19,7 @@ import { MIN_ANALYSIS_DESCRIPTION } from "@/lib/validationConstants"
 import { analyseAlignment, analyseGaps, analyseInterviewQuestions, analyseQuestionsToAsk, analyseSkills, type AlignmentResult, type AnalysisRequest, type GapsResult, type QuestionsResult, type SkillsResult } from "@/services/analysisService"
 import type { Job } from "@/types/job"
 import { isProfileReady } from "@/utils/profileReady"
-import { Sparkles } from "lucide-react"
+import { Bot, Sparkles } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router"
 
@@ -145,15 +151,28 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          size="icon-lg"
-          className="fixed bottom-6 right-6 z-40 size-14 rounded-full shadow-lg hover:scale-105 transition-transform"
-          aria-label="AI Insights"
-        >
-          <Sparkles className="size-6" />
-        </Button>
-      </SheetTrigger>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SheetTrigger asChild>
+              <Button
+                size="icon-lg"
+                className="fixed bottom-6 right-10 z-40 size-14 rounded-full shadow-lg hover:scale-105 transition-transform"
+                aria-label="AI Insights"
+              >
+                <Bot className="size-6" />
+              </Button>
+            </SheetTrigger>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            className="bg-popover text-popover-foreground border text-base"
+            arrowClassName="bg-popover fill-popover"
+          >
+            AI Insights
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <SheetContent
         side="bottom"
         className="max-h-[80vh] sm:inset-x-8 sm:rounded-t-xl md:inset-x-16 lg:inset-x-32 xl:inset-x-48"
