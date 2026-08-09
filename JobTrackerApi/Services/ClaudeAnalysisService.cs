@@ -43,8 +43,8 @@ public class ClaudeAnalysisService : IAnalysisService
             FormatUserMessage(profile, description, role, company),
             "Skills");
 
-        if (result.Skills is not { Length: >= 1 })
-            throw new AnalysisFormatException("Skills response is empty or missing.");
+        if (result.Skills is null)
+            throw new AnalysisFormatException("Skills field missing from response.");
 
         return result;
     }
@@ -56,8 +56,8 @@ public class ClaudeAnalysisService : IAnalysisService
             FormatUserMessage(profile, description, role, company),
             "Gaps");
 
-        if (result.Gaps is not { Length: >= 1 })
-            throw new AnalysisFormatException("Gaps response is empty or missing.");
+        if (result.Gaps is null)
+            throw new AnalysisFormatException("Gaps field missing from response.");
 
         return result;
     }
@@ -69,8 +69,8 @@ public class ClaudeAnalysisService : IAnalysisService
             FormatUserMessage(profile, description, role, company),
             "QuestionsToAsk");
 
-        if (result.Questions is not { Length: >= 1 })
-            throw new AnalysisFormatException("Questions-to-ask response is empty or missing.");
+        if (result.Questions is null)
+            throw new AnalysisFormatException("Questions field missing from response.");
 
         return result;
     }
@@ -82,8 +82,8 @@ public class ClaudeAnalysisService : IAnalysisService
             FormatUserMessage(profile, description, role, company),
             "InterviewQuestions");
 
-        if (result.Questions is not { Length: >= 1 })
-            throw new AnalysisFormatException("Interview questions response is empty or missing.");
+        if (result.Questions is null)
+            throw new AnalysisFormatException("Questions field missing from response.");
 
         return result;
     }

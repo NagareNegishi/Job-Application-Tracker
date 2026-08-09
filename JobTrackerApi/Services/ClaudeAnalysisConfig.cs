@@ -16,60 +16,175 @@ internal static class ClaudeAnalysisConfig
     public const int MinInterviewQuestionCount = 4;
     public const int MaxInterviewQuestionCount = 6;
 
-    // TODO: prompts are placeholder quality — polish in a dedicated session before shipping.
     public static readonly string AlignmentPrompt = """
-        You are a career advisor assessing both how well a candidate's profile matches a job, and whether they'd actually want it.
+        Assess how well the candidate's profile matches this specific job, and whether
+        they would actually want it.
 
-        Rate the alignment on a scale of 1–5 (1 = poor fit, 5 = excellent fit), weighing the candidate's skills and background against the role, and — when given — their stated conditions (work mode, contract type, salary expectation, preferred locations, other conditions) against what the listing offers. Give a one-sentence reason.
+        SCORING:
+        Rate the alignment 1–5 (1 = poor fit, 5 = excellent fit) in two steps, in order:
+        1. Score how well the candidate's skills and background match the role's requirements.
+        2. Count how many of the candidate's conditions (work mode, contract type,
+           salary expectation, preferred locations, additional conditions) conflict with the
+           listing, then cap the step 1 score: 1 conflict caps it at 4, 2 conflicts caps it
+           at 3, 3 or more caps it at 2. No conflicts leaves the step 1 score unchanged.
 
-        Separately, check whether the job description reads like a genuine job listing. If it resembles something else — a CV-writing/career-coaching service, a scam or pyramid-scheme pitch, or text too vague or garbled to be a real listing — set "concern" to a short, neutral one-sentence note describing the issue. Otherwise set "concern" to null. Always still return your best score and reasoning, even when a concern is present — never refuse to answer.
+        REASONING:
+        In one sentence, state what matched or fell short between the candidate's
+        skills/background and the role, naming any condition mismatch that lowered the
+        score — without leaking scoring terms like "cap" or "conflict" to the user.
 
-        Return valid JSON only. No markdown fences, no prose before or after.
+        CONCERN DETECTION:
+        Check whether the description reads like a genuine job listing. If it resembles a
+        CV-writing/career-coaching service, a scam or pyramid-scheme pitch, or text too vague
+        or garbled to be a real listing, set concern to a neutral one-sentence note naming the
+        issue. Otherwise set concern to null. Never refuse to answer because of a concern.
 
+        OUTPUT FORMAT:
+        - Return valid JSON only. No markdown fences, no prose before or after.
+        - `score`: integer 1–5.
+        - `reasoning`: one sentence.
+        - `concern`: one sentence, or JSON null — never an empty string or the text "null".
+
+        Examples:
         {"score": 4, "reasoning": "Strong frontend skills match the role, though limited backend experience is a gap.", "concern": null}
-
-        {"score": 2, "reasoning": "Skills partially match, but the salary expectation is likely well above what's offered.", "concern": "This reads more like an ad for a CV-writing service than an actual job listing."}
-
-        score must be an integer 1–5. reasoning must be a single sentence. concern must be a single sentence, or the literal JSON null — never an empty string or the word "null" as text.
+        {"score": 3, "reasoning": "Skills and experience are an excellent match, but the role's contract type and location don't match what you're looking for.", "concern": null}
+        {"score": 1, "reasoning": "No real role details to assess fit against.", "concern": "This reads like an ad for a CV-writing service, not a job listing."}
         """;
 
     public static readonly string SkillsPrompt = $$"""
-        You are a career advisor identifying the most important skills for a specific role.
-        Given the job description and the candidate's profile for context, list the {{MinSkillCount}}–{{MaxSkillCount}} skills most critical for success in this role.
-        Return valid JSON only. No markdown fences, no prose before or after.
+        Identify which of the candidate's own skills are most relevant to this specific
+        role.
 
-        {"skills": ["TypeScript", "React", "Node.js", "REST APIs", "CI/CD", "PostgreSQL"]}
+        SELECTION:
+        Draw skills only from evidence in the Candidate Profile:
+        - The Skills line.
+        - The Certifications line.
+        - Work history and Education entries (e.g. a tool named in a work history
+          entry counts, even if not on the Skills line).
+        Exclude skills the role wants that aren't evidenced in the profile.
 
-        Return exactly {{MinSkillCount}}–{{MaxSkillCount}} items. Skills should be concise (1–4 words).
+        RANKING:
+        Order most to least relevant.
+        Return {{MinSkillCount}}–{{MaxSkillCount}} skills. If overlap is thinner than
+        {{MaxSkillCount}}, return fewer — don't pad with weak or irrelevant matches.
+        If none apply, return an empty array.
+
+        OUTPUT FORMAT:
+        - Return valid JSON only, even when empty. No markdown fences, no prose.
+        - `skills`: array of strings, concise (1–4 words each).
+
+        Examples:
+        {"skills": ["TypeScript", "React", "REST APIs", "CI/CD"]}
+        {"skills": []}
         """;
 
     public static readonly string GapsPrompt = $$"""
-        You are a career advisor identifying gaps between a candidate's profile and a job.
-        Identify {{MinGapCount}}–{{MaxGapCount}} specific gaps where the candidate falls short, each with brief, practical advice.
-        Return valid JSON only. No markdown fences, no prose before or after.
+        Identify where the candidate's profile falls short of what this specific role
+        wants.
 
-        {"gaps": [{"gap": "No cloud experience", "advice": "Highlight any personal AWS/Azure projects and your transferable infrastructure knowledge from C#."}]}
+        SELECTION:
+        Find role requirements that aren't evidenced in the Candidate Profile:
+        - The Skills line.
+        - The Certifications line.
+        - Work history and Education entries.
+        Exclude requirements the profile already evidences.
 
-        Return exactly {{MinGapCount}}–{{MaxGapCount}} gap objects. gap and advice are required strings.
+        ADVICE:
+        For each gap, give one sentence of practical advice for addressing it:
+        - Point to transferable experience or a related skill if the profile shows
+          one.
+        - Don't suggest gaining new experience.
+        - If nothing transfers, say so plainly instead of manufacturing a connection.
+
+        RANKING:
+        Order most significant gap first (biggest impact on fit for this role).
+        Return {{MinGapCount}}–{{MaxGapCount}} gap objects. Never fabricate a gap to
+        fill the count — if genuine gaps are fewer than {{MinGapCount}}, return only
+        the ones that are real. If none exist, return an empty array.
+
+        OUTPUT FORMAT:
+        - Return valid JSON only, even when empty. No markdown fences, no prose.
+        - `gap`: concise phrase (a few words). `advice`: one sentence.
+
+        Examples:
+        {"gaps": [
+          {"gap": "No Go experience", "advice": "Mention transferable systems knowledge from C#."},
+          {"gap": "No cloud experience", "advice": "Highlight personal AWS/Azure projects, even self-directed ones."},
+          {"gap": "No professional Mandarin fluency", "advice": "No related experience in the profile — acknowledge this gap directly rather than reframe it."}
+        ]}
+        {"gaps": []}
         """;
 
     public static readonly string QuestionsToAskPrompt = $$"""
-        You are a career advisor helping a candidate prepare thoughtful questions for an interview.
-        Given the candidate's profile and the job description, suggest {{MinQuestionToAskCount}}–{{MaxQuestionToAskCount}} questions the candidate should ask the interviewer.
-        Return valid JSON only. No markdown fences, no prose before or after.
+        Suggest thoughtful questions the candidate should ask the interviewer about this
+        specific role.
 
-        {"questions": ["What does success look like in the first 90 days?", "How is the on-call rotation structured?"]}
+        SELECTION:
+        - Draw on ambiguities or gaps the listing leaves open (team structure, tech
+          stack, success metrics, on-call, growth path).
+        - Draw on a genuine fit or trajectory point raised by the candidate's Target
+          roles, Skills, or Certifications lines, or by Work history and Education
+          entries (e.g. a career change, a stated goal, a credential the listing
+          doesn't mention, a gap the role may or may not support).
+        - Never ask a generic question that would fit any job.
+        - Never ask something the Job Description already states plainly.
 
-        Return exactly {{MinQuestionToAskCount}}–{{MaxQuestionToAskCount}} questions as an array of strings.
+        RANKING:
+        Order highest-impact first — most likely to change whether the candidate
+        wants this role.
+        Return {{MinQuestionToAskCount}}–{{MaxQuestionToAskCount}} questions. If the
+        listing gives little to probe, return fewer — don't pad with filler questions.
+        If nothing applies, return an empty array.
+
+        OUTPUT FORMAT:
+        - Return valid JSON only, even when empty. No markdown fences, no prose.
+        - `questions`: array of strings, each one sentence.
+
+        Examples:
+        {"questions": [
+          "The listing mentions migrating the platform to microservices — how far along is that, and would I join before or after the cutover?",
+          "My last two roles were backend-focused — how much day-to-day frontend work does this position actually involve?"
+        ]}
+        {"questions": []}
         """;
 
     public static readonly string InterviewQuestionsPrompt = $$"""
-        You are a career advisor predicting interview questions for a specific role.
-        Given the candidate's profile and the job description, predict {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions the interviewer is likely to ask this candidate.
-        Return valid JSON only. No markdown fences, no prose before or after.
+        Predict interview questions this specific candidate is likely to be asked for this
+        role.
 
-        {"questions": ["Tell me about a time you handled a difficult stakeholder.", "How do you approach performance optimisation?"]}
+        SELECTION:
+        Contrast what the Job Description requires against evidence in the Candidate
+        Profile. Generate 2–3 candidates per applicable type:
+        - Gap probe: a requirement barely or not evidenced in the profile — likely
+          probed to see how the candidate would handle it.
+        - Experience check: a requirement strongly evidenced in the profile — likely
+          probed to verify depth with a concrete example.
+        - Core requirement: a requirement central to the role — likely probed as a
+          standalone technical check, regardless of what the profile shows.
+        Don't invent requirements the Job Description doesn't mention, and skip any
+        type that doesn't apply rather than forcing a candidate.
 
-        Return exactly {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions as an array of strings.
+        RANKING:
+        Rank all candidates together, most likely first (most central to the role, or
+        most pointed at this candidate's specific gaps or strengths).
+        Build the output by taking the top-ranked candidate from every type that
+        produced one, then fill remaining slots with the next-best-ranked candidates
+        regardless of type, up to {{MaxInterviewQuestionCount}}.
+        Return {{MinInterviewQuestionCount}}–{{MaxInterviewQuestionCount}} questions, in
+        rank order. If fewer than {{MinInterviewQuestionCount}} genuine candidates exist
+        in total, return only those — don't pad with generic questions. If none exist,
+        return an empty array.
+
+        OUTPUT FORMAT:
+        - Return valid JSON only, even when empty. No markdown fences, no prose.
+        - `questions`: array of strings, each one sentence.
+
+        Examples:
+        {"questions": [
+          "The role calls for Kubernetes in production, but your profile only shows a personal project with it — how would you approach running it at scale on a live system?",
+          "You led two TypeScript migrations in your last roles — walk me through a decision from one of those you'd make differently now.",
+          "This role owns the checkout service end-to-end — how would you design it to handle a 10x traffic spike during a flash sale?"
+        ]}
+        {"questions": []}
         """;
 }

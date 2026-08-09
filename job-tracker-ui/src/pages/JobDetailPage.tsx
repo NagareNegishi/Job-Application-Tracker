@@ -7,8 +7,10 @@
 // │   └── ContactCard    # individual contact — name, email, phone, role
 // ├── CorrespondenceList # timeline of correspondence entries (JSON column)
 // │   └── CorrespondenceEntry
-// └── DocumentList       # uploaded files
-//     └── DocumentCard   # filename, type, upload date, download/delete
+// ├── DocumentList       # uploaded files
+// │   └── DocumentCard   # filename, type, upload date, download/delete
+// └── AnalysisSection    # floating AI Insights trigger + bottom sheet
+import { AnalysisSection } from "@/components/AnalysisSection";
 import { ContactList } from "@/components/ContactList";
 import { CorrespondenceList } from "@/components/CorrespondenceList";
 import { DocumentList } from "@/components/DocumentList";
@@ -56,6 +58,7 @@ function JobDetailPage() {
           <JobEditSheet job={job} open={editOpen} onOpenChange={setEditOpen} />
         </div>
       </div>
+      <AnalysisSection job={job} />
     </div>
   )
 }
