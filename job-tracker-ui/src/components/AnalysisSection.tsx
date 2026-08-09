@@ -20,7 +20,7 @@ import { analyseAlignment, analyseGaps, analyseInterviewQuestions, analyseQuesti
 import type { Job } from "@/types/job"
 import { isProfileReady } from "@/utils/profileReady"
 import { Bot, Sparkles } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router"
 
 interface AnalysisSectionProps {
@@ -71,11 +71,16 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   const [requestError, setRequestError] = useState<string | null>(null)
   const [results, setResults] = useState<Partial<ResultMap>>({})
 
-  if (!hasRole("AiUser")) return null
-
   const descriptionReady = (job.description?.length ?? 0) >= MIN_ANALYSIS_DESCRIPTION
   const profileReady = isProfileReady(profile)
   const disabled = !descriptionReady || !profileReady
+
+  useEffect(() => {
+    if (disabled) setRequestError(null)
+  }, [disabled])
+
+  if (!hasRole("AiUser")) return null
+
   const gateMessage = !descriptionReady
     ? "Add a description to this job to run analysis."
     : !profileReady
@@ -202,8 +207,11 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
             ))}
           </div>
           <p className="text-md text-muted-foreground h-12 line-clamp-2">{displayedBlurb}</p>
-          {gateMessage && <p className="text-sm text-muted-foreground">{gateMessage}</p>}
-          {requestError && <p className="text-sm text-destructive">{requestError}</p>}
+          {(gateMessage ?? requestError) && (
+            <p className={`text-sm ${gateMessage ? "text-muted-foreground" : "text-destructive"}`}>
+              {gateMessage ?? requestError}
+            </p>
+          )}
           <div className="border rounded-lg p-4 min-h-32 text-sm text-muted-foreground">
             {renderResult()}
           </div>
