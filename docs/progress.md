@@ -115,6 +115,6 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
 | Table scroll accessibility | Viewport-contained flex chain; `table-plain.tsx`; sticky `TableHeader`; see `docs/plans/table-scroll-accessibility.md` | Done |
 | Action bar layout fix | Anchor "Add New Job" + "Show/Hide Columns" to the view toggle row (`JobPage.tsx`) — prevents clipping on narrow viewports | Pending |
-| Auto-fill rate-limit error message | `ParseListingDialog` and `lib/api.ts` have no distinct message for a 429; falls back to generic error. Same gap applies to the `"analyse"` policy | Pending |
+| Auto-fill rate-limit error message | `lib/api.ts` has a 429-specific fallback message; `ParseListingDialog`'s catch block fixed to surface `ApiError.message` instead of discarding it (was hardcoded regardless of error) | Done |
 | Maintenance page | Redirect to `/maintenance` on in-window 503; health-poll auto-recovery; see `docs/plans/maintenance-page.md` | Done |
 | Profile inline view/edit | Read-only sections with pencil → in-place edit; see `docs/plans/profile-inline-edit.md` | Done — remaining items are optional polish |

@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { ApiError } from "@/lib/api"
 import { parseListing } from "@/services/parseService"
 import type { FormState } from "@/types/formTypes"
 import { toFormFields } from "@/utils/parsedJobFields"
@@ -42,8 +43,8 @@ export function ParseListingDialog({ open, onOpenChange, onFill, onFillManually 
       const fields = await parseListing(text)
       onFill(toFormFields(fields))
       handleOpenChange(false)
-    } catch {
-      setError("Something went wrong. Please try again.")
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.")
     } finally {
       setLoading(false)
     }
