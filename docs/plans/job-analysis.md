@@ -2,7 +2,7 @@
 
 ## Overview
 
-Two connected features: **Profile** (user's background stored in the app) and **Job Analysis** (on-demand AI insights comparing profile against a specific job). Five separate analysis types, each triggered independently on the job detail page.
+Two connected features: **Profile** (user's background stored in the app) and **Job Analysis** (on-demand AI insights comparing profile against a specific job). Five analysis types, each triggered independently on the job detail page.
 
 CV integration is deferred — analysis uses profile text only.
 
@@ -12,44 +12,38 @@ CV integration is deferred — analysis uses profile text only.
 
 | Decision | Reasoning |
 |---|---|
-| Separate endpoint per analysis type | Focused prompt per concern produces higher quality output than one large response |
-| On-demand, not saved | Results are always fresh; no stale data when job description changes |
-| `UserProfile` as a new table | Profile has multiple structured fields and will be updated independently; JSON column on `ApplicationUser` would be awkward to query and evolve |
-| All analysis endpoints use the full profile | Alignment, gaps, and interview questions all benefit from the complete picture — no field is exclusive to one analysis type |
-| One profile per user (unique FK to `ApplicationUser`) | Cascade deletes automatic; no orphan cleanup needed |
-| `IAnalysisService` / `ClaudeAnalysisService` in `Services/` | Follows existing service abstraction pattern; mockable in tests |
-| `AnalysisController` at `/api/analyse` — content-scoped, not job-scoped | Analysis takes the job's text in the request body; no stored-job fetch, so no `{jobId}`, no 404, no ownership check. Serves both a saved-job flow and an ad-hoc "is this worth it?" paste through one endpoint |
-| Only `description` is required; `role`/`company` are optional context | `description` is the sole signal that matters; a saved job always has role/company, an ad-hoc paste may not. `description` must be 30 chars (`MinAnalysisDescription`) to the existing `Description` max; below/empty/over → 400. The floor bounds accidental/trivial input, not quality (char count ≠ meaning); thin-but-present clears the gate and the analysis returns "not enough information" instead |
-| Ad-hoc entry point exposes Alignment only; saved jobs expose all 5 types | Ad-hoc is a triage check ("worth pursuing?"); the other four analyses only make sense for a job you're actually tracking |
-| PUT creates, PATCH updates (separate endpoints) | Avoids re-sending and re-validating the full profile on every edit; only changed fields sent and validated on PATCH |
-| PATCH follows JSON Merge Patch (RFC 7396): whole-array replace, `[]` clears, omit = unchanged | Standard and stateless; no element-identity tracking or separate delete op; pairs with per-section save so untouched sections are never sent |
-| `WorkingRights` is an array of `(country, status)` pairs, `country` = ISO 3166-1 alpha-2 | One person can hold rights in multiple countries and jobs span countries; a single enum can't express this. ISO codes are standard, unambiguous, no duplication |
-| Dates: no future dates; "current" role/study = `null` end date, set via a per-entry checkbox | Standard résumé UX (LinkedIn/Seek); an explicit "currently here" checkbox is more discoverable than an inferred blank field; multiple concurrent current entries allowed; start date always required |
-| WorkHistory dates: separate `fromYear`/`fromMonth`/`toYear`/`toMonth` int fields; month optional | Year-only entries are common on CVs. Separate fields eliminate partial-state bugs in the frontend (no combining/splitting logic needed). `[Range]` on each field; `IValidatableObject` enforces not-future and ordering. Month ordering only checked when both months present. Education keeps plain `from`/`to` year ints (already matched this pattern). |
-| Save is permissive; the analysis gate is strict | Profiles are built incrementally — PUT/PATCH accept sparse or empty input; required-content is enforced only at analysis time (the 400 gate), not at save |
-| Return 400 if profile not set | Analysis has no input without a profile; clear error, not a silent empty response |
-| One shared `"analyse"` rate-limit policy, 5/min | Real use is slow (~5s latency + ~10s reading ≈ 4/min natural ceiling), so 5/min maps to "run the full 5-type suite once per minute" — never blocks first-pass use, caps abuse an order of magnitude tighter. Matches existing `auth`/`parse` policies (global bucket, not per-IP — see `progress.md` backlog note); shared (not per-endpoint) because users burst across types, not repeat one |
-| Analysis requires the `AiEnabled` policy | Every Claude-backed feature sits behind AI access (same as auto-fill parsing), so the admin AI-access switch governs the whole paid surface — no ungated hole where a non-AI user burns API budget |
-| Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
-| `claude-haiku-4-5` model | Fast and cheap; each call is a single focused extraction, not reasoning |
-| Claude failure → 502 | Both a thrown Anthropic API error and a 200 whose body is unparseable or missing required fields (e.g. no `score`) return **502** with `{ "error": "..." }` — an upstream dependency failed, not a bug in our code (500) and not parse's silent degrade-to-empty. The service throws a typed exception (e.g. `AnalysisFormatException`); the controller catches and maps to 502. Analysis output *is* the product, so a hollow result would mislead where parse's empty-form fallback is harmless. No retry (matches the parse config's deliberate no-retry choice); a single re-prompt is deferred as a later enhancement |
-| Count bounds per list type | Each list prompt states an explicit **min–max** so output length is predictable (stable UI card size) and neither padded nor thin: Skills **5–8**, Gaps **2–4**, Questions-to-ask **3–5**, Interview-questions **4–6**. Alignment is exempt (single score + one sentence) |
-| Analysis tunables centralized in `ClaudeAnalysisConfig` | One `internal static class` (mirrors `ClaudeParsingConfig`) holds model, max tokens, the count bounds above, and the 5 system prompts. Count bounds are named consts **interpolated into the prompts** via `$$"""` raw strings (interpolation delimiter `{{ }}`, so literal JSON braces in the prompt examples need no escaping) — a range changes in exactly one place, never drifting from the prompt text. Prompts are therefore `static readonly` (interpolated at load), not `const`. `MinAnalysisDescription` stays in `ValidationConstants` (request-validation gate, not a Claude tunable) |
-| Max output tokens = 512 (single shared) | One `MaxTokens` in `ClaudeAnalysisConfig` across all 5 types (same value as the parser). `MaxTokens` is a ceiling, not a cost (billed on actual output), and the D12 count bounds already constrain length — so a shared cap with ~2.5× headroom over the heaviest type (gaps ≈ 200 tokens) prevents mid-JSON truncation (→ 502) without per-type tuning |
-| Profile page: per-section Save (D14) | Each section (Skills, Work History, Education, …) has its own Save that PATCHes only that section's field(s). Fits how profiles are actually edited — small partial updates over time — and avoids a single bottom Save that forces scrolling past everything to change one tag. Merge-patch (D3b) makes it natural: each PATCH carries one field, untouched sections are never sent (no accidental-`[]` wipe). **First save** of an as-yet-unsaved profile (GET returned empty) uses PUT with the whole current form (mostly-empty arrays, save is permissive); every save after uses PATCH |
-| Analysis result lifetime: page-durable (D15) | All 5 results live only in Job Detail page state — kept while on the page (switching among the types preserves prior results), reset on refresh or navigate-away; re-running a type replaces its result with a fresh call. No client cache or persistence — simplest, and reinforces "on-demand, always fresh". Persisting a result long-term is out of scope here (see the *Save analysis to job* follow-up in Notes) |
-| Nav link + demo user (D16) | Profile is a **top-level nav link** (peer of Jobs/Dashboard), not tucked under Settings/account menu — analysis buttons are gated on a filled profile, so discoverability matters (a buried link leaves users stuck on "why are the analysis buttons disabled?"). The **demo user sees Profile and can edit it**, seeded with a sample profile via `DemoSeed` (like demo jobs) so the feature shows fully; analysis endpoints still 403 for demo (D11, API-cost block). Because the demo profile is editable, the periodic demo-reset + login re-seed must also reset/re-seed it — see the *demo profile reset* follow-up in Notes |
-| Job Detail analysis section gated by `hasRole("AiUser")` only, no separate demo check (D18) | Demo account is seeded without the `AiUser` role (`Program.cs`), so hiding the section for non-AI users already hides it for demo too — same pattern `JobTable`/`SettingsPage` use elsewhere. The server-side 403 demo block (D11) remains as defense in depth, just never hit in normal use |
-| Client mirrors the server's profile-minimum boolean via a new shared predicate, not `profileScore.ts` (D19) | `profileScore.ts` is a weighted 0–100 completeness gauge for `ProfilePage`'s progress ring — a different purpose with different criteria. The analysis gate is a strict boolean (`TargetRoles>0 && Skills>0 && WorkingRights>0 && (Certifications>0 \|\| WorkHistory>0 \|\| Education>0)`) that must match `AnalysisController.GetGatedProfileAsync` exactly, so it gets its own small predicate rather than reusing the score util |
-| Job Detail analysis UI: floating trigger + bottom-sliding Sheet, not a stacked section (D20, supersedes Step 9's original "no popup/sheet" call) | Analysis is an on-demand AI action, not stored job data like Contacts/Correspondence/Documents — it doesn't belong permanently stacked in the page flow, and list-shaped results (Gaps, Interview Questions) need room without lengthening the page on every click. A `Popover` was considered and rejected as too cramped for list results. Reuses the existing `Sheet` primitive (already proven in `JobEditSheet`) rather than a new one. `side="bottom"` (not `right`, unlike `JobEditSheet`) both visually distinguishes an AI *action* from a data-*editing* drawer, and reads naturally as rising from the bottom-right FAB that opens it |
-| Test coverage scope (D17) | Three test files, mirroring existing conventions (in-memory EF, direct controller instantiation, manual `ClaimsPrincipal`, service mocked at the controller boundary — same as `IParsingService` in `JobsControllerTests`). **(1) `ProfileDTOTests`** (new, mirrors `JobDTOTests`) — array-count caps, per-item string caps, `country` regex `^[A-Z]{2}$`, date attributes (YYYY-MM regex / `[Range(1900,2099)]`), and `IValidatableObject` cross-field rules (`from` not future, `to ≥ from`, `to` null = current). **(2) Profile tests in `AccountControllerTests`** (extend) — GET empty `{}` vs full; PUT creates + 409 if exists; PATCH merge semantics (`[]` clears, omitted untouched) + 404 if none; own-profile-only. **(3) `AnalysisControllerTests`** (new, mocks `IAnalysisService`, no live Claude) — 400 on description too short/empty/over-max, 400 on profile-gate fail, 400 on no profile, 403 demo, 502 when service throws `AnalysisFormatException`, 200 happy path returns mocked result. **Out of scope** (consistent with existing suite): no `ClaudeAnalysisServiceTests` (AI service mocked at controller, never live-tested — same as `ClaudeParsingService`); no tests for `[Authorize]`, the `AiEnabled` policy, or the `"analyse"` rate-limit (pipeline concerns, untested everywhere else) |
-| Empty list results are valid, not malformed (D21, found wiring Skills) | A live Skills call against a profile with zero real overlap (all software-engineering skills, job = Sales Development Representative) made Claude write a prose refusal instead of JSON — `ExtractJson` fell back to `"{}"`, and the service's old `Length >= 1` floor then rejected that as a 502. The `Length >= 1` check already contradicted each prompt's own "never fabricate/pad" instruction, which implies a genuine answer can be empty (zero overlap, zero gaps for a perfect match, etc). Fix: `ClaudeAnalysisService` now only rejects a `null` field (Claude broke the JSON contract) for Skills/Gaps/QuestionsToAsk/InterviewQuestions — an empty array passes through as a real result. Each of those four prompts' OUTPUT FORMAT section was updated to say so explicitly, with an empty-array example alongside the normal one, so Claude reaches for `[]` instead of prose. Alignment is unaffected — it always has a score |
-
----
-
-## Open Decisions
-
-**All decisions D1–D17 settled and folded into the Design Decisions table above (as of 2026-07-04).** No open questions remain — the plan is ready to implement, starting at Step 1 (`UserProfile` entity + migration).
+| Separate endpoint per analysis type | Focused prompt per concern beats one large response |
+| On-demand, not saved | Always fresh; no stale data when job description changes |
+| `UserProfile` as a new table | Multiple structured fields, updated independently; a JSON column on `ApplicationUser` would be awkward to query/evolve |
+| All analysis endpoints use the full profile | No field is exclusive to one analysis type |
+| One profile per user (unique FK to `ApplicationUser`) | Cascade deletes automatic; no orphan cleanup |
+| `IAnalysisService` / `ClaudeAnalysisService` in `Services/` | Matches existing service abstraction pattern; mockable in tests |
+| `AnalysisController` at `/api/analyse` — content-scoped, not job-scoped | Takes the job's text in the request body, not a stored job id — no `{jobId}`, no 404, no ownership check. Serves both the saved-job flow and an ad-hoc paste through one endpoint |
+| Only `description` required; `role`/`company` optional | `description` is the sole signal that matters; a saved job always has role/company, an ad-hoc paste may not (gate details in Endpoints section) |
+| Ad-hoc entry point exposes Alignment only | It's a triage check ("worth pursuing?"); the other four only make sense for a job you're tracking |
+| PUT creates, PATCH updates | Avoids re-sending/re-validating the full profile on every edit |
+| PATCH follows JSON Merge Patch (RFC 7396) | Standard, stateless; pairs with per-section save so untouched sections are never sent |
+| `WorkingRights` = array of `(country, status)`, `country` = ISO 3166-1 alpha-2 | One person can hold rights in multiple countries; a single enum can't express that |
+| Dates: no future dates; "current" = `null` end date via checkbox | Standard résumé UX (LinkedIn/Seek); more discoverable than an inferred blank field |
+| WorkHistory dates: separate `fromYear`/`fromMonth`/`toYear`/`toMonth` ints, month optional | Year-only entries are common on CVs; separate fields avoid partial-state parsing bugs. Education keeps plain `from`/`to` year ints |
+| Save is permissive; the analysis gate is strict | Profiles are built incrementally — PUT/PATCH accept sparse/empty input; required-content is enforced only at analysis time |
+| Return 400 if profile not set | Analysis has no input without a profile |
+| One shared `"analyse"` rate-limit policy, 5/min | Real use is slow (~5s latency + reading) so 5/min never blocks normal use; shared because users burst across types, not repeat one |
+| Analysis requires the `AiEnabled` policy | Every Claude-backed feature sits behind AI access, same as auto-fill parsing |
+| Block demo user (403) | Prevents API cost from demo accounts, same as `DocumentsController` |
+| `claude-haiku-4-5` model | Fast/cheap; each call is a focused extraction, not reasoning |
+| Claude failure → 502 | Upstream dependency failed, not our bug (500) and not parse's silent degrade-to-empty. Typed `AnalysisFormatException` thrown by the service, mapped to 502 by the controller. No retry (matches parse's config) |
+| Count bounds per list type | Predictable output length: Skills 5–8, Gaps 2–4, Questions-to-ask 3–5, Interview-questions 4–6. Alignment exempt (single score + sentence) |
+| Analysis tunables centralized in `ClaudeAnalysisConfig` | Mirrors `ClaudeParsingConfig`: model, max tokens, count bounds, all 5 system prompts. Bounds are consts interpolated into the prompts (`$$"""` raw strings) so a range changes in one place |
+| Max output tokens = 512, shared across all 5 types | `MaxTokens` is a ceiling not a cost; ~2.5x headroom over the heaviest type (gaps ≈ 200 tokens) prevents mid-JSON truncation without per-type tuning |
+| Profile page: per-section Save (D14) | Fits how profiles are actually edited — small partial updates over time. Merge-patch makes it natural: each PATCH carries one field. First save (empty profile) uses PUT; every save after uses PATCH |
+| Analysis result lifetime: page-durable (D15) | Results live in Job Detail page state only — kept while on the page, reset on refresh/navigate-away. No client cache or persistence, reinforces "on-demand, always fresh" |
+| Nav link + demo user (D16) | Profile is a top-level nav link, not tucked under Settings — analysis buttons are gated on a filled profile so discoverability matters. Demo user sees Profile and can edit it (seeded sample data); analysis endpoints still 403 for demo |
+| Job Detail analysis gated by `hasRole("AiUser")` only (D18) | Demo account has no `AiUser` role, so this already hides the section for demo too — same pattern as `JobTable`/`SettingsPage`. Server-side 403 (demo block) stays as defense in depth |
+| Client mirrors server's profile-minimum via a new shared predicate, not `profileScore.ts` (D19) | `profileScore.ts` is a weighted completeness gauge for a different purpose; the analysis gate is a strict boolean matching `AnalysisController.GetGatedProfileAsync` exactly |
+| Job Detail analysis UI: floating trigger + bottom-sliding Sheet (D20) | An on-demand AI action doesn't belong permanently stacked in the page like Contacts/Correspondence; list-shaped results need room. `Popover` rejected as too cramped. Reuses the existing `Sheet` primitive; `side="bottom"` distinguishes an AI action from `JobEditSheet`'s data-editing drawer |
+| Test coverage scope (D17) | `ProfileDTOTests` (validation), profile tests in `AccountControllerTests` (GET/PUT/PATCH), `AnalysisControllerTests` (mocked service, no live Claude). Out of scope: no live-Claude service tests, no `[Authorize]`/policy/rate-limit tests (untested everywhere else in the suite) |
+| Empty list results are valid, not malformed (D21) | A live Skills call against a profile with zero real overlap made Claude write prose instead of JSON, which the old `Length >= 1` floor then rejected as a 502 — but that floor already contradicted the prompts' own "never fabricate/pad" instruction. Fix: `ClaudeAnalysisService` only rejects a `null` field for Skills/Gaps/QuestionsToAsk/InterviewQuestions; `[]` passes through as a real result. Each prompt's OUTPUT FORMAT section now shows an empty-array example alongside the normal one. Alignment unaffected (always has a score) |
 
 ---
 
@@ -59,57 +53,31 @@ CV integration is deferred — analysis uses profile text only.
 
 | Field | Type | Purpose |
 |---|---|---|
-| `TargetRoles` | `string[]` | Roles the user is targeting — stored as JSON array |
-| `Skills` | `string[]` | Skills as a tag list — stored as JSON array |
-| `Certifications` | `string[]` | e.g. "AWS Certified Developer", "PMP" — stored as JSON array |
-| `Languages` | `string[]` | Spoken languages, free text tags — stored as JSON array |
-| `WorkingRights` | `WorkingRightEntry[]` | Work authorisation per country — stored as JSON array |
-| `WorkHistory` | `WorkHistoryEntry[]` | Structured work experience entries — stored as JSON array |
-| `Education` | `EducationEntry[]` | Structured education entries — stored as JSON array |
+| `TargetRoles` | `string[]` | Roles the user is targeting |
+| `Skills` | `string[]` | Skills tag list |
+| `Certifications` | `string[]` | e.g. "AWS Certified Developer", "PMP" |
+| `Languages` | `string[]` | Spoken languages, free text |
+| `WorkingRights` | `WorkingRightEntry[]` | Work authorisation per country |
+| `WorkHistory` | `WorkHistoryEntry[]` | Structured work experience |
+| `Education` | `EducationEntry[]` | Structured education |
 
-**WorkingRightEntry:**
-| Sub-field | Type | Notes |
-|---|---|---|
-| `country` | `string` | ISO 3166-1 alpha-2 code (e.g. `NZ`, `AU`), uppercase; required |
-| `status` | `WorkingRight` | Authorisation type for that country |
+All array fields stored as JSON.
 
-**WorkingRight enum:**
-| Value | Meaning |
-|---|---|
-| `Citizen` | Citizen — unrestricted |
-| `PermanentResident` | Permanent resident — unrestricted |
-| `WorkVisa` | Current work visa — right exists but time-limited |
-| `RequiresSponsorship` | No current right; needs employer sponsorship |
-| `Other` | Right through another arrangement |
+**WorkingRightEntry:** `country` (ISO 3166-1 alpha-2, required), `status` (`WorkingRight` enum).
 
-**WorkHistoryEntry:**
-| Sub-field | Type | Notes |
-|---|---|---|
-| `title` | `string` | Job title |
-| `company` | `string` | Employer |
-| `fromYear` | `int` | Start year (1900–2099); required (`[Range]` rejects default 0); not future |
-| `fromMonth` | `int?` | Start month (1–12); optional |
-| `toYear` | `int?` | End year; `null` = current role (checkbox); `≥ fromYear`; not future |
-| `toMonth` | `int?` | End month (1–12); optional; `≥ fromMonth` when same year and both present |
-| `description` | `string?` | Responsibilities and achievements; optional |
+**WorkingRight enum:** `Citizen`, `PermanentResident`, `WorkVisa`, `RequiresSponsorship`, `Other`.
 
-**EducationEntry:**
-| Sub-field | Type | Notes |
-|---|---|---|
-| `institution` | `string` | University or school |
-| `degree` | `string` | Degree and field |
-| `from` | `int` | Year started; required; not future |
-| `to` | `int?` | Year graduated; `null` = currently enrolled (checkbox); `≥ from`; not future |
+**WorkHistoryEntry:** `title`, `company`, `fromYear` (required, not future), `fromMonth?`, `toYear?` (`null` = current), `toMonth?`, `description?`.
+
+**EducationEntry:** `institution`, `degree`, `from` (year, required), `to?` (`null` = currently enrolled).
 
 ### Validation
 
-Added to `ValidationConstants` (`MaxProfile*` etc.). Generous by design — bounds payload/abuse, not real users.
+Added to `ValidationConstants`. Generous by design — bounds payload/abuse, not real users.
 
 - **Array counts:** TargetRoles 10, Skills 50, Certifications 20, Languages 15, WorkingRights 20, WorkHistory 20, Education 10.
-- **String lengths:** TargetRoles item 100, Skills item 50, Certifications item 100, Languages item 30; WorkHistoryEntry `title` 100 / `company` 100 / `description` 2000 (optional); EducationEntry `institution` 100 / `degree` 100; WorkingRightEntry `country` 2 (regex `^[A-Z]{2}$`).
-- **Dates:**
-  - *Format (attribute):* WorkHistory — `fromYear`/`toYear` use `[Range(1900, 2099)]`; `fromMonth`/`toMonth` use `[Range(1, 12)]`. Education `from`/`to` — `[Range(1900, 2099)]`. No regex attributes on WorkHistory (model changed from YYYY-MM string to separate int fields).
-  - *Runtime (`IValidatableObject` on the entry DTOs):* year fields not future; `toYear ≥ fromYear` when present; `toMonth ≥ fromMonth` when same year and both present. Month-only ordering enforced only when both months are provided (month is optional).
+- **String lengths:** TargetRoles item 100, Skills item 50, Certifications item 100, Languages item 30; WorkHistoryEntry `title`/`company` 100, `description` 2000 (optional); EducationEntry `institution`/`degree` 100; WorkingRightEntry `country` 2 (regex `^[A-Z]{2}$`).
+- **Dates:** `[Range(1900, 2099)]` on year fields, `[Range(1, 12)]` on month fields. `IValidatableObject` enforces not-future, `to ≥ from`, month ordering only when both months present.
 
 ### API Shape
 
@@ -118,14 +86,13 @@ GET    /api/account/profile
 PUT    /api/account/profile
 PATCH  /api/account/profile
 Authorization: Bearer <token>
-Content-Type: application/json
 ```
 
-**GET** — returns the saved profile, or empty object `{}` if nothing has been saved yet (not 404). An existing profile always includes all fields (unfilled arrays serialize as `[]`), so the frontend distinguishes create vs update by whether the response is empty: empty → `PUT`, has data → `PATCH`. No timestamp field.
+**GET** — returns the saved profile, or `{}` if nothing saved yet (not 404). Frontend uses emptiness to decide PUT vs PATCH.
 
-**PUT** — creates the profile on first save. Returns 409 if a profile already exists. Frontend uses this only once (when GET returned empty).
+**PUT** — creates on first save. 409 if a profile already exists.
 
-**PATCH** — partial update on an existing profile, following **JSON Merge Patch (RFC 7396)** semantics: only fields included in the body are updated, omitted fields are left unchanged; arrays are replaced wholesale (send the full array), and `[]` clears a field. The client must send **only changed fields** — an accidental `[]` on an untouched field wipes it (see per-section save, D14). Returns 404 if no profile exists yet. Use for all edits after initial creation.
+**PATCH** — JSON Merge Patch (RFC 7396): only included fields update, arrays replace wholesale, `[]` clears a field. Client sends only changed fields. 404 if no profile exists.
 
 PUT body (full profile):
 ```json
@@ -145,23 +112,13 @@ PUT body (full profile):
     }
   ],
   "education": [
-    {
-      "institution": "University of Auckland",
-      "degree": "BSc Computer Science",
-      "from": 2019,
-      "to": 2022
-    },
-    {
-      "institution": "MIT",
-      "degree": "MSc Machine Learning",
-      "from": 2024,
-      "to": null
-    }
+    { "institution": "University of Auckland", "degree": "BSc Computer Science", "from": 2019, "to": 2022 },
+    { "institution": "MIT", "degree": "MSc Machine Learning", "from": 2024, "to": null }
   ]
 }
 ```
 
-PATCH body (partial — only changed fields):
+PATCH body (partial):
 ```json
 { "skills": ["TypeScript", "React", "C#", "PostgreSQL", "Docker"] }
 ```
@@ -172,7 +129,7 @@ PATCH body (partial — only changed fields):
 
 ### Endpoints
 
-**Content-scoped, not job-scoped.** Analysis takes the job's text in the request body — it does not fetch a stored job by id. So there is no `{jobId}` in the route, no job lookup, and no 404/ownership check: a pasted description is not a per-user resource, only the profile is. One code path serves both entry points below.
+Content-scoped, not job-scoped — analysis takes the job's text in the request body, not a stored job id. No `{jobId}`, no 404, no ownership check.
 
 ```
 POST /api/analyse/<type>
@@ -180,20 +137,20 @@ Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-Request body (minimal — only `description` is required):
+Request body:
 ```json
 { "description": "...", "role": "Senior Backend Engineer", "company": "Acme" }
 ```
 
 All endpoints:
-- Require `[Authorize]` **and the `AiEnabled` policy** (same as auto-fill parsing — every Claude-backed feature requires AI access); block demo user (403)
-- Rate-limited by a single shared `"analyse"` policy — **5/min** across all 5 types (enough to run the full suite once a minute; an abuse backstop, not a UX limit)
-- Return 400 if `description` is null/empty, shorter than `MinAnalysisDescription` (30 chars), or longer than the existing `Description` max (reused so the ad-hoc paste is bounded like a saved job). This length check is the only job-side gate — it bounds accidental/trivial input ("test", "asdf"), not quality; deliberate abuse is handled by rate limiting (D10). Enforced client-side too. `role`/`company` are optional context, never gated. A description that clears the minimum but is still thin is *not* a 400; the analysis itself returns a "not enough information" style answer.
-- Return 400 unless the profile meets the analysis minimum — ALL of: `TargetRoles` non-empty, `Skills` non-empty, `WorkingRights` non-empty (≥1 entry, any status incl. `RequiresSponsorship`), and at least one of `Certifications` / `WorkHistory` / `Education` non-empty. `Languages` not required. Same rule enforced client-side (analysis buttons disabled until met); defined once, identical both sides.
+- Require `[Authorize]` + `AiEnabled` policy; block demo user (403)
+- Rate-limited by shared `"analyse"` policy — 5/min across all 5 types
+- 400 if `description` is null/empty/shorter than `MinAnalysisDescription` (30 chars)/longer than the `Description` max. Enforced client-side too. `role`/`company` optional, never gated. Thin-but-present description is not a 400 — the analysis itself returns a "not enough information" answer
+- 400 unless the profile meets the analysis minimum: `TargetRoles`, `Skills`, `WorkingRights` all non-empty, plus at least one of `Certifications`/`WorkHistory`/`Education`. `Languages` not required. Same rule enforced client-side (disables the buttons)
 
 **Two entry points, one endpoint:**
-1. *From a saved job* (job detail page) — exposes all 5 analysis types. The frontend pre-fills `description` from the stored job (or prompts for one if empty), plus `role`/`company`, then posts the body above.
-2. *Ad-hoc triage* ("is this worth considering?") — user pastes just a `description`, no saved job. Exposes **Alignment only**.
+1. Saved job (job detail page) — all 5 types, pre-filled from the stored job.
+2. Ad-hoc triage — paste just a `description`, no saved job. Alignment only.
 
 | Type | Endpoint | Entry points |
 |---|---|---|
@@ -205,11 +162,10 @@ All endpoints:
 
 ### Response Shapes
 
-**Alignment**
+**Alignment** — score 1–5, `reasoning` one sentence, `concern` is `null` for a genuine listing else a short not-a-job note (soft, non-refusing — see Profile Conditions below).
 ```json
 { "score": 3, "reasoning": "Strong frontend match; limited backend exposure.", "concern": null }
 ```
-Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine listing, else a short not-a-job note (soft, non-refusing) — see the Profile Conditions expansion below.
 
 **Skills** — 5–8 items
 ```json
@@ -244,137 +200,111 @@ Score is 1–5. `reasoning` is one sentence. `concern` is `null` for a genuine l
 
 | # | Item | Status |
 |---|---|---|
-| 1 | Add `UserProfile` entity + migration | Done |
-| 2 | Add `ProfileDTO` (request) + `ProfileResponseDto` (response) | Done |
-| 3 | Add `GET /api/account/profile` + `PUT /api/account/profile` + `PATCH /api/account/profile` to `AccountController` | Done |
-| 3a | `ProfileDTOTests` — validation for `ProfileDTO`, `WorkingRightEntry`, `WorkHistoryEntry`, `EducationEntry` | Done |
-| 3b | Profile tests in `AccountControllerTests` — GET empty/full, PUT + 409, PATCH merge + 404 | Done |
-| 4 | Add `/profile` page to frontend — tag sections, working rights, work history, education, suggestion lists | Done |
-| 5 | Add Profile nav link | Done (folded into Step 4) |
+| 1 | `UserProfile` entity + migration | Done |
+| 2 | `ProfileDTO` (request) + `ProfileResponseDto` (response) | Done |
+| 3 | `GET`/`PUT`/`PATCH /api/account/profile` on `AccountController` | Done |
+| 3a | `ProfileDTOTests` | Done |
+| 3b | Profile tests in `AccountControllerTests` | Done |
+| 4 | `/profile` page — tag sections, working rights, work history, education, suggestion lists | Done |
+| 5 | Profile nav link | Done (folded into Step 4) |
 
 ### Analysis
 
 | # | Item | Status |
 |---|---|---|
-| 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | Done |
-| 6a | Shared `ClaudeResponseHelper` (`ExtractJson`/`LogContractIssues`/`GetKnownKeys<T>`) — used by both `ClaudeParsingService` and `ClaudeAnalysisService`; `ClaudeResponseHelperTests` (11 tests) | Done |
-| 7 | Add `AnalysisController` at `/api/analyse` with 5 content-scoped endpoints (body: `description` + optional `role`/`company`); `[Authorize(Policy = "AiEnabled")]` + demo-block + shared `"analyse"` 5/min policy | Done |
+| 6 | `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | Done |
+| 6a | Shared `ClaudeResponseHelper` (`ExtractJson`/`LogContractIssues`/`GetKnownKeys<T>`), used by both `ClaudeParsingService` and `ClaudeAnalysisService`; `ClaudeResponseHelperTests` | Done |
+| 7 | `AnalysisController` at `/api/analyse`, 5 endpoints, `AiEnabled` policy + demo-block + `"analyse"` 5/min | Done |
 | 8 | Register `ClaudeAnalysisService` in `Program.cs` | Done |
 | 8a | `AnalysisControllerTests` — mocks `IAnalysisService`; 400 gates, 403 demo, 502 on `AnalysisFormatException`, 200 happy path | Done |
-| 8b | Prompt-quality polish — wording/structure pass (SELECTION/RANKING/OUTPUT FORMAT, examples) for all 5 prompts in `ClaudeAnalysisConfig.cs`; wording verified through the UI once Steps 9–10 land | Done |
-| 9 | Add analysis UI to Job Detail page — `AnalysisSection`, 5 buttons + shared error/result area (see breakdown below) | In progress (4/5 wired) |
-| 10 | Add ad-hoc triage entry point — paste a description, Alignment only | — |
+| 8b | Prompt-quality polish for all 5 prompts in `ClaudeAnalysisConfig.cs` | Done |
+| 9 | Analysis UI on Job Detail page — `AnalysisSection`, 5 buttons + shared error/result area | Done — all 5 buttons wired |
+| 10 | Ad-hoc triage entry point — paste a description, Alignment only | — |
 
 ---
 
-### Step 9 Breakdown (Job Detail Analysis UI)
+### Step 9 (Job Detail Analysis UI) — reference
 
-New `AnalysisSection` component (D20): a floating bottom-right FAB (`Sparkles` icon, same icon `ParseListingDialog` uses for its AI action) mounted at the `JobDetailPage` root, outside the section stack. Clicking it opens a `Sheet` (`side="bottom"`, `max-h-[80vh]`, internal scroll) containing the buttons, gate message, and result area below.
+`AnalysisSection` (D20): floating bottom-right FAB (`Sparkles`, same icon as `ParseListingDialog`) at the `JobDetailPage` root. Opens a `Sheet` (`side="bottom"`, `max-h-[80vh]`, internal scroll) with buttons, gate message, result area.
 
-- Renders nothing (no FAB) if `!hasRole("AiUser")` (D18 — also covers the demo user, which has no `AiUser` role).
-- Sheet title ("AI Insights" + `Sparkles` icon), same header convention as `ParseListingDialog`.
-- 5 buttons, each labeled with the analysis type plus a one-line explainer of what it returns:
-  - Alignment — how well your profile matches this job
-  - Top Skills — skills to highlight for this role
-  - Gaps — where your profile falls short, and how to address it
-  - Questions to Ask — good questions for the interviewer
-  - Interview Questions — questions you're likely to be asked
-- All 5 buttons share one disabled state, computed from two client-side gates mirroring the server (in order):
-  1. `job.description` present and ≥ `MinAnalysisDescription` (30 chars) — no upper-bound check needed, job descriptions are already capped at save time.
-  2. Profile meets the analysis minimum — new shared predicate (D19), read via the existing `useProfile()` (`hooks/profileQuery.ts`), no new fetch needed.
-- One shared error/status line below the buttons: shows the specific unmet-gate reason when disabled ("Add a description to this job to run analysis." / "Complete your profile to run analysis."); reused as the reactive error slot for POST failures (429/502/network) after a click, same generic-message pattern as `ParseListingDialog`.
-- One shared result "screen" below that: renders whichever type is currently active. Each of the 5 types keeps its own result in page state per D15 (switching buttons swaps the displayed result, doesn't refetch) — starts as plain text rendering of the JSON response; per-type formatting (score display, list, gap pairs) is a later pass once the shape is wired end to end.
+- No FAB unless `hasRole("AiUser")` (D18, also covers demo).
+- 5 buttons: Alignment, Top Skills, Gaps, Questions to Ask, Interview Questions — each with a one-line explainer.
+- Buttons share one disabled state: `job.description` ≥ `MinAnalysisDescription`, and profile meets the minimum (`isProfileReady`, via `useProfile()`).
+- One shared error/status line: unmet-gate reason when disabled, or POST failure (429/502/network) after a click.
+- One shared result area below: renders whichever type is active. Each type keeps its own result in page state (D15) — switching buttons swaps the display, doesn't refetch.
 
-**Wiring progress** (one button at a time, per the Frontend Component Workflow rule in CLAUDE.md — stop and get approval after each before starting the next):
-
-| Button | Endpoint | Status |
-|---|---|---|
-| Alignment | `POST /api/analyse/alignment` | Done — loading state, score/reasoning/concern rendering, error handling |
-| Matched Skills | `POST /api/analyse/skills` | Done — loading state, list rendering incl. empty-result message, error handling (surfaced the D21 empty-array fix) |
-| Skill Gaps | `POST /api/analyse/gaps` | Done — loading state, gap/advice list rendering incl. empty-result message, error handling |
-| Questions to Ask | `POST /api/analyse/questions-to-ask` | Done — loading state, list rendering incl. empty-result message, error handling |
-| Interview Questions | `POST /api/analyse/interview-questions` | Not started |
-
-Shared plumbing added so far, in `src/services/analysisService.ts` and `AnalysisSection.tsx`: `AnalysisRequest` request type; per-type result state (`alignmentResult`, `skillsResult`, …), a single `loadingType`/`requestError` pair shared across buttons, `handleSelect(type)` dispatches to the right service call. The remaining three buttons follow the same shape — add a `analyse<Type>` service fn + result state + a branch in `handleSelect` and the result-rendering block.
+Shared plumbing (`src/services/analysisService.ts`, `AnalysisSection.tsx`): `AnalysisRequest` type; per-type result state (`alignmentResult`, `skillsResult`, `gapsResult`, `questionsToAskResult`, `interviewQuestionsResult`); single `loadingType`/`requestError` pair; `handleSelect(type)` dispatches to the right service call. `QuestionsResult` (`{ questions: string[] }`) is shared between Questions-to-ask and Interview-questions, matching the backend's shared DTO.
 
 ---
 
 ## Profile Conditions (Expansion — added 2026-07-12)
 
-Adds a "What I'm looking for" dimension to the profile — the user's **conditions/preferences**, distinct from **background**. Alignment analysis reads them so it answers "do you *want* this job?" not just "*can* you do it?". Modelled on the reference screener's "My Conditions". **Not started**; spans backend + frontend + the alignment prompt. Reopens Profile (previously "done" for background only).
+Adds a "What I'm looking for" dimension to the profile — user's conditions/preferences, distinct from background. Alignment reads them so it answers "do you *want* this job?" not just "*can* you do it?". Reopened Profile after Steps 1–5 were done.
 
 ### Decisions
 
 | Decision | Reasoning |
 |---|---|
-| Profile = Background + Conditions (global, not per-role) | Conditions apply across all target roles, not per-role; `TargetRoles` stays `string[]` and heads a new "What I'm looking for" section. Per-role conditions rejected — rare need, large model/UI/prompt cost |
-| New condition fields: `WorkModes`, `ContractTypes`, `SalaryExpectations`, `PreferredLocations`, `AdditionalConditions` | Structure the filterable conditions (mode/contract/salary/location) for consistent hard signals; one free-text field absorbs nuance that resists structure |
-| Experience level → free text, not a structured field | Seniority is fuzzy and often role-dependent; an enum would fight reality. Reference treated junior-only as a hard filter — a soft free-text note fits this project better |
-| `WorkModes` reuses existing `WorkMode` enum (`OnSite`/`Remote`/`Hybrid`), multi-select | Remote is a work-mode, not a location — keeps geography and remote orthogonal (no "Remote country" hack) |
-| `ContractTypes` = unordered *acceptable set* (new enum) | Set answers "is this type acceptable?" — enough for alignment. Ranked preference deferred (nicer signal, more UI, low payoff now). Enum: `FullTimePermanent`, `FullTimeContract`, `PartTime`, `Casual`, `Internship`, `Temporary` |
-| `SalaryExpectations` = list of min floors, one per currency | Expectation is a floor; "any paid" = empty list. Min+max range deferred. `List<SalaryExpectation>` (`{ MinAmount int?, Currency, Period }`), max 3, distinct currencies (multi-market seekers); empty `[]` clears (was a nullable object — `null` couldn't be cleared via PATCH). Currency ISO 4217 alpha-3 (`^[A-Z]{3}$`); `SalaryPeriod` enum `Annual`/`Monthly`/`Hourly` |
-| `PreferredLocations` = `[{ Country, Areas[] }]`; empty `Areas` = anywhere in country | Country ISO-2 (reuse `^[A-Z]{2}$`) is a short autocomplete list — fixes "list too long"; `Areas` optional loose text (the infinite list stays unstructured). Multiple areas per country allowed. Cross-country regions ("Europe") go in free text, not a continent grouping |
-| `AdditionalConditions` = free text (`text`, max 500), HTML-rejected | Catch-all: experience level, "unpaid only if exceptional", region nuance. 500 fits a few preference notes, not an essay. Reject markup via the same inline `<[a-zA-Z/]` regex `ParseListingRequest` uses (no reusable attribute exists — it's an `IValidatableObject` check in `ProfileDTO.Validate()`) |
-| Conditions are optional — analysis gate unchanged | Requiring conditions would block a quick alignment run; they enrich output when present. The D9 profile-minimum stays background-only |
-| Only Alignment (of the 5) reads conditions | The other four are background-only (skills/gaps/interview prep); conditions are about fit/desire, which is Alignment's job |
-| Alignment gains soft `concern: string?` (not-a-job detection) | Surfaces "looks like a CV service / scam / unclear listing" without refusing — score + reasoning still return, the user decides. Non-strict by choice (some users want unclear listings). Threshold/wording tuned in Step 8b |
+| Profile = Background + Conditions (global, not per-role) | Conditions apply across all target roles; per-role conditions rejected — rare need, large cost |
+| New fields: `WorkModes`, `ContractTypes`, `SalaryExpectations`, `PreferredLocations`, `AdditionalConditions` | Structured fields for filterable hard signals; one free-text field absorbs nuance that resists structure |
+| Experience level → free text, not structured | Seniority is fuzzy and role-dependent; an enum would fight reality |
+| `WorkModes` reuses `WorkMode` enum, multi-select | Remote is a work-mode, not a location — keeps geography and remote orthogonal |
+| `ContractTypes` = unordered acceptable set (new enum) | Answers "is this type acceptable?" — enough for alignment. Ranked preference deferred |
+| `SalaryExpectations` = list of min floors, one per currency | Expectation is a floor; "any paid" = empty list. `List<SalaryExpectation>` (`MinAmount int?`, `Currency`, `Period`), max 3, distinct currencies, empty `[]` clears |
+| `PreferredLocations` = `[{ Country, Areas[] }]`, empty `Areas` = anywhere in country | Country ISO-2 keeps the picker short; `Areas` stays free text. Cross-country regions go in `AdditionalConditions`, not a continent grouping |
+| `AdditionalConditions` = free text, max 500, HTML-rejected | Catch-all for experience level, exceptions, region nuance. Rejects markup via the same regex `ParseListingRequest` uses |
+| Conditions optional — analysis gate unchanged | Requiring conditions would block a quick alignment run; the D9 profile-minimum stays background-only |
+| Only Alignment reads conditions | The other four are background-only; conditions are about fit/desire, which is Alignment's job |
+| Alignment gains soft `concern: string?` | Surfaces "looks like a scam / unclear listing" without refusing — score + reasoning still return. Non-strict by choice |
 
 ### New fields (on `UserProfile`, `ProfileDTO`, `ProfileResponseDto`)
 
-| Field | Type | Storage (mirrors) |
-|---|---|---|
-| `WorkModes` | `List<WorkMode>` | JSONB list |
-| `ContractTypes` | `List<ContractType>` | JSONB list |
-| `SalaryExpectations` | `List<SalaryExpectation>` (owned) | JSONB (like `WorkingRights`) |
-| `PreferredLocations` | `List<PreferredLocationEntry>` | JSONB owned (like `WorkingRightEntry`) |
-| `AdditionalConditions` | `string?` | `text` column |
+| Field | Type |
+|---|---|
+| `WorkModes` | `List<WorkMode>` |
+| `ContractTypes` | `List<ContractType>` |
+| `SalaryExpectations` | `List<SalaryExpectation>` (owned) |
+| `PreferredLocations` | `List<PreferredLocationEntry>` (owned) |
+| `AdditionalConditions` | `string?` |
 
 **New enums** (`Models/Enums/`): `ContractType` (`FullTimePermanent`, `FullTimeContract`, `PartTime`, `Casual`, `Internship`, `Temporary`); `SalaryPeriod` (`Annual`, `Monthly`, `Hourly`).
 
-**New entry classes** (`Models/`, DataAnnotations style like `WorkingRightEntry.cs`):
-- `SalaryExpectation` — `MinAmount int?` (`[Range(0, MaxSalaryAmount)]`), `Currency string` (`^[A-Z]{3}$`), `Period SalaryPeriod`. Profile holds a `List<SalaryExpectation>` (one per currency; distinct-currency rule in `ProfileDTO.Validate`).
-- `PreferredLocationEntry` — `Country string` (required, `^[A-Z]{2}$`), `Areas List<string>` (optional; each item ≤ `MaxProfileLocationAreaItemLength`).
+**New entry classes** (`Models/`): `SalaryExpectation` (`MinAmount int?`, `Currency` regex `^[A-Z]{3}$`, `Period`); `PreferredLocationEntry` (`Country` regex `^[A-Z]{2}$`, required; `Areas List<string>`, optional).
 
 ### Validation constants (new)
 
 - Counts: `MaxProfileWorkModesCount` 3, `MaxProfileContractTypesCount` 6, `MaxProfileLocationsCount` 10, `MaxProfileLocationAreasCount` 10, `MaxProfileSalaryExpectationsCount` 3.
 - Lengths: `MaxProfileLocationAreaItemLength` 100, `MaxProfileAdditionalConditionsLength` 500.
-- Salary: `MaxSalaryAmount` (e.g. 100_000_000); currency regex `^[A-Z]{3}$` inline on the entry.
+- Salary: `MaxSalaryAmount` (e.g. 100,000,000).
 
-### Steps (not started)
+### Steps
 
 | # | Item | Status |
 |---|---|---|
-| C1 | `ValidationConstants` + `ContractType`/`SalaryPeriod` enums + `PreferredLocationEntry`/`SalaryExpectation` classes | Done |
+| C1 | `ValidationConstants` + `ContractType`/`SalaryPeriod` enums + entry classes | Done |
 | C2 | `UserProfile` entity — add the 5 fields | Done |
-| C3 | Migration (new `text` + JSONB columns) | Done |
-| C4 | `ProfileDTO` + `ProfileResponseDto` — validation + `ToProfile`/`ApplyTo`/`ToResponseDto` wiring | Done |
-| C5 | `ProfileDTOTests` — new-field validation (currency/country regex, count caps, salary range, `AdditionalConditions` HTML-reject) + `WorkingRightEntry` omitted-`Status` now fails (nullable+`[Required]` fix in C1) | Done |
-| C6 | `FormatUserMessage` + `AlignmentPrompt` + Alignment model `concern` (the analysis payoff) | Done |
-| C7 | Frontend profile form — conditions section + country/currency suggestion lists | Done |
+| C3 | Migration | Done |
+| C4 | `ProfileDTO` + `ProfileResponseDto` wiring | Done |
+| C5 | `ProfileDTOTests` — new-field validation | Done |
+| C6 | `FormatUserMessage` + `AlignmentPrompt` + `concern` field | Done |
+| C7 | Frontend conditions section + suggestion lists | Done |
 | C8 | Frontend alignment display — show `concern` when present | — |
 
-Wording/structure polish for the reworked `AlignmentPrompt` is done (three-branch example set covering skill-gap/condition-cap/concern, plain-language REASONING guard so scoring-mechanism terms never reach the user). The `concern` threshold still needs tuning against real listings — verify once C8 (frontend display) and Steps 9–10 (analysis UI) are usable end to end.
-
-### C7 Breakdown (Frontend Conditions UI) — Done
-
-All of C7.1–C7.8b landed: types/constants/suggestions (`types/profile.ts`, `lib/validationConstants.ts`, `tagSuggestions.ts`), `CheckboxGroup`/`MultiSelectSection` (WorkModes, ContractTypes), `SalaryExpectationSection`, `PreferredLocationsSection` (per-entry `CountryCombobox` + nested `Areas` tag list), `AdditionalConditionsSection` (`Textarea` + client-side HTML-reject mirroring `ProfileDTO.Validate()`) — all mounted in `ProfilePage.tsx` under "What I'm looking for" / "Background". Component-level polish (layout, spacing) still pending — not blocking, tracked as follow-up below.
+Wording/structure polish for the reworked `AlignmentPrompt` is done. The `concern` threshold still needs tuning against real listings — verify once C8 and Steps 9–10 are usable end to end.
 
 ---
 
 ## Notes
 
-### For the Analysis build (Steps 6–10)
-- `Anthropic:ApiKey` is shared with the auto-fill parsing feature — no duplicate config key needed.
-- Tests: mock `IAnalysisService` in controller tests; no live Claude calls in CI.
-
 ### Deferred / follow-up work
-- **C7 component polish:** `PreferredLocationsSection` and `AdditionalConditionsSection` (and possibly the earlier C7.4/C7.5 components) need a visual/layout pass — built to match existing patterns functionally but not yet polished. Follow `.claude/skills/frontend-design/SKILL.md` when picking this up.
-- **Demo profile reset (pairs with D16):** the demo user can edit their seeded profile, so the periodic demo-data reset + login re-seed (Demo/Auth step 2) must be extended to cover `UserProfile` — add the sample profile to `DemoSeed` and include it in the reset path.
-- **Save analysis to job (separate scope):** *Questions to ask* and *Likely interview questions* get an optional "Save to job" action persisting them onto new optional `Job` fields (e.g. `QuestionsToAsk`, `InterviewQuestions`). Partially overrides "on-demand, not saved" for those two types only; the three assessment types stay ephemeral (D15). Adds `Job` fields + migration + save UI.
-- **Profile quality score:** scoring util done — `utils/profileScore.ts`, config-driven, returns `{ score, breakdown }`; tests in `profileScore.test.ts`. Grading: WorkHistory 25, Skills 25, TargetRoles 15, Education/WorkingRights/Languages 10, Certs 5. `ScoreRing` component done (`components/ui/ScoreRing.tsx`) — SVG ring, OKLCH colour via shared `utils/scoreColor.ts` (also used by `ResponseRateCard`), animated fill on mount and score change; props: `size`, `strokeWidth`, `bgColor`; mounted in `ProfilePage` header. **Remaining:** per-section improvement hints from `breakdown`.
-- **Form re-hydration (known issue):** `ProfilePage`'s effect re-runs `setForm(data)` on every refetch, so saving one section wipes unsaved edits in another mid-edit section. Left as-is (rare). Fix: hydrate once via a `hydrated` ref guard — per-section `savedValue` already comes from `data`.
-- **Profile page: indicate analysis-required fields (after Steps 9–10):** once the analysis feature is fully wired, `ProfilePage` should visually flag which fields gate analysis — `TargetRoles`, `Skills`, `WorkingRights`, and at least one of `Certifications`/`WorkHistory`/`Education` (the `isProfileReady` predicate, D19) — distinct from the general completeness score ring, since a profile can score decently on the ring while still missing a gating field.
+- **C7 component polish:** `PreferredLocationsSection` and `AdditionalConditionsSection` need a visual/layout pass. Follow `.claude/skills/frontend-design/SKILL.md`.
+- **Demo profile reset:** demo user can edit their seeded profile, so the periodic demo-reset (Demo/Auth step 2) needs to cover `UserProfile` too.
+- **Save analysis to job:** *Questions to ask* and *Interview questions* could get a "Save to job" action onto new `Job` fields, overriding "on-demand, not saved" for those two types only. Adds `Job` fields + migration + save UI.
+- **Profile quality score:** done — `utils/profileScore.ts` + `ScoreRing` component, mounted in `ProfilePage` header. Remaining: per-section improvement hints from `breakdown`.
+- **Form re-hydration bug:** `ProfilePage` re-runs `setForm(data)` on every refetch, so saving one section can wipe unsaved edits in another mid-edit section. Rare, left as-is. Fix: hydrate once via a `hydrated` ref guard.
+- **Profile page: flag analysis-gating fields:** once analysis UI is fully wired, visually flag which fields gate analysis (`TargetRoles`, `Skills`, `WorkingRights`, one of `Certifications`/`WorkHistory`/`Education`) — distinct from the general completeness score ring.
 
-### Reference (profile page, done)
-- Suggestion pools live in `components/profile/tagSuggestions.ts`. Sources: Languages → `iso-639-1`; Institutions → Hipolabs `world_universities_and_domains.json` (MIT); Roles / Skills / Certifications / Degrees → curated static lists. Custom free-text input is always allowed — lists only suggest.
+### Reference
+- `Anthropic:ApiKey` shared with auto-fill parsing — no duplicate config key.
+- Tests mock `IAnalysisService`; no live Claude calls in CI.
+- Suggestion pools live in `components/profile/tagSuggestions.ts`. Sources: Languages → `iso-639-1`; Institutions → Hipolabs `world_universities_and_domains.json`; Roles/Skills/Certifications/Degrees → curated static lists. Custom free-text input always allowed.
