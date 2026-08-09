@@ -449,6 +449,7 @@ public class AuthControllerTests : IDisposable
         var job = await SeedJobAsync(TestUserId);
         var doc = new Document { JobId = job.Id, Name = "cv.pdf", StoredName = "stored-key.pdf", StorageKey = "stored-key.pdf", Type = DocumentType.CV };
         _context.Documents.Add(doc);
+        _context.UserProfiles.Add(new UserProfile { UserId = TestUserId, Skills = ["C#"] });
         await _context.SaveChangesAsync();
 
         // Act
@@ -463,6 +464,9 @@ public class AuthControllerTests : IDisposable
         // Old jobs gone, fresh seed in place
         var jobCount = await _context.Jobs.CountAsync(j => j.UserId == TestUserId);
         Assert.Equal(DemoSeed.CreateJobs(TestUserId).Count, jobCount);
+
+        // Profile cleared, not reseeded
+        Assert.False(await _context.UserProfiles.AnyAsync(p => p.UserId == TestUserId));
     }
 
     // X-Reset-Key header missing or wrong — reject before touching the DB

@@ -27,6 +27,7 @@ Status: **Done.** Two connected features: **Profile** (user's background + prefe
 | Profile = Background + Conditions (global, not per-role) | Conditions apply across all target roles; per-role conditions rejected as rare-need/high-cost |
 | Only Alignment reads Conditions | The other four are background-only; conditions are about fit/desire, which is Alignment's job |
 | Alignment carries a soft `concern: string?` | Flags "looks like a scam / unclear listing" without refusing to answer — score + reasoning still return |
+| Demo user's profile is wiped, not reseeded, on nightly reset | Unlike `Jobs`, profile is meant to be visitor-filled to demonstrate the feature — nothing to restore |
 
 ---
 
@@ -72,7 +73,6 @@ Response shapes/prompts live in `Models/` and `Services/ClaudeAnalysisConfig.cs`
 ### Deferred / follow-up work
 - **`concern` threshold tuning:** needs verification against real listings now that Steps 9–10 are usable end to end.
 - **C7 component polish:** `PreferredLocationsSection` and `AdditionalConditionsSection` need a visual/layout pass. Follow `.claude/skills/frontend-design/SKILL.md`.
-- **Demo profile reset:** demo user can edit their seeded profile, so the periodic demo-reset (Demo/Auth step 2) needs to cover `UserProfile` too.
 - **Save analysis to job:** *Questions to ask* and *Interview questions* could get a "Save to job" action onto new `Job` fields, overriding "on-demand, not saved" for those two types only. Adds `Job` fields + migration + save UI.
 - **Profile quality score:** done — `utils/profileScore.ts` + `ScoreRing` component, mounted in `ProfilePage` header. Remaining: per-section improvement hints from `breakdown`.
 - **Form re-hydration bug:** `ProfilePage` re-runs `setForm(data)` on every refetch, so saving one section can wipe unsaved edits in another mid-edit section. Rare, left as-is. Fix: hydrate once via a `hydrated` ref guard.
