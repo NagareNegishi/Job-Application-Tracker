@@ -206,9 +206,11 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
               </button>
             ))}
           </div>
-          <p className="text-md text-muted-foreground h-12 line-clamp-2">{displayedBlurb}</p>
+          {!disabled && (
+            <p className="text-md text-muted-foreground h-6 truncate px-3">{displayedBlurb}</p>
+          )}
           {(gateMessage ?? requestError) && (
-            <p className={`text-sm ${gateMessage ? "text-muted-foreground" : "text-destructive"}`}>
+            <p className="text-sm text-destructive px-3">
               {gateMessage ?? requestError}
             </p>
           )}
