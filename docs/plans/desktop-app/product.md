@@ -65,9 +65,10 @@ Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-go
 - No per-IP rate limiting or CORS handling needed: the backend only ever talks to the local frontend over loopback.
 
 ## non-goals
-🤖 ai-audited(opus-4.8) — added maintenance-window removal as an exclusion after `plan-verify` (2026-08-11); the other six carried from the source doc
+🤖 ai-audited(opus-4.8) — added the maintenance-window removal and the drop-Identity/multi-user-data-model exclusions (2026-08-11); the other six carried from the source doc
 
 - No authentication or multi-user support: the app launches straight into the jobs list.
+- No ASP.NET Identity or multi-user data model: Identity is dropped entirely (it only served the auth the fork removes). Jobs are no longer user-scoped, and the profile and preferences are stored as single rows, not per-user records.
 - No admin panel, user management, or AI-access toggle.
 - No demo mode or seeded sample data.
 - No cloud storage, cloud backup, or sync between machines.
@@ -76,7 +77,7 @@ Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-go
 - No mobile build in this plan (may be revisited separately later).
 
 ## open questions
-🤖 ai-audited(opus-4.8) — added five decisions surfaced by the pre-audit gap check (2026-08-11); the first three are the ones that block clean implementation
+🤖 ai-audited(opus-4.8) — added the open decisions surfaced by the pre-audit gap check (2026-08-11); the key-delivery and on-launch-migration items are the ones that block clean implementation
 
 - **How does the .NET sidecar obtain the keychain-stored API key?** `tauri-plugin-keyring` runs on the Tauri side, not inside the backend process, so the key has to be handed over somehow (env var at sidecar spawn vs. per-request header). Related: the backend currently fails fast at startup if `Anthropic:ApiKey` is missing (`Program.cs:119`) and both Claude services read it in their constructor (`ClaudeAnalysisService.cs:18`), so decide whether the sidecar starts keyless and acquires the key later, or only spawns after key entry.
 - **What owns jobs and the profile once auth is removed?** Jobs are user-scoped (`ScopeJobsToUser` migration) and `UserProfile` has a required `UserId` FK to `ApplicationUser` with cascade delete. Options: a synthetic single implicit user, or detaching these from `ApplicationUser` entirely. This decision shapes the Step 4 migration regeneration in `impl.md`.
