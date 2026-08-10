@@ -80,7 +80,7 @@ export type ProfileScoreResult = {
 // Highest-weight sections — the only ones worth naming in a low-score hint. Labels match each
 // section's on-page title. Low-weight "conditions" fields are deliberately excluded.
 const HINT_LABELS: Partial<Record<SectionKey, string>> = {
-  workHistory: "Work History",
+  workHistory: "Work History (volunteer work or projects count too)",
   skills: "Skills",
   targetRoles: "Desired Roles",
 }

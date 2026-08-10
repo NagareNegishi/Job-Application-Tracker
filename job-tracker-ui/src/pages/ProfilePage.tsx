@@ -1,4 +1,5 @@
 // Career profile page — lets users maintain the background data used as context for AI job analysis.
+import { Lightbulb } from "lucide-react"
 import NavBar from "@/components/NavBar"
 import { useProfile, useCreateProfile, usePatchProfile } from "@/hooks/profileQuery"
 import type { UserProfile, ProfilePatch } from "@/types/profile"
@@ -15,7 +16,7 @@ import LanguagesSection from "@/components/profile/LanguagesSection"
 import WorkHistorySection from "@/components/profile/WorkHistorySection"
 import EducationSection from "@/components/profile/EducationSection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
-import { computeProfileScore } from "@/utils/profileScore"
+import { computeProfileScore, getProfileHint } from "@/utils/profileScore"
 import { sectionInvalid } from "@/utils/profileValidation"
 import { gateTooltipFor, type GateField } from "@/utils/profileReady"
 import { ScoreRing } from "@/components/ui/ScoreRing"
@@ -248,8 +249,9 @@ export default function ProfilePage() {
     )
   }
 
-  // Live completeness score of the current form.
-  const profileScore = computeProfileScore(form).score
+  // Live completeness score of the current form, plus a nudge naming the weakest high-value sections.
+  const scoreResult = computeProfileScore(form)
+  const profileHint = getProfileHint(scoreResult)
 
   if (isLoading) return (
     <div className="min-h-screen bg-muted">
@@ -269,7 +271,15 @@ export default function ProfilePage() {
           <p className="text-sm text-muted-foreground mt-1">
             Your career profile is used as context for AI job analysis.
           </p>
-          <ScoreRing score={profileScore} />
+          <div className="flex items-center gap-4 mt-3 ml-1">
+            <ScoreRing score={scoreResult.score} />
+            {profileHint && (
+              <div className="flex items-start gap-2 max-w-xs rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                <Lightbulb className="size-4 shrink-0 mt-0.5 text-amber-500 dark:text-amber-400" />
+                <p className="text-sm text-muted-foreground">{profileHint}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* What I'm looking for: conditions/preferences, read only by Alignment analysis */}
