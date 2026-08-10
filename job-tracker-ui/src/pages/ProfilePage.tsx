@@ -265,8 +265,8 @@ export default function ProfilePage() {
         </div>
 
         {/* What I'm looking for: conditions/preferences, read only by Alignment analysis */}
-        <div className="space-y-3">
-          <h2 className="text-base font-semibold px-1">What I'm looking for</h2>
+        <fieldset className="rounded-lg bg-card/60 p-4 space-y-3">
+          <legend className="px-1 text-base font-semibold">What I'm looking for</legend>
           {renderTagSection("targetRoles")}
           <MultiSelectSection
             title="Work Modes"
@@ -284,11 +284,11 @@ export default function ProfilePage() {
           <SalaryExpectationSection {...sectionProps("salaryExpectations")} />
           <PreferredLocationsSection {...sectionProps("preferredLocations")} />
           <AdditionalConditionsSection {...sectionProps("additionalConditions")} />
-        </div>
+        </fieldset>
 
         {/* Background: experience → education → supporting → logistics */}
-        <div className="space-y-3">
-          <h2 className="text-base font-semibold px-1">Background</h2>
+        <fieldset className="rounded-lg bg-card/60 p-4 space-y-3">
+          <legend className="px-1 text-base font-semibold">Background</legend>
           <WorkHistorySection {...sectionProps("workHistory")} />
           <EducationSection {...sectionProps("education")} />
 
@@ -297,7 +297,7 @@ export default function ProfilePage() {
           <LanguagesSection {...sectionProps("languages")} />
 
           <WorkingRightsSection {...sectionProps("workingRights")} />
-        </div>
+        </fieldset>
 
         {/* Page-level actions while any section is open — sticky so they're reachable without scrolling */}
         {anyEditing && (
