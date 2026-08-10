@@ -60,13 +60,13 @@ type TagSectionConfig = {
 
 // Per-section data only — the wiring (value/onChange/save/dirty) is identical and lives in the map below.
 const TAG_SECTIONS: Record<TagFieldKey, TagSectionConfig> = {
-  targetRoles: { title: "Desired Roles", emptyText: "No desired roles added yet",
+  targetRoles: { title: "Desired Roles", emptyText: "No desired roles added",
     placeholder: "Type a role and press Enter",
     maxItems: MAX_TARGET_ROLES_COUNT, maxItemLength: MAX_TARGET_ROLE_ITEM_LENGTH, layout: "stack", suggestions: TARGET_ROLE_SUGGESTIONS },
-  skills: { title: "Skills", emptyText: "No skills added yet",
+  skills: { title: "Skills", emptyText: "No skills added",
     placeholder: "Type a skill and press Enter",
     maxItems: MAX_SKILLS_COUNT, maxItemLength: MAX_SKILL_ITEM_LENGTH, suggestions: SKILL_SUGGESTIONS },
-  certifications: { title: "Certifications", emptyText: "No certifications added yet",
+  certifications: { title: "Certifications", emptyText: "No certifications added",
     placeholder: "Type a certification and press Enter",
     maxItems: MAX_CERTIFICATIONS_COUNT, maxItemLength: MAX_CERTIFICATION_ITEM_LENGTH, layout: "stack", suggestions: CERTIFICATION_SUGGESTIONS },
 }

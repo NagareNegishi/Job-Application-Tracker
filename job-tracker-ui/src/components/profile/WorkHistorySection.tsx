@@ -59,7 +59,7 @@ export default function WorkHistorySection({
       onSave={onSave}
       onCancel={onCancel}
       isEmpty={value.length === 0}
-      emptyText="No work history added yet"
+      emptyText="No work history added"
       onAdd={handleAdd}
       view={
         <ul className="space-y-3">

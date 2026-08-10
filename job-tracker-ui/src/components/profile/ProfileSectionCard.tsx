@@ -16,7 +16,7 @@ type Props = {
   onSave: () => void
   onCancel: () => void // reverts the section's value and exits edit mode (page-owned)
   isEmpty: boolean     // show `emptyText` instead of `view`; header icon becomes +
-  emptyText: string    // placeholder when empty, e.g. "No skills added yet"
+  emptyText: string    // placeholder when empty, e.g. "No skills added"
   onAdd?: () => void   // multi-entry sections: enter edit with a blank entry seeded
   view: ReactNode
   children: ReactNode

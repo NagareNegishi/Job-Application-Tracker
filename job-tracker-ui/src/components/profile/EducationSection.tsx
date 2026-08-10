@@ -43,7 +43,7 @@ export default function EducationSection({
       onSave={onSave}
       onCancel={onCancel}
       isEmpty={value.length === 0}
-      emptyText="No education added yet"
+      emptyText="No education added"
       onAdd={handleAdd}
       view={
         <ul className="space-y-3">

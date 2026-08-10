@@ -37,14 +37,14 @@ export default function LanguagesSection({
       onSave={onSave}
       onCancel={onCancel}
       isEmpty={value.length === 0}
-      emptyText="No languages added yet"
+      emptyText="No languages added"
       onAdd={handleAdd}
       view={
-        <ul className="text-sm space-y-1">
+        <ul className="text-sm space-y-1.5">
           {value.map((entry, i) => (
-            <li key={i}>
+            <li key={i} className="flex items-center gap-1.5">
               <span className="font-medium">{entry.language}</span>
-              <span className="text-muted-foreground">{" — "}{formatEnumLabel(entry.fluency)}</span>
+              <span className="text-muted-foreground">{formatEnumLabel(entry.fluency)}</span>
             </li>
           ))}
         </ul>

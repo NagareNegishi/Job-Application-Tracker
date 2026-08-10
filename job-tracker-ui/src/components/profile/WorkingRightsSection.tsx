@@ -45,7 +45,7 @@ export default function WorkingRightsSection({
       onSave={onSave}
       onCancel={onCancel}
       isEmpty={value.length === 0}
-      emptyText="No work rights added yet"
+      emptyText="No work rights added"
       onAdd={handleAdd}
       view={
         <ul className="text-sm space-y-1.5">
