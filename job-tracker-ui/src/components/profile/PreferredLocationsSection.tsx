@@ -8,6 +8,7 @@ import { useEntryList } from "@/components/profile/useEntryList"
 import type { PreferredLocationEntry } from "@/types/profile"
 import { preferredLocationsInvalid } from "@/utils/profileValidation"
 import CountryCombobox from "./CountryCombobox"
+import CountryFlag from "./CountryFlag"
 import { getCountryName } from "./countryCodes"
 import { MAX_LOCATION_AREAS_COUNT, MAX_LOCATION_AREA_ITEM_LENGTH } from "@/lib/validationConstants"
 import type { SectionProps } from "@/components/profile/sectionProps"
@@ -39,12 +40,13 @@ export default function PreferredLocationsSection({
       emptyText="No preferred locations added yet"
       onAdd={handleAdd}
       view={
-        <ul className="text-sm space-y-1">
+        <ul className="text-sm space-y-1.5">
           {value.map((entry, i) => (
-            <li key={i}>
+            <li key={i} className="flex items-center gap-1.5">
+              <CountryFlag code={entry.country} />
               <span className="font-medium">{getCountryName(entry.country)}</span>
               <span className="text-muted-foreground">
-                {" — "}{entry.areas.length > 0 ? entry.areas.join(", ") : "anywhere"}
+                {entry.areas.length > 0 ? entry.areas.join(", ") : "anywhere in country"}
               </span>
             </li>
           ))}
