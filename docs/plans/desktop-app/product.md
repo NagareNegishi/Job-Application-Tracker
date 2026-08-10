@@ -4,15 +4,6 @@
 lowest: 🤖 ai-audited
 🌱 idea 0 · 🤖 ai-audited 10 · 👤 human-ok 0 · ✅ settled 0
 
-## Needs revisiting
-
-Raised by the `plan-verify` pass on `impl.md` (2026-08-11). These are not yet folded into the fields below, so those fields still read as originally written.
-
-- **Missed scope: maintenance-window removal.** The web app has a `MaintenancePage` and 503 maintenance-window behavior (cloud-only). Not mentioned in `requirements`/`non-goals`; should be listed as something the fork strips.
-- **Missed scope: second AI surface.** AI gating in the requirements only implies the parse flow, but there is also a profile-analysis feature (`AnalysisController`/`ProfilePage`) that calls Claude and needs the same key-present gating.
-
-Resolved by the same pass (no product-doc change needed, recorded here for context): Linux keychain has a `linux-keyutils` fallback, and the Apple-unsigned macOS build can still auto-update because the Tauri updater uses its own minisign signature.
-
 ## about
 🤖 ai-audited(opus-4.8) — no change; scope is clear from the source doc
 
@@ -34,7 +25,7 @@ Ship a desktop app (Windows, Mac, Linux) that reuses the existing backend and fr
 One person tracking their own job applications, who wants a local-only tool: no account, no cloud sync, no shared server.
 
 ## requirements
-🤖 ai-audited(opus-4.8) — converted two always-true "when app runs on any platform" triggers to ubiquitous EARS phrasing
+🤖 ai-audited(opus-4.8) — converted two always-true "when app runs on any platform" triggers to ubiquitous EARS phrasing; named both AI surfaces (parse + alignment analysis) on the key-present gating requirement after `plan-verify` (2026-08-11)
 
 - When the app launches and no API key is stored in the OS keychain, the system shall show the settings screen for first-run setup.
 - When the user enters a Claude API key in settings, the system shall store it in the OS keychain, not in a config file or localStorage.
@@ -55,7 +46,7 @@ One person tracking their own job applications, who wants a local-only tool: no 
 - Database: SQLite via EF Core. Supported on EF Core 8+ (incl. `.OwnsMany(...).ToJson()`, which is used heavily and needs no change), but this is **not** a package swap and existing migrations do **not** carry over. Three things in the current model are Postgres-only and must be reworked before SQLite will build:
   - `List<string>` fields `TargetRoles`/`Skills`/`Certifications` (`Models/UserProfile.cs:11-13`) map to Npgsql native `text[]`; SQLite has no array type — convert to `PrimitiveCollection` (JSON/TEXT) or a value-converted string.
   - Two `PrimitiveCollection(...).HasColumnType("jsonb")` calls for `WorkModes`/`ContractTypes` (`Data/JobTrackerContext.cs:48-53`); `jsonb` is Postgres-only — drop the explicit column type (EF maps primitive collections to TEXT JSON on SQLite automatically) or make it provider-conditional.
-  - Migration `Migrations/20260717065502_SalaryExpectationsArray.cs` uses raw Postgres JSON SQL (`::jsonb`, `jsonb_typeof`, `jsonb_build_array`, `-> 0`) that SQLite cannot run.
+  - Two migrations use raw Postgres JSON SQL that SQLite cannot run: `Migrations/20260717065502_SalaryExpectationsArray.cs` (`::jsonb`, `jsonb_typeof`, `jsonb_build_array`, `-> 0`) and `Migrations/20260717203254_LanguagesFluencyEntry.cs` (`jsonb_agg`/`jsonb_build_object`/`::text[]`).
   - Because this is a fork with no existing data to preserve, "migrations carry over" is not a goal: after fixing the two mappings, delete `Migrations/` and regenerate a single `InitialCreate` against SQLite (the Postgres-only data-reshaping migration above simply drops out). Net effect: a small model-mapping rework in one file plus a full migration regen — low-risk, not trivial. Do not switch away from SQLite: embedded Postgres reintroduces a server process, and LiteDB/raw files mean abandoning EF Core.
 - Keychain access: `tauri-plugin-keyring` (wraps `keyring-rs`; covers macOS Keychain, Windows Credential Manager, Linux Secret Service)
 - Storage: `LocalStorageService`, reused from the web app, pointed at the app data directory
@@ -74,7 +65,7 @@ Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-go
 - No per-IP rate limiting or CORS handling needed: the backend only ever talks to the local frontend over loopback.
 
 ## non-goals
-🤖 ai-audited(opus-4.8) — no change; six clear exclusions carried from the source doc
+🤖 ai-audited(opus-4.8) — added maintenance-window removal as an exclusion after `plan-verify` (2026-08-11); the other six carried from the source doc
 
 - No authentication or multi-user support: the app launches straight into the jobs list.
 - No admin panel, user management, or AI-access toggle.
@@ -85,8 +76,13 @@ Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-go
 - No mobile build in this plan (may be revisited separately later).
 
 ## open questions
-🤖 ai-audited(opus-4.8) — no change; three real unknowns, none currently blocking
+🤖 ai-audited(opus-4.8) — added five decisions surfaced by the pre-audit gap check (2026-08-11); the first three are the ones that block clean implementation
 
+- **How does the .NET sidecar obtain the keychain-stored API key?** `tauri-plugin-keyring` runs on the Tauri side, not inside the backend process, so the key has to be handed over somehow (env var at sidecar spawn vs. per-request header). Related: the backend currently fails fast at startup if `Anthropic:ApiKey` is missing (`Program.cs:119`) and both Claude services read it in their constructor (`ClaudeAnalysisService.cs:18`), so decide whether the sidecar starts keyless and acquires the key later, or only spawns after key entry.
+- **What owns jobs and the profile once auth is removed?** Jobs are user-scoped (`ScopeJobsToUser` migration) and `UserProfile` has a required `UserId` FK to `ApplicationUser` with cascade delete. Options: a synthetic single implicit user, or detaching these from `ApplicationUser` entirely. This decision shapes the Step 4 migration regeneration in `impl.md`.
+- **How is the local SQLite schema migrated when an auto-updated version ships a schema change?** Nothing currently runs `Database.Migrate()` at startup; decide whether the app migrates the existing DB file on launch (essential once auto-update is in play).
+- **What does the data export actually cover, and is there an import?** Does the JSON export include the `UserProfile` and the actual uploaded document files, or only jobs plus document metadata? And is there an import/restore counterpart — without one, export is a weak backup and the "only safety net" framing (impl Step 9) doesn't hold.
+- **Confirm the privacy carve-out.** The `about`/`problem` framing promises offline use and "no data leaving the machine," but both AI surfaces send job text (and, for alignment, the profile) to Anthropic. The intended carve-out — AI features are optional and key-gated, everything else stays local — should be stated explicitly rather than left implied.
 - User-selectable document storage path (instead of the fixed app-data-dir location) is deferred; no target version set yet.
 - What signal or threshold would justify paying for Apple code signing later ("if macOS adoption/complaints justify it" isn't a defined trigger yet).
 - No decision yet on how the sidecar retry/backoff parameters (attempt count, delay curve) are tuned, or what "unavailable" recovery looks like beyond the banner (manual retry button? auto-recovery once the backend comes back?).
