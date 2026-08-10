@@ -8,7 +8,6 @@ lowest: 🤖 ai-audited
 
 Raised by the `plan-verify` pass on `impl.md` (2026-08-11). These are not yet folded into the fields below, so those fields still read as originally written.
 
-- **`stack` claim is wrong.** It says SQLite is a "package swap + connection string; migrations carry over." Verification against the code disproved this: the model maps owned collections with `.OwnsMany(...).ToJson()`, sets `.HasColumnType("jsonb")`, and maps `List<string>` to native Postgres `text[]`, and one migration is raw Postgres-only JSON SQL. The move is a model rewrite plus a full migration regeneration. Still feasible (EF Core 8+ supports `ToJson()` on SQLite), just not trivial. Fix the `stack` wording.
 - **Missed scope: maintenance-window removal.** The web app has a `MaintenancePage` and 503 maintenance-window behavior (cloud-only). Not mentioned in `requirements`/`non-goals`; should be listed as something the fork strips.
 - **Missed scope: second AI surface.** AI gating in the requirements only implies the parse flow, but there is also a profile-analysis feature (`AnalysisController`/`ProfilePage`) that calls Claude and needs the same key-present gating.
 
@@ -49,11 +48,15 @@ One person tracking their own job applications, who wants a local-only tool: no 
 - When an update is available, the system shall use Tauri's first-party updater plugin to apply it.
 
 ## stack
-🤖 ai-audited(opus-4.8) — no change; every component is decided in the source doc
+🤖 ai-audited(opus-4.8) — corrected the SQLite line after `plan-verify` (2026-08-11) disproved the "package swap, migrations carry over" claim; everything else decided in the source doc
 
 - Desktop shell: Tauri
 - Backend: existing ASP.NET Core API, unmodified aside from removed features, run as a sidecar process (`externalBin` + `shell:allow-execute`)
-- Database: SQLite via EF Core (swapped from PostgreSQL/Npgsql; migrations carry over)
+- Database: SQLite via EF Core. Supported on EF Core 8+ (incl. `.OwnsMany(...).ToJson()`, which is used heavily and needs no change), but this is **not** a package swap and existing migrations do **not** carry over. Three things in the current model are Postgres-only and must be reworked before SQLite will build:
+  - `List<string>` fields `TargetRoles`/`Skills`/`Certifications` (`Models/UserProfile.cs:11-13`) map to Npgsql native `text[]`; SQLite has no array type — convert to `PrimitiveCollection` (JSON/TEXT) or a value-converted string.
+  - Two `PrimitiveCollection(...).HasColumnType("jsonb")` calls for `WorkModes`/`ContractTypes` (`Data/JobTrackerContext.cs:48-53`); `jsonb` is Postgres-only — drop the explicit column type (EF maps primitive collections to TEXT JSON on SQLite automatically) or make it provider-conditional.
+  - Migration `Migrations/20260717065502_SalaryExpectationsArray.cs` uses raw Postgres JSON SQL (`::jsonb`, `jsonb_typeof`, `jsonb_build_array`, `-> 0`) that SQLite cannot run.
+  - Because this is a fork with no existing data to preserve, "migrations carry over" is not a goal: after fixing the two mappings, delete `Migrations/` and regenerate a single `InitialCreate` against SQLite (the Postgres-only data-reshaping migration above simply drops out). Net effect: a small model-mapping rework in one file plus a full migration regen — low-risk, not trivial. Do not switch away from SQLite: embedded Postgres reintroduces a server process, and LiteDB/raw files mean abandoning EF Core.
 - Keychain access: `tauri-plugin-keyring` (wraps `keyring-rs`; covers macOS Keychain, Windows Credential Manager, Linux Secret Service)
 - Storage: `LocalStorageService`, reused from the web app, pointed at the app data directory
 
