@@ -31,7 +31,7 @@ export default function AdditionalConditionsSection({
       <Textarea
         value={value}
         onChange={e => onChange(e.target.value)}
-        placeholder="Anything else that matters — experience level, unpaid-only-if-exceptional, region nuance…"
+        placeholder="Anything else that matters: experience level required, unpaid work only if exceptional, other regional nuance..."
         rows={4}
         maxLength={MAX_ADDITIONAL_CONDITIONS_LENGTH}
       />

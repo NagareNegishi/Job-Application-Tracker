@@ -30,7 +30,7 @@ export default function ProfileSectionCard({
     <div className="bg-card rounded-lg border p-5 space-y-3">
       {/* min-h keeps the header height stable whether or not the pencil button renders */}
       <div className="flex items-center justify-between min-h-7">
-        <h2 className="text-sm font-medium">{title}</h2>
+        <h2 className="text-sm font-medium border-l-2 border-primary pl-2">{title}</h2>
         {!editing && (
           <div className="flex items-center gap-1">
             {/* Multi-entry sections get a separate add-another button once entries exist */}
@@ -69,7 +69,7 @@ export default function ProfileSectionCard({
           </div>
         </>
       ) : isEmpty ? (
-        <p className="text-sm text-muted-foreground">{emptyText}</p>
+        <p className="text-sm text-muted-foreground italic">{emptyText}</p>
       ) : (
         view
       )}
