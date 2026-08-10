@@ -24,7 +24,7 @@ function emptyEntry(): EducationEntry {
 }
 
 export default function EducationSection({
-  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error, gateTooltip,
 }: Props) {
   const errors = value.map(e => checkDateOrder(e.from, e.to))
 
@@ -39,6 +39,7 @@ export default function EducationSection({
       saving={saving}
       saveBlocked={educationInvalid(value)}
       error={error}
+      gateTooltip={gateTooltip}
       onEdit={onEdit}
       onSave={onSave}
       onCancel={onCancel}

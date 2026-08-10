@@ -28,7 +28,7 @@ function emptyEntry(): WorkingRightEntry {
 }
 
 export default function WorkingRightsSection({
-  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error, gateTooltip,
 }: Props) {
   const { lastEntryRef, addEntry, handleAdd, updateEntry, removeEntry } =
     useEntryList(value, onChange, emptyEntry, onEdit)
@@ -41,6 +41,7 @@ export default function WorkingRightsSection({
       saving={saving}
       saveBlocked={workingRightsInvalid(value)}
       error={error}
+      gateTooltip={gateTooltip}
       onEdit={onEdit}
       onSave={onSave}
       onCancel={onCancel}

@@ -35,7 +35,7 @@ function formatRange(e: WorkHistoryEntry): string {
 }
 
 export default function WorkHistorySection({
-  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error, gateTooltip,
 }: Props) {
   // Future-date check (start, then end) precedes the ordering check; first failure wins per entry.
   const errors = value.map(e =>
@@ -55,6 +55,7 @@ export default function WorkHistorySection({
       saving={saving}
       saveBlocked={workHistoryInvalid(value)}
       error={error}
+      gateTooltip={gateTooltip}
       onEdit={onEdit}
       onSave={onSave}
       onCancel={onCancel}

@@ -17,6 +17,7 @@ import EducationSection from "@/components/profile/EducationSection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
 import { computeProfileScore } from "@/utils/profileScore"
 import { sectionInvalid } from "@/utils/profileValidation"
+import { gateTooltipFor, type GateField } from "@/utils/profileReady"
 import { ScoreRing } from "@/components/ui/ScoreRing"
 import FormActionBar from "@/components/ui/FormActionBar"
 import {
@@ -43,6 +44,12 @@ const EMPTY_PROFILE: UserProfile = {
 
 // All 12 section keys — drives Save profile and the first-run auto-open
 const ALL_SECTION_KEYS = Object.keys(EMPTY_PROFILE) as (keyof UserProfile)[]
+
+const GATE_FIELDS = ["targetRoles", "skills", "workingRights", "certifications", "workHistory", "education"] as const satisfies readonly GateField[]
+
+function isGateField(key: keyof UserProfile): key is GateField {
+  return (GATE_FIELDS as readonly string[]).includes(key)
+}
 
 // Only the three string[] fields render as tag sections; keyed so state/save wire up generically.
 type TagFieldKey = "targetRoles" | "skills" | "certifications"
@@ -217,6 +224,7 @@ export default function ProfilePage() {
       onEdit: () => openSection(key),
       onCancel: () => cancelSection(key),
       error: sectionErrors[key],
+      gateTooltip: isGateField(key) ? gateTooltipFor(form, key) : undefined,
     }
   }
 
@@ -265,7 +273,7 @@ export default function ProfilePage() {
         </div>
 
         {/* What I'm looking for: conditions/preferences, read only by Alignment analysis */}
-        <fieldset className="rounded-lg bg-card/60 p-4 space-y-3">
+          <fieldset className="rounded-lg bg-card/60 p-4 space-y-3">
           <legend className="px-1 text-base font-semibold">What I'm looking for</legend>
           {renderTagSection("targetRoles")}
           <MultiSelectSection
