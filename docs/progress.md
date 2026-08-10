@@ -118,4 +118,3 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
 | Interview prep tool | Save *Questions to ask* / *Interview questions* analysis results for later use; reconsidered as belonging to a dedicated interview-prep page/function rather than Job Detail — likely a separate plugin or app, not this one | Idea |
-| Action bar layout fix | Anchor "Add New Job" + "Show/Hide Columns" to the view toggle row (`JobPage.tsx`) — prevents clipping on narrow viewports | Pending |
