@@ -77,6 +77,30 @@ export type ProfileScoreResult = {
   breakdown: ProfileScoreBreakdown[]
 }
 
+// Highest-weight sections — the only ones worth naming in a low-score hint. Labels match each
+// section's on-page title. Low-weight "conditions" fields are deliberately excluded.
+const HINT_LABELS: Partial<Record<SectionKey, string>> = {
+  workHistory: "Work History",
+  skills: "Skills",
+  targetRoles: "Desired Roles",
+}
+
+const HINT_SCORE_THRESHOLD = 80
+
+/** User-facing nudge for a low-scoring profile — names only the highest-weight sections still incomplete. */
+export function getProfileHint({ score, breakdown }: ProfileScoreResult): string | undefined {
+  if (score >= HINT_SCORE_THRESHOLD) return undefined
+
+  const weak = breakdown
+    .filter(b => b.fraction < 1 && b.section in HINT_LABELS)
+    .map(b => HINT_LABELS[b.section]!)
+
+  if (weak.length === 0) return undefined
+
+  const list = new Intl.ListFormat("en", { style: "long", type: "conjunction" }).format(weak)
+  return `Add more detail to ${list} to strengthen your profile.`
+}
+
 /** Computes a 0–100 completeness score for a profile, plus a per-section breakdown. Pure — no side effects. */
 export function computeProfileScore(profile: UserProfile): ProfileScoreResult {
   const breakdown = (Object.keys(PROFILE_SCORE_CONFIG) as SectionKey[]).map<ProfileScoreBreakdown>(section => {
