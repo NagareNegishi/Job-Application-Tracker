@@ -10,6 +10,7 @@ import { WorkingRight, type WorkingRightEntry } from "@/types/profile"
 import { workingRightsInvalid } from "@/utils/profileValidation"
 import type { SectionProps } from "@/components/profile/sectionProps"
 import CountryCombobox from "./CountryCombobox"
+import CountryFlag from "./CountryFlag"
 import { getCountryName } from "./countryCodes"
 
 const STATUS_LABELS: Record<WorkingRight, string> = {
@@ -47,11 +48,12 @@ export default function WorkingRightsSection({
       emptyText="No work rights added yet"
       onAdd={handleAdd}
       view={
-        <ul className="text-sm space-y-1">
+        <ul className="text-sm space-y-1.5">
           {value.map((entry, i) => (
-            <li key={i}>
+            <li key={i} className="flex items-center gap-1.5">
+              <CountryFlag code={entry.country} />
               <span className="font-medium">{getCountryName(entry.country)}</span>
-              <span className="text-muted-foreground">{" — "}{STATUS_LABELS[entry.status]}</span>
+              <span className="text-muted-foreground">{STATUS_LABELS[entry.status]}</span>
             </li>
           ))}
         </ul>
