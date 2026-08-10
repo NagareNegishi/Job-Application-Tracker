@@ -25,7 +25,7 @@ Ship a desktop app (Windows, Mac, Linux) that reuses the existing backend and fr
 One person tracking their own job applications, who wants a local-only tool: no account, no cloud sync, no shared server.
 
 ## requirements
-🤖 ai-audited(opus-4.8) — converted two always-true "when app runs on any platform" triggers to ubiquitous EARS phrasing; named both AI surfaces (parse + alignment analysis) on the key-present gating requirement after `plan-verify` (2026-08-11). 👤 API-key behavior settled by human decision (2026-08-11): keyless boot, live-verified entry, add/update/remove, loopback-push delivery — see the rewritten first three requirements.
+🤖 ai-audited(opus-4.8) — converted two always-true "when app runs on any platform" triggers to ubiquitous EARS phrasing; named both AI surfaces (parse + alignment analysis) on the key-present gating requirement after `plan-verify` (2026-08-11). 👤 API-key behavior settled by human decision (2026-08-11): keyless boot, live-verified entry, add/update/remove, loopback-push delivery — see the rewritten first three requirements. 👤 on-launch schema migration settled by human decision (2026-08-11): `Database.Migrate()` on startup behind a pre-migration backup — see the migration requirement below.
 
 - When the app launches, the system shall open directly to the jobs list whether or not an API key is stored, and shall never block startup on key setup. The key ships empty by default and is optional; the web app's startup fail-fast on a missing `Anthropic:ApiKey` is removed.
 - When the user enters a Claude API key in settings, the system shall verify it with a live test call to Anthropic and store it in the OS keychain (never a config file or localStorage) only if verification succeeds. The user can update or remove the stored key at any time from the same screen.
@@ -36,6 +36,7 @@ One person tracking their own job applications, who wants a local-only tool: no 
 - When the app exits, the system shall explicitly kill the sidecar process so it doesn't linger.
 - When the user requests a data export, the system shall produce a JSON file containing all jobs.
 - The system shall store the SQLite database file in the OS-standard app data directory, not next to the binary.
+- When the app starts, the system shall bring the SQLite schema up to date by applying any pending EF Core migrations (`Database.Migrate()`), after first copying the database file to a backup. This runs before the app serves requests and reveals the UI, and covers both first run (schema created from scratch) and post-auto-update schema changes. If migration fails, the system shall keep the backup and surface a failure state rather than serve a half-migrated database.
 - The system shall store uploaded documents in a fixed folder inside the same app data directory.
 - When an update is available, the system shall use Tauri's first-party updater plugin to apply it.
 
@@ -79,10 +80,9 @@ Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-go
 - No mobile build in this plan (may be revisited separately later).
 
 ## open questions
-🤖 ai-audited(opus-4.8) — added the open decisions surfaced by the pre-audit gap check (2026-08-11). 👤 resolved the sidecar key-delivery item (2026-08-11): keyless boot + loopback push + live-verified entry — moved into requirements/stack. On-launch-migration remains the item that blocks clean implementation.
+🤖 ai-audited(opus-4.8) — added the open decisions surfaced by the pre-audit gap check (2026-08-11). 👤 resolved the sidecar key-delivery item (2026-08-11): keyless boot + loopback push + live-verified entry — moved into requirements/stack. 👤 resolved on-launch-migration (2026-08-11): `Database.Migrate()` on startup behind a pre-migration backup — moved into requirements + impl Step 5/8.
 
 - **What owns jobs and the profile once auth is removed?** Jobs are user-scoped (`ScopeJobsToUser` migration) and `UserProfile` has a required `UserId` FK to `ApplicationUser` with cascade delete. Options: a synthetic single implicit user, or detaching these from `ApplicationUser` entirely. This decision shapes the Step 4 migration regeneration in `impl.md`.
-- **How is the local SQLite schema migrated when an auto-updated version ships a schema change?** Nothing currently runs `Database.Migrate()` at startup; decide whether the app migrates the existing DB file on launch (essential once auto-update is in play).
 - **What does the data export actually cover, and is there an import?** Does the JSON export include the `UserProfile` and the actual uploaded document files, or only jobs plus document metadata? And is there an import/restore counterpart — without one, export is a weak backup and the "only safety net" framing (impl Step 9) doesn't hold.
 - **Confirm the privacy carve-out.** The `about`/`problem` framing promises offline use and "no data leaving the machine," but both AI surfaces send job text (and, for alignment, the profile) to Anthropic. The intended carve-out — AI features are optional and key-gated, everything else stays local — should be stated explicitly rather than left implied.
 - User-selectable document storage path (instead of the fixed app-data-dir location) is deferred; no target version set yet.

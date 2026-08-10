@@ -56,6 +56,8 @@ Publish the backend as a self-contained per-platform binary named with the requi
 
 The sidecar starts **keyless** — remove the `Anthropic:ApiKey` startup fail-fast (`Program.cs:119`) so a missing key never blocks boot (human decision, 2026-08-11). The backend exposes a loopback-only endpoint that receives the current API key (see Step 6); until a key arrives it runs with AI disabled.
 
+On startup, before serving requests, the backend brings the local schema up to date with `Database.Migrate()` (human decision, 2026-08-11) — there is no `dotnet ef database update` step on a user's machine, and auto-update (Step 10) can ship a schema change against the user's existing DB file. Guard it with a **pre-migration backup**: copy the SQLite file (see Step 8 for its location) before calling `Migrate()`, and on failure keep the backup and surface a failure state rather than reveal the UI over a half-migrated DB. `Migrate()` covers first run (creates the schema) and upgrade (applies pending migrations) in one path; this is net-new since `Program.cs` currently runs no schema step at all. Sequence it ahead of the Step 5 health handshake so the window only appears once the DB is ready. Keep authoring future migrations against the SQLite provider so EF emits SQLite-compatible DDL.
+
 ### Step 6: API key storage in the OS keychain with a settings screen
 🤖 ai-audited(opus-4.8) · 🔗 verified → doc: https://github.com/charlesportwoodii/tauri-plugin-keyring (v0.2.0, macOS/Windows/Linux); src: job-tracker-ui/src/pages/SettingsPage.tsx
 
@@ -71,7 +73,7 @@ The app opens straight to the jobs list on every launch — a missing key is nev
 ### Step 8: Point database and document storage at the OS app data dir
 🤖 ai-audited(opus-4.8) · 🔗 verified → src: JobTrackerApi/Services/LocalStorageService.cs:10-14
 
-Resolve the OS-standard app data directory per platform (`%APPDATA%`, `~/Library/Application Support`, `~/.local/share`) and place the SQLite file there, not next to the binary. Point `LocalStorageService` at a fixed documents folder inside the same directory. Verified the service reads `Storage:UploadsPath` from config and calls `Directory.CreateDirectory` (lines 10-14), so this is a matter of supplying the resolved path rather than restructuring the service. A user-selectable path is out of scope for this plan.
+Resolve the OS-standard app data directory per platform (`%APPDATA%`, `~/Library/Application Support`, `~/.local/share`) and place the SQLite file there, not next to the binary. Point `LocalStorageService` at a fixed documents folder inside the same directory. Verified the service reads `Storage:UploadsPath` from config and calls `Directory.CreateDirectory` (lines 10-14), so this is a matter of supplying the resolved path rather than restructuring the service. A user-selectable path is out of scope for this plan. The Step 5 pre-migration backup copy of the SQLite file lives in this same app data directory.
 
 ### Step 9: JSON data export
 🤖 ai-audited(opus-4.8) · ❔ unverified (net-new)
