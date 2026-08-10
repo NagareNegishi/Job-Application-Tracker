@@ -14,7 +14,7 @@ Fork the repo, then wrap the existing React frontend in a Tauri shell and run th
 
 The verification pass resolved several of these and made one worse. Updated state:
 
-- **SQLite swap is a model rewrite, not a package swap (worse than assumed).** The DbContext maps owned collections with `.OwnsMany(...).ToJson()`, sets `.HasColumnType("jsonb")` explicitly, and maps `List<string>` to native Postgres `text[]`. The migrations contain `jsonb`, `text[]`, `NpgsqlValueGenerationStrategy`, and a raw-SQL migration (`LanguagesFluencyEntry`) built entirely on Postgres-only `jsonb_agg`/`jsonb_build_object`/`::text[]` functions. None of this runs on SQLite. This contradicts the product doc's "package swap + connection string; migrations still work." See Step 4.
+- **SQLite swap is a model rewrite, not a package swap (worse than assumed).** The DbContext maps owned collections with `.OwnsMany(...).ToJson()`, sets `.HasColumnType("jsonb")` explicitly, and maps `List<string>` to native Postgres `text[]`. The migrations contain `jsonb`, `text[]`, `NpgsqlValueGenerationStrategy`, and two raw-SQL migrations (`SalaryExpectationsArray`, `LanguagesFluencyEntry`) built on Postgres-only `jsonb`/`jsonb_agg`/`jsonb_build_object`/`::text[]` functions. None of this runs on SQLite. This contradicts the product doc's "package swap + connection string; migrations still work." See Step 4.
 - **SQLite JSON is nonetheless feasible (resolved).** EF Core 8+ extended `ToJson()` owned collections and primitive collections to the SQLite provider, so the aggregate-to-JSON model survives the move once the Postgres-specific column types are dropped (SQLite stores them as TEXT).
 - **Sidecar bundling per target triple is real but standard (resolved).** Tauri v2 requires the sidecar binary named with a `-$TARGET_TRIPLE` suffix and run via `shell:allow-execute`. Confirmed as the documented approach, so this is build-tooling work, not an open feasibility question.
 - **Startup race is still net-new.** The health-check/handshake before revealing the UI has no analog in the web app. Unverified by nature.
@@ -45,7 +45,7 @@ Remove login, register, check-email, confirm-email, forgot-password, reset-passw
 Bigger than the product doc implied. Verified this is a model change plus a full migration regeneration, not a package-and-connection-string swap:
 - Replace the Npgsql provider with the SQLite provider and update the connection string (`Program.cs:130` uses `UseNpgsql`).
 - Remove or replace the Postgres-specific mappings in `JobTrackerContext.cs`: the explicit `.HasColumnType("jsonb")` calls (lines 50, 53) and the native `text[]` array mapping for `List<string>` (`TargetRoles`/`Skills`/`Certifications`, per `UserProfile.cs`). The `.OwnsMany(...).ToJson()` owned collections (lines 24-55) do carry over: EF Core 8+ supports `ToJson()` and primitive collections on SQLite, stored as TEXT.
-- Delete and regenerate every migration against SQLite. The existing set embeds `jsonb`, `text[]`, `NpgsqlValueGenerationStrategy`, and a raw-SQL migration (`LanguagesFluencyEntry`) written in Postgres-only JSON functions that SQLite cannot run.
+- Delete and regenerate every migration against SQLite. The existing set embeds `jsonb`, `text[]`, `NpgsqlValueGenerationStrategy`, and two raw-SQL migrations (`SalaryExpectationsArray`, `LanguagesFluencyEntry`) written in Postgres-only JSON functions that SQLite cannot run.
 - Keep the `IDesignTimeDbContextFactory` so `dotnet ef` still works after the swap.
 
 ### Step 5: Run the backend as a Tauri sidecar with a managed lifecycle
@@ -61,7 +61,7 @@ Add `tauri-plugin-keyring` (v0.2.0, actively maintained, covers macOS Keychain /
 ### Step 7: First-run setup and AI feature gating
 🤖 ai-audited(opus-4.8) · 🔗 verified → src: job-tracker-ui/src/services/parseService.ts, JobTrackerApi/Controllers/AnalysisController.cs
 
-On launch with no stored key, route the user to the settings screen for first-run setup. Gate the AI features on the key being present. The AI surface is broader than the plan first captured: besides the parse/auto-fill flow (`parseService.ts`), there is a profile-analysis feature (`AnalysisController`, `ClaudeAnalysisService`, `ProfilePage`) that also calls Claude and must be gated the same way. Depends on Step 6's keychain read.
+On launch with no stored key, route the user to the settings screen for first-run setup. Gate the AI features on the key being present. The AI surface is broader than the plan first captured: besides the parse/auto-fill flow (`parseService.ts`), there is a profile/job alignment-analysis feature (`AnalysisController`, `ClaudeAnalysisService`, surfaced in the frontend via `AnalysisSection`/`AlignmentDialog` on `JobDetailPage` — not `ProfilePage`) that also calls Claude and must be gated the same way. Depends on Step 6's keychain read.
 
 ### Step 8: Point database and document storage at the OS app data dir
 🤖 ai-audited(opus-4.8) · 🔗 verified → src: JobTrackerApi/Services/LocalStorageService.cs:10-14
