@@ -3,7 +3,7 @@
 // Total weight is 108 (100 background/experience + 4 preference fields at 2 each), so
 // normalized values are earned-points / 108 * 100, rounded.
 import { describe, it, expect } from "vitest"
-import { computeProfileScore } from "./profileScore"
+import { computeProfileScore, getProfileHint } from "./profileScore"
 import { LanguageFluency, ContractType, type UserProfile, type WorkHistoryEntry } from "@/types/profile"
 import { WorkMode } from "@/types/enums"
 
@@ -151,5 +151,42 @@ describe("normalization and breakdown", () => {
     expect(result.score).toBe(32)  // (25 + 10) / 108 → 32.4 → 32
     const skillsRow = result.breakdown.find(b => b.section === "skills")
     expect(skillsRow).toMatchObject({ weight: 25, fraction: 1, points: 25 })  // points is pre-normalization
+  })
+})
+
+describe("getProfileHint", () => {
+  it("names all three core sections for an empty profile", () => {
+    const hint = getProfileHint(computeProfileScore(emptyProfile))
+    expect(hint).toBe("Add more detail to Work History (volunteer work or projects count too), Skills, and Desired Roles to strengthen your profile.")
+  })
+
+  it("returns undefined once the score clears the threshold", () => {
+    const full: UserProfile = {
+      ...emptyProfile,
+      targetRoles: ["Engineer"], skills: skills(5), workHistory: history(DESC_COMPLETE, DESC_COMPLETE),
+      certifications: ["AWS"], languages: [{ language: "English", fluency: LanguageFluency.NativeOrBilingual }],
+      workingRights: [{ country: "NZ", status: "Citizen" }],
+      education: [{ institution: "UoA", degree: "BSc", from: 2018, to: 2021 }],
+    }
+    expect(getProfileHint(computeProfileScore(full))).toBeUndefined()
+  })
+
+  it("stays undefined below the threshold if only low-weight fields are missing", () => {
+    // Core sections (workHistory/skills/targetRoles) full; only the 2-weight preference fields are empty.
+    const result = computeProfileScore({
+      ...emptyProfile,
+      targetRoles: ["Engineer"], skills: skills(5), workHistory: history(DESC_COMPLETE, DESC_COMPLETE),
+    })
+    expect(result.score).toBeLessThan(80)
+    expect(getProfileHint(result)).toBeUndefined()
+  })
+
+  it("names only the weak core section when the others are complete", () => {
+    const result = computeProfileScore({
+      ...emptyProfile,
+      targetRoles: ["Engineer"], workHistory: history(DESC_COMPLETE, DESC_COMPLETE),
+      skills: skills(1),  // weak — only 1/3 credit
+    })
+    expect(getProfileHint(result)).toBe("Add more detail to Skills to strengthen your profile.")
   })
 })
