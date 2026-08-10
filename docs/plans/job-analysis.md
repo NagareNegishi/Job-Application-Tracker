@@ -70,15 +70,8 @@ Response shapes/prompts live in `Models/` and `Services/ClaudeAnalysisConfig.cs`
 
 ## Notes
 
-### Deferred / follow-up work
-- **`concern` threshold tuning:** needs verification against real listings now that Steps 9–10 are usable end to end.
-- **C7 component polish:** `PreferredLocationsSection` and `AdditionalConditionsSection` need a visual/layout pass. Follow `.claude/skills/frontend-design/SKILL.md`.
-- **Save analysis to job:** *Questions to ask* and *Interview questions* could get a "Save to job" action onto new `Job` fields, overriding "on-demand, not saved" for those two types only. Adds `Job` fields + migration + save UI.
-- **Profile quality score:** done — `utils/profileScore.ts` + `ScoreRing` component, mounted in `ProfilePage` header. Remaining: per-section improvement hints from `breakdown`.
-- **Form re-hydration bug:** `ProfilePage` re-runs `setForm(data)` on every refetch, so saving one section can wipe unsaved edits in another mid-edit section. Rare, left as-is. Fix: hydrate once via a `hydrated` ref guard.
-- **Profile page: flag analysis-gating fields:** visually flag which fields gate analysis, distinct from the general completeness score ring.
-
 ### Reference
 - `Anthropic:ApiKey` shared with auto-fill parsing — no duplicate config key.
 - Tests mock `IAnalysisService`; no live Claude calls in CI.
 - Suggestion pools live in `components/profile/tagSuggestions.ts`. Sources: Languages → `iso-639-1`; Institutions → Hipolabs `world_universities_and_domains.json`; Roles/Skills/Certifications/Degrees → curated static lists. Custom free-text input always allowed.
+- Country flags render via `CountryFlag.tsx` (shared by `CountryCombobox` and view-mode lists) — `fi fi-<code>` sprite classes from the `flag-icons` package, already a dependency and imported globally in `main.tsx`. Not emoji — sprites render consistently across platforms/fonts.

@@ -101,20 +101,21 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Company Verification API | External repo; live at `https://company-verification.onrender.com`; NZ + AU registries; not yet integrated into this project |
 | Dark mode + custom themes | Dark/light toggle in NavBar; 4 color themes; stored in `UserPreferences.theme` |
 | Assessment + Withdrawn statuses | New enum values; auto-fill `appliedAt` on POST/PATCH→Applied with confirm dialog if already set |
+| Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs |
+| Stale application indicator | `StaleIndicator` component — amber Clock icon + tooltip in jobs list and Kanban card; `staleDaysSince` helper in `dashboardUtils.ts` |
+| Job analysis | `UserProfile` table + 5 AI analysis endpoints + Job Detail UI + ad-hoc triage dialog; see `docs/plans/job-analysis.md` |
+| Table scroll accessibility | Viewport-contained flex chain; `table-plain.tsx`; sticky `TableHeader`; see `docs/plans/table-scroll-accessibility.md` |
+| Auto-fill rate-limit error message | `lib/api.ts` 429-specific fallback message; `ParseListingDialog` catch block surfaces `ApiError.message` |
+| Maintenance page | Redirect to `/maintenance` on in-window 503; health-poll auto-recovery; see `docs/plans/maintenance-page.md` |
+| Profile inline view/edit | Read-only sections with pencil → in-place edit; see `docs/plans/profile-inline-edit.md` — remaining items are optional polish |
 
 ## Active / Upcoming Work
 
 | Plan | Item | Status |
 |---|---|---|
-| Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs | Done |
 | Interview reminder email | Scheduled job emails user day-before interviewAt via IEmailService | Early planning |
-| Stale application indicator | `StaleIndicator` component — amber Clock icon + tooltip in jobs list and Kanban card; `staleDaysSince` helper extracted in `dashboardUtils.ts` | Done |
-| Job analysis | `UserProfile` table + 5 AI analysis endpoints + Job Detail UI + ad-hoc triage dialog | Done. See `docs/plans/job-analysis.md` for deferred polish items. |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
-| Table scroll accessibility | Viewport-contained flex chain; `table-plain.tsx`; sticky `TableHeader`; see `docs/plans/table-scroll-accessibility.md` | Done |
+| Interview prep tool | Save *Questions to ask* / *Interview questions* analysis results for later use; reconsidered as belonging to a dedicated interview-prep page/function rather than Job Detail — likely a separate plugin or app, not this one | Idea |
 | Action bar layout fix | Anchor "Add New Job" + "Show/Hide Columns" to the view toggle row (`JobPage.tsx`) — prevents clipping on narrow viewports | Pending |
-| Auto-fill rate-limit error message | `lib/api.ts` has a 429-specific fallback message; `ParseListingDialog`'s catch block fixed to surface `ApiError.message` instead of discarding it (was hardcoded regardless of error) | Done |
-| Maintenance page | Redirect to `/maintenance` on in-window 503; health-poll auto-recovery; see `docs/plans/maintenance-page.md` | Done |
-| Profile inline view/edit | Read-only sections with pencil → in-place edit; see `docs/plans/profile-inline-edit.md` | Done — remaining items are optional polish |
