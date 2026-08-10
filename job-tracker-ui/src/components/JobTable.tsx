@@ -20,12 +20,13 @@ import { COLUMNS } from "@/lib/columns";
 import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums";
-import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ListFilter, Plus, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { hasRole } from "@/lib/auth";
 import type { FormState } from "@/types/formTypes";
+import { AlignmentDialog } from "./AlignmentDialog";
 import { ColumnToggle } from "./ColumnToggle";
 import { JobCreateSheet } from "./JobCreateSheet";
 import { ParseListingDialog } from "./ParseListingDialog";
@@ -217,6 +218,7 @@ export function JobTable() {
   const { data: jobs, isPending, isError } = useJobs();
   // AI users see ParseListingDialog first, non-AI sers see JobCreateSheet directly
   const [parseOpen, setParseOpen] = useState(false);
+  const [alignmentOpen, setAlignmentOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [initialData, setInitialData] = useState<Partial<FormState> | undefined>(undefined);
   const navigate = useNavigate();
@@ -316,15 +318,28 @@ export function JobTable() {
           <span className="hidden sm:inline">Job Applications</span>
           <span className="sm:hidden">Applications</span>
         </h1>
-        <Button
-          variant="outline"
-          className="shadow-xs hover:bg-secondary"
-          onClick={handleAddJob}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">Add New Job</span>
-          <span className="sm:hidden">New Job</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          {hasRole("AiUser") && (
+            <Button
+              variant="outline"
+              className="shadow-xs hover:bg-secondary"
+              onClick={() => setAlignmentOpen(true)}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Worth Applying?</span>
+              <span className="sm:hidden">Worth It?</span>
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            className="shadow-xs hover:bg-secondary"
+            onClick={handleAddJob}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Add New Job</span>
+            <span className="sm:hidden">New Job</span>
+          </Button>
+        </div>
       </div>
       <hr className="border-t border-border" />
 
@@ -585,6 +600,11 @@ export function JobTable() {
         onOpenChange={setParseOpen}
         onFill={handleFill}
         onFillManually={handleFillManually}
+      />
+      <AlignmentDialog
+        open={alignmentOpen}
+        onOpenChange={setAlignmentOpen}
+        onAutoFill={handleFill}
       />
       <JobCreateSheet open={sheetOpen} onOpenChange={setSheetOpen} initialData={initialData} />
     </div>

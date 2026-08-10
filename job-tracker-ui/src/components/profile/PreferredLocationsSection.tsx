@@ -1,4 +1,4 @@
-// Preferred locations section — per-entry country + free-text areas ("anywhere in country" if empty).
+// Preferred locations section: per-entry country + free-text areas ("anywhere in country" if empty).
 // View/edit mode and card chrome come from ProfileSectionCard.
 import { Label } from "@/components/ui/label"
 import TagInput from "@/components/ui/TagInput"
@@ -8,6 +8,7 @@ import { useEntryList } from "@/components/profile/useEntryList"
 import type { PreferredLocationEntry } from "@/types/profile"
 import { preferredLocationsInvalid } from "@/utils/profileValidation"
 import CountryCombobox from "./CountryCombobox"
+import CountryFlag from "./CountryFlag"
 import { getCountryName } from "./countryCodes"
 import { MAX_LOCATION_AREAS_COUNT, MAX_LOCATION_AREA_ITEM_LENGTH } from "@/lib/validationConstants"
 import type { SectionProps } from "@/components/profile/sectionProps"
@@ -36,15 +37,16 @@ export default function PreferredLocationsSection({
       onSave={onSave}
       onCancel={onCancel}
       isEmpty={value.length === 0}
-      emptyText="No preferred locations added yet"
+      emptyText="No preferred locations added"
       onAdd={handleAdd}
       view={
-        <ul className="text-sm space-y-1">
+        <ul className="text-sm space-y-1.5">
           {value.map((entry, i) => (
-            <li key={i}>
+            <li key={i} className="flex items-center gap-1.5">
+              <CountryFlag code={entry.country} />
               <span className="font-medium">{getCountryName(entry.country)}</span>
               <span className="text-muted-foreground">
-                {" — "}{entry.areas.length > 0 ? entry.areas.join(", ") : "anywhere"}
+                {entry.areas.length > 0 ? entry.areas.join(", ") : "anywhere in country"}
               </span>
             </li>
           ))}
@@ -71,7 +73,7 @@ export default function PreferredLocationsSection({
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">
-                  Areas <span className="font-normal">(optional — leave blank for anywhere in country)</span>
+                  Areas <span className="font-normal">(optional: leave blank for anywhere in country)</span>
                 </Label>
                 <TagInput
                   value={entry.areas}

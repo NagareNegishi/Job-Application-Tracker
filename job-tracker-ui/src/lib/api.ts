@@ -142,6 +142,7 @@ export class MaintenanceError extends Error {
 // Never echo the backend's { error } field (untrusted channel — could leak server detail);
 // return a safe client-authored fallback instead. See docs/plans/maintenance-page.md.
 function genericFallbackMessage(status: number): string {
+  if (status === 429) return "Too many requests. Please wait a moment and try again."
   if (status >= 500) return "Something went wrong on our end. Please try again shortly."
   return "Something went wrong. Please try again."
 }

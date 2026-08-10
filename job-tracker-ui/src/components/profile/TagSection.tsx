@@ -31,6 +31,7 @@ export default function TagSection({
   onEdit,
   onCancel,
   error,
+  gateTooltip,
   placeholder,
   maxItems,
   maxItemLength,
@@ -45,6 +46,7 @@ export default function TagSection({
       dirty={dirty}
       saving={saving}
       error={error}
+      gateTooltip={gateTooltip}
       onEdit={onEdit}
       onSave={onSave}
       onCancel={onCancel}

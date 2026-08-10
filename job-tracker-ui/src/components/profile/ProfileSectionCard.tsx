@@ -4,6 +4,7 @@
 import type { ReactNode } from "react"
 import { Pencil, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { GateIndicator } from "@/components/profile/GateIndicator"
 
 type Props = {
   title: string
@@ -12,25 +13,29 @@ type Props = {
   saving: boolean
   saveBlocked?: boolean // section-specific validation failure; disables Save on top of !dirty
   error?: string
+  gateTooltip?: string // set while this field is required for AI analysis and still unmet
   onEdit: () => void
   onSave: () => void
   onCancel: () => void // reverts the section's value and exits edit mode (page-owned)
   isEmpty: boolean     // show `emptyText` instead of `view`; header icon becomes +
-  emptyText: string    // placeholder when empty, e.g. "No skills added yet"
+  emptyText: string    // placeholder when empty, e.g. "No skills added"
   onAdd?: () => void   // multi-entry sections: enter edit with a blank entry seeded
   view: ReactNode
   children: ReactNode
 }
 
 export default function ProfileSectionCard({
-  title, editing, dirty, saving, saveBlocked, error,
+  title, editing, dirty, saving, saveBlocked, error, gateTooltip,
   onEdit, onSave, onCancel, isEmpty, emptyText, onAdd, view, children,
 }: Props) {
   return (
     <div className="bg-card rounded-lg border p-5 space-y-3">
       {/* min-h keeps the header height stable whether or not the pencil button renders */}
       <div className="flex items-center justify-between min-h-7">
-        <h2 className="text-sm font-medium">{title}</h2>
+        <div className="flex items-center gap-1.5">
+          <h2 className="text-sm font-medium border-l-2 border-primary pl-2">{title}</h2>
+          <GateIndicator tooltip={gateTooltip} />
+        </div>
         {!editing && (
           <div className="flex items-center gap-1">
             {/* Multi-entry sections get a separate add-another button once entries exist */}
@@ -69,7 +74,7 @@ export default function ProfileSectionCard({
           </div>
         </>
       ) : isEmpty ? (
-        <p className="text-sm text-muted-foreground">{emptyText}</p>
+        <p className="text-sm text-muted-foreground italic">{emptyText}</p>
       ) : (
         view
       )}

@@ -102,6 +102,11 @@ public class AuthController : ControllerBase
         _context.Jobs.RemoveRange(jobs);
         user.Preferences = null; // reset theme, columns, autoFill to defaults
         await _userManager.UpdateAsync(user);
+
+        // Profile isn't seeded — just clear it
+        var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        if (profile != null) _context.UserProfiles.Remove(profile);
+
         await _context.SaveChangesAsync();
 
         _context.Jobs.AddRange(DemoSeed.CreateJobs(user.Id));

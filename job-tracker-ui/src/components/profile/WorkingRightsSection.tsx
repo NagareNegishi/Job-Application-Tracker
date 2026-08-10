@@ -10,6 +10,7 @@ import { WorkingRight, type WorkingRightEntry } from "@/types/profile"
 import { workingRightsInvalid } from "@/utils/profileValidation"
 import type { SectionProps } from "@/components/profile/sectionProps"
 import CountryCombobox from "./CountryCombobox"
+import CountryFlag from "./CountryFlag"
 import { getCountryName } from "./countryCodes"
 
 const STATUS_LABELS: Record<WorkingRight, string> = {
@@ -27,7 +28,7 @@ function emptyEntry(): WorkingRightEntry {
 }
 
 export default function WorkingRightsSection({
-  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error,
+  value, onChange, dirty, saving, onSave, editing, onEdit, onCancel, error, gateTooltip,
 }: Props) {
   const { lastEntryRef, addEntry, handleAdd, updateEntry, removeEntry } =
     useEntryList(value, onChange, emptyEntry, onEdit)
@@ -40,18 +41,20 @@ export default function WorkingRightsSection({
       saving={saving}
       saveBlocked={workingRightsInvalid(value)}
       error={error}
+      gateTooltip={gateTooltip}
       onEdit={onEdit}
       onSave={onSave}
       onCancel={onCancel}
       isEmpty={value.length === 0}
-      emptyText="No work rights added yet"
+      emptyText="No work rights added"
       onAdd={handleAdd}
       view={
-        <ul className="text-sm space-y-1">
+        <ul className="text-sm space-y-1.5">
           {value.map((entry, i) => (
-            <li key={i}>
+            <li key={i} className="flex items-center gap-1.5">
+              <CountryFlag code={entry.country} />
               <span className="font-medium">{getCountryName(entry.country)}</span>
-              <span className="text-muted-foreground">{" — "}{STATUS_LABELS[entry.status]}</span>
+              <span className="text-muted-foreground">{STATUS_LABELS[entry.status]}</span>
             </li>
           ))}
         </ul>

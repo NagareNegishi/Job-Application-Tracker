@@ -31,7 +31,7 @@ const STATUS_ORDER: Record<string, number> = {
   NoResponse: 6,
 };
 
-const PRIORITY_ORDER: Record<string, number> = {
+export const PRIORITY_ORDER: Record<string, number> = {
   Low: 0,
   Medium: 1,
   High: 2,

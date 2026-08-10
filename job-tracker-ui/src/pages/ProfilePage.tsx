@@ -1,4 +1,5 @@
 // Career profile page — lets users maintain the background data used as context for AI job analysis.
+import { Lightbulb } from "lucide-react"
 import NavBar from "@/components/NavBar"
 import { useProfile, useCreateProfile, usePatchProfile } from "@/hooks/profileQuery"
 import type { UserProfile, ProfilePatch } from "@/types/profile"
@@ -15,8 +16,9 @@ import LanguagesSection from "@/components/profile/LanguagesSection"
 import WorkHistorySection from "@/components/profile/WorkHistorySection"
 import EducationSection from "@/components/profile/EducationSection"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
-import { computeProfileScore } from "@/utils/profileScore"
+import { computeProfileScore, getProfileHint } from "@/utils/profileScore"
 import { sectionInvalid } from "@/utils/profileValidation"
+import { gateTooltipFor, type GateField } from "@/utils/profileReady"
 import { ScoreRing } from "@/components/ui/ScoreRing"
 import FormActionBar from "@/components/ui/FormActionBar"
 import {
@@ -44,6 +46,12 @@ const EMPTY_PROFILE: UserProfile = {
 // All 12 section keys — drives Save profile and the first-run auto-open
 const ALL_SECTION_KEYS = Object.keys(EMPTY_PROFILE) as (keyof UserProfile)[]
 
+const GATE_FIELDS = ["targetRoles", "skills", "workingRights", "certifications", "workHistory", "education"] as const satisfies readonly GateField[]
+
+function isGateField(key: keyof UserProfile): key is GateField {
+  return (GATE_FIELDS as readonly string[]).includes(key)
+}
+
 // Only the three string[] fields render as tag sections; keyed so state/save wire up generically.
 type TagFieldKey = "targetRoles" | "skills" | "certifications"
 
@@ -60,13 +68,13 @@ type TagSectionConfig = {
 
 // Per-section data only — the wiring (value/onChange/save/dirty) is identical and lives in the map below.
 const TAG_SECTIONS: Record<TagFieldKey, TagSectionConfig> = {
-  targetRoles: { title: "Desired Roles", emptyText: "No desired roles added yet",
+  targetRoles: { title: "Desired Roles", emptyText: "No desired roles added",
     placeholder: "Type a role and press Enter",
     maxItems: MAX_TARGET_ROLES_COUNT, maxItemLength: MAX_TARGET_ROLE_ITEM_LENGTH, layout: "stack", suggestions: TARGET_ROLE_SUGGESTIONS },
-  skills: { title: "Skills", emptyText: "No skills added yet",
+  skills: { title: "Skills", emptyText: "No skills added",
     placeholder: "Type a skill and press Enter",
     maxItems: MAX_SKILLS_COUNT, maxItemLength: MAX_SKILL_ITEM_LENGTH, suggestions: SKILL_SUGGESTIONS },
-  certifications: { title: "Certifications", emptyText: "No certifications added yet",
+  certifications: { title: "Certifications", emptyText: "No certifications added",
     placeholder: "Type a certification and press Enter",
     maxItems: MAX_CERTIFICATIONS_COUNT, maxItemLength: MAX_CERTIFICATION_ITEM_LENGTH, layout: "stack", suggestions: CERTIFICATION_SUGGESTIONS },
 }
@@ -217,6 +225,7 @@ export default function ProfilePage() {
       onEdit: () => openSection(key),
       onCancel: () => cancelSection(key),
       error: sectionErrors[key],
+      gateTooltip: isGateField(key) ? gateTooltipFor(form, key) : undefined,
     }
   }
 
@@ -240,8 +249,9 @@ export default function ProfilePage() {
     )
   }
 
-  // Live completeness score of the current form.
-  const profileScore = computeProfileScore(form).score
+  // Live completeness score of the current form, plus a nudge naming the weakest high-value sections.
+  const scoreResult = computeProfileScore(form)
+  const profileHint = getProfileHint(scoreResult)
 
   if (isLoading) return (
     <div className="min-h-screen bg-muted">
@@ -261,12 +271,20 @@ export default function ProfilePage() {
           <p className="text-sm text-muted-foreground mt-1">
             Your career profile is used as context for AI job analysis.
           </p>
-          <ScoreRing score={profileScore} />
+          <div className="flex items-center gap-4 mt-3 ml-1">
+            <ScoreRing score={scoreResult.score} />
+            {profileHint && (
+              <div className="flex items-start gap-2 max-w-xs rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                <Lightbulb className="size-4 shrink-0 mt-0.5 text-amber-500 dark:text-amber-400" />
+                <p className="text-sm text-muted-foreground">{profileHint}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* What I'm looking for: conditions/preferences, read only by Alignment analysis */}
-        <div className="space-y-3">
-          <h2 className="text-base font-semibold px-1">What I'm looking for</h2>
+          <fieldset className="rounded-lg bg-card/60 p-4 space-y-3">
+          <legend className="px-1 text-base font-semibold">What I'm looking for</legend>
           {renderTagSection("targetRoles")}
           <MultiSelectSection
             title="Work Modes"
@@ -284,11 +302,11 @@ export default function ProfilePage() {
           <SalaryExpectationSection {...sectionProps("salaryExpectations")} />
           <PreferredLocationsSection {...sectionProps("preferredLocations")} />
           <AdditionalConditionsSection {...sectionProps("additionalConditions")} />
-        </div>
+        </fieldset>
 
         {/* Background: experience → education → supporting → logistics */}
-        <div className="space-y-3">
-          <h2 className="text-base font-semibold px-1">Background</h2>
+        <fieldset className="rounded-lg bg-card/60 p-4 space-y-3">
+          <legend className="px-1 text-base font-semibold">Background</legend>
           <WorkHistorySection {...sectionProps("workHistory")} />
           <EducationSection {...sectionProps("education")} />
 
@@ -297,7 +315,7 @@ export default function ProfilePage() {
           <LanguagesSection {...sectionProps("languages")} />
 
           <WorkingRightsSection {...sectionProps("workingRights")} />
-        </div>
+        </fieldset>
 
         {/* Page-level actions while any section is open — sticky so they're reachable without scrolling */}
         {anyEditing && (

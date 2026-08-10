@@ -95,29 +95,26 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Customizable table columns | `Preferences` JSON on user; column toggle UI in toolbar |
 | Job table tabs | Active / Closing Soon / All / Rejected; frontend-only filtering |
 | Kanban board view | `@dnd-kit`; drag card patches job status via PATCH |
-| Kanban DragOverlay refactor | `DragOverlay` portal; `KanbanCardPreview` clone; `draggingId` state for clean post-drop transition |
 | AI access admin | `Admin` + `AiUser` roles; `AdminController`; `/admin` page |
 | Auto-fill parsing | `ParseListingDialog`; Claude Haiku; `POST /api/jobs/parse`; 2/min rate limit |
 | RDS maintenance window | EventBridge stops DB 20:00–07:00 NZ; backend 503 on `DbException`; frontend `MaintenanceError` with time-aware message |
 | Company Verification API | External repo; live at `https://company-verification.onrender.com`; NZ + AU registries; not yet integrated into this project |
-| Dark mode + custom themes | Dark/light toggle in NavBar; 4 color themes (blue, red, yellow, pink); applied via `.theme-*` on `<html>`; stored in `UserPreferences.theme` |
-| Assessment + Withdrawn statuses | New enum values 7/8; auto-fill `appliedAt` on POST (non-Wishlist) and PATCH (→ Applied); confirm dialog when status changes to Applied and `appliedAt` already set (`JobEditSheet` + `KanbanBoard`); `ConfirmDialog` generic base + `DeleteConfirmDialog` wrapper in `ui/`; Kanban column order and tab filters updated |
-| Kanban drag polish | DragOverlay: `shadow-2xl`, `scale-105`, `rotate-1`; origin card ring + `bg-primary/5` highlight while dragging, persists while appliedAt confirm dialog is open |
+| Dark mode + custom themes | Dark/light toggle in NavBar; 4 color themes; stored in `UserPreferences.theme` |
+| Assessment + Withdrawn statuses | New enum values; auto-fill `appliedAt` on POST/PATCH→Applied with confirm dialog if already set |
+| Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs |
+| Stale application indicator | `StaleIndicator` component — amber Clock icon + tooltip in jobs list and Kanban card; `staleDaysSince` helper in `dashboardUtils.ts` |
+| Job analysis | `UserProfile` table + 5 AI analysis endpoints + Job Detail UI + ad-hoc triage dialog; see `docs/plans/job-analysis.md` |
+| Table scroll accessibility | Viewport-contained flex chain; `table-plain.tsx`; sticky `TableHeader`; see `docs/plans/table-scroll-accessibility.md` |
+| Auto-fill rate-limit error message | `lib/api.ts` 429-specific fallback message; `ParseListingDialog` catch block surfaces `ApiError.message` |
+| Maintenance page | Redirect to `/maintenance` on in-window 503; health-poll auto-recovery; see `docs/plans/maintenance-page.md` |
+| Profile inline view/edit | Read-only sections with pencil → in-place edit; see `docs/plans/profile-inline-edit.md` — remaining items are optional polish |
 
 ## Active / Upcoming Work
 
 | Plan | Item | Status |
 |---|---|---|
-| Dashboard / Analytics | Funnel, response rate, weekly chart, stale jobs | Done |
 | Interview reminder email | Scheduled job emails user day-before interviewAt via IEmailService | Early planning |
-| Stale application indicator | `StaleIndicator` component — amber Clock icon + tooltip in jobs list and Kanban card; `staleDaysSince` helper extracted in `dashboardUtils.ts` | Done |
-| Job analysis | `UserProfile` table + 5 AI analysis endpoints + detail page UI | Profile, Conditions expansion, backend, and Step 9 (analysis UI, all 5 buttons wired) done. `AnalysisSection.tsx`/`analysisService.ts` deduplicated: single `postAnalysis<T>` helper replaces 5 near-identical fetch wrappers; per-type result `useState`s consolidated into one `results` map; dispatch chain replaced with a typed `ANALYSIS_FETCHERS` lookup; result-rendering ternary chain replaced with a `renderResult()` switch + shared `StringListResult`. Remaining: Step 10 (ad-hoc entry point), C8 (frontend `concern` display). See `docs/plans/job-analysis.md`. |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |
 | Job application rating API | Crowdsourced company ratings; separate product; scoring weights not finalized | Early planning |
-| Table scroll accessibility | Viewport-contained flex chain; `table-plain.tsx`; sticky `TableHeader`; see `docs/plans/table-scroll-accessibility.md` | Done |
-| Action bar layout fix | Move "Add New Job" + "Show/Hide Columns" into the view toggle row (`JobPage.tsx`) so they anchor to window edge — prevents clipping on narrow viewports; requires lifting add-job dialog trigger out of `JobTable` | Pending |
-| Auto-fill rate-limit error message | `ParseListingDialog.tsx:56-58` catch block is parameter-less, always shows generic "Something went wrong" — no distinct message for a 429 from the `"parse"` policy. `lib/api.ts`'s `genericFallbackMessage` also has no 429 case. Fix: check `err instanceof ApiError && err.status === 429` and show a tailored rate-limit message. Same gap likely applies to the `"analyse"` policy once Step 10 UI exists | Pending |
-| Maintenance page | Redirect to `/maintenance` on in-window 503; health-poll auto-recovery; see `docs/plans/maintenance-page.md` | Done |
-| Profile inline view/edit | All 12 sections show a read-only view with pencil → in-place edit; shared `ProfileSectionCard`; validation in `utils/profileValidation.ts`; see `docs/plans/profile-inline-edit.md` | Done — mandatory work complete. Remaining items are optional polish, not blocking. |
-| — | View toggle + column selector polish | `IconToggle.tsx`: pill shape, animated check, blue active state. `ColumnToggle`: `Settings2` icon-only, `w-auto` popover, right-edge aligned, always-below, viewport-aware scroll | Done |
+| Interview prep tool | Save *Questions to ask* / *Interview questions* analysis results for later use; reconsidered as belonging to a dedicated interview-prep page/function rather than Job Detail — likely a separate plugin or app, not this one | Idea |

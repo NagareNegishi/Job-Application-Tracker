@@ -157,26 +157,8 @@ npm install @dnd-kit/core
 
 ---
 
-## Feature Idea — Group By Toggle
+## Feature Idea — Group By Toggle (rejected)
 
-Add a **Status | Priority** toggle inside the Kanban view. Columns, filtering, and the drag patch operation all switch based on the selection.
+Considered adding a **Status | Priority** toggle that would switch the column dimension itself (columns, filtering, and the drag patch operation all switching based on selection — tracked as GitHub issue #82). Rejected as not worth the cost: it needs `groupBy` state, toggle UI, a `PRIORITY_BG` color map, a `getColumns()` abstraction, a generalized `KanbanColumn`, and drag-to-priority patching, for a need better served by a simpler alternative.
 
-**Not yet started.**
-
-### Design Decisions
-
-| Decision | Reasoning |
-|---|---|
-| `groupBy` state lives inside `KanbanBoard` | Kanban-specific concern; `JobPage` doesn't need it |
-| Column config object `{ id, label, bgClass }` | Decouples `KanbanColumn` from the dimension; same component renders both |
-| `handleDragEnd` uses `groupBy` to pick patch path | Status grouping → `path: '/status'`; Priority grouping → `path: '/priority'` |
-
-### Steps
-
-| # | Item | Status |
-|---|---|---|
-| 1 | Add `groupBy` state + toggle UI in `KanbanBoard` | — |
-| 2 | Add `PRIORITY_BG` color map | — |
-| 3 | Build `getColumns()` — returns `{ id, label, bgClass }[]` for active dimension | — |
-| 4 | Generalize `KanbanColumn` to accept config object instead of `status: JobStatus` | — |
-| 5 | Update `handleDragEnd` to patch the right field based on `groupBy` | — |
+**Shipped instead: sort by priority within each status column.** Cards inside every column now order Urgent → Low via `byPriorityDesc` in `KanbanBoard.tsx`, reusing `PRIORITY_ORDER` (exported from `useJobFilters.ts`, already used for table sorting — no duplicate ordering map). No new state, no toggle UI, no backend change.

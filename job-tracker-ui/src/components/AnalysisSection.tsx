@@ -1,3 +1,4 @@
+import { AlignmentResultView } from "@/components/AlignmentResultView"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -6,6 +7,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useProfile } from "@/hooks/profileQuery"
 import { ApiError } from "@/lib/api"
 import { hasRole } from "@/lib/auth"
@@ -13,8 +20,8 @@ import { MIN_ANALYSIS_DESCRIPTION } from "@/lib/validationConstants"
 import { analyseAlignment, analyseGaps, analyseInterviewQuestions, analyseQuestionsToAsk, analyseSkills, type AlignmentResult, type AnalysisRequest, type GapsResult, type QuestionsResult, type SkillsResult } from "@/services/analysisService"
 import type { Job } from "@/types/job"
 import { isProfileReady } from "@/utils/profileReady"
-import { Sparkles } from "lucide-react"
-import { useState } from "react"
+import { Bot, Sparkles } from "lucide-react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router"
 
 interface AnalysisSectionProps {
@@ -65,11 +72,16 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   const [requestError, setRequestError] = useState<string | null>(null)
   const [results, setResults] = useState<Partial<ResultMap>>({})
 
-  if (!hasRole("AiUser")) return null
-
   const descriptionReady = (job.description?.length ?? 0) >= MIN_ANALYSIS_DESCRIPTION
   const profileReady = isProfileReady(profile)
   const disabled = !descriptionReady || !profileReady
+
+  useEffect(() => {
+    if (disabled) setRequestError(null)
+  }, [disabled])
+
+  if (!hasRole("AiUser")) return null
+
   const gateMessage = !descriptionReady
     ? "Add a description to this job to run analysis."
     : !profileReady
@@ -104,9 +116,7 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
         if (!r) break
         return (
           <div className="space-y-2 text-foreground">
-            <p className="font-medium">Alignment score: {r.score} / 5</p>
-            <p>{r.reasoning}</p>
-            {r.concern && <p className="text-amber-600 dark:text-amber-400">{r.concern}</p>}
+            <AlignmentResultView result={r} />
           </div>
         )
       }
@@ -145,15 +155,28 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          size="icon-lg"
-          className="fixed bottom-6 right-6 z-40 size-14 rounded-full shadow-lg hover:scale-105 transition-transform"
-          aria-label="AI Insights"
-        >
-          <Sparkles className="size-6" />
-        </Button>
-      </SheetTrigger>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SheetTrigger asChild>
+              <Button
+                size="icon-lg"
+                className="fixed bottom-6 right-10 z-40 size-14 rounded-full bg-ai-accent text-ai-accent-foreground shadow-lg hover:bg-ai-accent/90 hover:scale-105 transition-transform"
+                aria-label="AI Insights"
+              >
+                <Bot className="size-6" />
+              </Button>
+            </SheetTrigger>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            className="bg-popover text-popover-foreground border text-base"
+            arrowClassName="bg-popover fill-popover"
+          >
+            AI Insights
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <SheetContent
         side="bottom"
         className="max-h-[80vh] sm:inset-x-8 sm:rounded-t-xl md:inset-x-16 lg:inset-x-32 xl:inset-x-48"
@@ -182,9 +205,14 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
               </button>
             ))}
           </div>
-          <p className="text-md text-muted-foreground h-12 line-clamp-2">{displayedBlurb}</p>
-          {gateMessage && <p className="text-sm text-muted-foreground">{gateMessage}</p>}
-          {requestError && <p className="text-sm text-destructive">{requestError}</p>}
+          {!disabled && (
+            <p className="text-md text-muted-foreground h-6 truncate px-3">{displayedBlurb}</p>
+          )}
+          {(gateMessage ?? requestError) && (
+            <p className="text-sm text-destructive px-3">
+              {gateMessage ?? requestError}
+            </p>
+          )}
           <div className="border rounded-lg p-4 min-h-32 text-sm text-muted-foreground">
             {renderResult()}
           </div>

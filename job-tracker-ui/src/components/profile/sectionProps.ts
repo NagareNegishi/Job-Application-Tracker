@@ -11,4 +11,5 @@ export type SectionProps<T> = {
   onEdit: () => void
   onCancel: () => void
   error?: string
+  gateTooltip?: string // set when this field is required for AI analysis and currently unmet
 }
