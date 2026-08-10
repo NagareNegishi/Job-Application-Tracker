@@ -81,6 +81,7 @@ Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-go
 - No demo mode or seeded sample data.
 - No cloud storage, cloud backup, or sync between machines.
 - No shared codebase with the web app: this is a permanent fork, not a feature-flagged variant.
+- No maintenance window or scheduled-downtime handling: the web app's 503 maintenance behavior is cloud-only and is stripped from the fork. This spans the backend 503 response (`Program.cs`), the `MaintenanceError`-on-503 path in `job-tracker-ui/src/lib/api.ts`, and `MaintenancePage.tsx`.
 - No mobile build in this plan (may be revisited separately later).
 
 ## open questions
