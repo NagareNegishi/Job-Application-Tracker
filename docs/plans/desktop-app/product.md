@@ -4,6 +4,16 @@
 lowest: 🤖 ai-audited
 🌱 idea 0 · 🤖 ai-audited 10 · 👤 human-ok 0 · ✅ settled 0
 
+## Needs revisiting
+
+Raised by the `plan-verify` pass on `impl.md` (2026-08-11). These are not yet folded into the fields below, so those fields still read as originally written.
+
+- **`stack` claim is wrong.** It says SQLite is a "package swap + connection string; migrations carry over." Verification against the code disproved this: the model maps owned collections with `.OwnsMany(...).ToJson()`, sets `.HasColumnType("jsonb")`, and maps `List<string>` to native Postgres `text[]`, and one migration is raw Postgres-only JSON SQL. The move is a model rewrite plus a full migration regeneration. Still feasible (EF Core 8+ supports `ToJson()` on SQLite), just not trivial. Fix the `stack` wording.
+- **Missed scope: maintenance-window removal.** The web app has a `MaintenancePage` and 503 maintenance-window behavior (cloud-only). Not mentioned in `requirements`/`non-goals`; should be listed as something the fork strips.
+- **Missed scope: second AI surface.** AI gating in the requirements only implies the parse flow, but there is also a profile-analysis feature (`AnalysisController`/`ProfilePage`) that calls Claude and needs the same key-present gating.
+
+Resolved by the same pass (no product-doc change needed, recorded here for context): Linux keychain has a `linux-keyutils` fallback, and the Apple-unsigned macOS build can still auto-update because the Tauri updater uses its own minisign signature.
+
 ## about
 🤖 ai-audited(opus-4.8) — no change; scope is clear from the source doc
 
