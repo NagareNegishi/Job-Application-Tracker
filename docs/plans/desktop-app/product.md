@@ -40,7 +40,7 @@ One person tracking their own job applications, who wants a local-only tool: no 
 - When an update is available, the system shall use Tauri's first-party updater plugin to apply it.
 
 ## stack
-🤖 ai-audited(opus-4.8) — corrected the SQLite line after `plan-verify` (2026-08-11) disproved the "package swap, migrations carry over" claim; everything else decided in the source doc
+🤖 ai-audited(opus-4.8) — corrected the SQLite line after `plan-verify` (2026-08-11) disproved the "package swap, migrations carry over" claim; everything else decided in the source doc. 👤 added the API-key delivery line (human decision, 2026-08-11).
 
 - Desktop shell: Tauri
 - Backend: existing ASP.NET Core API, unmodified aside from removed features, run as a sidecar process (`externalBin` + `shell:allow-execute`)
@@ -50,6 +50,7 @@ One person tracking their own job applications, who wants a local-only tool: no 
   - Two migrations use raw Postgres JSON SQL that SQLite cannot run: `Migrations/20260717065502_SalaryExpectationsArray.cs` (`::jsonb`, `jsonb_typeof`, `jsonb_build_array`, `-> 0`) and `Migrations/20260717203254_LanguagesFluencyEntry.cs` (`jsonb_agg`/`jsonb_build_object`/`::text[]`).
   - Because this is a fork with no existing data to preserve, "migrations carry over" is not a goal: after fixing the two mappings, delete `Migrations/` and regenerate a single `InitialCreate` against SQLite (the Postgres-only data-reshaping migration above simply drops out). Net effect: a small model-mapping rework in one file plus a full migration regen — low-risk, not trivial. Do not switch away from SQLite: embedded Postgres reintroduces a server process, and LiteDB/raw files mean abandoning EF Core.
 - Keychain access: `tauri-plugin-keyring` (wraps `keyring-rs`; covers macOS Keychain, Windows Credential Manager, Linux Secret Service)
+- API key delivery: the backend starts keyless (no startup fail-fast on a missing key). On add/update/remove the Tauri side POSTs the current key to a loopback-only backend endpoint; the backend caches it in memory and constructs the `AnthropicClient` per call. `ClaudeParsingService`/`ClaudeAnalysisService` stop reading the key from `IConfiguration` in their constructor. The key crosses keychain → Tauri → loopback and never enters the webview/renderer.
 - Storage: `LocalStorageService`, reused from the web app, pointed at the app data directory
 
 ## target device / platform
@@ -78,9 +79,8 @@ Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-go
 - No mobile build in this plan (may be revisited separately later).
 
 ## open questions
-🤖 ai-audited(opus-4.8) — added the open decisions surfaced by the pre-audit gap check (2026-08-11); the key-delivery and on-launch-migration items are the ones that block clean implementation
+🤖 ai-audited(opus-4.8) — added the open decisions surfaced by the pre-audit gap check (2026-08-11). 👤 resolved the sidecar key-delivery item (2026-08-11): keyless boot + loopback push + live-verified entry — moved into requirements/stack. On-launch-migration remains the item that blocks clean implementation.
 
-- **How does the .NET sidecar obtain the keychain-stored API key?** `tauri-plugin-keyring` runs on the Tauri side, not inside the backend process, so the key has to be handed over somehow (env var at sidecar spawn vs. per-request header). Related: the backend currently fails fast at startup if `Anthropic:ApiKey` is missing (`Program.cs:119`) and both Claude services read it in their constructor (`ClaudeAnalysisService.cs:18`), so decide whether the sidecar starts keyless and acquires the key later, or only spawns after key entry.
 - **What owns jobs and the profile once auth is removed?** Jobs are user-scoped (`ScopeJobsToUser` migration) and `UserProfile` has a required `UserId` FK to `ApplicationUser` with cascade delete. Options: a synthetic single implicit user, or detaching these from `ApplicationUser` entirely. This decision shapes the Step 4 migration regeneration in `impl.md`.
 - **How is the local SQLite schema migrated when an auto-updated version ships a schema change?** Nothing currently runs `Database.Migrate()` at startup; decide whether the app migrates the existing DB file on launch (essential once auto-update is in play).
 - **What does the data export actually cover, and is there an import?** Does the JSON export include the `UserProfile` and the actual uploaded document files, or only jobs plus document metadata? And is there an import/restore counterpart — without one, export is a weak backup and the "only safety net" framing (impl Step 9) doesn't hold.
