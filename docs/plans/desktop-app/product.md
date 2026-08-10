@@ -38,7 +38,7 @@ One person tracking their own job applications, who wants a local-only tool: no 
 
 - When the app launches and no API key is stored in the OS keychain, the system shall show the settings screen for first-run setup.
 - When the user enters a Claude API key in settings, the system shall store it in the OS keychain, not in a config file or localStorage.
-- When an AI feature is invoked and no API key is present, the system shall disable the feature and prompt the user to add one.
+- When an AI feature is invoked and no API key is present, the system shall disable the feature and prompt the user to add one. This gating covers both AI surfaces, not just parse: job-listing parse (`JobsController` `POST /api/jobs/parse`) and profile/job alignment analysis (`AnalysisController` `POST /api/analyse/*`, surfaced in the frontend via `AnalysisSection`/`AlignmentDialog`). In the web app both are gated by the `AiEnabled` role policy; the fork replaces that role gate with a key-present check.
 - When the app starts, the system shall spawn the .NET backend as a sidecar process on a loopback port and pass that port to the frontend over Tauri IPC.
 - When the backend sidecar process crashes, the system shall retry with backoff, then show a persistent "backend unavailable" banner if retries are exhausted.
 - When the app exits, the system shall explicitly kill the sidecar process so it doesn't linger.
