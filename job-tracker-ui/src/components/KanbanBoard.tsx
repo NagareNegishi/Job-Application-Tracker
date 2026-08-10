@@ -6,6 +6,7 @@ import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, use
 import type { DragEndEvent, DragStartEvent, Modifier } from '@dnd-kit/core'
 import { useNavigate } from 'react-router'
 import { useJobs, usePatchJob } from '@/hooks/jobQuery'
+import { PRIORITY_ORDER } from '@/hooks/useJobFilters'
 import { JobStatus } from '@/types/enums'
 import type { Job } from '@/types/job'
 import { PriorityDot } from '@/components/ui/PriorityDot'
@@ -99,6 +100,11 @@ function KanbanCard({ job, isBeingDragged, isPendingConfirm }: { job: Job; isBei
   )
 }
 
+// Highest priority first within a column.
+function byPriorityDesc(a: Job, b: Job): number {
+  return (PRIORITY_ORDER[b.priority] ?? 0) - (PRIORITY_ORDER[a.priority] ?? 0)
+}
+
 function KanbanColumn({ status, jobs, draggingId, confirmJobId }: { status: JobStatus; jobs: Job[]; draggingId: number | null; confirmJobId: number | null }) {
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
@@ -183,7 +189,7 @@ export function KanbanBoard() {
             <KanbanColumn
               key={status}
               status={status}
-              jobs={jobs.filter((j) => j.status === status)}
+              jobs={jobs.filter((j) => j.status === status).sort(byPriorityDesc)}
               draggingId={draggingId}
               confirmJobId={confirmJob?.id ?? null}
             />
@@ -192,13 +198,13 @@ export function KanbanBoard() {
           <div className="w-px self-stretch bg-border mx-1" />
           <KanbanColumn
             status={JobStatus.Withdrawn}
-            jobs={jobs.filter((j) => j.status === JobStatus.Withdrawn)}
+            jobs={jobs.filter((j) => j.status === JobStatus.Withdrawn).sort(byPriorityDesc)}
             draggingId={draggingId}
             confirmJobId={confirmJob?.id ?? null}
           />
           <KanbanColumn
             status={JobStatus.NoResponse}
-            jobs={jobs.filter((j) => j.status === JobStatus.NoResponse)}
+            jobs={jobs.filter((j) => j.status === JobStatus.NoResponse).sort(byPriorityDesc)}
             draggingId={draggingId}
             confirmJobId={confirmJob?.id ?? null}
           />
