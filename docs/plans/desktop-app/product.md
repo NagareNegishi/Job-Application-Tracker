@@ -10,9 +10,11 @@ lowest: 🤖 ai-audited
 A desktop build of the job tracker, forked from the existing web app. Single user, runs entirely on the local machine, no cloud services involved.
 
 ## problem / motivation
-🤖 ai-audited(opus-4.8) — tightened; user demand is assumed, no numbers on how many people actually want local-only
+🤖 ai-audited(opus-4.8) — tightened; user demand is assumed, no numbers on how many people actually want local-only. 👤 privacy carve-out stated explicitly (2026-08-11): the "no data leaving the machine" promise holds by default and has exactly one opt-in exception, the AI features — see the carve-out below and the matching constraint.
 
 The web app requires an account, a hosted backend, and network access. Some users want to track job applications without any of that: no sign-up, no data leaving the machine, works offline. The fork exists to serve that case without compromising the web app's multi-user, cloud-backed design.
+
+**Privacy carve-out.** "No data leaving the machine" is the default and holds fully with no API key: the database, uploaded documents, and backups all stay on the local disk, and the app is usable offline. The single exception is the AI features, and they are opt-in. When — and only when — the user has added a verified Claude API key, invoking an AI feature sends data to Anthropic: job-listing text for parse (`JobsController` `POST /api/jobs/parse`), and job text plus the user's profile for alignment analysis (`AnalysisController`). With no key stored both features are disabled (see the gating requirement), so nothing is ever sent implicitly — the user opts in per key, not per launch. The only other network activity is the Tauri auto-updater checking for and downloading new versions, which transmits no user data (just app version/update metadata).
 
 ## goal
 🤖 ai-audited(opus-4.8) — no change; states the outcome, not the mechanism
@@ -62,12 +64,13 @@ One person tracking their own job applications, who wants a local-only tool: no 
 Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-goals).
 
 ## constraints
-🤖 ai-audited(opus-4.8) — no change; all three signing/distribution limits are settled decisions
+🤖 ai-audited(opus-4.8) — no change; all three signing/distribution limits are settled decisions. 👤 added the AI-egress boundary (2026-08-11) as the hard-boundary half of the privacy carve-out stated in `problem / motivation`.
 
 - No paid Apple Developer account: macOS builds ship unsigned. Gatekeeper will warn on first launch; users right-click and choose Open to bypass.
 - Windows distribution goes through the Microsoft Store (MSIX), which requires a one-time ~$19 individual developer account fee but signs the package for free.
 - Linux distribution goes through Flathub, no signing cost.
 - No per-IP rate limiting or CORS handling needed: the backend only ever talks to the local frontend over loopback.
+- The only user data that may leave the machine is what the opt-in AI features send to Anthropic, and only when a verified key is stored: job-listing text (parse) and job text plus profile (alignment analysis). No telemetry, no analytics, no sync; the API key lives in the OS keychain and is never transmitted anywhere but Anthropic (and locally over loopback to the sidecar).
 
 ## non-goals
 🤖 ai-audited(opus-4.8) — added the maintenance-window removal and the drop-Identity/multi-user-data-model exclusions (2026-08-11); the other six carried from the source doc
@@ -82,10 +85,9 @@ Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-go
 - No mobile build in this plan (may be revisited separately later).
 
 ## open questions
-🤖 ai-audited(opus-4.8) — added the open decisions surfaced by the pre-audit gap check (2026-08-11). 👤 resolved the sidecar key-delivery item (2026-08-11): keyless boot + loopback push + live-verified entry — moved into requirements/stack. 👤 resolved on-launch-migration (2026-08-11): `Database.Migrate()` on startup behind a pre-migration backup — moved into requirements + impl Step 5/8. 👤 resolved export/import (2026-08-11): full-coverage zip backup + replace-all restore, covering jobs, profile, preferences, document metadata and files — moved into requirements/stack + impl Step 9. The `.bak` from Step 5 stays a narrow migration-failure guard; the backup/restore is the user-facing DR layer on top.
+🤖 ai-audited(opus-4.8) — added the open decisions surfaced by the pre-audit gap check (2026-08-11). 👤 resolved the sidecar key-delivery item (2026-08-11): keyless boot + loopback push + live-verified entry — moved into requirements/stack. 👤 resolved on-launch-migration (2026-08-11): `Database.Migrate()` on startup behind a pre-migration backup — moved into requirements + impl Step 5/8. 👤 resolved export/import (2026-08-11): full-coverage zip backup + replace-all restore, covering jobs, profile, preferences, document metadata and files — moved into requirements/stack + impl Step 9. The `.bak` from Step 5 stays a narrow migration-failure guard; the backup/restore is the user-facing DR layer on top. 👤 resolved privacy carve-out (2026-08-11): stated explicitly in `problem / motivation` and pinned as a hard boundary in `constraints` — local by default, AI features the one opt-in, key-gated exception, updater carries no user data.
 
 - **What owns jobs and the profile once auth is removed?** Jobs are user-scoped (`ScopeJobsToUser` migration) and `UserProfile` has a required `UserId` FK to `ApplicationUser` with cascade delete. Options: a synthetic single implicit user, or detaching these from `ApplicationUser` entirely. This decision shapes the Step 4 migration regeneration in `impl.md`.
-- **Confirm the privacy carve-out.** The `about`/`problem` framing promises offline use and "no data leaving the machine," but both AI surfaces send job text (and, for alignment, the profile) to Anthropic. The intended carve-out — AI features are optional and key-gated, everything else stays local — should be stated explicitly rather than left implied.
 - User-selectable document storage path (instead of the fixed app-data-dir location) is deferred; no target version set yet.
 - What signal or threshold would justify paying for Apple code signing later ("if macOS adoption/complaints justify it" isn't a defined trigger yet).
 - No decision yet on how the sidecar retry/backoff parameters (attempt count, delay curve) are tuned, or what "unavailable" recovery looks like beyond the banner (manual retry button? auto-recovery once the backend comes back?).
