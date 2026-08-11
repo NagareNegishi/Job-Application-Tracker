@@ -127,3 +127,7 @@ Tests use an in-memory EF Core database (unique per test class via `Guid.NewGuid
 ## Frontend Component Workflow
 
 Once a component is wired into a page, stop and wait for approval before starting the next one.
+
+## Collaboration
+
+Don't use the question-selector tool (AskUserQuestion) for open-ended architecture, design, or stack decisions — only for genuinely simple, discrete preference picks. For anything with real tradeoffs, lay out the options and a recommendation in plain text and let the user redirect.
