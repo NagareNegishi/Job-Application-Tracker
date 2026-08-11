@@ -75,10 +75,25 @@ The app opens straight to the jobs list on every launch — a missing key is nev
 
 Resolve the OS-standard app data directory per platform (`%APPDATA%`, `~/Library/Application Support`, `~/.local/share`) and place the SQLite file there, not next to the binary. Point `LocalStorageService` at a fixed documents folder inside the same directory. Verified the service reads `Storage:UploadsPath` from config and calls `Directory.CreateDirectory` (lines 10-14), so this is a matter of supplying the resolved path rather than restructuring the service. A user-selectable path is out of scope for this plan. The Step 5 pre-migration backup copy of the SQLite file lives in this same app data directory.
 
-### Step 9: JSON data export
-🤖 ai-audited(opus-4.8) · ❔ unverified (net-new)
+### Step 9: Backup and restore (zip archive)
+🤖 ai-audited(opus-4.8) · 👤 backup/restore decided by human (2026-08-11): full-coverage zip + replace-all restore · ❔ unverified (net-new)
 
-Add an export action that writes all jobs to a JSON file the user chooses a location for. Since there is no cloud backup, this is the only safety net, so it should cover the full job dataset (including document metadata) rather than a partial view. No existing export endpoint to build on.
+Add a **Backup** action and a **Restore** action. Together they are the app's only disaster-recovery and machine-migration path — the Step 5 `.bak` guards migration failure only, not disk loss, accidental deletion, or moving to a new machine. No existing export endpoint to build on.
+
+**Backup.** The user chooses a destination and the system writes a single **zip archive** containing:
+- a JSON manifest — all jobs (including their owned `Contact`/`Correspondence` JSON), the singleton `UserProfile`, the `AppSettings` preferences (visible columns + `autoFillEnabled`), and document metadata (`Name`, `Type`, `StorageKey`, `JobId`, `CreatedAt`);
+- the uploaded document files themselves, stored inside the archive under their `StorageKey` names.
+
+Document files must be included, not just their metadata: a `Document` row's `StorageKey` points at a file in the documents folder (`LocalStorageService`), so a restore with metadata but no files leaves every download resolving to a missing file. The manifest carries a format/schema version so restore can reject incompatible archives.
+
+**Restore is replace-all, not merge:**
+1. The user picks a backup archive. The system validates it — well-formed zip, manifest present, and version compatible with the current schema. A newer-schema archive is rejected outright rather than partially applied (the running app has already brought its own schema up to date via Step 5's `Database.Migrate()`).
+2. The system shows an explicit confirmation stating that restore **replaces all current jobs, profile, preferences, and documents**, and cannot be undone except from another backup.
+3. Before touching anything, the system snapshots the current state — the same DB `.bak` copy as Step 5 plus a copy of the documents folder — so a failed or regretted restore can be rolled back.
+4. It clears the current jobs, profile, preferences, and documents folder, writes the manifest rows into the DB, and unpacks the archived files into the documents folder under their `StorageKey` names, preserving the metadata↔file mapping so downloads resolve.
+5. The whole restore runs as one unit: a DB transaction for the rows, with the unpacked files staged and swapped into place only once the DB write commits. On any failure it rolls back to the step-3 snapshot and surfaces the error, leaving the app on the pre-restore state rather than a half-restored one.
+
+No selective or per-record import in this plan — restore reconstitutes a whole backup, nothing finer-grained.
 
 ### Step 10: Auto-update via the Tauri updater plugin
 🤖 ai-audited(opus-4.8) · 🔗 verified → doc: https://v2.tauri.app/plugin/updater/ §signature (minisign/Ed25519, independent of Apple signing)
