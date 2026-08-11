@@ -64,10 +64,10 @@ One person tracking their own job applications, who wants a local-only tool: no 
 Desktop: Windows, macOS, Linux. Mobile is out of scope for this plan (see non-goals).
 
 ## constraints
-🤖 ai-audited(opus-4.8) — no change; all three signing/distribution limits are settled decisions. 👤 added the AI-egress boundary (2026-08-11) as the hard-boundary half of the privacy carve-out stated in `problem / motivation`.
+🤖 ai-audited(opus-4.8) — corrected the Windows line after `plan-verify` (2026-08-11) disproved MSIX: Tauri emits only EXE/MSI, so the Store path is a Win32 installer, not an MSIX package (matches `impl.md` Step 11). The Apple and Flathub limits are unchanged settled decisions. 👤 added the AI-egress boundary (2026-08-11) as the hard-boundary half of the privacy carve-out stated in `problem / motivation`.
 
 - No paid Apple Developer account: macOS builds ship unsigned. Gatekeeper will warn on first launch; users right-click and choose Open to bypass.
-- Windows distribution goes through the Microsoft Store (MSIX), which requires a one-time ~$19 individual developer account fee but signs the package for free.
+- Windows distribution ships a Win32 installer (MSI via WiX, or NSIS) — Tauri does **not** generate MSIX. It can still be listed on the Microsoft Store as a Store-linked Win32 app (a one-time ~$19 individual developer account; the Store requires the installer to support silent installation), or distributed directly. Signing is not covered by the Store for this path.
 - Linux distribution goes through Flathub, no signing cost.
 - No per-IP rate limiting or CORS handling needed: the backend only ever talks to the local frontend over loopback.
 - The only user data that may leave the machine is what the opt-in AI features send to Anthropic, and only when a verified key is stored: job-listing text (parse) and job text plus profile (alignment analysis). No telemetry, no analytics, no sync; the API key lives in the OS keychain and is never transmitted anywhere but Anthropic (and locally over loopback to the sidecar).
