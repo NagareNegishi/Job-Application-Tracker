@@ -25,7 +25,7 @@ The verification pass resolved several of these and made one worse. Updated stat
 ## Steps
 
 ### Step 1: Scaffold the Tauri shell around the existing frontend
-🤖 ai-audited(opus-4.8) · ❔ unverified (net-new)
+🤖 ai-audited(opus-4.8) · ❔ unverified (net-new) — the wrapped frontend is confirmed present (job-tracker-ui/index.html, package.json, vite.config.ts); the Tauri project itself is net-new.
 
 Create the fork and add a Tauri project that wraps the current `job-tracker-ui` build as its web content. Get an empty-shell desktop window rendering the existing jobs UI in dev, pointed at a manually-run backend for now. No sidecar yet. This establishes the shell and the build pipeline before any feature changes. The frontend it wraps exists; the Tauri project is new.
 
@@ -50,7 +50,7 @@ Bigger than the product doc implied. Verified this is a model change plus a full
 - Keep the `IDesignTimeDbContextFactory` so `dotnet ef` still works after the swap.
 
 ### Step 5: Run the backend as a Tauri sidecar with a managed lifecycle
-🤖 ai-audited(opus-4.8) · 🔗 verified → doc: https://v2.tauri.app/develop/sidecar/ §Embedding External Binaries (externalBin, shell:allow-execute, app.shell().sidecar())
+🤖 ai-audited(opus-4.8) · 🔗 verified → src: JobTrackerApi/Program.cs:119-124 (Anthropic:ApiKey fail-fast present, to remove), :129-130 (UseNpgsql, provider to swap), no `Database.Migrate()` anywhere in Program.cs (schema step genuinely absent); doc: https://v2.tauri.app/develop/sidecar/ §Embedding External Binaries (externalBin, `-$TARGET_TRIPLE`, shell:allow-execute, app.shell().sidecar()) — re-confirmed this session. The lifecycle glue (health handshake, backoff, banner) and the `Database.Migrate()` call itself are net-new.
 
 Publish the backend as a self-contained per-platform binary named with the required `-$TARGET_TRIPLE` suffix, register it as a Tauri `externalBin` sidecar with the `shell:allow-execute` permission, and spawn it at startup via `app.shell().sidecar(...)` on a loopback port. Pass the chosen port to the frontend over Tauri IPC. Health-check before showing the UI. On crash, retry with backoff and fall back to a persistent "backend unavailable" banner. Kill the process on app exit. The config, permission identifier, and spawn API are confirmed current; the lifecycle glue (health handshake, backoff, banner) is net-new.
 
@@ -59,11 +59,13 @@ The sidecar starts **keyless** — remove the `Anthropic:ApiKey` startup fail-fa
 On startup, before serving requests, the backend brings the local schema up to date with `Database.Migrate()` (human decision, 2026-08-11) — there is no `dotnet ef database update` step on a user's machine, and auto-update (Step 10) can ship a schema change against the user's existing DB file. Guard it with a **pre-migration backup**: copy the SQLite file (see Step 8 for its location) before calling `Migrate()`, and on failure keep the backup and surface a failure state rather than reveal the UI over a half-migrated DB. `Migrate()` covers first run (creates the schema) and upgrade (applies pending migrations) in one path; this is net-new since `Program.cs` currently runs no schema step at all. Sequence it ahead of the Step 5 health handshake so the window only appears once the DB is ready. Keep authoring future migrations against the SQLite provider so EF emits SQLite-compatible DDL.
 
 ### Step 6: API key storage in the OS keychain with a settings screen
-🤖 ai-audited(opus-4.8) · 🔗 verified → doc: https://github.com/charlesportwoodii/tauri-plugin-keyring (v0.2.0, macOS/Windows/Linux); src: job-tracker-ui/src/pages/SettingsPage.tsx
+🤖 ai-audited(opus-4.8) · 🔗 verified → src: JobTrackerApi/Services/ClaudeParsingService.cs:23 and ClaudeAnalysisService.cs:18 (both read `Anthropic:ApiKey` from IConfiguration in their constructor — the reads to replace), job-tracker-ui/src/pages/SettingsPage.tsx present; doc: github.com/charlesportwoodii/tauri-plugin-keyring v0.2.0 — macOS Keychain / Windows Credential Manager / Linux D-Bus Secret Service, `linux-keyutils` fallback — re-confirmed this session. The live-verify-on-save and loopback-push delivery are net-new.
 
 Add `tauri-plugin-keyring` (v0.2.0, actively maintained, covers macOS Keychain / Windows Credential Manager / Linux Secret Service, with a `linux-keyutils` fallback) and a settings screen where the user enters their Claude API key. On Save, **verify the key with one live test call to Anthropic and store it in the keychain only if verification succeeds** (human decision, 2026-08-11), never a config file or localStorage. The screen also lets the user update or remove the stored key at any time.
 
 Delivery to the backend is **loopback push**, not a keychain read from inside the backend (`tauri-plugin-keyring` runs on the Tauri side, not in the .NET process): on add/update/remove, Tauri POSTs the current key to the loopback-only endpoint from Step 5, and the backend caches it in memory and builds the `AnthropicClient` per call from that value. `ClaudeParsingService.cs:22` and `ClaudeAnalysisService.cs:16` stop reading the key from `IConfiguration` in their constructor. The key never enters the webview/renderer. Reuse the existing `SettingsPage` (confirmed present) as the host.
+
+Linux caveat (verified this session): the plugin's default backend is the D-Bus Secret Service; the `linux-keyutils` fallback avoids needing gnome-keyring/KWallet running but is session-scoped (in-kernel), so a key stored through it does not survive a reboot. Treat it as a degraded fallback, not an equivalent — and note the Flatpak sandbox interaction called out in Step 11.
 
 ### Step 7: First-run setup and AI feature gating
 🤖 ai-audited(opus-4.8) · 🔗 verified → src: job-tracker-ui/src/services/parseService.ts, JobTrackerApi/Controllers/AnalysisController.cs
@@ -96,11 +98,19 @@ Document files must be included, not just their metadata: a `Document` row's `St
 No selective or per-record import in this plan — restore reconstitutes a whole backup, nothing finer-grained.
 
 ### Step 10: Auto-update via the Tauri updater plugin
-🤖 ai-audited(opus-4.8) · 🔗 verified → doc: https://v2.tauri.app/plugin/updater/ §signature (minisign/Ed25519, independent of Apple signing)
+🤖 ai-audited(opus-4.8) · 🔗 verified → doc: https://v2.tauri.app/plugin/updater/ (minisign key via `tauri signer generate`; signature required, cannot be disabled) + https://v2.tauri.app/distribute/sign/macos/ (Apple code signing is separate from the updater's minisign) — re-confirmed this session
 
 Wire in Tauri's first-party updater plugin. Verified the updater requires its own minisign signature (generated via `tauri signer generate`), which is independent of Apple code signing, so the Apple-unsigned macOS build can still auto-update. The remaining open question is Gatekeeper quarantine behavior on the replaced bundle, not the updater mechanism.
 
 ### Step 11: Package and distribute per platform
-🤖 ai-audited(opus-4.8) · ❔ unverified (not checked)
+🤖 ai-audited(opus-4.8) · 🔗 verified → doc: https://v2.tauri.app/distribute/microsoft-store/ (Tauri generates only EXE/MSI — no MSIX; the Store app links to the unpacked app; silent install required) + https://v2.tauri.app/distribute/ (official Flathub/Flatpak guide)
 
-Produce the three distribution artifacts: MSIX for the Microsoft Store (Windows), a Flathub package for Linux, and an unsigned macOS bundle with documented right-click-Open first-launch steps. Each ships the sidecar backend binary for that target triple from Step 5 (the `-$TARGET_TRIPLE` naming is confirmed). The store-specific mechanics — MSIX packaging/certification and the Flathub manifest and review process — were not checked this pass and should be verified before committing to timelines.
+Produce the three distribution artifacts.
+
+**Windows — MSIX claim was wrong (verified this session).** Tauri does **not** generate MSIX. The official Microsoft Store guide states it "only generates EXE and MSI installers, so you must create a Microsoft Store application that only links to the unpacked application," and the Store additionally requires the Win32 installer to support silent installation. So the Windows path is an MSI (WiX) or NSIS installer submitted as a Store-listed Win32 app, not an MSIX package. This contradicts the product doc's `constraints` line ("Windows distribution goes through the Microsoft Store (MSIX)") — that constraint needs revisiting.
+
+**Linux — Flathub, with a sandbox catch.** Flathub distribution is officially supported via a Flatpak manifest. Because Flatpak sandboxes D-Bus, the manifest must explicitly grant the Secret Service access the Step 6 keychain plugin depends on, or key storage silently fails inside the sandbox — a real cross-step interaction, not a packaging detail.
+
+**macOS.** Unsigned bundle with documented right-click-Open first-launch steps (Gatekeeper), consistent with the Step 10 finding that the unsigned build still auto-updates.
+
+Each artifact ships the sidecar backend binary for its target triple from Step 5 (the `-$TARGET_TRIPLE` naming is confirmed). Still unchecked: the exact MSI/NSIS silent-install certification requirements and the Flathub review process.
