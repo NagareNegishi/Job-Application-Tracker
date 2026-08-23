@@ -14,21 +14,16 @@ export default function ConfirmEmailPage() {
   // %2B and raw + correctly as a literal plus sign.
   const rawToken = /[?&]token=([^&]*)/.exec(window.location.search)?.[1]
   const token = rawToken ? decodeURIComponent(rawToken) : null
+  // Derived from the URL, not state — avoids a setState-in-effect flash for the guard case
+  const isMalformed = !userId || !token
 
-  // Union type drives rendering — one state variable, three possible UIs
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    // Guard: missing params means the link was malformed — skip the API call
-    if (!userId || !token) {
-      setErrorMessage("Invalid confirmation link.")
-      setStatus("error")
-      return
-    }
+    if (isMalformed) return
 
-    // Call once on mount — empty dep array is intentional, params come from the URL and won't change
-    // useEffect can't be async directly, so use .then/.catch instead of await
+    // .then/.catch, not await — effects can't be async directly
     confirmEmail(userId, token)
       .then(() => setStatus("success"))
       .catch((err) => {
