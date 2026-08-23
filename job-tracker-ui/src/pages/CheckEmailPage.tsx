@@ -11,18 +11,17 @@ export default function CheckEmailPage() {
 
   // Cooldown starts immediately — email was just sent by register
   const [cooldownUntil, setCooldownUntil] = useState(() => Date.now() + COOLDOWN_MS)
-  const [, rerender] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
   const [sent, setSent] = useState(false)
 
-  // Re-render exactly when cooldown expires so button re-enables itself
   useEffect(() => {
-    const remaining = cooldownUntil - Date.now()
+    const remaining = cooldownUntil - now
     if (remaining <= 0) return
-    const timer = setTimeout(() => rerender(n => n + 1), remaining)
+    const timer = setTimeout(() => setNow(Date.now()), remaining)
     return () => clearTimeout(timer)
-  }, [cooldownUntil])
+  }, [cooldownUntil, now])
 
-  const isCoolingDown = Date.now() < cooldownUntil
+  const isCoolingDown = now < cooldownUntil
 
   async function handleResend() {
     if (!email || isCoolingDown) return
