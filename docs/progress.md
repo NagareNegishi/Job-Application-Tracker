@@ -113,6 +113,10 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 
 | Plan | Item | Status |
 |---|---|---|
+| Desktop app download prompt | Link web app users to the desktop app releases at first-touch, failed login, and Settings; see `docs/plans/desktop-app-download/product.md` | Idea |
+| App rebrand | New app name (candidate "NooBi", unsettled) + logo/icon rollout checklist across repo, config, and UI; see `docs/plans/app-rebrand/product.md` | Idea |
+| Subscription tiers (Free / AI plan) | Self-serve plan signup with AI plan gated by payment, replacing the admin-only AI-access toggle; see `docs/plans/subscription-tiers/product.md` | Idea |
+| Hosting migration off AWS | Move off EC2/RDS to a stable, cost-effective platform and remove the cost-driven nightly maintenance window; see `docs/plans/hosting-migration/product.md` | Idea |
 | Interview reminder email | Scheduled job emails user day-before interviewAt via IEmailService | Early planning |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |

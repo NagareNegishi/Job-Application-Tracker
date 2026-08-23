@@ -1,4 +1,4 @@
-import { ResponsiveButton } from "@/components/ui/ResponsiveButton"
+import { ResponsiveButton } from "@/components/custom/ResponsiveButton"
 import { DocumentCard } from "@/components/DocumentCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateDocument, useDocuments } from "@/hooks/documentQuery"

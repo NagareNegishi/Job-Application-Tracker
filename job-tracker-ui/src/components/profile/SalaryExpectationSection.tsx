@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
-import SuggestionInput from "@/components/ui/SuggestionInput"
+import SuggestionInput from "@/components/custom/SuggestionInput"
 import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
 import EntryRow, { AddEntryButton } from "@/components/profile/EntryRow"
 import { useEntryList } from "@/components/profile/useEntryList"

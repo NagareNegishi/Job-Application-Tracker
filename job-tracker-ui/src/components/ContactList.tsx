@@ -1,6 +1,6 @@
-import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
+import { DeleteConfirmDialog } from "@/components/custom/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { ResponsiveButton } from "@/components/ui/ResponsiveButton";
+import { ResponsiveButton } from "@/components/custom/ResponsiveButton";
 import {
   Dialog,
   DialogClose,
@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
+import { useRemountableDialog } from "@/hooks/useRemountableDialog";
 import {
   MAX_CONTACT_EMAIL_LENGTH,
   MAX_CONTACT_NAME_LENGTH,
@@ -23,7 +24,7 @@ import {
 import type { Contact } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
 import { Mail, Pencil, Phone, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
 /**
@@ -100,7 +101,7 @@ interface ContactListProps {
  */
 export function ContactList({ contacts, jobId }: ContactListProps) {
 
-  const [open, setOpen] = useState(false)
+  const { open, setOpen, openDialog, key } = useRemountableDialog()
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined)
   const { mutate: patchJob, isPending } = usePatchJob()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -109,13 +110,13 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
   // Handlers for add, open dialog with empty form
   function handleAdd() {
     setSelectedContact(undefined)
-    setOpen(true)
+    openDialog()
   }
 
   // Handlers for edit, open dialog with selected contact data
   function handleEdit(contact: Contact) {
     setSelectedContact(contact)
-    setOpen(true)
+    openDialog()
   }
 
   // Called by dialog on save
@@ -172,6 +173,7 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
 
       {/* Dialog for adding/editing contacts */ }
       <ContactDialog
+        key={key}
         open={open}
         onOpenChange={setOpen}
         contact={selectedContact}
@@ -254,16 +256,8 @@ export function ContactDialog({
 }: ContactDialogProps) {
   
   const emptyContact: ContactFormState = { name: "", email: "", role: "", phone: "", notes: "" }
-  const [form, setForm] = useState<ContactFormState>(emptyContact)
+  const [form, setForm] = useState<ContactFormState>(() => contact ? toContactFormState(contact) : emptyContact)
   const [errors, setErrors] = useState<ContactFormErrors>({})
-
-  // Reset form when dialog opens with fresh contact data
-  useEffect(() => {
-    if (open) {
-      setForm(contact ? toContactFormState(contact) : emptyContact)
-      setErrors({})
-    }
-  }, [contact, open])
 
   // Helper function to update form state for a specific field
   function setField<K extends keyof ContactFormState>(key: K, value: ContactFormState[K]) {

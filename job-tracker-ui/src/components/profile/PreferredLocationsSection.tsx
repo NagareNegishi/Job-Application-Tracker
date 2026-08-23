@@ -1,7 +1,7 @@
 // Preferred locations section: per-entry country + free-text areas ("anywhere in country" if empty).
 // View/edit mode and card chrome come from ProfileSectionCard.
 import { Label } from "@/components/ui/label"
-import TagInput from "@/components/ui/TagInput"
+import TagInput from "@/components/custom/TagInput"
 import ProfileSectionCard from "@/components/profile/ProfileSectionCard"
 import EntryRow, { AddEntryButton } from "@/components/profile/EntryRow"
 import { useEntryList } from "@/components/profile/useEntryList"

@@ -19,8 +19,8 @@ import { type MatchStrategy } from "@/utils/matchSuggestion"
 import { computeProfileScore, getProfileHint } from "@/utils/profileScore"
 import { sectionInvalid } from "@/utils/profileValidation"
 import { gateTooltipFor, type GateField } from "@/utils/profileReady"
-import { ScoreRing } from "@/components/ui/ScoreRing"
-import FormActionBar from "@/components/ui/FormActionBar"
+import { ScoreRing } from "@/components/custom/ScoreRing"
+import FormActionBar from "@/components/custom/FormActionBar"
 import {
   MAX_TARGET_ROLE_ITEM_LENGTH,
   MAX_SKILL_ITEM_LENGTH,

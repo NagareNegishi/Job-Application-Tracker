@@ -1,6 +1,6 @@
 // Closed-set multi-select profile section (CheckboxGroup) — shared by WorkModes and ContractTypes.
 // View/edit mode and card chrome come from ProfileSectionCard.
-import CheckboxGroup from "@/components/ui/CheckboxGroup"
+import CheckboxGroup from "@/components/custom/CheckboxGroup"
 import ProfileSectionCard, { ViewChips } from "@/components/profile/ProfileSectionCard"
 import { formatEnumLabel } from "@/types/enums"
 import type { SectionProps } from "@/components/profile/sectionProps"

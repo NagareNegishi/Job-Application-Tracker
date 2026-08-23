@@ -1,7 +1,7 @@
-import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
+import { DeleteConfirmDialog } from "@/components/custom/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { ResponsiveButton } from "@/components/ui/ResponsiveButton";
-import { DatePicker } from "@/components/ui/DatePicker";
+import { ResponsiveButton } from "@/components/custom/ResponsiveButton";
+import { DatePicker } from "@/components/custom/DatePicker";
 import {
   Dialog,
   DialogClose,
@@ -14,11 +14,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
+import { useRemountableDialog } from "@/hooks/useRemountableDialog";
 import { MAX_NOTES_LENGTH } from "@/lib/validationConstants";
 import type { Correspondence } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
 // Props for CorrespondenceDialog component
@@ -74,7 +75,7 @@ interface CorrespondenceListProps {
 // CorrespondenceList component renders a list of correspondence entries for a job.
 export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) {
 
-  const [open, setOpen] = useState(false)
+  const { open, setOpen, openDialog, key } = useRemountableDialog()
   const [selectedCorrespondence, setSelectedCorrespondence] = useState<Correspondence | undefined>(undefined)
   const { mutate: patchJob, isPending } = usePatchJob()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -83,13 +84,13 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
   // Handlers for add, open dialog with empty form
   function handleAdd() {
     setSelectedCorrespondence(undefined)
-    setOpen(true)
+    openDialog()
   }
 
   // Handlers for edit, open dialog with selected contact data
   function handleEdit(entry: Correspondence) {
     setSelectedCorrespondence(entry)
-    setOpen(true)
+    openDialog()
   }
 
   // Called by dialog on save
@@ -146,6 +147,7 @@ export function CorrespondenceList({ entries, jobId }: CorrespondenceListProps) 
 
       {/* Dialog for adding/editing correspondences */ }
       <CorrespondenceDialog
+        key={key}
         open={open}
         onOpenChange={setOpen}
         entry={selectedCorrespondence}
@@ -218,12 +220,7 @@ export function CorrespondenceDialog({
   isPending
 }: CorrespondenceDialogProps) {
   
-  const [form, setForm] = useState<CorrespondenceFormState>(emptyCorrespondence)
-
-  // Reset form when dialog opens with fresh correspondence data
-  useEffect(() => {
-    if (open) setForm(entry ? toCorrespondenceFormState(entry) : emptyCorrespondence)
-  }, [entry, open])
+  const [form, setForm] = useState<CorrespondenceFormState>(() => entry ? toCorrespondenceFormState(entry) : emptyCorrespondence)
 
   // Helper function to update form state for a specific field
   function setField<K extends keyof CorrespondenceFormState>(key: K, value: CorrespondenceFormState[K]) {

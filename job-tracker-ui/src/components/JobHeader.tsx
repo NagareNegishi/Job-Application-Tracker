@@ -1,10 +1,10 @@
-import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
+import { DeleteConfirmDialog } from "@/components/custom/DeleteConfirmDialog";
 import { UnderlinedText } from "@/components/UnderlinedText";
 import { useDeleteJob } from "@/hooks/jobQuery";
 import type { Job } from "@/types/job";
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
-import { ResponsiveButton } from "@/components/ui/ResponsiveButton";
+import { ResponsiveButton } from "@/components/custom/ResponsiveButton";
 import { ChevronLeft, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";

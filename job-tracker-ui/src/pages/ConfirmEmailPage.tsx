@@ -14,21 +14,16 @@ export default function ConfirmEmailPage() {
   // %2B and raw + correctly as a literal plus sign.
   const rawToken = /[?&]token=([^&]*)/.exec(window.location.search)?.[1]
   const token = rawToken ? decodeURIComponent(rawToken) : null
+  // Derived from the URL, not state — avoids a setState-in-effect flash for the guard case
+  const isMalformed = !userId || !token
 
-  // Union type drives rendering — one state variable, three possible UIs
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    // Guard: missing params means the link was malformed — skip the API call
-    if (!userId || !token) {
-      setErrorMessage("Invalid confirmation link.")
-      setStatus("error")
-      return
-    }
+    if (isMalformed) return
 
-    // Call once on mount — empty dep array is intentional, params come from the URL and won't change
-    // useEffect can't be async directly, so use .then/.catch instead of await
+    // .then/.catch, not await — effects can't be async directly
     confirmEmail(userId, token)
       .then(() => setStatus("success"))
       .catch((err) => {
@@ -42,11 +37,11 @@ export default function ConfirmEmailPage() {
       <div className="w-full max-w-sm">
         <AuthBrand />
         <div className="space-y-4 text-center mt-10">
-        {status === "loading" && (
+        {!isMalformed && status === "loading" && (
           <p className="text-sm text-muted-foreground">Verifying your email...</p>
         )}
 
-        {status === "success" && (
+        {!isMalformed && status === "success" && (
           <>
             <h1 className="text-2xl font-semibold">Email verified</h1>
             <p className="text-sm text-muted-foreground">
@@ -56,10 +51,10 @@ export default function ConfirmEmailPage() {
           </>
         )}
 
-        {status === "error" && (
+        {(isMalformed || status === "error") && (
           <>
             <h1 className="text-2xl font-semibold">Verification failed</h1>
-            <p className="text-sm text-red-600">{errorMessage}</p>
+            <p className="text-sm text-red-600">{isMalformed ? "Invalid confirmation link." : errorMessage}</p>
             <p className="text-sm text-muted-foreground">
               Try requesting a new link from the{" "}
               <Link to="/login" className="underline">sign in page</Link>.

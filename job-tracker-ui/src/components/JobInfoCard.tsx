@@ -1,7 +1,7 @@
 import type { Job } from "@/types/job";
 import { formatEnumLabel } from "@/types/enums";
-import { PriorityDot } from "./ui/PriorityDot";
-import { StatusBadge } from "./ui/StatusBadge";
+import { PriorityDot } from "./custom/PriorityDot";
+import { StatusBadge } from "./custom/StatusBadge";
 
 export function JobInfoCard({ job }: { job: Job }) {
   return (

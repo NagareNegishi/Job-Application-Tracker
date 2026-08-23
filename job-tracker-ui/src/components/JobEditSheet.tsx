@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/DatePicker"
+import { DatePicker } from "@/components/custom/DatePicker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -29,8 +29,8 @@ import {
 } from "@/lib/validationConstants"
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
 import type { Job, JobPatchOperation } from "@/types/job"
-import { useEffect, useState } from "react"
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
+import { useState } from "react"
+import { ConfirmDialog } from "@/components/custom/ConfirmDialog"
 
 // FormState represents the internal state of the job edit form
 interface FormState {
@@ -93,14 +93,6 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
   const [errors, setErrors] = useState<{ jobUrl?: string; salary?: string }>({})
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [pendingOps, setPendingOps] = useState<JobPatchOperation[]>([])
-
-  // Reset form when sheet opens with fresh job data
-  useEffect(() => {
-    if (open) {
-      setForm(toFormState(job))
-      setErrors({})
-    }
-  }, [job, open])
 
 
   // Helper function to update form state for a specific field

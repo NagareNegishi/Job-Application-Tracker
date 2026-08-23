@@ -1,7 +1,7 @@
 // [dnd-kit-legacy] migrate to @dnd-kit/react when v1.0 is stable
 
 import { useState } from 'react'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { ConfirmDialog } from '@/components/custom/ConfirmDialog'
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent, Modifier } from '@dnd-kit/core'
 import { useNavigate } from 'react-router'
@@ -9,9 +9,9 @@ import { useJobs, usePatchJob } from '@/hooks/jobQuery'
 import { PRIORITY_ORDER } from '@/hooks/useJobFilters'
 import { JobStatus } from '@/types/enums'
 import type { Job } from '@/types/job'
-import { PriorityDot } from '@/components/ui/PriorityDot'
-import { StaleIndicator } from '@/components/ui/StaleIndicator'
-import { StatusBadge } from '@/components/ui/StatusBadge'
+import { PriorityDot } from '@/components/custom/PriorityDot'
+import { StaleIndicator } from '@/components/custom/StaleIndicator'
+import { StatusBadge } from '@/components/custom/StatusBadge'
 import { cn } from "@/lib/utils"
 
 const COLUMNS: JobStatus[] = [
