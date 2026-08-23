@@ -7,41 +7,42 @@
 // │   └── ContactCard    # individual contact — name, email, phone, role
 // ├── CorrespondenceList # timeline of correspondence entries (JSON column)
 // │   └── CorrespondenceEntry
-// └── DocumentList       # uploaded files
-//     └── DocumentCard   # filename, type, upload date, download/delete
+// ├── DocumentList       # uploaded files
+// │   └── DocumentCard   # filename, type, upload date, download/delete
+// └── AnalysisSection    # floating AI Insights trigger + bottom sheet
+import { AnalysisSection } from "@/components/AnalysisSection";
 import { ContactList } from "@/components/ContactList";
 import { CorrespondenceList } from "@/components/CorrespondenceList";
 import { DocumentList } from "@/components/DocumentList";
 import { JobEditSheet } from "@/components/JobEditSheet";
 import { JobHeader } from "@/components/JobHeader";
 import { JobInfoCard } from "@/components/JobInfoCard";
-import { MaintenanceError } from "@/lib/api";
 import { useJob } from "@/hooks/jobQuery";
-import { useState } from "react";
+import { useRemountableDialog } from "@/hooks/useRemountableDialog";
 import NavBar from "@/components/NavBar";
 import { useParams } from "react-router";
 
 
 function JobDetailPage() {
 
-  const [editOpen, setEditOpen] = useState(false)
+  const { open: editOpen, setOpen: setEditOpen, openDialog: openEdit, key: editKey } = useRemountableDialog()
 
   const { id } = useParams()
   const jobId = id ? parseInt(id) : NaN
-  const { data: job, isPending, isError, error } = useJob(jobId, { enabled: !isNaN(jobId) })
+  const { data: job, isPending, isError } = useJob(jobId, { enabled: !isNaN(jobId) })
   if (!id || isNaN(jobId)) return <p>Invalid job ID.</p>
   if (isPending) return <p>Loading...</p>
-  if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Something went wrong."}</p>
+  if (isError) return <p>Something went wrong.</p>
   if (!job) return <p>Job not found.</p>
 
   return (
     <div className="min-h-screen bg-muted">
       <NavBar />
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="bg-card rounded-lg shadow-sm p-6">
-          <JobHeader job={job} onEdit={() => setEditOpen(true)} />
+      <div className="max-w-5xl mx-auto px-0 py-8 sm:px-6">
+        <div className="bg-card rounded-lg shadow-sm px-2 py-3 sm:p-6">
+          <JobHeader job={job} onEdit={openEdit} />
           <hr className="border-t border-border mb-6" />
-          <div className="px-4 space-y-6">
+          <div className="px-1 sm:px-4 space-y-6">
             <JobInfoCard job={job} />
             <ContactList
               contacts={job.contacts ?? []}
@@ -54,9 +55,10 @@ function JobDetailPage() {
             <DocumentList jobId={jobId} />
           </div>
 
-          <JobEditSheet job={job} open={editOpen} onOpenChange={setEditOpen} />
+          <JobEditSheet key={editKey} job={job} open={editOpen} onOpenChange={setEditOpen} />
         </div>
       </div>
+      <AnalysisSection job={job} />
     </div>
   )
 }

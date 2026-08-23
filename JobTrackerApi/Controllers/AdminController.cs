@@ -7,6 +7,7 @@ using JobTrackerApi.Models;
 
 namespace JobTrackerApi.Controllers;
 
+/// <summary>Admin-only controller for user management and AI access control.</summary>
 [ApiController]
 [Route("api/admin")]
 [Authorize(Policy = "Admin")]

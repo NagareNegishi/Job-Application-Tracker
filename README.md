@@ -1,10 +1,8 @@
 # Job Application Tracker
 
 Keeping track of dozens of job applications in a spreadsheet gets messy fast.<br>
-Job Application Tracker is a web app that gives you a single place to manage your entire job search,
-log every application, track where it stands, attach your CV and cover letters,
-record contacts and conversations, and get a clear view of what needs attention next.<br>
-Switch between a table view and a Kanban board, filter by location or work mode, and set priorities so nothing slips through the cracks.
+Job Application Tracker is a web app that gives you a single place to log every application, track where it stands, attach your CV and cover letters, and record contacts and conversations.<br>
+Switch between a table view and a Kanban board, filter by location or work mode, and set priorities.
 
 ## Tech Stack
 
@@ -17,39 +15,43 @@ Switch between a table view and a Kanban board, filter by location or work mode,
 
 ## Features
 
-- Track job applications through a status pipeline (Wishlist → Applied → Screening → Interview → Offer / Rejected)
-- Tab views on the job table: Active, Closing Soon, All, Rejected
-- Kanban board view — toggle from the table; drag cards to move jobs between stages (Wishlist → Applied → Offer…)
-- Customisable table columns — show or hide columns; preferences saved per user
-- Sorting and filtering — sort by any column; filter by location or work mode
+- Track job applications through a status pipeline (Wishlist → Applied → Screening → Interview → Offer / Rejected / No Response)
+- Tab views on the job table: Active, Closing Soon, All, Closed
+- Kanban board view: drag cards to move jobs between stages
+- Customisable table columns: show or hide columns, preferences saved per user
+- Dark mode and colour themes: four built-in palettes, preference saved per user
+- Sort by any column and filter by location or work mode
 - Attach documents (CV, cover letter) per application
 - Contact and correspondence history per application
 - JWT authentication with httpOnly refresh token rotation
-- Email verification on registration; forgot / reset password flow
+- Email verification on registration, with forgot/reset password
 - Change password from the Settings page
-- Demo mode — try the app without registering
-- AI auto-fill — paste a job listing and the fields are extracted automatically; available to AI-enabled accounts
+- Demo mode: try the app without registering
+- AI auto-fill: paste a job listing and fields fill in automatically (AI-enabled accounts only)
+- AI job insights: alignment score, skill gaps, and interview prep from your saved profile (AI-enabled accounts only)
+- Analytics dashboard: summary counts, status funnel, weekly applications chart, and stale applications list
 
 ## Demo
 
-A live demo is available at [jobtracker.nagarenegishi.com](https://jobtracker.nagarenegishi.com).
+Live demo at [jobtracker.nagarenegishi.com](https://jobtracker.nagarenegishi.com).
 
-Click **Try Demo** on the login page — no account required. The demo account is pre-loaded with sample job applications across different statuses and priorities.
+Click **Try Demo** on the login page. No account required. The demo account has sample applications across all statuses and priorities.
 
 **Demo limitations:**
-- Document upload and delete are disabled — upload UI is visible but actions return a clear message
+- Document upload and delete are disabled. The upload UI is visible but actions return a clear message.
 - Password changes are blocked
 
 **AI features:**
-AI-powered auto-fill is available but limited to approved accounts — open access would expose the API key to unlimited use.
+AI auto-fill and AI insights are limited to approved accounts. Open access would expose the API key to unlimited use.
 To try it, leave a comment on this repo or reach out directly and I'll enable it for your account.
 
 **Data reset:**
-- On every demo login, any missing sample jobs are automatically restored — visitor deletions come back, visitor additions are left alone
-- Full reset runs nightly via a scheduled GitHub Actions workflow — clears all data and re-seeds from scratch
+- On every demo login, any missing sample jobs are automatically restored. Visitor deletions come back; visitor additions are left alone.
+- The demo profile is wiped, not reseeded, on nightly reset
+- Full reset runs nightly via a scheduled GitHub Actions workflow, clearing all data and re-seeding from scratch
 
 **Availability:**
-- Offline daily midnight–8 AM Sydney time — RDS stopped overnight to reduce demo hosting costs
+- Offline daily from 8 PM to 7 AM New Zealand time. RDS stops overnight to reduce demo hosting costs.
 
 To get the full experience (documents, password change), [register a free account](https://jobtracker.nagarenegishi.com/register).
 
@@ -65,7 +67,7 @@ To get the full experience (documents, password change), [register a free accoun
 
 ## Local Development
 
-The project runs in a Dev Container (recommended — PostgreSQL included as a Docker service).
+The project runs in a Dev Container (recommended). PostgreSQL runs as a separate Docker service.
 
 1. Open in VS Code with the Dev Containers extension
 2. Create `JobTrackerApi/appsettings.Development.json` (gitignored):
@@ -88,13 +90,13 @@ The project runs in a Dev Container (recommended — PostgreSQL included as a Do
 5. Start frontend: `cd job-tracker-ui && npm install && npm run dev`
 6. Run tests: `cd JobTrackerApi.Tests && dotnet test`
 
-In development, documents are stored in the local filesystem path set in `Storage:UploadsPath`. The folder is created automatically on startup if it does not exist.
+In development, documents are stored at the path set in `Storage:UploadsPath`. The folder is created automatically on startup.
 
 ---
 
 ## Production Deployment
 
-Deployed on AWS: EC2 (Docker Compose) + RDS PostgreSQL + S3 document storage. nginx handles SSL termination and serves the React frontend; the backend runs on the internal Docker network only.
+Deployed on AWS: EC2 (Docker Compose) + RDS PostgreSQL + S3 document storage. nginx handles SSL termination and serves the React frontend. The backend runs on the internal Docker network only.
 
 See [`docs/deployment-setup.md`](docs/deployment-setup.md) for required AWS infrastructure, GitHub Actions secrets, and EC2 setup.
 
@@ -102,4 +104,4 @@ See [`docs/deployment-setup.md`](docs/deployment-setup.md) for required AWS infr
 
 ## Claude Code
 
-Claude Code is used selectively as an AI coding assistant for targeted tasks, under developer direction. The Dev Container (`.devcontainer/`) with `project-firewall.sh` restricts its outbound network access to an allowlist of domains. `.claude/` contains custom skills (frontend design, OWASP scanning, dev research, learning mode) and `CLAUDE.md` loads codebase context into every session. Architecture decisions and plans are documented in `docs/`.
+Claude Code is used as a coding assistant on specific tasks, under developer direction. The Dev Container's `project-firewall.sh` restricts its outbound network to an allowlist of domains. `.claude/` holds custom skills (frontend design, OWASP scanning, dev research, learning mode) and `CLAUDE.md` loads codebase context into every session. Architecture decisions and plans are in `docs/`.

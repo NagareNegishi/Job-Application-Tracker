@@ -17,6 +17,17 @@ export async function silentRefresh(): Promise<string> {
     credentials: "include",
   })
     .then(async (res) => {
+      // DB down during the scheduled window, route to the maintenance page instead of
+      // throwing (which would strand the user on /login). Skip when already on /maintenance:
+      // App.tsx runs silentRefresh on every mount, so redirecting there would reload-loop.
+      if (
+        res.status === 503 &&
+        isMaintenanceWindow() &&
+        window.location.pathname !== "/maintenance"
+      ) {
+        window.location.href = "/maintenance"
+        throw new MaintenanceError()
+      }
       if (!res.ok) throw new Error("Refresh failed")
       const data = await res.json()
       setToken(data.accessToken)
@@ -29,19 +40,24 @@ export async function silentRefresh(): Promise<string> {
   return refreshPromise
 }
 
-const MAINTENANCE_WINDOW = { startHour: 0, endHour: 8, timezone: "Australia/Sydney" }
+const MAINTENANCE_WINDOW = { startHour: 20, endHour: 7, timezone: "Pacific/Auckland" }
 
-// Returns true if the current time in Sydney falls within the scheduled maintenance window
+// Returns true if the current NZ time falls within the scheduled maintenance window.
+// The window crosses midnight (20:00 → 07:00), so when startHour > endHour the check
+// is an OR: "after start OR before end". Matches the DST-aware EventBridge RDS schedule.
 function isMaintenanceWindow(): boolean {
   const hour = parseInt(
     new Intl.DateTimeFormat("en-AU", {
       timeZone: MAINTENANCE_WINDOW.timezone,
       hour: "numeric",
-      hour12: false,
+      hourCycle: "h23",
     }).format(new Date()),
     10
   )
-  return hour >= MAINTENANCE_WINDOW.startHour && hour < MAINTENANCE_WINDOW.endHour
+  const { startHour, endHour } = MAINTENANCE_WINDOW
+  return startHour <= endHour
+    ? hour >= startHour && hour < endHour
+    : hour >= startHour || hour < endHour
 }
 
 /**
@@ -68,7 +84,10 @@ export async function apiFetch(
 
   // 503 — DB unreachable, show maintenance message if within scheduled window
   if (response.status === 503) {
-    if (isMaintenanceWindow()) throw new MaintenanceError()
+    if (isMaintenanceWindow()) {
+      window.location.href = "/maintenance"
+      throw new MaintenanceError()
+    }
     throw new ApiError(503, "Service temporarily unavailable. Please try again.")
   }
 
@@ -110,15 +129,23 @@ export class ApiError extends Error {
 }
 
 /**
- * Thrown when a 503 response is received during the scheduled maintenance window (midnight–8 AM Sydney time).
+ * Thrown when a 503 response is received during the scheduled maintenance window (8 PM–7 AM New Zealand time).
  */
 export class MaintenanceError extends Error {
-  constructor(message = "Service is in maintenance (midnight–8 AM Sydney time). Please try again later.") {
+  constructor(message = "Service is in maintenance (8 PM–7 AM New Zealand time). Please try again later.") {
     super(message)
     this.name = "MaintenanceError"
   }
 }
 
+
+// Never echo the backend's { error } field (untrusted channel — could leak server detail);
+// return a safe client-authored fallback instead. See docs/plans/maintenance-page.md.
+function genericFallbackMessage(status: number): string {
+  if (status === 429) return "Too many requests. Please wait a moment and try again."
+  if (status >= 500) return "Something went wrong on our end. Please try again shortly."
+  return "Something went wrong. Please try again."
+}
 
 /**
  * Helper function to throw an ApiError with the status code and message from the response body if available.
@@ -140,7 +167,7 @@ async function throwApiError(response: Response): Promise<never> {
       ? body.map((e: { description?: string }) => e.description).filter(Boolean).join(". ")
       : null) ??
     (typeof body === "string" ? body : null) ??
-    "Unknown error"
+    genericFallbackMessage(response.status)
   )
 }
 

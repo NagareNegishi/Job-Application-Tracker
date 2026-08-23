@@ -3,6 +3,7 @@ using JobTrackerApi.Models;
 using System.ComponentModel.DataAnnotations;
 using static JobTrackerApi.Models.ValidationConstants;
 
+/// <summary>Validation attribute tests for authentication DTOs.</summary>
 public class AuthDTOTests
 {
     // RegisterDTO requires email

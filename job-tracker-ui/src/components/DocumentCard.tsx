@@ -1,4 +1,4 @@
-import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
+import { DeleteConfirmDialog } from "@/components/custom/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

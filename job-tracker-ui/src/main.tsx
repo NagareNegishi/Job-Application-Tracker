@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import 'flag-icons/css/flag-icons.min.css'
 
 // TanStack Query Setup, it requires to wrap the app with QueryClientProvider
 // https://tanstack.com/query/v5/docs/framework/react/quick-start

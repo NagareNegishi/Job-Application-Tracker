@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button"
+import { ResponsiveButton } from "@/components/custom/ResponsiveButton"
 import { DocumentCard } from "@/components/DocumentCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateDocument, useDocuments } from "@/hooks/documentQuery"
-import { ApiError, MaintenanceError } from "@/lib/api"
+import { ApiError } from "@/lib/api"
 import type { DocumentType } from "@/types/enums"
 import { Plus } from "lucide-react"
 import { useRef, useState } from "react"
@@ -12,7 +12,7 @@ interface DocumentListProps {
 }
 
 export function DocumentList({ jobId }: DocumentListProps) {
-  const { data: documents, isPending, isError, error } = useDocuments(jobId)
+  const { data: documents, isPending, isError } = useDocuments(jobId)
   const { mutate: addDocument, isPending: isUploading } = useCreateDocument()
   const [selectedType, setSelectedType] = useState<DocumentType>("Other")
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -26,7 +26,7 @@ export function DocumentList({ jobId }: DocumentListProps) {
       {
         onSuccess: () => setUploadError(null),
         onError: (err) => setUploadError(
-          err instanceof MaintenanceError || err instanceof ApiError ? err.message : "Failed to upload document."
+          err instanceof ApiError ? err.message : "Failed to upload document."
         )
       }
     )
@@ -34,7 +34,7 @@ export function DocumentList({ jobId }: DocumentListProps) {
   }
 
   if (isPending) return <p>Loading documents...</p>
-  if (isError) return <p>{error instanceof MaintenanceError ? error.message : "Failed to load documents."}</p>
+  if (isError) return <p>Failed to load documents.</p>
 
   return (
     <div className="space-y-4">
@@ -58,13 +58,14 @@ export function DocumentList({ jobId }: DocumentListProps) {
               <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
-          <Button
+          <ResponsiveButton
+            icon={Plus}
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
           >
-            <Plus className="h-4 w-4" />{isUploading ? "Uploading..." : "Add Document"}
-          </Button>
+            {isUploading ? "Uploading..." : "Add Document"}
+          </ResponsiveButton>
         </div>
       </div>
       {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}

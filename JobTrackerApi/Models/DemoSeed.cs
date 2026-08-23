@@ -1,5 +1,6 @@
 namespace JobTrackerApi.Models;
 
+/// <summary>Static seed data for the demo user account.</summary>
 public static class DemoSeed
 {
     // Company + Role pairs used to detect which jobs are missing on demo login

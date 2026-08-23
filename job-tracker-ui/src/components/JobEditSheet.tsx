@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/DatePicker"
+import { DatePicker } from "@/components/custom/DatePicker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -12,6 +12,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
@@ -28,7 +29,8 @@ import {
 } from "@/lib/validationConstants"
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
 import type { Job, JobPatchOperation } from "@/types/job"
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { ConfirmDialog } from "@/components/custom/ConfirmDialog"
 
 // FormState represents the internal state of the job edit form
 interface FormState {
@@ -89,14 +91,8 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
   const [form, setForm] = useState<FormState>(() => toFormState(job))
   const { mutate: patchJob, isPending } = usePatchJob()
   const [errors, setErrors] = useState<{ jobUrl?: string; salary?: string }>({})
-
-  // Reset form when sheet opens with fresh job data
-  useEffect(() => {
-    if (open) {
-      setForm(toFormState(job))
-      setErrors({})
-    }
-  }, [job, open])
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingOps, setPendingOps] = useState<JobPatchOperation[]>([])
 
 
   // Helper function to update form state for a specific field
@@ -177,6 +173,15 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
       return
     }
 
+    // Ask before resetting appliedAt when status changes to Applied and date is already set
+    const statusChangingToApplied = form.status === JobStatus.Applied && job.status !== JobStatus.Applied
+    const appliedAtUnchanged = !operations.some(op => op.path === "/appliedAt")
+    if (statusChangingToApplied && job.appliedAt != null && appliedAtUnchanged) {
+      setPendingOps(operations)
+      setConfirmOpen(true)
+      return
+    }
+
     // Trigger the patch
     patchJob(
       { id: job.id, operations },
@@ -184,14 +189,23 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
     )
   }
 
+  function handleResetAppliedAt() {
+    const ops: JobPatchOperation[] = [...pendingOps, { op: "replace" as const, path: "/appliedAt" as const, value: new Date().toISOString() }]
+    patchJob({ id: job.id, operations: ops }, { onSuccess: () => onOpenChange(false) })
+  }
+
+  function handleKeepAppliedAt() {
+    patchJob({ id: job.id, operations: pendingOps }, { onSuccess: () => onOpenChange(false) })
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="overflow-y-auto sm:max-w-lg">
+      <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Edit Job</SheetTitle>
         </SheetHeader>
 
-        {/* form fields go here */}
+        <div className="flex-1 overflow-y-auto px-4 space-y-4">
 
         {/* Edit Company */}
         <div className="space-y-1.5">
@@ -228,7 +242,7 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
             </SelectTrigger>
             <SelectContent>
               {Object.values(JobStatus).map(s => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>{formatEnumLabel(s)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -387,12 +401,14 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           <p className="text-xs text-muted-foreground text-right">{form.notes.length} / {MAX_NOTES_LENGTH}</p>
         </div>
 
+        </div>
+
         {/* Action buttons */}
-        <div className="flex gap-2 pt-2">
+        <SheetFooter className="flex-row justify-between">
           {/* Cancel just closes the sheet without saving */}
           <Button
             variant="outline"
-            className="flex-1"
+            className="hover:bg-gray-200 dark:hover:bg-gray-700"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
@@ -400,13 +416,23 @@ export function JobEditSheet({ job, open, onOpenChange }: JobEditSheetProps) {
           </Button>
           {/* Save triggers form submission */}
           <Button
-            className="flex-1"
+            className="w-1/2 bg-blue-500 hover:bg-blue-600 text-white"
             onClick={handleSubmit}
             disabled={isPending}
           >
             {isPending ? "Saving..." : "Save"}
           </Button>
-        </div>
+        </SheetFooter>
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="Update Applied Date?"
+          description={<>{`You applied on ${new Date(job.appliedAt!).toLocaleDateString()}.`}<br />Reset to today?</>}
+          confirmLabel="Reset to today"
+          cancelLabel="No, keep it"
+          onConfirm={handleResetAppliedAt}
+          onCancel={handleKeepAppliedAt}
+        />
       </SheetContent>
     </Sheet>
   )

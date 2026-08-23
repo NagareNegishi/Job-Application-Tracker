@@ -155,6 +155,9 @@ else
 // AI parsing: extracts job fields from pasted listing text via Claude API
 builder.Services.AddScoped<IParsingService, ClaudeParsingService>();
 
+// AI analysis: compares a job listing against the user's profile via Claude API
+builder.Services.AddScoped<IAnalysisService, ClaudeAnalysisService>();
+
 // Registers Identity's core services
 builder.Services.AddIdentityCore<ApplicationUser>()
     .AddRoles<IdentityRole>()
@@ -241,6 +244,15 @@ builder.Services.AddRateLimiter(options =>
         config.QueueLimit = 0;
         config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
     });
+
+    // Shared across all 5 analysis types — each request hits the Claude API
+    options.AddFixedWindowLimiter("analyse", config =>
+    {
+        config.Window = TimeSpan.FromMinutes(1);
+        config.PermitLimit = 5;
+        config.QueueLimit = 0;
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
 });
 
 // CORS only needed in dev — in production, Nginx proxies /api/* so frontend and backend share one origin
@@ -303,7 +315,19 @@ app.UseExceptionHandler(errorApp =>
 
         if (error != null)
         {
-            if (error.Error is System.Data.Common.DbException)
+            // Walk the whole chain: EF Core wraps a DB connection failure in a non-DbException,
+            // so the DbException is nested, not top-level. See docs/plans/maintenance-page.md.
+            var isDbDown = false;
+            for (Exception? e = error.Error; e is not null; e = e.InnerException)
+            {
+                if (e is System.Data.Common.DbException)
+                {
+                    isDbDown = true;
+                    break;
+                }
+            }
+
+            if (isDbDown)
             {
                 // DbException includes intentional maintenance window downtime
                 logger.LogError(error.Error, "Database unavailable");

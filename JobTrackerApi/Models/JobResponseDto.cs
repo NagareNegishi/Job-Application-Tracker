@@ -1,5 +1,6 @@
 namespace JobTrackerApi.Models;
 
+/// <summary>Safe API response shape for a job application, without owner identity or raw document internals.</summary>
 public class JobResponseDto
 {
     // EF Core automatically recognizes Id as the primary key
@@ -23,4 +24,5 @@ public class JobResponseDto
     public string? Location { get; set; }
     public WorkMode? WorkMode { get; set; }
     public DateTime? InterviewAt { get; set; }
+    public DateTime StatusChangedAt { get; set; }
 }

@@ -1,0 +1,74 @@
+@base = http://localhost:5286
+
+// Alignment-only live test (Step 8b). Requires:
+//  - this account has the AiEnabled ("AiUser") role
+//  - this account already has a saved profile that meets the analysis gate
+//    (TargetRoles, Skills, WorkingRights non-empty, plus one of Certifications/WorkHistory/Education)
+// Run "dotnet run --launch-profile https" from JobTrackerApi/ first (or use the http profile @ :5286).
+// Credentials are never stored in this file — sending the login request pops
+// an input box for each (VS Code REST Client's $prompt), so it's safe to commit.
+
+### Log in — captures accessToken for the requests below
+# @name login
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{$prompt Login email}}",
+  "password": "{{$prompt Login password}}"
+}
+
+@token = {{login.response.body.$.accessToken}}
+
+### Sanity check — confirm the profile meets the analysis gate before testing
+GET {{base}}/api/account/profile
+Authorization: Bearer {{token}}
+Accept: application/json
+
+
+### Alignment — strong match
+// Tailor this to skills/roles actually in your saved profile so it should score high.
+POST {{base}}/api/analyse/alignment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "description": "We're looking for a Senior Full-Stack Engineer to join our small product team. You'll work across a React + TypeScript frontend and a C#/.NET backend, with PostgreSQL as our primary datastore. Day to day you'll ship features end to end, review PRs, and help shape our API design. We value clear communication and pragmatic engineering over ceremony.",
+  "role": "Senior Full-Stack Engineer",
+  "company": "Acme Corp"
+}
+
+
+### Alignment — weak match
+// Deliberately far from a typical software profile — expect a low score with specific reasoning.
+POST {{base}}/api/analyse/alignment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "description": "We are hiring a Senior Embedded Systems Engineer to design real-time firmware for industrial control hardware. Requires deep experience with C, RTOS internals, PCB bring-up, and JTAG debugging. You'll work closely with electrical engineers on a factory floor and must be comfortable with occasional on-site travel to manufacturing plants.",
+  "role": "Senior Embedded Systems Engineer",
+  "company": "Industrial Systems Ltd"
+}
+
+
+### Alignment — not-a-job listing (should surface a soft `concern`, not refuse)
+POST {{base}}/api/analyse/alignment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "description": "Get your resume professionally rewritten by certified career coaches! Our proven templates have helped thousands land interviews at top companies. Package deals starting at $99 include ATS optimization, LinkedIn profile makeover, and a 30-minute coaching call. Order today and get 20% off with code CAREER20.",
+  "role": "",
+  "company": ""
+}
+
+
+### Alignment — ad-hoc entry point (no role/company, mirrors the paste-only triage flow)
+POST {{base}}/api/analyse/alignment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "description": "Backend Engineer needed for a fast-growing fintech startup. Must have 3+ years building REST APIs in a statically typed language, comfortable with relational databases and writing tests. Remote-friendly, small team, high ownership."
+}

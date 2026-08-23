@@ -9,6 +9,7 @@ namespace JobTrackerApi.Data;
 // JWT config before DbContext is ever registered. This factory gives EF a direct path:
 // it's auto-discovered by the tools and used instead of Program.cs entirely.
 // https://learn.microsoft.com/en-us/ef/core/cli/dbcontext-creation?tabs=dotnet-core-cli
+/// <summary>Design-time factory for EF CLI tools, bypassing Program.cs to avoid fail-fast JWT validation.</summary>
 public class JobTrackerContextFactory : IDesignTimeDbContextFactory<JobTrackerContext>
 {
     public JobTrackerContext CreateDbContext(string[] args)

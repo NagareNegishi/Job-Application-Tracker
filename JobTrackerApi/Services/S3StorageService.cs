@@ -3,6 +3,7 @@ using Amazon.S3.Model;
 
 namespace JobTrackerApi.Services;
 
+/// <summary>Production IStorageService implementation that stores files in an S3 bucket.</summary>
 public class S3StorageService : IStorageService
 {
     private readonly IAmazonS3 _s3;

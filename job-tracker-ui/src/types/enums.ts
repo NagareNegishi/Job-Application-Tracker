@@ -5,9 +5,12 @@ export const JobStatus = {
         Wishlist: "Wishlist",
         Applied: 'Applied',
         Screening: 'Screening',
+        Assessment: 'Assessment',
         Interview: 'Interview',
         Offered: 'Offered',
-        Rejected: 'Rejected'
+        Rejected: 'Rejected',
+        Withdrawn: 'Withdrawn',
+        NoResponse: 'NoResponse'
 } as const;
 
 export type JobStatus = typeof JobStatus[keyof typeof JobStatus];
@@ -44,6 +47,14 @@ const ENUM_DISPLAY_OVERRIDES: Record<string, string> = {
   OnSite: "On-site",
   CoverLetter: "Cover Letter",
   ReferenceLetter: "Reference Letter",
+  NoResponse: "No Response",
+  FullTimePermanent: "Full-time (Permanent)",
+  FullTimeContract: "Full-time (Contract)",
+  PartTime: "Part-time",
+  LimitedWorking: "Limited Working",
+  ProfessionalWorking: "Professional Working",
+  FullProfessional: "Full Professional",
+  NativeOrBilingual: "Native or Bilingual",
 };
 
 export function formatEnumLabel(value: string): string {

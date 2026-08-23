@@ -5,7 +5,7 @@
  * set later via the edit form once an interview is scheduled.
  */
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/DatePicker"
+import { DatePicker } from "@/components/custom/DatePicker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -18,6 +18,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
@@ -34,7 +35,7 @@ import {
 } from "@/lib/validationConstants"
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
 import type { FormState } from "@/types/formTypes"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 
 // Default form state for creating a new job, with empty fields and default status/priority
@@ -71,17 +72,9 @@ interface JobCreateSheetProps {
  */
 export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateSheetProps) {
 
-  const [form, setForm] = useState<FormState>(defaultForm)
+  const [form, setForm] = useState<FormState>(() => ({ ...defaultForm, ...initialData }))
   const { mutate: createJob, isPending } = useCreateJob()
   const [errors, setErrors] = useState<{ company?: string; role?: string; jobUrl?: string; salary?: string }>({})
-
-  // Reset merges defaultForm with initialData so parsed fields pre-fill the form
-  useEffect(() => {
-    if (open) {
-      setForm({ ...defaultForm, ...initialData })
-      setErrors({})
-    }
-  }, [open])
 
   // Helper function to update form state for a specific field
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -128,12 +121,12 @@ export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateShe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="overflow-y-auto sm:max-w-lg">
+      <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Add New Job</SheetTitle>
         </SheetHeader>
 
-        {/* form fields go here */}
+        <div className="flex-1 overflow-y-auto px-4 space-y-4">
 
         {/* Edit Company */}
         <div className="space-y-1.5">
@@ -172,7 +165,7 @@ export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateShe
             </SelectTrigger>
             <SelectContent>
               {Object.values(JobStatus).map(s => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>{formatEnumLabel(s)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -321,12 +314,14 @@ export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateShe
           <p className="text-xs text-muted-foreground text-right">{form.notes.length} / {MAX_NOTES_LENGTH}</p>
         </div>
 
+        </div>
+
         {/* Action buttons */}
-        <div className="flex gap-2 pt-2">
+        <SheetFooter className="flex-row justify-between">
           {/* Cancel just closes the sheet without saving */}
           <Button
             variant="outline"
-            className="flex-1"
+            className="hover:bg-gray-200 dark:hover:bg-gray-700"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
@@ -334,13 +329,13 @@ export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateShe
           </Button>
           {/* Save triggers form submission */}
           <Button
-            className="flex-1"
+            className="w-1/2 bg-blue-500 hover:bg-blue-600 text-white"
             onClick={handleSubmit}
             disabled={isPending}
           >
             {isPending ? "Saving..." : "Save"}
           </Button>
-        </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   )

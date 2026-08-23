@@ -2,9 +2,10 @@ name: Reset Demo Data
 
 on:
   schedule:
-    # RDS shutdown at midnight, GitHub Actions could delay ~2 hr 
-    # Runs ~9:30 PM Sydney time daily
-    - cron: '30 9 * * *'
+    # RDS is down 20:00–07:00 NZ (Pacific/Auckland); this must run while RDS is UP.
+    # cron is UTC: 0 20 UTC = 08:00 NZST / 09:00 NZDT. GitHub's ~2h delay pushes it to
+    # ~10–11am NZ — still ~9h before the 8pm shutdown, and after the 7am startup.
+    - cron: '0 20 * * *'
   workflow_dispatch:       # manual trigger from GitHub Actions UI
 
 jobs:

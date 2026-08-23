@@ -9,7 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Moq;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
+/// <summary>Tests for JobsController ensuring correct job management behavior and ownership enforcement.</summary>
 public class JobsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;
@@ -31,6 +34,16 @@ public class JobsControllerTests: IDisposable
         // create context and controller directly
         _context = new JobTrackerContext(options);
         _controller = new JobsController(_context, _storageMock.Object, _parsingMock.Object);
+
+        // TryValidateModel requires ObjectValidator; not set when controller is instantiated directly without the MVC pipeline.
+        var validatorMock = new Mock<IObjectModelValidator>();
+        validatorMock.Setup(v => v.Validate(
+            It.IsAny<ActionContext>(),
+            It.IsAny<ValidationStateDictionary>(),
+            It.IsAny<string>(),
+            It.IsAny<object>()));
+        _controller.ObjectValidator = validatorMock.Object;
+
         SetUser();
     }
 
@@ -443,6 +456,98 @@ public class JobsControllerTests: IDisposable
 
         var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
         Assert.Empty(jobs);
+    }
+
+    [Fact]
+    public async Task PostJob_SetsAppliedAt_WhenStatusIsNotWishlistAndAppliedAtIsNull()
+    {
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev", Status = JobStatus.Applied };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.NotNull(dto.AppliedAt);
+    }
+
+    [Fact]
+    public async Task PostJob_DoesNotSetAppliedAt_WhenStatusIsWishlist()
+    {
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev", Status = JobStatus.Wishlist };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.Null(dto.AppliedAt);
+    }
+
+    [Fact]
+    public async Task PostJob_PreservesAppliedAt_WhenExplicitlyProvided()
+    {
+        var explicitDate = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev", Status = JobStatus.Applied, AppliedAt = explicitDate };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.Equal(explicitDate, dto.AppliedAt);
+    }
+
+    [Fact]
+    public async Task PatchJob_SetsAppliedAt_WhenStatusBecomesAppliedAndAppliedAtIsNull()
+    {
+        var job = await SeedJobAsync(status: JobStatus.Wishlist, appliedAt: null);
+        var patchDoc = new JsonPatchDocument<UpdateJobDTO>();
+        patchDoc.Replace(j => j.Status, JobStatus.Applied);
+
+        var result = await _controller.PatchJob(job.Id, patchDoc);
+
+        Assert.IsType<NoContentResult>(result);
+        var updated = await _context.Jobs.FindAsync(job.Id);
+        Assert.NotNull(updated!.AppliedAt);
+    }
+
+    [Fact]
+    public async Task PatchJob_DoesNotUpdateStatusChangedAt_WhenStatusDoesNotChange()
+    {
+        var job = await SeedJobAsync(status: JobStatus.Applied);
+        var originalTimestamp = job.StatusChangedAt;
+        var patchDoc = new JsonPatchDocument<UpdateJobDTO>();
+        patchDoc.Replace(j => j.Notes, "just updating notes");
+
+        await _controller.PatchJob(job.Id, patchDoc);
+
+        var updated = await _context.Jobs.FindAsync(job.Id);
+        Assert.Equal(originalTimestamp, updated!.StatusChangedAt);
+    }
+
+    [Fact]
+    public async Task PatchJob_UpdatesStatusChangedAt_WhenStatusChanges()
+    {
+        var job = await SeedJobAsync(status: JobStatus.Wishlist);
+        var originalTimestamp = job.StatusChangedAt;
+        var patchDoc = new JsonPatchDocument<UpdateJobDTO>();
+        patchDoc.Replace(j => j.Status, JobStatus.Applied);
+
+        await _controller.PatchJob(job.Id, patchDoc);
+
+        var updated = await _context.Jobs.FindAsync(job.Id);
+        Assert.True(updated!.StatusChangedAt > originalTimestamp);
+    }
+
+    [Fact]
+    public async Task PostJob_SetsStatusChangedAt_OnCreate()
+    {
+        var before = DateTime.UtcNow;
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev" };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.True(dto.StatusChangedAt >= before);
     }
 
     // Test for ParseListingRequest with empty text

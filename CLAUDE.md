@@ -13,6 +13,7 @@ The dev environment runs in a Dev Container (`.devcontainer/`) with the PostgreS
 - `docs/progress.md` — read at session start; update after each major feature completes.
 - `docs/plans/` — per-feature plan/decision files; read only the relevant file when working on a feature.
 - `docs/company-verification-api-reference.md` — contract for the external company verification API.
+- `memory/` — Claude session memory (gitignored). Read/write here, not the default hidden auto-memory location. Promote durable decisions to CLAUDE.md or a skill only with user review.
 
 ## Commands
 
@@ -104,13 +105,13 @@ All controllers except `AuthController` require `[Authorize]`. New controllers m
 
 **Data flow**: `pages/` → `hooks/` (TanStack Query) → `services/` (fetch wrappers) → API
 
-- `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, handles 401 silent refresh, and throws `MaintenanceError` on 503 during scheduled window (midnight–8 AM Sydney); includes `authService.ts`, `adminService.ts`, `preferencesService.ts`; silent refresh logic in `src/lib/auth.ts`
+- `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, handles 401 silent refresh, and throws `MaintenanceError` on 503 during scheduled window (8 PM–7 AM NZ); includes `authService.ts`, `adminService.ts`, `preferencesService.ts`; silent refresh logic in `src/lib/auth.ts`
 - `src/hooks/` — TanStack Query hooks
-- `src/pages/` — `JobPage` (list), `JobDetailPage` (detail), `LoginPage`, `RegisterPage`, `SettingsPage`, `CheckEmailPage`, `ConfirmEmailPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `AdminPage`
-- `src/components/` — feature components including `KanbanBoard`, `ParseListingDialog`, `ColumnToggle`; `src/components/ui/` — shadcn/ui primitives
+- `src/pages/` — `JobPage` (list), `JobDetailPage` (detail), `LoginPage`, `RegisterPage`, `SettingsPage`, `CheckEmailPage`, `ConfirmEmailPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `AdminPage`, `DashboardPage` (analytics — client-side only, no API endpoint; `dashboardUtils.ts`)
+- `src/components/` — feature components including `KanbanBoard`, `ParseListingDialog`, `ColumnToggle`; `src/components/dashboard/` — dashboard widgets; `src/components/ui/` — shadcn/ui primitives
 - `src/types/` — TypeScript types mirroring backend models; enums use `const` object pattern (`enum` keyword disallowed by `erasableSyntaxOnly`)
 
-**Routing**: React Router 7 — `/` → `/jobs`, `/jobs/:id`, `/login`, `/register`, `/settings`, `/check-email`, `/confirm-email`, `/forgot-password`, `/reset-password`, `/admin`. All job + account routes wrapped in `ProtectedRoute`; `/admin` wrapped in `AdminRoute`.
+**Routing**: React Router 7 — `/` → `/jobs`, `/jobs/:id`, `/dashboard`, `/login`, `/register`, `/settings`, `/check-email`, `/confirm-email`, `/forgot-password`, `/reset-password`, `/admin`. All job + account routes wrapped in `ProtectedRoute`; `/admin` wrapped in `AdminRoute`.
 
 **Path alias**: `@/` resolves to `src/` (configured in `vite.config.ts`).
 
@@ -121,3 +122,12 @@ Tests use an in-memory EF Core database (unique per test class via `Guid.NewGuid
 ## Skills
 
 - When working on frontend UI or styling: follow: `.claude/skills/frontend-design/SKILL.md`
+- When writing or editing code: follow: `.claude/skills/code-commenting/SKILL.md`
+
+## Frontend Component Workflow
+
+Once a component is wired into a page, stop and wait for approval before starting the next one.
+
+## Collaboration
+
+Don't use the question-selector tool (AskUserQuestion) for open-ended architecture, design, or stack decisions — only for genuinely simple, discrete preference picks. For anything with real tradeoffs, lay out the options and a recommendation in plain text and let the user redirect.

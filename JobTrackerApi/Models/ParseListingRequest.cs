@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace JobTrackerApi.Models;
 
+/// <summary>Request DTO for the AI job listing parser endpoint.</summary>
 public class ParseListingRequest : IValidatableObject
 {
     [Required(AllowEmptyStrings = false)]

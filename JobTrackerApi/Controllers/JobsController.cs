@@ -11,8 +11,9 @@ using System.Security.Claims;
 
 namespace JobTrackerApi.Controllers;
 
+/// <summary>CRUD controller for job applications; patch endpoint uses JSON Patch for partial updates.</summary>
 [ApiController]
-[Route("api/[controller]")] 
+[Route("api/[controller]")]
 [Authorize]
 public class JobsController : ControllerBase
 {
@@ -94,6 +95,11 @@ public class JobsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var newJob = dto.ToJob();
         newJob.UserId = userId ?? string.Empty;
+        newJob.StatusChangedAt = DateTime.UtcNow;
+
+        if (newJob.Status != JobStatus.Wishlist && newJob.AppliedAt == null)
+            newJob.AppliedAt = DateTime.UtcNow;
+
         _context.Jobs.Add(newJob);
         await _context.SaveChangesAsync();
 
@@ -181,6 +187,13 @@ public class JobsController : ControllerBase
 
         if (!ModelState.IsValid) return BadRequest(ModelState);
         if (!TryValidateModel(jobToPatch)) return BadRequest(ModelState);
+
+        // Auto-fill AppliedAt the first time a job is moved to Applied
+        if (jobToPatch.Status == JobStatus.Applied && jobToPatch.AppliedAt == null)
+            jobToPatch.AppliedAt = DateTime.UtcNow;
+
+        if (jobToPatch.Status != job.Status)
+            job.StatusChangedAt = DateTime.UtcNow;
 
         // Map back to the original job entity
         job.Company = jobToPatch.Company;

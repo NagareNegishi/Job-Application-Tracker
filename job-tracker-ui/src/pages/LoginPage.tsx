@@ -1,7 +1,8 @@
+import AuthBrand from "@/components/AuthBrand"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ApiError, MaintenanceError } from "@/lib/api"
+import { ApiError } from "@/lib/api"
 import { login, loginDemo } from "@/services/authService"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router"
@@ -22,16 +23,18 @@ export default function LoginPage() {
     try {
       await loginDemo()
       navigate("/jobs")
-    } catch (err) {
-      setError(err instanceof MaintenanceError ? err.message : "Demo login failed. Please try again.")
+    } catch {
+      setError("Demo login failed. Please try again.")
     } finally {
       setDemoLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <form onSubmit={async (e) => {
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <AuthBrand />
+        <form onSubmit={async (e) => {
         e.preventDefault()
         setError(null)
         setUnverified(false)
@@ -40,9 +43,7 @@ export default function LoginPage() {
           await login(email, password)
           navigate("/jobs")
         } catch (err) {
-          if (err instanceof MaintenanceError) {
-            setError(err.message)
-          } else if (err instanceof ApiError) {
+          if (err instanceof ApiError) {
             if (err.status === 403) {
               setUnverified(true)
               setError(err.message)
@@ -57,7 +58,7 @@ export default function LoginPage() {
         } finally { // ensures loading resets
           setLoading(false)
         }
-      }} className="w-full max-w-sm space-y-4">
+      }} className="w-full space-y-4 mt-10">
         <h1 className="text-2xl font-semibold">Sign in</h1>
 
         {error && (
@@ -110,7 +111,8 @@ export default function LoginPage() {
           No account?{" "}
           <Link to="/register" className="underline">Register</Link>
         </p>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }

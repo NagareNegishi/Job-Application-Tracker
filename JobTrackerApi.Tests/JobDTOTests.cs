@@ -3,6 +3,7 @@ using JobTrackerApi.Models;
 using System.ComponentModel.DataAnnotations;
 
 
+/// <summary>Mapping and validation tests for JobDTO.</summary>
 public class JobDTOTests
 {
     // Mapping from JobDTO to Job should work correctly

@@ -1,3 +1,4 @@
+import AuthBrand from "@/components/AuthBrand"
 import { Button } from "@/components/ui/button"
 import { resendConfirmation } from "@/services/authService"
 import { useState, useEffect } from "react"
@@ -10,18 +11,17 @@ export default function CheckEmailPage() {
 
   // Cooldown starts immediately — email was just sent by register
   const [cooldownUntil, setCooldownUntil] = useState(() => Date.now() + COOLDOWN_MS)
-  const [, rerender] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
   const [sent, setSent] = useState(false)
 
-  // Re-render exactly when cooldown expires so button re-enables itself
   useEffect(() => {
-    const remaining = cooldownUntil - Date.now()
+    const remaining = cooldownUntil - now
     if (remaining <= 0) return
-    const timer = setTimeout(() => rerender(n => n + 1), remaining)
+    const timer = setTimeout(() => setNow(Date.now()), remaining)
     return () => clearTimeout(timer)
-  }, [cooldownUntil])
+  }, [cooldownUntil, now])
 
-  const isCoolingDown = Date.now() < cooldownUntil
+  const isCoolingDown = now < cooldownUntil
 
   async function handleResend() {
     if (!email || isCoolingDown) return
@@ -31,8 +31,10 @@ export default function CheckEmailPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-sm space-y-4 text-center">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <AuthBrand />
+        <div className="space-y-4 text-center mt-10">
         <h1 className="text-2xl font-semibold">Check your email</h1>
         <p className="text-sm text-muted-foreground">
           We sent a verification link to <strong>{email ?? "your email"}</strong>.
@@ -49,6 +51,7 @@ export default function CheckEmailPage() {
         <Button onClick={handleResend} disabled={isCoolingDown} variant="outline" className="w-full">
           {isCoolingDown ? "Resend available shortly..." : "Resend verification email"}
         </Button>
+        </div>
       </div>
     </div>
   )

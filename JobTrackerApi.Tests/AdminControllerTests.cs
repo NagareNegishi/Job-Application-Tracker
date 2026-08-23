@@ -10,6 +10,7 @@ using Moq;
 using System.Linq.Expressions;
 using System.Security.Claims;
 
+/// <summary>Tests for AdminController — user listing and AI access grant/revoke flows.</summary>
 public class AdminControllerTests
 {
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;

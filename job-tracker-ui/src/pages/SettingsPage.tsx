@@ -4,11 +4,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { usePreferences, useUpdatePreferences } from "@/hooks/preferencesQuery"
+import { useTheme } from "@/hooks/useTheme"
+import type { ColorTheme } from "@/hooks/useTheme"
 import { ApiError } from "@/lib/api"
 import { hasRole } from "@/lib/auth"
 import { changePassword } from "@/services/authService"
 import { useState } from "react"
 import { useLocation, useNavigate } from "react-router"
+
+const THEME_OPTIONS: { value: ColorTheme; label: string; color: string }[] = [
+  { value: "default", label: "Default", color: "bg-slate-400" },
+  { value: "blue",    label: "Blue",    color: "bg-blue-600" },
+  { value: "red",     label: "Red",     color: "bg-red-600" },
+  { value: "yellow",  label: "Yellow",  color: "bg-yellow-500" },
+  { value: "pink",    label: "Pink",    color: "bg-pink-500" },
+]
 
 // Settings page — authenticated account management.
 // Currently holds change password only; add new sections here as features grow (e.g. email, notifications).
@@ -20,6 +30,7 @@ export default function SettingsPage() {
 
   const { data: prefs, isLoading: isLoadingPrefs } = usePreferences()
   const { mutate: mutatePrefs } = useUpdatePreferences()
+  const { colorTheme, setColorTheme } = useTheme()
 
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -91,6 +102,32 @@ export default function SettingsPage() {
                 {loading ? "Saving..." : "Change password"}
               </Button>
             </form>
+          </section>
+
+          <section className="mt-6 pt-6 border-t">
+            <h2 className="text-sm font-medium text-muted-foreground mb-4">Appearance</h2>
+            {isLoadingPrefs ? (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            ) : (
+              <div className="flex gap-3">
+                {THEME_OPTIONS.map(({ value, label, color }) => (
+                  <button
+                    key={value}
+                    onClick={() => {
+                      setColorTheme(value)
+                      mutatePrefs({ ...prefs!, theme: value })
+                    }}
+                    aria-label={label}
+                    title={label}
+                    className={`w-7 h-7 rounded-full ${color} transition-all ${
+                      colorTheme === value
+                        ? "ring-2 ring-offset-2 ring-foreground"
+                        : "hover:ring-2 hover:ring-offset-2 hover:ring-muted-foreground"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </section>
 
           {hasRole("AiUser") && (

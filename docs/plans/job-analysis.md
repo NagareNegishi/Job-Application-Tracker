@@ -1,206 +1,77 @@
 # Job Analysis (AI Insights)
 
-## Overview
-
-Two connected features: **Profile** (user's background stored in the app) and **Job Analysis** (on-demand AI insights comparing profile against a specific job). Five separate analysis types, each triggered independently on the job detail page.
-
-CV integration is deferred — analysis uses profile text only.
+Status: **Done.** Two connected features: **Profile** (user's background + preferences, stored in the app) and **Job Analysis** (on-demand AI insights comparing profile against a job). Five analysis types, triggered from the job detail page, plus an ad-hoc "worth applying?" triage entry point that doesn't require a saved job. CV integration deferred — analysis uses profile text only.
 
 ---
 
-## Design Decisions
+## Key Decisions
 
 | Decision | Reasoning |
 |---|---|
-| Separate endpoint per analysis type | Focused prompt per concern produces higher quality output than one large response |
-| On-demand, not saved | Results are always fresh; no stale data when job description changes |
-| `UserProfile` as a new table | Profile has multiple structured fields and will be updated independently; JSON column on `ApplicationUser` would be awkward to query and evolve |
-| All analysis endpoints use the full profile | Alignment, gaps, and interview questions all benefit from the complete picture — no field is exclusive to one analysis type |
-| One profile per user (unique FK to `ApplicationUser`) | Cascade deletes automatic; no orphan cleanup needed |
-| `IAnalysisService` / `ClaudeAnalysisService` in `Services/` | Follows existing service abstraction pattern; mockable in tests |
-| `JobAnalysisController` — separate from `JobsController` | Five endpoints with their own route prefix keep `JobsController` clean |
-| PUT creates, PATCH updates (separate endpoints) | Avoids re-sending and re-validating the full profile on every edit; only changed fields sent and validated on PATCH |
-| Return 400 if profile not set | Analysis has no input without a profile; clear error, not a silent empty response |
-| Block demo user (403) | Prevents API cost from demo accounts; same pattern as `DocumentsController` |
-| `claude-haiku-4-5` model | Fast and cheap; each call is a single focused extraction, not reasoning |
+| Separate endpoint per analysis type | Focused prompt per concern beats one large response |
+| On-demand, not saved | Always fresh; no stale data when job description changes |
+| `UserProfile` as a new table, not a JSON column | Multiple structured fields, updated independently; needs to be queryable/evolvable |
+| `AnalysisController` at `/api/analyse` is content-scoped, not job-scoped | Takes the job's text in the request body, not a stored job id — serves both the saved-job flow and an ad-hoc paste through one endpoint |
+| Ad-hoc entry point exposes Alignment only | It's a triage check ("worth pursuing?"); the other four only make sense for a job you're already tracking |
+| Ad-hoc trigger kept separate from `ParseListingDialog`, not folded in | Triage is an optional pre-decision step; folding it into auto-fill would force every auto-fill through an extra rate-limited call and a profile-readiness gate parsing doesn't need |
+| PUT creates, PATCH updates (JSON Merge Patch, RFC 7396) | Avoids re-sending/re-validating the full profile on every edit |
+| Save is permissive; the analysis gate is strict | Profiles are built incrementally — PUT/PATCH accept sparse/empty input; required-content is enforced only at analysis time (400 if profile doesn't meet the minimum) |
+| `WorkingRights` = array of `(country, status)` | One person can hold rights in multiple countries; a single enum can't express that |
+| One shared `"analyse"` rate-limit policy, 5/min across all 5 types | Real use is slow (~5s latency + reading); shared because users burst across types, not repeat one |
+| Analysis requires `AiEnabled` policy; blocks demo user (403) | Every Claude-backed feature sits behind AI access and demo cost protection, same as auto-fill parsing |
+| `claude-haiku-4-5`, 512 max output tokens shared across all 5 types | Fast/cheap extraction, not reasoning; token cap is a truncation ceiling, not per-type tuning |
+| Claude failure → 502 (`AnalysisFormatException`), no retry | Upstream dependency failed, not our bug — matches auto-fill parsing's error convention |
+| Empty list results (`[]`) are valid, not malformed | A `Length >= 1` floor once rejected legitimate zero-overlap Skills results as a 502, contradicting the prompts' own "never fabricate/pad" instruction. Only `null` is now rejected |
+| Analysis result lifetime is page-durable, not cached | Results live in Job Detail page state only; reset on refresh/navigate-away — reinforces "on-demand, always fresh" |
+| Job Detail analysis UI gated by `hasRole("AiUser")` only | Demo account has no `AiUser` role, so this already hides the section for demo too; server-side 403 stays as defense in depth |
+| Profile = Background + Conditions (global, not per-role) | Conditions apply across all target roles; per-role conditions rejected as rare-need/high-cost |
+| Only Alignment reads Conditions | The other four are background-only; conditions are about fit/desire, which is Alignment's job |
+| Alignment carries a soft `concern: string?` | Flags "looks like a scam / unclear listing" without refusing to answer — score + reasoning still return |
+| Demo user's profile is wiped, not reseeded, on nightly reset | Unlike `Jobs`, profile is meant to be visitor-filled to demonstrate the feature — nothing to restore |
 
 ---
 
 ## Profile
 
-### Fields
+**Background fields:** `TargetRoles`, `Skills`, `Certifications`, `Languages` (string lists), `WorkingRights` (`WorkingRightEntry[]`: country ISO-2 + `WorkingRight` enum), `WorkHistory` (`WorkHistoryEntry[]`), `Education` (`EducationEntry[]`).
 
-| Field | Type | Purpose |
-|---|---|---|
-| `TargetRoles` | `string[]` | Roles the user is targeting — stored as JSON array |
-| `Skills` | `string[]` | Skills as a tag list — stored as JSON array |
-| `Certifications` | `string[]` | e.g. "AWS Certified Developer", "PMP" — stored as JSON array |
-| `Languages` | `string[]` | Spoken languages, free text tags — stored as JSON array |
-| `WorkingRight` | `WorkingRight?` | Work authorisation status — single nullable enum |
-| `WorkHistory` | `WorkHistoryEntry[]` | Structured work experience entries — stored as JSON array |
-| `Education` | `EducationEntry[]` | Structured education entries — stored as JSON array |
+**Conditions fields** ("what I'm looking for" — optional, doesn't gate analysis): `WorkModes` (reuses `WorkMode` enum), `ContractTypes` (new enum), `SalaryExpectations` (min-floor per currency, max 3), `PreferredLocations` (`{Country, Areas[]}`), `AdditionalConditions` (free text, catch-all for experience level/nuance).
 
-**WorkingRight enum:**
-| Value | Meaning |
-|---|---|
-| `Citizen` | NZ / AU citizen — unrestricted |
-| `PermanentResident` | NZ / AU resident visa — unrestricted |
-| `WorkVisa` | Current work visa — right exists but time-limited |
-| `RequiresSponsorship` | No current right; needs employer sponsorship |
-| `Other` | Has working rights through another arrangement |
-
-**WorkHistoryEntry:**
-| Sub-field | Type | Notes |
-|---|---|---|
-| `title` | `string` | Job title |
-| `company` | `string` | Employer |
-| `from` | `string` | Start date (`"YYYY-MM"`) |
-| `to` | `string?` | End date (`"YYYY-MM"`); `null` = current role |
-| `description` | `string` | Responsibilities and achievements |
-
-**EducationEntry:**
-| Sub-field | Type | Notes |
-|---|---|---|
-| `institution` | `string` | University or school |
-| `degree` | `string` | Degree and field |
-| `from` | `int` | Year started |
-| `to` | `int?` | Year graduated; `null` = currently enrolled |
-
-### API Shape
+Validation lengths/counts are in `ValidationConstants` — generous by design, bounds abuse not real users. Dates reject future values; `to == null` means current/ongoing.
 
 ```
-GET    /api/account/profile
-PUT    /api/account/profile
-PATCH  /api/account/profile
-Authorization: Bearer <token>
-Content-Type: application/json
+GET/PUT/PATCH /api/account/profile
 ```
-
-**GET** — returns the profile, or empty object `{}` if not yet created (not 404).
-
-**PUT** — creates the profile on first save. Returns 409 if a profile already exists. Frontend uses this only once (when GET returned empty).
-
-**PATCH** — partial update on an existing profile; only fields included in the body are updated, omitted fields are left unchanged (merge patch, not JSON Patch spec). Returns 404 if no profile exists yet. Use for all edits after initial creation.
-
-PUT body (full profile):
-```json
-{
-  "targetRoles": ["Senior Full-Stack Engineer", "Engineering Lead"],
-  "skills": ["TypeScript", "React", "C#", "PostgreSQL"],
-  "certifications": ["AWS Certified Developer", "PMP"],
-  "languages": ["English", "Japanese"],
-  "workingRight": "PermanentResident",
-  "workHistory": [
-    {
-      "title": "Frontend Developer",
-      "company": "Acme Corp",
-      "from": "2023-01",
-      "to": null,
-      "description": "Built React dashboards, led migration to TypeScript..."
-    }
-  ],
-  "education": [
-    {
-      "institution": "University of Auckland",
-      "degree": "BSc Computer Science",
-      "from": 2019,
-      "to": 2022
-    },
-    {
-      "institution": "MIT",
-      "degree": "MSc Machine Learning",
-      "from": 2024,
-      "to": null
-    }
-  ]
-}
-```
-
-PATCH body (partial — only changed fields):
-```json
-{ "skills": ["TypeScript", "React", "C#", "PostgreSQL", "Docker"] }
-```
-
----
+GET returns `{}` if unset (frontend uses this to decide PUT vs PATCH). PUT 409s if a profile already exists. PATCH is JSON Merge Patch — `[]` clears a field, 404 if no profile exists.
 
 ## Analysis
 
-### Endpoints
-
-All endpoints:
-- `POST /api/jobs/{jobId}/analyse/<type>`
-- Require `[Authorize]`; block demo user (403)
-- Return 400 if user has no profile saved
-- Return 404 if job not found or belongs to another user
-
-| Type | Endpoint |
-|---|---|
-| Alignment score | `POST /api/jobs/{jobId}/analyse/alignment` |
-| Top skills for this role | `POST /api/jobs/{jobId}/analyse/skills` |
-| Gap analysis | `POST /api/jobs/{jobId}/analyse/gaps` |
-| Questions to ask | `POST /api/jobs/{jobId}/analyse/questions-to-ask` |
-| Likely interview questions | `POST /api/jobs/{jobId}/analyse/interview-questions` |
-
-### Response Shapes
-
-**Alignment**
-```json
-{ "score": 3, "reasoning": "Strong frontend match; limited backend exposure." }
 ```
-Score is 1–5. `reasoning` is one sentence.
-
-**Skills**
-```json
-{ "skills": ["TypeScript", "React", "REST APIs", "CI/CD"] }
+POST /api/analyse/<type>
 ```
+Body: `{ description, role?, company? }`. 400 if `description` is missing/too short, or if the profile doesn't meet the minimum (`TargetRoles`, `Skills`, `WorkingRights` non-empty + one of `Certifications`/`WorkHistory`/`Education`) — same rule enforced client-side to disable the buttons.
 
-**Gaps**
-```json
-{
-  "gaps": [
-    { "gap": "No Go experience", "advice": "Mention transferable systems knowledge from C#." },
-    { "gap": "Limited cloud experience", "advice": "Highlight any AWS/Azure work, even personal projects." }
-  ]
-}
-```
-
-**Questions to ask**
-```json
-{ "questions": ["What does the on-call rotation look like?", "How is success measured in the first 90 days?"] }
-```
-
-**Likely interview questions**
-```json
-{ "questions": ["Tell me about a time you dealt with a difficult stakeholder.", "How do you approach performance optimisation?"] }
-```
-
----
-
-## Steps
-
-### Profile
-
-| # | Item | Status |
+| Type | Endpoint | Entry points |
 |---|---|---|
-| 1 | Add `UserProfile` entity + migration | — |
-| 2 | Add `ProfileDTO` (request) + `ProfileResponseDto` (response) | — |
-| 3 | Add `GET /api/account/profile` + `PUT /api/account/profile` to `AccountController` | — |
-| 4 | Add `/profile` page to frontend — tags input for `TargetRoles` and `Skills`; repeating entry forms for `WorkHistory` and `Education` (add/remove entries) | — |
-| 5 | Add Profile nav link | — |
+| Alignment score (1–5 + reasoning + soft `concern`) | `/api/analyse/alignment` | saved job + ad-hoc |
+| Top skills for this role (5–8) | `/api/analyse/skills` | saved job |
+| Gap analysis (2–4, gap+advice pairs) | `/api/analyse/gaps` | saved job |
+| Questions to ask (3–5) | `/api/analyse/questions-to-ask` | saved job |
+| Likely interview questions (4–6) | `/api/analyse/interview-questions` | saved job |
 
-### Analysis
+Response shapes/prompts live in `Models/` and `Services/ClaudeAnalysisConfig.cs`.
 
-| # | Item | Status |
-|---|---|---|
-| 6 | Add `IAnalysisService` + `ClaudeAnalysisService` in `Services/` | — |
-| 7 | Add `JobAnalysisController` with 5 endpoints | — |
-| 8 | Register `ClaudeAnalysisService` in `Program.cs` | — |
-| 9 | Add analysis UI to Job Detail page — 5 independent buttons, each shows its own result inline | — |
+## UI
+
+- **Job Detail (`AnalysisSection`):** floating FAB → bottom `Sheet` with 5 buttons, shared disabled/error state, shared result area (`src/services/analysisService.ts` + `AnalysisSection.tsx`).
+- **Ad-hoc triage (`AlignmentDialog` + `AlignmentResultView`):** `Dialog` (matches `ParseListingDialog`'s shape), wired into `JobTable.tsx`. On a positive result, hands off directly to `parseListing()` + `toFormFields()` in the same dialog, skipping `ParseListingDialog`.
 
 ---
 
 ## Notes
 
-- `Anthropic:ApiKey` is shared with the auto-fill parsing feature — no duplicate config key needed once that feature is added.
-- Tests: mock `IAnalysisService` in controller tests; no live Claude calls in CI.
-- Profile page vs Settings: `/profile` is a dedicated page — profile is substantial enough to warrant its own route rather than a section in Settings.
+### Reference
+- `Anthropic:ApiKey` shared with auto-fill parsing — no duplicate config key.
+- Tests mock `IAnalysisService`; no live Claude calls in CI.
+- Suggestion pools live in `components/profile/tagSuggestions.ts`. Sources: Languages → `iso-639-1`; Institutions → Hipolabs `world_universities_and_domains.json`; Roles/Skills/Certifications/Degrees → curated static lists. Custom free-text input always allowed.
+- Country flags render via `CountryFlag.tsx` (shared by `CountryCombobox` and view-mode lists) — `fi fi-<code>` sprite classes from the `flag-icons` package, already a dependency and imported globally in `main.tsx`. Not emoji — sprites render consistently across platforms/fonts.

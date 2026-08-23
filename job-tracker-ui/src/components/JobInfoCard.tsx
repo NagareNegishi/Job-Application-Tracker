@@ -1,12 +1,12 @@
 import type { Job } from "@/types/job";
 import { formatEnumLabel } from "@/types/enums";
-import { PriorityDot } from "./ui/PriorityDot";
-import { StatusBadge } from "./ui/StatusBadge";
+import { PriorityDot } from "./custom/PriorityDot";
+import { StatusBadge } from "./custom/StatusBadge";
 
 export function JobInfoCard({ job }: { job: Job }) {
   return (
-    <div className="border rounded-lg p-6 space-y-4">
-      <div className="flex flex-wrap items-center gap-8 border-b border-border pb-4">
+    <div className="border rounded-lg p-3 sm:p-6 space-y-3 sm:space-y-4">
+      <div className="flex flex-wrap items-center gap-4 sm:gap-8 border-b border-border pb-3 sm:pb-4">
         <StatusBadge status={job.status} className="text-sm px-3 py-0.5" />
         {job.priority && <PriorityDot priority={job.priority} dotSize="w-3 h-3" className="text-sm" />}
         {job.interviewAt && (
@@ -32,7 +32,7 @@ export function JobInfoCard({ job }: { job: Job }) {
       </div>
 
       {(job.location || job.workMode) && (
-        <div className="flex flex-wrap items-center gap-6 pl-2">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-6 pl-2">
           {job.location && (
             <span className="flex items-baseline gap-1.5">
               <span className="text-xs uppercase tracking-wider text-muted-foreground">Location</span>
@@ -75,7 +75,7 @@ export function JobInfoCard({ job }: { job: Job }) {
       )}
 
       {(job.jobUrl || job.source) && (
-        <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5 pl-2">
+        <div className="flex flex-wrap items-baseline gap-x-3 sm:gap-x-6 gap-y-1.5 pl-2">
           {job.jobUrl && (
             <span className="flex items-baseline gap-1.5">
               <span className="text-xs uppercase tracking-wider text-muted-foreground flex-shrink-0">Link</span>

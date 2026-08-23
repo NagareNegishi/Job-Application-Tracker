@@ -14,4 +14,7 @@ public class UserPreferencesDto
 
     // Whether the AI auto-fill dialog appears before the Add Job sheet for AI users.
     public bool AutoFillEnabled { get; set; } = true;
+
+    // "blue" | "red" | "yellow" | "pink" | null (no color theme)
+    public string? Theme { get; set; }
 }
