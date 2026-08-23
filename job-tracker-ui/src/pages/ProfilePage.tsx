@@ -96,9 +96,12 @@ export default function ProfilePage() {
   // Sections currently in edit mode; everything else renders read-only
   const [editingSections, setEditingSections] = useState<Set<keyof UserProfile>>(new Set())
 
-  // Mirror for the data-sync effect below — reading it there must not re-trigger the effect
+  // Mirror for the data-sync effect below — reading it there must not re-trigger the effect.
+  // Declared before that effect so it commits first and stays current within the same commit.
   const editingRef = useRef(editingSections)
-  editingRef.current = editingSections
+  useEffect(() => {
+    editingRef.current = editingSections
+  }, [editingSections])
 
   const [savingAll, setSavingAll] = useState(false)
   const [saveAllError, setSaveAllError] = useState("")
@@ -138,7 +141,9 @@ export default function ProfilePage() {
     if (data === undefined) return
     if (data === null) {
       profileExists.current = false
-      // First run — no profile row yet, so open everything for the initial fill
+      // First run — no profile row yet, so open everything for the initial fill.
+      // Reacts to the query settling, not a pure function of render inputs.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditingSections(new Set(ALL_SECTION_KEYS))
       return
     }
@@ -220,6 +225,8 @@ export default function ProfilePage() {
       onChange: (val: UserProfile[K]) => updateField(key, val),
       dirty: dirtyKeys.includes(key),
       saving: savingSection === key,
+      // saveSection reads profileExists.current only once invoked (on click), never during render
+      // eslint-disable-next-line react-hooks/refs
       onSave: () => saveSection(key),
       editing: editingSections.has(key),
       onEdit: () => openSection(key),
