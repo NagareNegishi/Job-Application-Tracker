@@ -37,11 +37,11 @@ export default function ConfirmEmailPage() {
       <div className="w-full max-w-sm">
         <AuthBrand />
         <div className="space-y-4 text-center mt-10">
-        {status === "loading" && (
+        {!isMalformed && status === "loading" && (
           <p className="text-sm text-muted-foreground">Verifying your email...</p>
         )}
 
-        {status === "success" && (
+        {!isMalformed && status === "success" && (
           <>
             <h1 className="text-2xl font-semibold">Email verified</h1>
             <p className="text-sm text-muted-foreground">
@@ -51,10 +51,10 @@ export default function ConfirmEmailPage() {
           </>
         )}
 
-        {status === "error" && (
+        {(isMalformed || status === "error") && (
           <>
             <h1 className="text-2xl font-semibold">Verification failed</h1>
-            <p className="text-sm text-red-600">{errorMessage}</p>
+            <p className="text-sm text-red-600">{isMalformed ? "Invalid confirmation link." : errorMessage}</p>
             <p className="text-sm text-muted-foreground">
               Try requesting a new link from the{" "}
               <Link to="/login" className="underline">sign in page</Link>.
