@@ -38,10 +38,11 @@ client over the browser.
   linking to the desktop app download.
 - When an authenticated user views Settings, the system shall display a
   section linking to the desktop app download.
-- When the prompt renders, the system shall fetch the release manifest from a
-  backend endpoint and display one download button per platform key present.
-  *(browser can't fetch `latest.json` directly — GitHub's release CDN sends
-  no CORS headers; see impl.md.)*
+- When the prompt renders, the system shall fetch the installer list from a
+  backend endpoint and display one download button per available platform.
+  *(the manifest approach — `latest.json` — turned out to point at
+  auto-updater payloads, not human installers, and its CORS/rate-limit
+  profile ruled out a direct browser fetch anyway; see impl.md.)*
 - When the user activates a platform's download button, the system shall open
   that platform's asset URL from the manifest in a new tab.
 - When the manifest fetch fails, the system shall fall back to a single link
@@ -51,14 +52,16 @@ client over the browser.
 ✅ settled
 
 Frontend (`job-tracker-ui`, `services/` + component convention) plus a new
-read-only backend endpoint (`JobTrackerApi`) that fetches `latest.json`
-server-side and caches it in memory (short TTL).
+read-only backend endpoint (`JobTrackerApi`) that calls the GitHub Releases
+API for `NagareNegishi/job-tracker-desktop-releases`, picks the human
+installer per platform by filename, and caches the result in memory (short
+TTL).
 
 ## target device / platform
 ✅ settled
 
-Web app (React), linking to desktop installers per platform key in
-`latest.json` — Windows, macOS (universal), Linux.
+Web app (React), linking to desktop installers — Windows, macOS (universal),
+Linux (once shipped; not in the current release).
 
 ## constraints
 ✅ settled
