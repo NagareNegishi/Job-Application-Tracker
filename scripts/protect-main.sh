@@ -19,10 +19,9 @@ RULESET_NAME="protect-main"
 ASSUME_YES=0
 [ "${1:-}" = "-y" ] && ASSUME_YES=1
 
-# Required status checks are OFF by default: a stack-agnostic seed has no CI, and
-# a required check that never reports would block every merge. Once this project
-# has CI, list its check names here (e.g. "build" "test") to also require them.
-REQUIRED_CHECKS=()
+# Required status checks — must match the job names in .github/workflows/pr-checks.yml
+# exactly, or GitHub will never see a matching report and merges will hang blocked forever.
+REQUIRED_CHECKS=("backend-test" "frontend-build" "frontend-lint")
 
 # Fail early if gh is missing or unauthenticated.
 if ! gh auth status >/dev/null 2>&1; then
