@@ -34,5 +34,12 @@ services:
       - Demo__ResetKey=${DEMO_RESET_KEY}
       - Email__FromAddress=${EMAIL_FROM_ADDRESS}
       - Resend__ApiKey=${RESEND_API_KEY}
+      - Admin__Email=${ADMIN_EMAIL}
+      - Anthropic__ApiKey=${ANTHROPIC_API_KEY}
       - AWS_REGION=ap-southeast-2  # AWS SDK reads this automatically for S3 + IAM
+      
+      # Allowlist for frontend base URL used in email links (confirm, reset password).
+      # Add __1, __2 etc. for additional domains when scaling to multiple frontends.
+      # If the domain becomes sensitive, move to a GitHub secret and use ${VAR} like the entries above.
+      - App__AllowedFrontendOrigins__0=https://jobtracker.nagarenegishi.com
     restart: unless-stopped

@@ -9,6 +9,7 @@ using System.Security.Claims;
 
 namespace JobTrackerApi.Controllers;
 
+/// <summary>Controller for job application documents; delegates all file I/O to IStorageService.</summary>
 [ApiController]
 [Route("api/jobs/{jobId}/documents")]
 [Authorize]

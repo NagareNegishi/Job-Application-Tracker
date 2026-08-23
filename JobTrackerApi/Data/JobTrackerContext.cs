@@ -1,10 +1,10 @@
 using JobTrackerApi.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 namespace JobTrackerApi.Data;
 
-public class JobTrackerContext : IdentityDbContext<IdentityUser>
+/// <summary>EF Core DbContext; configures Contacts and Correspondences as owned JSON columns rather than separate tables.</summary>
+public class JobTrackerContext : IdentityDbContext<ApplicationUser>
 {
     public JobTrackerContext(DbContextOptions<JobTrackerContext> options)
         : base(options)
@@ -24,9 +24,39 @@ public class JobTrackerContext : IdentityDbContext<IdentityUser>
             .OwnsMany(j => j.Contacts, contacts => contacts.ToJson());
         modelBuilder.Entity<Job>()
             .OwnsMany(j => j.Correspondences, correspondence => correspondence.ToJson());
+
+        // UserProfile: one per user; cascade delete when user is removed
+        modelBuilder.Entity<UserProfile>()
+            .HasOne(p => p.User)
+            .WithOne()
+            .HasForeignKey<UserProfile>(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<UserProfile>()
+            .HasIndex(p => p.UserId)
+            .IsUnique();
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.Languages, l => l.ToJson());
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.WorkingRights, wr => wr.ToJson());
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.WorkHistory, wh => wh.ToJson());
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.Education, e => e.ToJson());
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.SalaryExpectations, se => se.ToJson());
+        // PrimitiveCollection is the EF Core 8 API for List<enum/scalar>; OwnsMany only works for entity types
+        modelBuilder.Entity<UserProfile>()
+            .PrimitiveCollection(p => p.WorkModes)
+            .HasColumnType("jsonb");
+        modelBuilder.Entity<UserProfile>()
+            .PrimitiveCollection(p => p.ContractTypes)
+            .HasColumnType("jsonb");
+        modelBuilder.Entity<UserProfile>()
+            .OwnsMany(p => p.PreferredLocations, pl => pl.ToJson());
     }
 
     public DbSet<Job> Jobs { get; set; } = null!;
     public DbSet<Document> Documents { get; set; } = null!;
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+    public DbSet<UserProfile> UserProfiles { get; set; } = null!;
 }

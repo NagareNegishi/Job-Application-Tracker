@@ -1,4 +1,6 @@
+import { DeleteConfirmDialog } from "@/components/custom/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
+import { ResponsiveButton } from "@/components/custom/ResponsiveButton";
 import {
   Dialog,
   DialogClose,
@@ -11,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePatchJob } from "@/hooks/jobQuery";
+import { useRemountableDialog } from "@/hooks/useRemountableDialog";
 import {
   MAX_CONTACT_EMAIL_LENGTH,
   MAX_CONTACT_NAME_LENGTH,
@@ -21,7 +24,7 @@ import {
 import type { Contact } from "@/types/contact";
 import type { JobPatchOperation } from "@/types/job";
 import { Mail, Pencil, Phone, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
 /**
@@ -42,9 +45,9 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
   return (
     <div className="border rounded-lg p-3 space-y-1 w-full">
       {/* Top row: name + actions */}
-      <div className="flex items-center justify-between">
-        <p className="font-medium">{contact.name}</p>
-        <div className="flex gap-1">
+      <div className="flex items-center justify-between min-w-0">
+        <p className="font-medium min-w-0 break-words">{contact.name}</p>
+        <div className="flex gap-1 shrink-0">
           {/* Edit action */ }
           <Button variant="ghost" size="icon"
             onClick={() => onEdit(contact)}
@@ -56,6 +59,7 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
           <Button variant="ghost" size="icon"
             onClick={() => onDelete(contact)}
             disabled={isPending}
+            className="text-destructive/70 hover:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -64,15 +68,17 @@ export function ContactCard({ contact, onEdit, onDelete, isPending }: ContactCar
       {/* Optional fields */}
       {contact.role && <p className="text-sm text-muted-foreground">{contact.role}</p>}
       {contact.email && (
-        <div className="flex items-center gap-1.5 text-sm">
-          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-          <span>{contact.email}</span>
+        <div className="flex items-center gap-1.5 text-sm min-w-0">
+          <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <a href={`mailto:${contact.email}`} className="truncate hover:underline">
+            {contact.email}
+          </a>
         </div>
       )}
       {contact.phone && (
-        <div className="flex items-center gap-1.5 text-sm">
-          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-          <span>{contact.phone}</span>
+        <div className="flex items-center gap-1.5 text-sm min-w-0">
+          <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{contact.phone}</span>
         </div>
       )}
       {contact.notes && <p className="text-sm text-muted-foreground">{contact.notes}</p>}
@@ -95,20 +101,22 @@ interface ContactListProps {
  */
 export function ContactList({ contacts, jobId }: ContactListProps) {
 
-  const [open, setOpen] = useState(false)
+  const { open, setOpen, openDialog, key } = useRemountableDialog()
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined)
   const { mutate: patchJob, isPending } = usePatchJob()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null)  // queued for delete confirmation
 
   // Handlers for add, open dialog with empty form
   function handleAdd() {
     setSelectedContact(undefined)
-    setOpen(true)
+    openDialog()
   }
 
   // Handlers for edit, open dialog with selected contact data
   function handleEdit(contact: Contact) {
     setSelectedContact(contact)
-    setOpen(true)
+    openDialog()
   }
 
   // Called by dialog on save
@@ -136,23 +144,36 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
     )
   }
 
-  // Handlers for delete
+  // Opens confirmation dialog; actual delete happens in handleDeleteConfirm
   function handleDelete(contact: Contact) {
-    const index = contacts.indexOf(contact)
+    setContactToDelete(contact)
+    setDeleteOpen(true)
+  }
+
+  // Performs the delete after user confirms
+  function handleDeleteConfirm() {
+    const index = contacts.indexOf(contactToDelete!)
     const operations: JobPatchOperation[] = [
       { op: "remove", path: `/contacts/${index}` }
     ]
-
-    patchJob(
-      { id: jobId, operations },
-    )
+    patchJob({ id: jobId, operations })
   }
 
   return (
     <div className="space-y-4">
 
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Contact?"
+        description="This contact will be permanently removed."
+        onConfirm={handleDeleteConfirm}
+      />
+
       {/* Dialog for adding/editing contacts */ }
       <ContactDialog
+        key={key}
         open={open}
         onOpenChange={setOpen}
         contact={selectedContact}
@@ -163,13 +184,12 @@ export function ContactList({ contacts, jobId }: ContactListProps) {
       {/* Header with Add button */ }
       <div className="flex items-center justify-between">
         <span className="text-sm uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Contacts</span>
-        <Button size="sm" variant="outline" onClick={handleAdd}><Plus className="h-4 w-4" />Add Contact</Button>
+        <ResponsiveButton icon={Plus} size="sm" variant="outline" onClick={handleAdd}>Add Contact</ResponsiveButton>
       </div>
 
       { contacts.length === 0
         ? <p className="text-muted-foreground">No contacts.</p>
-        // TODO: flex-col? or grid-cols-2
-        : <div className="grid grid-cols-4 gap-3">
+        : <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* List of contacts */}
           {contacts.map((c, i) =>
             <ContactCard
@@ -236,16 +256,8 @@ export function ContactDialog({
 }: ContactDialogProps) {
   
   const emptyContact: ContactFormState = { name: "", email: "", role: "", phone: "", notes: "" }
-  const [form, setForm] = useState<ContactFormState>(emptyContact)
+  const [form, setForm] = useState<ContactFormState>(() => contact ? toContactFormState(contact) : emptyContact)
   const [errors, setErrors] = useState<ContactFormErrors>({})
-
-  // Reset form when dialog opens with fresh contact data
-  useEffect(() => {
-    if (open) {
-      setForm(contact ? toContactFormState(contact) : emptyContact)
-      setErrors({})
-    }
-  }, [contact, open])
 
   // Helper function to update form state for a specific field
   function setField<K extends keyof ContactFormState>(key: K, value: ContactFormState[K]) {

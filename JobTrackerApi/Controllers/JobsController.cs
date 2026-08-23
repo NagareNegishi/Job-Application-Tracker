@@ -5,23 +5,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 // https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-10.0
 
 namespace JobTrackerApi.Controllers;
 
+/// <summary>CRUD controller for job applications; patch endpoint uses JSON Patch for partial updates.</summary>
 [ApiController]
-[Route("api/[controller]")] 
+[Route("api/[controller]")]
 [Authorize]
 public class JobsController : ControllerBase
 {
     private readonly JobTrackerContext _context; // Assigned once, never changes
     private readonly IStorageService _storage;
+    private readonly IParsingService _parsing;
 
-    public JobsController(JobTrackerContext context, IStorageService storage)
+    public JobsController(JobTrackerContext context, IStorageService storage, IParsingService parsing)
     {
         _context = context;
         _storage = storage;
+        _parsing = parsing;
     }
 
     //NOTE: with UserId, Every action needs two things:
@@ -91,6 +95,11 @@ public class JobsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var newJob = dto.ToJob();
         newJob.UserId = userId ?? string.Empty;
+        newJob.StatusChangedAt = DateTime.UtcNow;
+
+        if (newJob.Status != JobStatus.Wishlist && newJob.AppliedAt == null)
+            newJob.AppliedAt = DateTime.UtcNow;
+
         _context.Jobs.Add(newJob);
         await _context.SaveChangesAsync();
 
@@ -157,7 +166,14 @@ public class JobsController : ControllerBase
             Description = job.Description,
             Notes = job.Notes,
             Contacts = job.Contacts,
-            Correspondences = job.Correspondences
+            Correspondences = job.Correspondences,
+            JobUrl = job.JobUrl,
+            Source = job.Source,
+            SalaryMin = job.SalaryMin,
+            SalaryMax = job.SalaryMax,
+            Location = job.Location,
+            WorkMode = job.WorkMode,
+            InterviewAt = job.InterviewAt
         };
 
         patchDoc.ApplyTo(jobToPatch, jsonPatchError =>
@@ -172,6 +188,13 @@ public class JobsController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
         if (!TryValidateModel(jobToPatch)) return BadRequest(ModelState);
 
+        // Auto-fill AppliedAt the first time a job is moved to Applied
+        if (jobToPatch.Status == JobStatus.Applied && jobToPatch.AppliedAt == null)
+            jobToPatch.AppliedAt = DateTime.UtcNow;
+
+        if (jobToPatch.Status != job.Status)
+            job.StatusChangedAt = DateTime.UtcNow;
+
         // Map back to the original job entity
         job.Company = jobToPatch.Company;
         job.Role = jobToPatch.Role;
@@ -183,6 +206,13 @@ public class JobsController : ControllerBase
         job.Notes = jobToPatch.Notes;
         job.Contacts = jobToPatch.Contacts;
         job.Correspondences = jobToPatch.Correspondences;
+        job.JobUrl = jobToPatch.JobUrl;
+        job.Source = jobToPatch.Source;
+        job.SalaryMin = jobToPatch.SalaryMin;
+        job.SalaryMax = jobToPatch.SalaryMax;
+        job.Location = jobToPatch.Location;
+        job.WorkMode = jobToPatch.WorkMode;
+        job.InterviewAt = jobToPatch.InterviewAt;
 
         try
         {
@@ -196,7 +226,16 @@ public class JobsController : ControllerBase
         return NoContent();
     }
 
-    // Helper method to check if a job exists by ID
+    [HttpPost("parse")]
+    [Authorize(Policy = "AiEnabled")]
+    [EnableRateLimiting("parse")]
+    public async Task<ActionResult<ParsedJobFields>> ParseListing([FromBody] ParseListingRequest request)
+    {
+        return Ok(await _parsing.ParseListingAsync(request.Text));
+    }
+
+    // Helper methods
+    // Check if a job exists by ID
     private bool JobsExists(int id)
     {
         return _context.Jobs.Any(e => e.Id == id);

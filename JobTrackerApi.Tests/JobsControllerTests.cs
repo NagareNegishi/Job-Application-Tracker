@@ -9,11 +9,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Moq;
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
+/// <summary>Tests for JobsController ensuring correct job management behavior and ownership enforcement.</summary>
 public class JobsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;
     private readonly Mock<IStorageService> _storageMock;
+    private readonly Mock<IParsingService> _parsingMock;
     private readonly JobsController _controller;
     private const string TestUserId = "test-user-id";
 
@@ -25,10 +29,21 @@ public class JobsControllerTests: IDisposable
             .Options; // .Options extracts the built configuration object
 
         _storageMock = new Mock<IStorageService>();
+        _parsingMock = new Mock<IParsingService>();
 
         // create context and controller directly
         _context = new JobTrackerContext(options);
-        _controller = new JobsController(_context, _storageMock.Object);
+        _controller = new JobsController(_context, _storageMock.Object, _parsingMock.Object);
+
+        // TryValidateModel requires ObjectValidator; not set when controller is instantiated directly without the MVC pipeline.
+        var validatorMock = new Mock<IObjectModelValidator>();
+        validatorMock.Setup(v => v.Validate(
+            It.IsAny<ActionContext>(),
+            It.IsAny<ValidationStateDictionary>(),
+            It.IsAny<string>(),
+            It.IsAny<object>()));
+        _controller.ObjectValidator = validatorMock.Object;
+
         SetUser();
     }
 
@@ -441,5 +456,168 @@ public class JobsControllerTests: IDisposable
 
         var jobs = Assert.IsType<List<JobResponseDto>>(result.Value);
         Assert.Empty(jobs);
+    }
+
+    [Fact]
+    public async Task PostJob_SetsAppliedAt_WhenStatusIsNotWishlistAndAppliedAtIsNull()
+    {
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev", Status = JobStatus.Applied };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.NotNull(dto.AppliedAt);
+    }
+
+    [Fact]
+    public async Task PostJob_DoesNotSetAppliedAt_WhenStatusIsWishlist()
+    {
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev", Status = JobStatus.Wishlist };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.Null(dto.AppliedAt);
+    }
+
+    [Fact]
+    public async Task PostJob_PreservesAppliedAt_WhenExplicitlyProvided()
+    {
+        var explicitDate = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev", Status = JobStatus.Applied, AppliedAt = explicitDate };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.Equal(explicitDate, dto.AppliedAt);
+    }
+
+    [Fact]
+    public async Task PatchJob_SetsAppliedAt_WhenStatusBecomesAppliedAndAppliedAtIsNull()
+    {
+        var job = await SeedJobAsync(status: JobStatus.Wishlist, appliedAt: null);
+        var patchDoc = new JsonPatchDocument<UpdateJobDTO>();
+        patchDoc.Replace(j => j.Status, JobStatus.Applied);
+
+        var result = await _controller.PatchJob(job.Id, patchDoc);
+
+        Assert.IsType<NoContentResult>(result);
+        var updated = await _context.Jobs.FindAsync(job.Id);
+        Assert.NotNull(updated!.AppliedAt);
+    }
+
+    [Fact]
+    public async Task PatchJob_DoesNotUpdateStatusChangedAt_WhenStatusDoesNotChange()
+    {
+        var job = await SeedJobAsync(status: JobStatus.Applied);
+        var originalTimestamp = job.StatusChangedAt;
+        var patchDoc = new JsonPatchDocument<UpdateJobDTO>();
+        patchDoc.Replace(j => j.Notes, "just updating notes");
+
+        await _controller.PatchJob(job.Id, patchDoc);
+
+        var updated = await _context.Jobs.FindAsync(job.Id);
+        Assert.Equal(originalTimestamp, updated!.StatusChangedAt);
+    }
+
+    [Fact]
+    public async Task PatchJob_UpdatesStatusChangedAt_WhenStatusChanges()
+    {
+        var job = await SeedJobAsync(status: JobStatus.Wishlist);
+        var originalTimestamp = job.StatusChangedAt;
+        var patchDoc = new JsonPatchDocument<UpdateJobDTO>();
+        patchDoc.Replace(j => j.Status, JobStatus.Applied);
+
+        await _controller.PatchJob(job.Id, patchDoc);
+
+        var updated = await _context.Jobs.FindAsync(job.Id);
+        Assert.True(updated!.StatusChangedAt > originalTimestamp);
+    }
+
+    [Fact]
+    public async Task PostJob_SetsStatusChangedAt_OnCreate()
+    {
+        var before = DateTime.UtcNow;
+        var jobDto = new JobDTO { Company = "Acme", Role = "Dev" };
+
+        var result = await _controller.PostJob(jobDto);
+
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var dto = Assert.IsType<JobResponseDto>(createdResult.Value);
+        Assert.True(dto.StatusChangedAt >= before);
+    }
+
+    // Test for ParseListingRequest with empty text
+    [Fact]
+    public async Task ParseListingRequest_EmptyText_FailsValidation()
+    {
+        // Arrange
+        var request = new ParseListingRequest { Text = "" };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
+
+    // Test for ParseListingRequest with text over 8000 characters
+    [Fact]
+    public async Task ParseListingRequest_TextOverLimit_FailsValidation()
+    {
+        // Arrange
+        var request = new ParseListingRequest { Text = new string('x', 8001) };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
+
+    // Test for ParseListingRequest with HTML input
+    [Fact]
+    public async Task ParseListingRequest_HtmlInput_FailsValidation()
+    {
+        // Arrange
+        var request = new ParseListingRequest { Text = "<div>job listing</div>" };
+        var context = new ValidationContext(request);
+        var results = new List<ValidationResult>();
+
+        // Act
+        var isValid = Validator.TryValidateObject(request, context, results, true);
+
+        // Assert: Check that validation fails
+        Assert.False(isValid);
+    }
+
+    // Test for ParseListing with a partial result
+    [Fact]
+    public async Task ParseListing_ReturnsOk_WithParsedFields()
+    {
+        // Arrange
+        var text = "Senior Engineer at Acme Corp.";
+        var parsed = new ParsedJobFields { Company = "Acme Corp", Role = "Senior Engineer", Description = text };
+        _parsingMock
+            .Setup(s => s.ParseListingAsync(text))
+            .ReturnsAsync(parsed);
+        var request = new ParseListingRequest { Text = text };
+
+        // Act
+        var result = await _controller.ParseListing(request);
+
+        // Assert
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var fields = Assert.IsType<ParsedJobFields>(ok.Value);
+        Assert.Equal("Acme Corp", fields.Company);
+        Assert.Equal("Senior Engineer", fields.Role);
+        Assert.Equal(text, fields.Description);
     }
 }

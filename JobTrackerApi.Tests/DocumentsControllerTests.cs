@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Moq;
 
+/// <summary>Tests for DocumentsController covering CRUD operations and cross-user isolation.</summary>
 public class DocumentsControllerTests: IDisposable
 {
     private readonly JobTrackerContext _context;

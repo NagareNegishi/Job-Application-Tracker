@@ -1,5 +1,6 @@
 namespace JobTrackerApi.Services;
 
+/// <summary>Development IStorageService implementation that stores files on the local filesystem.</summary>
 public class LocalStorageService : IStorageService
 {
     private readonly string _uploadsPath;

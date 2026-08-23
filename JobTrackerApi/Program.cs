@@ -1,5 +1,5 @@
 using Amazon.S3;
-using Amazon.SimpleEmailV2;
+// using Amazon.SimpleEmailV2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,7 +11,10 @@ using JobTrackerApi.Models;
 using JobTrackerApi.Services;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Net;
+using System.Security.Claims;
 using Serilog;
 using Serilog.Formatting.Json;
 // using System.Text.Json;
@@ -106,6 +109,20 @@ if (!builder.Environment.IsDevelopment())
         ?? throw new InvalidOperationException("Resend:ApiKey is not configured. Set RESEND_API_KEY environment variable.");
 }
 
+var adminEmail = builder.Configuration["Admin:Email"]
+    ?? throw new InvalidOperationException(
+        builder.Environment.IsDevelopment()
+            ? "Admin:Email is not configured. Add it to appsettings.Development.json."
+            : "Admin:Email is not configured. Set ADMIN_EMAIL environment variable."
+    );
+
+var anthropicApiKey = builder.Configuration["Anthropic:ApiKey"]
+    ?? throw new InvalidOperationException(
+        builder.Environment.IsDevelopment()
+            ? "Anthropic:ApiKey is not configured. Add it to appsettings.Development.json."
+            : "Anthropic:ApiKey is not configured. Set ANTHROPIC_API_KEY environment variable."
+    );
+
 // Npgsql Entity Framework
 // https://www.npgsql.org/efcore/index.html?tabs=aspnet
 // No AddDbContextPool for safety and simplicity
@@ -135,8 +152,15 @@ if (builder.Environment.IsDevelopment())
 else
     builder.Services.AddHttpClient<IEmailService, ResendEmailService>();
 
+// AI parsing: extracts job fields from pasted listing text via Claude API
+builder.Services.AddScoped<IParsingService, ClaudeParsingService>();
+
+// AI analysis: compares a job listing against the user's profile via Claude API
+builder.Services.AddScoped<IAnalysisService, ClaudeAnalysisService>();
+
 // Registers Identity's core services
-builder.Services.AddIdentityCore<IdentityUser>()
+builder.Services.AddIdentityCore<ApplicationUser>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<JobTrackerContext>()
     .AddDefaultTokenProviders(); // Registers the "Default" token provider — Identity's token generation (email confirmation, password reset) won't work without it
 
@@ -156,8 +180,39 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtKey))
         };
+
+        // After signature + expiry are verified, check that the SecurityStamp in the token still matches the DB
+        // catches password changes that happened after the token was issued.
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                var stampClaim = context.Principal?.FindFirstValue("stamp");
+
+                if (userId == null)
+                {
+                    context.Fail("Missing sub claim.");
+                    return;
+                }
+
+                var userManager = context.HttpContext.RequestServices
+                    .GetRequiredService<UserManager<ApplicationUser>>();
+                var user = await userManager.FindByIdAsync(userId);
+
+                // Stamp mismatch
+                if (user == null || user.SecurityStamp != stampClaim)
+                    context.Fail("SecurityStamp mismatch — token invalidated.");
+            }
+        };
     });
 
+// Named policies — reusable on any endpoint via [Authorize(Policy = "...")]
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole(Roles.Admin));
+    options.AddPolicy("AiEnabled", policy => policy.RequireRole(Roles.AiUser));
+});
 
 // Rate limiting — fixed window per IP, applied to auth endpoints only via [EnableRateLimiting("auth")]
 builder.Services.AddRateLimiter(options =>
@@ -177,6 +232,24 @@ builder.Services.AddRateLimiter(options =>
     {
         config.Window = TimeSpan.FromHours(1);    // counter resets every 1 hour
         config.PermitLimit = 3;                   // max 3 resends per hour per IP
+        config.QueueLimit = 0;
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
+
+    // Tight limit for parse — each request hits the Claude API
+    options.AddFixedWindowLimiter("parse", config =>
+    {
+        config.Window = TimeSpan.FromMinutes(1);
+        config.PermitLimit = 2;
+        config.QueueLimit = 0;
+        config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+    });
+
+    // Shared across all 5 analysis types — each request hits the Claude API
+    options.AddFixedWindowLimiter("analyse", config =>
+    {
+        config.Window = TimeSpan.FromMinutes(1);
+        config.PermitLimit = 5;
         config.QueueLimit = 0;
         config.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
     });
@@ -200,11 +273,34 @@ if (builder.Environment.IsDevelopment())
 }
 
 
+// ForwardedHeaders — production only.
+// Tells ASP.NET to overwrite RemoteIpAddress from X-Forwarded-For and Request.Scheme from X-Forwarded-Proto.
+// Must be configured here so UseForwardedHeaders() picks it up at pipeline startup.
+// https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders =
+            ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+        // Clear the default loopback-only allowlist, then trust only the Docker internal network.
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+        options.KnownIPNetworks.Add(
+            new System.Net.IPNetwork(IPAddress.Parse("172.16.0.0"), 12)
+        );
+    });
+}
+
 // <snippet_UseSwagger>
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-    app.UseCors("DevCors"); // Apply CORS policy
+    app.UseCors("DevCors"); // dev: CORS needed because frontend and backend run on different ports
+else
+    // prod: rewrite RemoteIpAddress + Request.Scheme from Nginx's forwarded headers to see the real client IP
+    app.UseForwardedHeaders();
 
 // Catch all unhandled exceptions — logs full details server-side, returns a safe generic JSON 500 to the client
 app.UseExceptionHandler(errorApp =>
@@ -218,8 +314,32 @@ app.UseExceptionHandler(errorApp =>
         var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
 
         if (error != null)
+        {
+            // Walk the whole chain: EF Core wraps a DB connection failure in a non-DbException,
+            // so the DbException is nested, not top-level. See docs/plans/maintenance-page.md.
+            var isDbDown = false;
+            for (Exception? e = error.Error; e is not null; e = e.InnerException)
+            {
+                if (e is System.Data.Common.DbException)
+                {
+                    isDbDown = true;
+                    break;
+                }
+            }
+
+            if (isDbDown)
+            {
+                // DbException includes intentional maintenance window downtime
+                logger.LogError(error.Error, "Database unavailable");
+                context.Response.StatusCode = 503;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsJsonAsync(new { error = "Service temporarily unavailable." });
+                return;
+            }
+
             // Logs full exception with stack trace — visible server-side only
             logger.LogError(error.Error, "Unhandled exception");
+        }
 
         context.Response.StatusCode = 500;
         context.Response.ContentType = "application/json";
@@ -257,20 +377,13 @@ app.UseRateLimiter(); // must be after UseAuthorization so rate limit policies c
 
 app.MapControllers();
 
-// Health check endpoint — anonymous (no JWT), JSON response showing per-check status
+// Health check endpoint — anonymous (no JWT), status only.
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
     {
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new
-        {
-            status = report.Status.ToString(),
-            results = report.Entries.ToDictionary(
-                e => e.Key,
-                e => new { status = e.Value.Status.ToString(), duration = e.Value.Duration }
-            )
-        });
+        await context.Response.WriteAsJsonAsync(new { status = report.Status.ToString() });
     }
 }).AllowAnonymous();
 
@@ -280,14 +393,35 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#scope-validation
 using (var scope = app.Services.CreateScope())
 {
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     if (await userManager.FindByEmailAsync(DemoUser.Email) == null)
     {
         // EmailConfirmed = true — demo user bypasses email verification entirely
-        var demo = new IdentityUser { UserName = DemoUser.Email, Email = DemoUser.Email, EmailConfirmed = true };
+        var demo = new ApplicationUser { UserName = DemoUser.Email, Email = DemoUser.Email, EmailConfirmed = true };
         // Password is never used — demo endpoint bypasses auth entirely.
         // Random GUID + fixed suffix satisfies Identity's complexity rules (upper, digit, special char).
         await userManager.CreateAsync(demo, Guid.NewGuid().ToString() + "Aa1!");
+    }
+}
+
+// Seed Identity roles and promote admin — idempotent, logs and continues if admin not found
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    foreach (var role in new[] { Roles.Admin, Roles.AiUser })
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+
+    var admin = await userManager.FindByEmailAsync(adminEmail);
+    // Admin promotion — assigns both Admin and AiUser; idempotent checks prevent duplicate role entries
+    if (admin is { EmailConfirmed: true })
+    {
+        if (!await userManager.IsInRoleAsync(admin, Roles.Admin))
+            await userManager.AddToRoleAsync(admin, Roles.Admin);
+        if (!await userManager.IsInRoleAsync(admin, Roles.AiUser))
+            await userManager.AddToRoleAsync(admin, Roles.AiUser);
     }
 }
 

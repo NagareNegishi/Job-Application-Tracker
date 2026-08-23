@@ -1,3 +1,4 @@
+import { DeleteConfirmDialog } from "@/components/custom/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useDeleteDocument, useDownloadDocument, usePatchDocument } from "@/hooks/documentQuery";
 import { ApiError } from "@/lib/api";
-import type { DocumentType } from "@/types/enums";
+import { formatEnumLabel, type DocumentType } from "@/types/enums";
 import type { JobDocument } from "@/types/jobDocument";
 import { Check, Download, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
@@ -32,6 +33,7 @@ export function DocumentCard({ document }: DocumentCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editType, setEditType] = useState(document.type)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   // Confirm edits and send PATCH request to update document metadata
   function handleConfirm() {
@@ -45,6 +47,18 @@ export function DocumentCard({ document }: DocumentCardProps) {
     )
   }
 
+  // Opens confirmation dialog; actual delete happens in handleDeleteConfirm
+  function handleDeleteConfirm() {
+    deleteDocument(
+      { jobId: document.jobId, docId: document.docId },
+      {
+        onError: (err) => setDeleteError(
+          err instanceof ApiError ? err.message : "Failed to delete document."
+        )
+      }
+    )
+  }
+
   // Revert to original values if user cancels edit
   function handleCancel() {
     setEditName(baseName)
@@ -53,10 +67,10 @@ export function DocumentCard({ document }: DocumentCardProps) {
   }
 
   return (
-    <div className="border rounded p-3 flex items-center justify-between">
+    <div className="border rounded p-3 flex items-center justify-between min-w-0">
 
       {/* Display document name and type, or input fields if in edit mode */}
-      <div className="flex items-center gap-2 flex-1">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
         {isEditing ? (
           <>
             <Input
@@ -78,14 +92,14 @@ export function DocumentCard({ document }: DocumentCardProps) {
           </>
         ) : (
           <>
-            <p className="font-medium">{document.name}</p>
-            <p className="text-sm text-muted-foreground">{document.type}</p>
+            <p className="font-medium truncate">{document.name}</p>
+            <p className="text-sm text-muted-foreground">{formatEnumLabel(document.type)}</p>
           </>
         )}
       </div>
 
       {/* Action buttons: Edit (pencil), Download, Delete (trash) */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 shrink-0">
         
         {/* Edit actions */}
         {isEditing ? (
@@ -116,20 +130,23 @@ export function DocumentCard({ document }: DocumentCardProps) {
 
         {/* Delete action */}
         <Button variant="ghost" size="icon"
-          onClick={() => deleteDocument(
-            { jobId: document.jobId, docId: document.docId },
-            {
-              onError: (err) => setDeleteError(
-                err instanceof ApiError ? err.message : "Failed to delete document."
-              )
-            }
-          )}
+          className="text-destructive/70 hover:text-destructive"
+          onClick={() => setDeleteOpen(true)}
           disabled={isBusy || isEditing}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
       {deleteError && <p className="text-sm text-red-600 mt-1">{deleteError}</p>}
+
+      {/* Delete confirmation dialog */}
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Document?"
+        description="This document will be permanently removed."
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

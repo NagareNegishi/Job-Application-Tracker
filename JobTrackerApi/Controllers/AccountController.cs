@@ -1,8 +1,11 @@
+using JobTrackerApi.Data;
 using JobTrackerApi.Models;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace JobTrackerApi.Controllers;
@@ -16,11 +19,111 @@ namespace JobTrackerApi.Controllers;
 [Authorize]
 public class AccountController : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly JobTrackerContext _context;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(UserManager<IdentityUser> userManager)
+    public AccountController(UserManager<ApplicationUser> userManager, JobTrackerContext context, ILogger<AccountController> logger)
     {
         _userManager = userManager;
+        _context = context;
+        _logger = logger;
+    }
+
+    // Default columns returned when the user has never saved a preference
+    private static readonly List<string> DefaultColumns = ["status", "priority", "appliedAt", "closedAt"];
+
+    // Update this set whenever a new toggleable column is added to the frontend column config
+    private static readonly HashSet<string> AllowedColumns =
+    [
+        "status", "priority", "appliedAt", "closedAt",
+        "location", "workMode", "salary", "interviewAt", "jobUrl"
+    ];
+
+    [HttpGet("preferences")]
+    public async Task<IActionResult> GetPreferences()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId!);
+        if (user == null) return Unauthorized();
+
+        if (user.Preferences == null)
+            return Ok(new UserPreferencesDto { VisibleColumns = DefaultColumns });
+
+        var prefs = JsonSerializer.Deserialize<UserPreferencesDto>(user.Preferences);
+        return Ok(prefs ?? new UserPreferencesDto { VisibleColumns = DefaultColumns });
+    }
+
+    // PUT replaces the entire preferences blob — partial updates require spreading on the frontend.
+    // TODO: refactor to PATCH with merge semantics so callers only send fields they own (see docs/plans/preferences-patch-refactor.md)
+    [HttpPut("preferences")]
+    public async Task<IActionResult> UpdatePreferences(UserPreferencesDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId!);
+        if (user == null) return Unauthorized();
+
+        var invalid = dto.VisibleColumns.Where(c => !AllowedColumns.Contains(c)).ToList();
+        if (invalid.Count > 0)
+            return BadRequest(new { message = $"Unknown column keys: {string.Join(", ", invalid)}" });
+
+        user.Preferences = JsonSerializer.Serialize(dto);
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            return StatusCode(500, new { errors = result.Errors.Select(e => e.Description) });
+
+        return Ok(dto);
+    }
+
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // null if no profile yet; throws if >1 row (impossible — unique FK)
+        var profile = await _context.UserProfiles
+            .SingleOrDefaultAsync(p => p.UserId == userId);
+
+        if (profile == null)
+            return Ok(new { });
+
+        return Ok(profile.ToResponseDto());
+    }
+
+    [HttpPut("profile")]
+    public async Task<IActionResult> CreateProfile(ProfileDTO dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var exists = await _context.UserProfiles
+            .AnyAsync(p => p.UserId == userId);
+
+        if (exists)
+            return Conflict(new { message = "Profile already exists. Use PATCH to update." });
+
+        var profile = dto.ToProfile(userId!);
+        _context.UserProfiles.Add(profile);
+        await _context.SaveChangesAsync();
+
+        return Ok(profile.ToResponseDto());
+    }
+
+    [HttpPatch("profile")]
+    public async Task<IActionResult> UpdateProfile(ProfileDTO dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // null if no profile yet; throws if >1 row (impossible — unique FK)
+        var profile = await _context.UserProfiles
+            .SingleOrDefaultAsync(p => p.UserId == userId);
+
+        if (profile == null)
+            return NotFound(new { message = "No profile found. Use PUT to create one." });
+
+        dto.ApplyTo(profile);
+        await _context.SaveChangesAsync();
+
+        return Ok(profile.ToResponseDto());
     }
 
     // Change password — validates current password via Identity, blocks demo user
@@ -40,8 +143,22 @@ public class AccountController : ControllerBase
 
         var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+        {
+            _logger.LogWarning("Password change failed for user {UserId}", userId);
+            return BadRequest(new { errors = result.Errors.Select(e => e.Description) }); // human-readable part only
+        }
 
+        // Revoke all active tokens (password change must invalidate existing sessions across all devices)
+        var activeTokens = await _context.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null)
+            .ToListAsync();
+
+        foreach (var token in activeTokens)
+            token.RevokedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Password changed and all sessions revoked for user {UserId}", userId);
         return Ok();
     }
 }

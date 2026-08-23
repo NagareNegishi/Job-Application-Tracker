@@ -72,6 +72,8 @@ done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 for domain in \
     "registry.npmjs.org" \
     "api.anthropic.com" \
+    "ui.shadcn.com" \
+    "api.osv.dev" \
     "api.nuget.org" \
     "www.nuget.org" \
     "globalcdn.nuget.org" \

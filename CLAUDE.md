@@ -8,6 +8,13 @@ A full-stack job application tracker with:
 
 The dev environment runs in a Dev Container (`.devcontainer/`) with the PostgreSQL DB as a separate Docker service.
 
+## Docs
+
+- `docs/progress.md` — read at session start; update after each major feature completes.
+- `docs/plans/` — per-feature plan/decision files; read only the relevant file when working on a feature.
+- `docs/company-verification-api-reference.md` — contract for the external company verification API.
+- `memory/` — Claude session memory (gitignored). Read/write here, not the default hidden auto-memory location. Promote durable decisions to CLAUDE.md or a skill only with user review.
+
 ## Commands
 
 ### Backend (from `JobTrackerApi/`)
@@ -45,8 +52,11 @@ npm run build
 Config in `appsettings.Development.json` or environment variables:
 
 - **`ConnectionStrings:JobTrackerContext`** — PostgreSQL connection string
-- **`Storage:UploadsPath`** — upload directory; `DocumentsController` throws at startup if missing
+- **`Jwt:Key`** / **`Jwt:Issuer`** / **`Jwt:Audience`** / **`Jwt:ExpiryMinutes`** / **`Jwt:RefreshExpiryDays`** — JWT config; app fails fast on startup if missing
+- **`Storage:UploadsPath`** — local upload directory (dev only); created automatically if missing
 - **`Cors:AllowedOrigins`** — e.g. `["http://localhost:5173"]`
+- **`Anthropic:ApiKey`** — required for AI parsing; app fails fast on startup if missing
+- **`Admin:Email`** — seeds admin role on startup; app fails fast if missing
 
 ### Frontend
 
@@ -56,43 +66,68 @@ API base URL is read from `VITE_API_BASE_URL` (`.env`).
 
 ### Backend
 
-**Controllers** (`Controllers/`) inject `JobTrackerContext` directly — no service/repository layer.
-- `JobsController` — CRUD + JSON Patch, routes to `/jobs`
-- `DocumentsController` — file upload CRUD, nested under `/jobs/{jobId}/documents`
-- `AuthController` — register, login, refresh, logout; manages JWT access tokens and httpOnly refresh token cookie
+**Controllers** (`Controllers/`) inject `JobTrackerContext` directly. Storage and email go through service abstractions (`Services/`) — no general repository layer.
+- `JobsController` — CRUD + JSON Patch at `/api/jobs`; `POST /api/jobs/parse` for AI auto-fill
+- `DocumentsController` — upload/download/delete at `/api/jobs/{jobId}/documents`; demo user blocked (403)
+- `AuthController` — unauthenticated flows at `/api/auth/`: register, login, refresh, logout, demo login, demo reset, email confirmation, resend confirmation, forgot password, reset password, cleanup unverified accounts
+- `AccountController` — authenticated account management at `/api/account/`: change password, `GET/PUT /api/account/preferences`
+- `AdminController` — requires `Admin` role; `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access`
 
 All controllers except `AuthController` require `[Authorize]`. New controllers must include it.
+
+**Roles**: `Admin` and `AiUser` — defined as string constants; seeded on startup; included as JWT claims. Use `"Admin"` or `"AiEnabled"` policy names registered in `Program.cs`. Rate limit policies: `"auth"` (5/min per IP), `"resend-confirmation"` (3/hr per IP), `"parse"` (2/min per IP).
+
+**Services** (`Services/`):
+- `IStorageService` / `LocalStorageService` (dev) / `S3StorageService` (prod)
+- `IEmailService` / `LogEmailService` (dev) / `ResendEmailService` (prod)
+- `IParsingService` / `ClaudeParsingService` — AI job listing parser using `claude-haiku-4-5`; rate-limited to 2/min per IP (`"parse"` policy)
 
 **Models** (`Models/`):
 - `Job` / `Document` — EF Core entities with `ToResponseDto()` methods
 - `JobDTO` / `UpdateJobDTO` / `DocumentDTO` / `UpdateDocumentDTO` — request DTOs with validation attributes
-- `JobResponseDto` / `DocumentResponseDto` — response shapes
+- `JobResponseDto` / `DocumentResponseDto` — response shapes (never expose `StoredName`/`StorageKey`)
 - `Contact` / `Correspondence` — owned types, stored as JSON columns in `Jobs` table (not separate tables); `email` and `phone` must be sent as `undefined` not `""` to pass `[EmailAddress]`/`[Phone]` validation
-- `ValidationConstants` — max lengths, file size, allowed extensions (`.pdf`, `.doc`, `.docx`)
-- Enums: `JobStatus`, `Priority`, `DocumentType` — serialized as strings
+- `RefreshToken` — tracks issued refresh tokens for rotation/revocation
+- `AuthDTO` — `RegisterDTO`, `LoginDTO`, `ChangePasswordDTO`
+- `UserPreferencesDto` — visible column list + `autoFillEnabled`; stored as JSON on `ApplicationUser`
+- `ParseListingRequest` / `ParsedJobFields` — request/response DTOs for `POST /api/jobs/parse`
+- `DemoSeed` — static class; holds sample job keys + `CreateJobs(userId)` for demo data seeding
+- `ValidationConstants` — max lengths, file size, allowed extensions
+- Enums: `JobStatus`, `Priority`, `DocumentType`, `WorkMode` — serialized as strings
 
-**Document storage**: Files saved to `Storage:UploadsPath` with a GUID filename (`StoredName`); display name kept in `Document.Name`. No PUT — use DELETE + POST instead. Uploads use `FormData`, not JSON — don't set `Content-Type` manually.
+**Document storage**: Handled via `IStorageService` (dev: local filesystem at `Storage:UploadsPath`). Files stored with a GUID key (`StorageKey`); display name kept in `Document.Name`. No PUT — use DELETE + POST instead. Uploads use `FormData`, not JSON — don't set `Content-Type` manually.
 
 **JSON Patch**: Jobs support PATCH via `Microsoft.AspNetCore.JsonPatch.SystemTextJson`, applied to `UpdateJobDTO` then mapped to the entity.
+
+**`Data/JobTrackerContextFactory`**: `IDesignTimeDbContextFactory` implementation — required so `dotnet ef` CLI can build the DbContext without hitting the fail-fast JWT validation in `Program.cs`.
 
 ### Frontend
 
 **Data flow**: `pages/` → `hooks/` (TanStack Query) → `services/` (fetch wrappers) → API
 
-- `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, and handles 401 silent refresh automatically
+- `src/services/` — fetch wrappers using `apiFetch` from `src/lib/api.ts` (never plain `fetch`); `apiFetch` attaches the Bearer token, sends credentials, handles 401 silent refresh, and throws `MaintenanceError` on 503 during scheduled window (8 PM–7 AM NZ); includes `authService.ts`, `adminService.ts`, `preferencesService.ts`; silent refresh logic in `src/lib/auth.ts`
 - `src/hooks/` — TanStack Query hooks
-- `src/pages/` — `JobPage` (list), `JobDetailPage` (detail)
-- `src/components/` — feature components; `src/components/ui/` — shadcn/ui primitives
+- `src/pages/` — `JobPage` (list), `JobDetailPage` (detail), `LoginPage`, `RegisterPage`, `SettingsPage`, `CheckEmailPage`, `ConfirmEmailPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `AdminPage`, `DashboardPage` (analytics — client-side only, no API endpoint; `dashboardUtils.ts`)
+- `src/components/` — feature components including `KanbanBoard`, `ParseListingDialog`, `ColumnToggle`; `src/components/dashboard/` — dashboard widgets; `src/components/ui/` — shadcn/ui primitives
 - `src/types/` — TypeScript types mirroring backend models; enums use `const` object pattern (`enum` keyword disallowed by `erasableSyntaxOnly`)
 
-**Routing**: React Router 7 — `/` redirects to `/jobs`, detail at `/jobs/:id`.
+**Routing**: React Router 7 — `/` → `/jobs`, `/jobs/:id`, `/dashboard`, `/login`, `/register`, `/settings`, `/check-email`, `/confirm-email`, `/forgot-password`, `/reset-password`, `/admin`. All job + account routes wrapped in `ProtectedRoute`; `/admin` wrapped in `AdminRoute`.
 
 **Path alias**: `@/` resolves to `src/` (configured in `vite.config.ts`).
 
 ### Tests
 
-Tests use an in-memory EF Core database (unique per test class via `Guid.NewGuid()`). Controllers are instantiated directly — no HTTP pipeline involved. `DocumentsControllerTests` uses Moq for `IConfiguration` to supply the uploads path.
+Tests use an in-memory EF Core database (unique per test class via `Guid.NewGuid()`). Controllers are instantiated directly — no HTTP pipeline involved. `IStorageService` mocked via Moq in `DocumentsControllerTests`. `ClaimsPrincipal` set up manually for `[Authorize]`.
 
 ## Skills
 
 - When working on frontend UI or styling: follow: `.claude/skills/frontend-design/SKILL.md`
+- When writing or editing code: follow: `.claude/skills/code-commenting/SKILL.md`
+
+## Frontend Component Workflow
+
+Once a component is wired into a page, stop and wait for approval before starting the next one.
+
+## Collaboration
+
+Don't use the question-selector tool (AskUserQuestion) for open-ended architecture, design, or stack decisions — only for genuinely simple, discrete preference picks. For anything with real tradeoffs, lay out the options and a recommendation in plain text and let the user redirect.

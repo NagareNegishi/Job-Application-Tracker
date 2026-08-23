@@ -1,9 +1,11 @@
 /**
  * Note: While post new job could accept array of "Contact" in backend,
  * frontend simply pass empty array.
+ * Note: InterviewAt is intentionally excluded from the create flow — it is
+ * set later via the edit form once an interview is scheduled.
  */
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/DatePicker"
+import { DatePicker } from "@/components/custom/DatePicker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -16,6 +18,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
@@ -24,23 +27,15 @@ import { useCreateJob } from "@/hooks/jobQuery"
 import {
   MAX_COMPANY_LENGTH,
   MAX_DESCRIPTION_LENGTH,
+  MAX_JOB_URL_LENGTH,
+  MAX_LOCATION_LENGTH,
   MAX_NOTES_LENGTH,
   MAX_ROLE_LENGTH,
+  MAX_SOURCE_LENGTH,
 } from "@/lib/validationConstants"
-import { JobStatus, Priority } from "@/types/enums"
-import { useEffect, useState } from "react"
-
-// FormState represents the internal state of the job edit form
-interface FormState {
-  company: string
-  role: string
-  status: JobStatus
-  priority: Priority
-  appliedAt: Date | undefined
-  closedAt: Date | undefined
-  description: string
-  notes: string
-}
+import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
+import type { FormState } from "@/types/formTypes"
+import { useState } from "react"
 
 
 // Default form state for creating a new job, with empty fields and default status/priority
@@ -53,6 +48,12 @@ const defaultForm: FormState = {
   closedAt: undefined,
   description: "",
   notes: "",
+  jobUrl: "",
+  source: "",
+  salaryMin: "",
+  salaryMax: "",
+  location: "",
+  workMode: "",
 }
 
 
@@ -62,25 +63,18 @@ const defaultForm: FormState = {
 interface JobCreateSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialData?: Partial<FormState>
 }
 
 /**
  * JobCreateSheet component provides a form for editing job details.
  * It uses a Sheet component for the UI and manages form state internally.
  */
-export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
+export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateSheetProps) {
 
-  const [form, setForm] = useState<FormState>(defaultForm)
+  const [form, setForm] = useState<FormState>(() => ({ ...defaultForm, ...initialData }))
   const { mutate: createJob, isPending } = useCreateJob()
-  const [errors, setErrors] = useState<{ company?: string; role?: string }>({})
-
-  // Reset form when sheet opens with default values
-  useEffect(() => {
-    if (open) {
-      setForm(defaultForm)
-      setErrors({})
-    }
-  }, [open])
+  const [errors, setErrors] = useState<{ company?: string; role?: string; jobUrl?: string; salary?: string }>({})
 
   // Helper function to update form state for a specific field
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -90,9 +84,13 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
   // Handles form submission by comparing current form state with original job data
   function handleSubmit() {
     // Validate required fields
-    const newErrors: { company?: string; role?: string } = {}
+    const newErrors: { company?: string; role?: string; jobUrl?: string; salary?: string } = {}
     if (!form.company.trim()) newErrors.company = "Company is required"
     if (!form.role.trim()) newErrors.role = "Role is required"
+    if (form.jobUrl && !/^https?:\/\//i.test(form.jobUrl))
+      newErrors.jobUrl = "URL must start with http:// or https://"
+    if (form.salaryMin !== "" && form.salaryMax !== "" && form.salaryMin > form.salaryMax)
+      newErrors.salary = "Min salary must be less than or equal to max"
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
@@ -110,6 +108,12 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
         closedAt: form.closedAt?.toISOString(),
         description: form.description || undefined,
         notes: form.notes || undefined,
+        jobUrl: form.jobUrl || undefined,
+        source: form.source || undefined,
+        salaryMin: form.salaryMin !== "" ? form.salaryMin : undefined,
+        salaryMax: form.salaryMax !== "" ? form.salaryMax : undefined,
+        location: form.location || undefined,
+        workMode: form.workMode || undefined,
       },
       { onSuccess: () => onOpenChange(false) }
     )
@@ -117,12 +121,12 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="overflow-y-auto sm:max-w-lg">
+      <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Add New Job</SheetTitle>
         </SheetHeader>
 
-        {/* form fields go here */}
+        <div className="flex-1 overflow-y-auto px-4 space-y-4">
 
         {/* Edit Company */}
         <div className="space-y-1.5">
@@ -161,7 +165,7 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
             </SelectTrigger>
             <SelectContent>
               {Object.values(JobStatus).map(s => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>{formatEnumLabel(s)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -205,6 +209,84 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
           />
         </div>
 
+        {/* Job URL */}
+        <div className="space-y-1.5">
+          <Label htmlFor="jobUrl">Job URL</Label>
+          <Input
+            id="jobUrl"
+            type="url"
+            value={form.jobUrl}
+            onChange={e => setField("jobUrl", e.target.value)}
+            maxLength={MAX_JOB_URL_LENGTH}
+            placeholder="https://..."
+          />
+          {errors.jobUrl && <p className="text-sm text-destructive">{errors.jobUrl}</p>}
+        </div>
+
+        {/* Source */}
+        <div className="space-y-1.5">
+          <Label htmlFor="source">Source</Label>
+          <Input
+            id="source"
+            value={form.source}
+            onChange={e => setField("source", e.target.value)}
+            maxLength={MAX_SOURCE_LENGTH}
+            placeholder="LinkedIn, Indeed, referral..."
+          />
+        </div>
+
+        {/* Location */}
+        <div className="space-y-1.5">
+          <Label htmlFor="location">Location</Label>
+          <Input
+            id="location"
+            value={form.location}
+            onChange={e => setField("location", e.target.value)}
+            maxLength={MAX_LOCATION_LENGTH}
+            placeholder="City, Country"
+          />
+        </div>
+
+        {/* Work Mode */}
+        <div className="space-y-1.5">
+          <Label>Work Mode</Label>
+          <Select
+            value={form.workMode}
+            onValueChange={v => setField("workMode", v as WorkMode)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select work mode" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(WorkMode).map(m => (
+                <SelectItem key={m} value={m}>{formatEnumLabel(m)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Salary */}
+        <div className="space-y-1.5">
+          <Label>Salary Range</Label>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMin}
+              onChange={e => setField("salaryMin", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Min"
+            />
+            <Input
+              type="number"
+              min={0}
+              value={form.salaryMax}
+              onChange={e => setField("salaryMax", e.target.value === "" ? "" : parseInt(e.target.value, 10))}
+              placeholder="Max"
+            />
+          </div>
+          {errors.salary && <p className="text-sm text-destructive">{errors.salary}</p>}
+        </div>
+
         {/* Edit Description */}
         <div className="space-y-1.5">
           <Label htmlFor="description">Description</Label>
@@ -232,12 +314,14 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
           <p className="text-xs text-muted-foreground text-right">{form.notes.length} / {MAX_NOTES_LENGTH}</p>
         </div>
 
+        </div>
+
         {/* Action buttons */}
-        <div className="flex gap-2 pt-2">
+        <SheetFooter className="flex-row justify-between">
           {/* Cancel just closes the sheet without saving */}
           <Button
             variant="outline"
-            className="flex-1"
+            className="hover:bg-gray-200 dark:hover:bg-gray-700"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
@@ -245,13 +329,13 @@ export function JobCreateSheet({ open, onOpenChange }: JobCreateSheetProps) {
           </Button>
           {/* Save triggers form submission */}
           <Button
-            className="flex-1"
+            className="w-1/2 bg-blue-500 hover:bg-blue-600 text-white"
             onClick={handleSubmit}
             disabled={isPending}
           >
             {isPending ? "Saving..." : "Save"}
           </Button>
-        </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   )

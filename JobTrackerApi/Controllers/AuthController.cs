@@ -21,20 +21,22 @@ namespace JobTrackerApi.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _config;
     private readonly JobTrackerContext _context;
     private readonly IWebHostEnvironment _env;
     private readonly IStorageService _storageService;
     private readonly IEmailService _emailService;
+    private readonly ILogger<AuthController> _logger;
 
     public AuthController(
-        UserManager<IdentityUser> userManager,
+        UserManager<ApplicationUser> userManager,
         IConfiguration config,
         JobTrackerContext context,
         IWebHostEnvironment env,
         IStorageService storageService,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<AuthController> logger)
     {
         _userManager = userManager;
         _config = config;
@@ -42,6 +44,7 @@ public class AuthController : ControllerBase
         _env = env;
         _storageService = storageService;
         _emailService = emailService;
+        _logger = logger;
     }
 
     // Demo login — bypasses password check, issues tokens for the seeded demo account directly
@@ -68,10 +71,11 @@ public class AuthController : ControllerBase
             await _context.SaveChangesAsync();
         }
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
+        _logger.LogInformation("Demo login for user {UserId}", user.Id);
         return Ok(new { accessToken });
     }
 
@@ -96,6 +100,13 @@ public class AuthController : ControllerBase
             await _storageService.DeleteAsync(doc.StoredName);
 
         _context.Jobs.RemoveRange(jobs);
+        user.Preferences = null; // reset theme, columns, autoFill to defaults
+        await _userManager.UpdateAsync(user);
+
+        // Profile isn't seeded — just clear it
+        var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        if (profile != null) _context.UserProfiles.Remove(profile);
+
         await _context.SaveChangesAsync();
 
         _context.Jobs.AddRange(DemoSeed.CreateJobs(user.Id));
@@ -115,11 +126,14 @@ public class AuthController : ControllerBase
         if (existing != null && !existing.EmailConfirmed && existing.Email != DemoUser.Email)
             await _userManager.DeleteAsync(existing);
 
-        var user = new IdentityUser { UserName = dto.Email, Email = dto.Email };
+        var user = new ApplicationUser { UserName = dto.Email, Email = dto.Email };
         var result = await _userManager.CreateAsync(user, dto.Password);
 
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+        {
+            _logger.LogWarning("Registration failed for email {Email}", dto.Email);
+            return BadRequest(result.Errors.Select(e => e.Description));
+        }
 
         // Token is signed by Identity using the user's security stamp — invalidated if password changes
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -133,6 +147,7 @@ public class AuthController : ControllerBase
         );
 
         // Don't auto-login — user must confirm email first
+        _logger.LogInformation("User registered, awaiting email confirmation: {UserId}", user.Id);
         return Ok(new { message = "Registration successful. Check your email to confirm your account." });
     }
 
@@ -189,7 +204,23 @@ public class AuthController : ControllerBase
         var result = await _userManager.ConfirmEmailAsync(user, decoded);
 
         if (!result.Succeeded)
+        {
+            _logger.LogWarning("Email confirmation failed for user {UserId}", userId);
             return BadRequest(new { message = "Invalid or expired confirmation link." });
+        }
+
+        _logger.LogInformation("Email confirmed for user {UserId}", userId);
+
+        // Admin promotion — assigns both Admin and AiUser; idempotent checks prevent duplicate role entries
+        var configAdminEmail = _config["Admin:Email"];
+        if (configAdminEmail != null &&
+            string.Equals(user.Email, configAdminEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!await _userManager.IsInRoleAsync(user, Roles.Admin))
+                await _userManager.AddToRoleAsync(user, Roles.Admin);
+            if (!await _userManager.IsInRoleAsync(user, Roles.AiUser))
+                await _userManager.AddToRoleAsync(user, Roles.AiUser);
+        }
 
         return Ok(new { message = "Email confirmed. You can now log in." });
     }
@@ -200,20 +231,25 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("auth")] // 5 requests per minute per IP — prevents brute force
     public async Task<IActionResult> Login(LoginDTO dto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email);
         // Handle wrong email/password together to prevent attacker guessing
-        if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        var passwordValid = await _userManager.CheckPasswordAsync(user ?? new ApplicationUser(), dto.Password);
+        if (user == null || !passwordValid)
+        {
+            _logger.LogWarning("Login failed for email {Email}", dto.Email);
             return Unauthorized();
+        }
 
         // 403 not 401 — password was correct but account is not yet activated
         if (!user.EmailConfirmed)
             return StatusCode(403, new { message = "Email not verified." });
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessToken(user);
         var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
         // the refresh token is set in cookie not for JS
         SetRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiresAt);
+        _logger.LogInformation("Login successful for user {UserId}", user.Id);
         return Ok(new { accessToken });
     }
 
@@ -236,7 +272,7 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByIdAsync(existing.UserId);
         if (user == null) return Unauthorized();
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessToken(user);
         var newRefreshToken = await CreateRefreshTokenAsync(user.Id);
 
         SetRefreshTokenCookie(newRefreshToken.Token, newRefreshToken.ExpiresAt);
@@ -282,6 +318,7 @@ public class AuthController : ControllerBase
             $"<p>Click <a href='{link}'>here</a> to reset your password.</p><p>This link expires in 24 hours. If you didn't request a reset, ignore this email.</p>"
         );
 
+        _logger.LogInformation("Password reset requested for {UserId}", user.Id);
         return Ok();
     }
 
@@ -290,15 +327,32 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResetPassword(ResetPasswordDTO dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null) return BadRequest(new { message = "Invalid reset link." });
 
         // Reverse URL encoding before Identity validates the token signature
         var decoded = Uri.UnescapeDataString(dto.Token);
+        // Same message for missing user and bad/expired token
+        if (user == null)
+            return BadRequest(new { message = "Invalid or expired reset link." });
+
         var result = await _userManager.ResetPasswordAsync(user, decoded, dto.NewPassword);
 
         if (!result.Succeeded)
-            return BadRequest(new { message = result.Errors.First().Description });
+        {
+            _logger.LogWarning("Password reset failed for user {UserId}", user.Id);
+            return BadRequest(new { message = "Invalid or expired reset link." });
+        }
 
+        // Revoke all active tokens (password reset must invalidate existing sessions across all devices)
+        var activeTokens = await _context.RefreshTokens
+            .Where(t => t.UserId == user.Id && t.RevokedAt == null)
+            .ToListAsync();
+
+        foreach (var token in activeTokens)
+            token.RevokedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Password reset and all sessions revoked for user {UserId}", user.Id);
         return Ok(new { message = "Password reset successful." });
     }
 
@@ -310,8 +364,19 @@ public class AuthController : ControllerBase
             return _config["App:FrontendBaseUrl"]
                 ?? throw new InvalidOperationException("App:FrontendBaseUrl is not configured.");
 
-        // In production, Nginx passes the real public hostname (proxy_set_header Host $host)
-        return $"https://{Request.Host.Value}";
+        // Validate Request.Host against the allowlist — prevents attacker-controlled reset links
+        var allowedOrigins = _config.GetSection("App:AllowedFrontendOrigins").Get<string[]>()
+            ?? throw new InvalidOperationException("App:AllowedFrontendOrigins is not configured.");
+
+        var host = Request.Host.Value;
+        var isAllowed = allowedOrigins
+            .Select(o => new Uri(o).Authority)
+            .Contains(host, StringComparer.OrdinalIgnoreCase);
+
+        if (!isAllowed)
+            throw new InvalidOperationException($"Request.Host '{host}' is not in App:AllowedFrontendOrigins.");
+
+        return $"https://{host}";
     }
 
     // Helper method to set the refresh token as an httpOnly cookie
@@ -329,14 +394,22 @@ public class AuthController : ControllerBase
     }
 
     // Helper method to generate Access token
-    private string GenerateAccessToken(IdentityUser user)
+    private async Task<string> GenerateAccessToken(ApplicationUser user)
     {
-        var claims = new[]
+        var roles = await _userManager.GetRolesAsync(user);
+
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim("stamp", user.SecurityStamp!) // SecurityStamp come from AspNet, not JWT standard claim names
         };
+
+        // "role" written explicitly — ClaimTypes.Role serializes as the full URI, not "role", breaking frontend JWT decoding.
+        // InboundClaimTypeMap maps "role" → ClaimTypes.Role on parse, so RequireRole() policies still work.
+        foreach (var role in roles)
+            claims.Add(new Claim("role", role));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var token = new JwtSecurityToken(

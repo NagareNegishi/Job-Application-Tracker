@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { ResponsiveButton } from "@/components/custom/ResponsiveButton"
 import { DocumentCard } from "@/components/DocumentCard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateDocument, useDocuments } from "@/hooks/documentQuery"
@@ -38,7 +38,7 @@ export function DocumentList({ jobId }: DocumentListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-y-2">
         <h2 className="text-sm uppercase tracking-wider font-semibold text-muted-foreground border-l-2 border-primary pl-3">Documents</h2>
         <div className="flex items-center gap-2">
           <input
@@ -58,13 +58,14 @@ export function DocumentList({ jobId }: DocumentListProps) {
               <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
-          <Button
+          <ResponsiveButton
+            icon={Plus}
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
           >
-            <Plus className="h-4 w-4" />{isUploading ? "Uploading..." : "Add Document"}
-          </Button>
+            {isUploading ? "Uploading..." : "Add Document"}
+          </ResponsiveButton>
         </div>
       </div>
       {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}

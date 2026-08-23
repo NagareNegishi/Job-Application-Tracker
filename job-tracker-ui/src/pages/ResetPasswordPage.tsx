@@ -1,3 +1,4 @@
+import AuthBrand from "@/components/AuthBrand"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,13 +23,16 @@ export default function ResetPasswordPage() {
   // Guard: malformed link — missing token or email
   if (!token || !email) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-full max-w-sm space-y-4 text-center">
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <AuthBrand />
+          <div className="space-y-4 text-center mt-10">
           <h1 className="text-2xl font-semibold">Invalid reset link</h1>
           <p className="text-sm text-muted-foreground">
             Try requesting a new link from the{" "}
             <Link to="/forgot-password" className="underline">forgot password page</Link>.
           </p>
+          </div>
         </div>
       </div>
     )
@@ -49,8 +53,10 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <AuthBrand />
+        <form onSubmit={handleSubmit} className="w-full space-y-4 mt-10">
         <h1 className="text-2xl font-semibold">Set new password</h1>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -64,7 +70,8 @@ export default function ResetPasswordPage() {
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Resetting..." : "Reset password"}
         </Button>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }
