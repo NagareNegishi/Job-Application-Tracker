@@ -31,9 +31,9 @@ import { AlignmentDialog } from "./AlignmentDialog";
 import { ColumnToggle } from "./ColumnToggle";
 import { JobCreateSheet } from "./JobCreateSheet";
 import { ParseListingDialog } from "./ParseListingDialog";
-import { PriorityDot } from "./ui/PriorityDot";
-import { StaleIndicator } from "./ui/StaleIndicator";
-import { StatusBadge } from "./ui/StatusBadge";
+import { PriorityDot } from "./custom/PriorityDot";
+import { StaleIndicator } from "./custom/StaleIndicator";
+import { StatusBadge } from "./custom/StatusBadge";
 
 const COL_RESIZE_MIN = 80;
 const COL_RESIZE_MAX = 550;
