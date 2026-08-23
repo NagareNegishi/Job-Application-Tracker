@@ -2,6 +2,7 @@
 
 import { describe, it, expect } from "vitest";
 import { classifyStatus, computeSummary, computeResponseRate, computeStatusFunnel, computeWeeklyApplications, computeStaleApplications } from "./dashboardUtils";
+import type { Job } from "@/types/job";
 
 describe("classifyStatus", () => {
   it("classifies active statuses correctly", () => {
@@ -29,12 +30,12 @@ describe("computeResponseRate", () => {
   });
 
   it("returns 0 when no eligible applications exist", () => {
-    const jobs = [{ status: "Wishlist" }, { status: "Withdrawn" }] as any[];
+    const jobs = [{ status: "Wishlist" }, { status: "Withdrawn" }] as unknown as Job[];
     expect(computeResponseRate(jobs)).toBe(0);
   });
 
   it("returns 0 when all eligible jobs are Applied or NoResponse", () => {
-    const jobs = [{ status: "Applied" }, { status: "NoResponse" }] as any[];
+    const jobs = [{ status: "Applied" }, { status: "NoResponse" }] as unknown as Job[];
     expect(computeResponseRate(jobs)).toBe(0);
   });
 
@@ -45,13 +46,13 @@ describe("computeResponseRate", () => {
       { status: "Rejected" },   // replied
       { status: "Wishlist" },   // excluded
       { status: "Withdrawn" },  // excluded
-    ] as any[];
+    ] as unknown as Job[];
     // responded=2, eligible=3 → 67%
     expect(computeResponseRate(jobs)).toBe(67);
   });
 
   it("returns 100 when all eligible jobs received a response", () => {
-    const jobs = [{ status: "Screening" }, { status: "Offered" }] as any[];
+    const jobs = [{ status: "Screening" }, { status: "Offered" }] as unknown as Job[];
     expect(computeResponseRate(jobs)).toBe(100);
   });
 });
@@ -68,7 +69,7 @@ describe("computeSummary", () => {
       { status: "Offered" },
       { status: "Rejected" },
       { status: "Rejected" },
-    ] as any[];
+    ] as unknown as Job[];
     expect(computeSummary(jobs)).toEqual({ active: 2, won: 1, closed: 2 });
   });
 });
@@ -93,7 +94,7 @@ describe("computeStatusFunnel", () => {
       { status: "Applied" },
       { status: "Applied" },
       { status: "Screening" },
-    ] as any[];
+    ] as unknown as Job[];
     const result = computeStatusFunnel(jobs);
     expect(result.find(e => e.status === "Applied")?.count).toBe(2);
     expect(result.find(e => e.status === "Screening")?.count).toBe(1);
@@ -107,7 +108,7 @@ describe("computeWeeklyApplications", () => {
   });
 
   it("excludes jobs without appliedAt", () => {
-    const jobs = [{ status: "Applied" }] as any[];
+    const jobs = [{ status: "Applied" }] as unknown as Job[];
     expect(computeWeeklyApplications(jobs)).toEqual([]);
   });
 
@@ -115,7 +116,7 @@ describe("computeWeeklyApplications", () => {
     const jobs = [
       { appliedAt: "2025-06-30T00:00:00Z" }, // Monday
       { appliedAt: "2025-07-02T00:00:00Z" }, // Wednesday, same week
-    ] as any[];
+    ] as unknown as Job[];
     const result = computeWeeklyApplications(jobs);
     expect(result).toHaveLength(1);
     expect(result[0].count).toBe(2);
@@ -126,7 +127,7 @@ describe("computeWeeklyApplications", () => {
     const jobs = [
       { appliedAt: "2025-07-07T00:00:00Z" }, // week of Jul 7
       { appliedAt: "2025-06-30T00:00:00Z" }, // week of Jun 30
-    ] as any[];
+    ] as unknown as Job[];
     const result = computeWeeklyApplications(jobs);
     expect(result[0].week).toBe("Jul 3 '25");
     expect(result[1].week).toBe("Jul 10 '25");
@@ -146,19 +147,19 @@ describe("computeStaleApplications", () => {
       { status: "Rejected",   statusChangedAt: old },
       { status: "Withdrawn",  statusChangedAt: old },
       { status: "NoResponse", statusChangedAt: old },
-    ] as any[];
+    ] as unknown as Job[];
     expect(computeStaleApplications(jobs, 21)).toHaveLength(0);
   });
 
   it("excludes jobs with a future closedAt", () => {
     const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const jobs = [{ status: "Applied", statusChangedAt: "2020-01-01T00:00:00Z", closedAt: future }] as any[];
+    const jobs = [{ status: "Applied", statusChangedAt: "2020-01-01T00:00:00Z", closedAt: future }] as unknown as Job[];
     expect(computeStaleApplications(jobs, 21)).toHaveLength(0);
   });
 
   it("excludes jobs updated within the threshold", () => {
     const recent = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(); // 5 days ago, well under threshold
-    const jobs = [{ status: "Applied", statusChangedAt: recent }] as any[];
+    const jobs = [{ status: "Applied", statusChangedAt: recent }] as unknown as Job[];
     expect(computeStaleApplications(jobs, 21)).toHaveLength(0);
   });
 
@@ -169,7 +170,7 @@ describe("computeStaleApplications", () => {
       { status: "Screening",  statusChangedAt: old },
       { status: "Assessment", statusChangedAt: old },
       { status: "Interview",  statusChangedAt: old },
-    ] as any[];
+    ] as unknown as Job[];
     expect(computeStaleApplications(jobs, 21)).toHaveLength(4);
   });
 });
