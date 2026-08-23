@@ -23,7 +23,7 @@ export default function LoginPage() {
     try {
       await loginDemo()
       navigate("/jobs")
-    } catch (err) {
+    } catch {
       setError("Demo login failed. Please try again.")
     } finally {
       setDemoLoading(false)
