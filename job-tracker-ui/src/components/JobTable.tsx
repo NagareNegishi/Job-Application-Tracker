@@ -16,6 +16,7 @@ import {
 import { useJobs } from "@/hooks/jobQuery";
 import { useJobFilters, type SortField } from "@/hooks/useJobFilters";
 import { usePreferences } from "@/hooks/preferencesQuery";
+import { useRemountableDialog } from "@/hooks/useRemountableDialog";
 import { COLUMNS } from "@/lib/columns";
 import type { ColumnKey } from "@/lib/columns";
 import { cn } from "@/lib/utils";
@@ -219,7 +220,7 @@ export function JobTable() {
   // AI users see ParseListingDialog first, non-AI sers see JobCreateSheet directly
   const [parseOpen, setParseOpen] = useState(false);
   const [alignmentOpen, setAlignmentOpen] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const { open: sheetOpen, setOpen: setSheetOpen, openDialog: openSheet, key: sheetKey } = useRemountableDialog();
   const [initialData, setInitialData] = useState<Partial<FormState> | undefined>(undefined);
   const navigate = useNavigate();
   // visibleColumns from prefs; fall back to defaults while loading.
@@ -292,18 +293,18 @@ export function JobTable() {
       setParseOpen(true);
     } else {
       setInitialData(undefined);
-      setSheetOpen(true);
+      openSheet();
     }
   }
 
   function handleFill(data: Partial<FormState>) {
     setInitialData(data);
-    setSheetOpen(true);
+    openSheet();
   }
 
   function handleFillManually() {
     setInitialData(undefined);
-    setSheetOpen(true);
+    openSheet();
   }
 
   const sortProps = { activeField: sortField, dir: sortDir, onSort: setSort };
@@ -606,7 +607,7 @@ export function JobTable() {
         onOpenChange={setAlignmentOpen}
         onAutoFill={handleFill}
       />
-      <JobCreateSheet open={sheetOpen} onOpenChange={setSheetOpen} initialData={initialData} />
+      <JobCreateSheet key={sheetKey} open={sheetOpen} onOpenChange={setSheetOpen} initialData={initialData} />
     </div>
   );
 }

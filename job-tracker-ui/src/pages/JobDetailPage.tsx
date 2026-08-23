@@ -18,14 +18,14 @@ import { JobEditSheet } from "@/components/JobEditSheet";
 import { JobHeader } from "@/components/JobHeader";
 import { JobInfoCard } from "@/components/JobInfoCard";
 import { useJob } from "@/hooks/jobQuery";
-import { useState } from "react";
+import { useRemountableDialog } from "@/hooks/useRemountableDialog";
 import NavBar from "@/components/NavBar";
 import { useParams } from "react-router";
 
 
 function JobDetailPage() {
 
-  const [editOpen, setEditOpen] = useState(false)
+  const { open: editOpen, setOpen: setEditOpen, openDialog: openEdit, key: editKey } = useRemountableDialog()
 
   const { id } = useParams()
   const jobId = id ? parseInt(id) : NaN
@@ -40,7 +40,7 @@ function JobDetailPage() {
       <NavBar />
       <div className="max-w-5xl mx-auto px-0 py-8 sm:px-6">
         <div className="bg-card rounded-lg shadow-sm px-2 py-3 sm:p-6">
-          <JobHeader job={job} onEdit={() => setEditOpen(true)} />
+          <JobHeader job={job} onEdit={openEdit} />
           <hr className="border-t border-border mb-6" />
           <div className="px-1 sm:px-4 space-y-6">
             <JobInfoCard job={job} />
@@ -55,7 +55,7 @@ function JobDetailPage() {
             <DocumentList jobId={jobId} />
           </div>
 
-          <JobEditSheet job={job} open={editOpen} onOpenChange={setEditOpen} />
+          <JobEditSheet key={editKey} job={job} open={editOpen} onOpenChange={setEditOpen} />
         </div>
       </div>
       <AnalysisSection job={job} />

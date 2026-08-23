@@ -35,7 +35,7 @@ import {
 } from "@/lib/validationConstants"
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
 import type { FormState } from "@/types/formTypes"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 
 // Default form state for creating a new job, with empty fields and default status/priority
@@ -72,17 +72,9 @@ interface JobCreateSheetProps {
  */
 export function JobCreateSheet({ open, onOpenChange, initialData }: JobCreateSheetProps) {
 
-  const [form, setForm] = useState<FormState>(defaultForm)
+  const [form, setForm] = useState<FormState>(() => ({ ...defaultForm, ...initialData }))
   const { mutate: createJob, isPending } = useCreateJob()
   const [errors, setErrors] = useState<{ company?: string; role?: string; jobUrl?: string; salary?: string }>({})
-
-  // Reset merges defaultForm with initialData so parsed fields pre-fill the form
-  useEffect(() => {
-    if (open) {
-      setForm({ ...defaultForm, ...initialData })
-      setErrors({})
-    }
-  }, [open])
 
   // Helper function to update form state for a specific field
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
