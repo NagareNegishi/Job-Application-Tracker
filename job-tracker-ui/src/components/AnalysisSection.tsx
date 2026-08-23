@@ -21,7 +21,7 @@ import { analyseAlignment, analyseGaps, analyseInterviewQuestions, analyseQuesti
 import type { Job } from "@/types/job"
 import { isProfileReady } from "@/utils/profileReady"
 import { Bot, Sparkles } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Link } from "react-router"
 
 interface AnalysisSectionProps {
@@ -75,10 +75,6 @@ export function AnalysisSection({ job }: AnalysisSectionProps) {
   const descriptionReady = (job.description?.length ?? 0) >= MIN_ANALYSIS_DESCRIPTION
   const profileReady = isProfileReady(profile)
   const disabled = !descriptionReady || !profileReady
-
-  useEffect(() => {
-    if (disabled) setRequestError(null)
-  }, [disabled])
 
   if (!hasRole("AiUser")) return null
 
