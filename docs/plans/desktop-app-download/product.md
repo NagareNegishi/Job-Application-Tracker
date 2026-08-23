@@ -38,21 +38,21 @@ client over the browser.
   linking to the desktop app download.
 - When an authenticated user views Settings, the system shall display a
   section linking to the desktop app download.
-- When the prompt renders, the system shall fetch `latest.json` from the
-  public releases repo and display one download button per platform key
-  present in its manifest.
+- When the prompt renders, the system shall fetch the release manifest from a
+  backend endpoint and display one download button per platform key present.
+  *(browser can't fetch `latest.json` directly — GitHub's release CDN sends
+  no CORS headers; see impl.md.)*
 - When the user activates a platform's download button, the system shall open
   that platform's asset URL from the manifest in a new tab.
-- When the `latest.json` fetch fails, the system shall fall back to a single
-  link to the static `releases/latest` page.
+- When the manifest fetch fails, the system shall fall back to a single link
+  to the static `releases/latest` page.
 
 ## stack
 ✅ settled
 
-Frontend only (`job-tracker-ui`), `services/` + component convention. Fetch
-`releases/latest/download/latest.json` from the public releases repo (GitHub's
-release CDN, not the rate-limited `api.github.com` API) for version and
-per-platform asset URLs. No backend proxy needed.
+Frontend (`job-tracker-ui`, `services/` + component convention) plus a new
+read-only backend endpoint (`JobTrackerApi`) that fetches `latest.json`
+server-side and caches it in memory (short TTL).
 
 ## target device / platform
 ✅ settled
@@ -72,7 +72,8 @@ anywhere in this repo's docs or code.
 
 - No auto-updater or in-app installer — this only links out to GitHub releases.
 - No migration or setup work for the desktop app itself — that's already done.
-- No new backend endpoint.
+- No webhook or manual step to keep the backend's cached URLs current — the
+  cache just re-fetches itself on TTL expiry.
 - No dismiss/"don't show again" state.
 
 ## open questions
