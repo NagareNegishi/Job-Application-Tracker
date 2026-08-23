@@ -109,11 +109,27 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Maintenance page | Redirect to `/maintenance` on in-window 503; health-poll auto-recovery; see `docs/plans/maintenance-page.md` |
 | Profile inline view/edit | Read-only sections with pencil → in-place edit; see `docs/plans/profile-inline-edit.md` — remaining items are optional polish |
 
+## Desktop App Download Status
+
+Product and impl plans settled; see `docs/plans/desktop-app-download/`.
+Backend tests moved up to run right after the endpoint they cover, ahead of
+the frontend steps, instead of last as originally numbered in impl.md.
+
+| Order | Item | Status |
+|---|---|---|
+| 1 | Backend `GET /api/desktop-release` endpoint + `IDesktopReleaseService`/`DesktopReleaseService` (GitHub Releases API call, filename-pattern matching, `IMemoryCache`, 502 on upstream failure with empty cache) — impl.md Step 1 | Not started |
+| 2 | Backend tests: filename-matching per platform, Linux-absent case, cache/fallback on upstream failure — impl.md Step 7 | Not started |
+| 3 | Frontend `desktopReleaseService.ts` — impl.md Step 2 | Not started |
+| 4 | Frontend `desktopReleaseQuery.ts` hook — impl.md Step 3 | Not started |
+| 5 | `DesktopDownloadPrompt` component — impl.md Step 4 | Not started |
+| 6 | Wire into `LoginPage` — impl.md Step 5 | Not started |
+| 7 | Wire into `SettingsPage` — impl.md Step 6 | Not started |
+
 ## Active / Upcoming Work
 
 | Plan | Item | Status |
 |---|---|---|
-| Desktop app download prompt | Link web app users to the desktop app releases at first-touch, failed login, and Settings; see `docs/plans/desktop-app-download/product.md` | Idea |
+| Desktop app download prompt | Link web app users to the desktop app releases on the login screen and in Settings; see Desktop App Download Status below and `docs/plans/desktop-app-download/product.md` | In progress |
 | App rebrand | New app name (candidate "NooBi", unsettled) + logo/icon rollout checklist across repo, config, and UI; see `docs/plans/app-rebrand/product.md` | Idea |
 | Subscription tiers (Free / AI plan) | Self-serve plan signup with AI plan gated by payment, replacing the admin-only AI-access toggle; see `docs/plans/subscription-tiers/product.md` | Idea |
 | Hosting migration off AWS | Move off EC2/RDS to a stable, cost-effective platform and remove the cost-driven nightly maintenance window; see `docs/plans/hosting-migration/product.md` | Idea |

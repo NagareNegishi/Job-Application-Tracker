@@ -65,6 +65,21 @@ result in `IMemoryCache` on a short TTL (e.g. 1 hour). Returns an error
 status if the upstream call fails and nothing is cached yet, so the
 frontend's fallback path has a clear signal to act on.
 
+Two implementation decisions resolved while breaking this into concrete
+tasks:
+- The GitHub-call + filename-match + cache logic lives in a new
+  `IDesktopReleaseService` / `DesktopReleaseService` in `Services/`
+  (registered via `AddHttpClient<IDesktopReleaseService,
+  DesktopReleaseService>()`), not inline in the `Program.cs` route — matches
+  the `IStorageService`/`IEmailService` convention and lets Step 7 test it
+  directly the way `LocalStorageServiceTests.cs` does. The minimal-API route
+  stays a thin wrapper.
+- The error status on upstream failure with an empty cache is **502**, not
+  503 — `apiFetch` (`job-tracker-ui/src/lib/api.ts:86-92`) treats *any* 503
+  from *any* endpoint as the nightly DB-maintenance signal and redirects the
+  whole app to `/maintenance` when within the 8PM–7AM NZ window. Reusing 503
+  here would piggyback on that unrelated behavior; 502 avoids the collision.
+
 ### Step 2: Add the frontend release-installer service function
 🤖 ai-audited(claude-sonnet-5) · ❔ unverified (net-new)
 
