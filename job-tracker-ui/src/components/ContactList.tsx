@@ -1,6 +1,6 @@
-import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
+import { DeleteConfirmDialog } from "@/components/custom/DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { ResponsiveButton } from "@/components/ui/ResponsiveButton";
+import { ResponsiveButton } from "@/components/custom/ResponsiveButton";
 import {
   Dialog,
   DialogClose,

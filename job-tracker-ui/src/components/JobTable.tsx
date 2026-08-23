@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Table } from "@/components/ui/table-plain";
+import { Table } from "@/components/custom/table-plain";
 import {
   TableBody,
   TableCaption,

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/DatePicker"
+import { DatePicker } from "@/components/custom/DatePicker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -30,7 +30,7 @@ import {
 import { JobStatus, Priority, WorkMode, formatEnumLabel } from "@/types/enums"
 import type { Job, JobPatchOperation } from "@/types/job"
 import { useState } from "react"
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
+import { ConfirmDialog } from "@/components/custom/ConfirmDialog"
 
 // FormState represents the internal state of the job edit form
 interface FormState {

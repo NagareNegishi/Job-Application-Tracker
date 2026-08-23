@@ -5,7 +5,7 @@
  * set later via the edit form once an interview is scheduled.
  */
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/DatePicker"
+import { DatePicker } from "@/components/custom/DatePicker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {

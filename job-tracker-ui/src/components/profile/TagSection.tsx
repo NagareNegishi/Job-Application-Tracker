@@ -1,7 +1,7 @@
 // One profile card: a tag list with per-section dirty detection.
 // Controlled — value/onChange live in the page so first-save can PUT the whole form.
 // View/edit mode and card chrome come from ProfileSectionCard.
-import TagInput from "@/components/ui/TagInput"
+import TagInput from "@/components/custom/TagInput"
 import ProfileSectionCard, { ViewChips } from "@/components/profile/ProfileSectionCard"
 import { type MatchStrategy } from "@/utils/matchSuggestion"
 import type { SectionProps } from "@/components/profile/sectionProps"
