@@ -1,3 +1,4 @@
+import { DesktopDownloadPrompt } from "@/components/DesktopDownloadPrompt"
 import NavBar from "@/components/NavBar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -149,6 +150,13 @@ export default function SettingsPage() {
               )}
             </section>
           )}
+
+          <section className="mt-6 pt-6 border-t">
+            <h2 className="text-sm font-medium text-muted-foreground mb-4">Desktop App</h2>
+            <div className="max-w-sm">
+              <DesktopDownloadPrompt />
+            </div>
+          </section>
         </div>
       </div>
     </div>
