@@ -17,7 +17,12 @@ export function DesktopDownloadPrompt() {
 
   return (
     <div className="space-y-2">
-      <p className="text-sm text-muted-foreground text-center">Get the desktop app</p>
+      <div className="text-center">
+        <p className="text-sm font-medium">Want to work offline?</p>
+        <p className="text-xs text-muted-foreground">
+          The desktop app keeps everything stored locally, no network required.
+        </p>
+      </div>
       <div className="flex flex-row gap-2">
         {PLATFORM_SLOTS.map(({ key, label, Icon }) => {
           const platform = data?.platforms.find((p) => p.platform === key)
@@ -39,6 +44,11 @@ export function DesktopDownloadPrompt() {
           )
         })}
       </div>
+      <p className="text-xs text-center">
+        <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer" className="underline text-muted-foreground">
+          View all releases
+        </a>
+      </p>
     </div>
   )
 }
