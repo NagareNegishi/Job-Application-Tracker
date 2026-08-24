@@ -12,7 +12,7 @@ Switch between a table view and a Kanban board, filter by location or work mode,
 - **Infrastructure:** EC2 + Docker Compose, RDS PostgreSQL, ECR
 - **External APIs:** Resend (email), Anthropic (AI features)
 - **Testing:** xUnit (backend), Vitest + Testing Library (frontend)
-- **CI/CD:** GitHub Actions — tests, lint, and build run on every PR; merging to `main` builds, migrates, and deploys automatically
+- **CI/CD:** GitHub Actions - tests, lint, and build run on every PR; merging to `main` builds, migrates, and deploys automatically
 
 ## Features
 
