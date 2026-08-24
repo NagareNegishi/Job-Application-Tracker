@@ -21,7 +21,7 @@ ASSUME_YES=0
 
 # Required status checks — must match the job names in .github/workflows/pr-checks.yml
 # exactly, or GitHub will never see a matching report and merges will hang blocked forever.
-REQUIRED_CHECKS=("backend-test" "frontend-build" "frontend-lint")
+REQUIRED_CHECKS=("backend-test" "frontend-build" "frontend-lint" "frontend-test")
 
 # Fail early if gh is missing or unauthenticated.
 if ! gh auth status >/dev/null 2>&1; then

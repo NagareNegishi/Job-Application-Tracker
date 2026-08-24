@@ -10,8 +10,9 @@ Switch between a table view and a Kanban board, filter by location or work mode,
 - **Frontend:** React 19 + TypeScript + Vite
 - **Storage:** AWS S3 (production), local filesystem (development)
 - **Infrastructure:** EC2 + Docker Compose, RDS PostgreSQL, ECR
-- **Testing:** xUnit
-- **CI/CD:** GitHub Actions (test → build → migrate → deploy)
+- **External APIs:** Resend (email), Anthropic (AI features)
+- **Testing:** xUnit (backend), Vitest + Testing Library (frontend)
+- **CI/CD:** GitHub Actions — tests, lint, and build run on every PR; merging to `main` builds, migrates, and deploys automatically
 
 ## Features
 
@@ -30,6 +31,7 @@ Switch between a table view and a Kanban board, filter by location or work mode,
 - AI auto-fill: paste a job listing and fields fill in automatically (AI-enabled accounts only)
 - AI job insights: alignment score, skill gaps, and interview prep from your saved profile (AI-enabled accounts only)
 - Analytics dashboard: summary counts, status funnel, weekly applications chart, and stale applications list
+- Desktop app: native Windows/macOS/Linux client, installers at [job-tracker-desktop-releases](https://github.com/NagareNegishi/job-tracker-desktop-releases)
 
 ## Demo
 
@@ -70,27 +72,15 @@ To get the full experience (documents, password change), [register a free accoun
 The project runs in a Dev Container (recommended). PostgreSQL runs as a separate Docker service.
 
 1. Open in VS Code with the Dev Containers extension
-2. Create `JobTrackerApi/appsettings.Development.json` (gitignored):
-```json
-{
-  "ConnectionStrings": { "JobTrackerContext": "<your-connection-string>" },
-  "Jwt": {
-    "Key": "<min-32-char-secret>",
-    "Issuer": "JobTrackerApi",
-    "Audience": "JobTrackerClient",
-    "ExpiryMinutes": 15,
-    "RefreshExpiryDays": 7
-  },
-  "Storage": { "UploadsPath": "<path-to-uploads-folder>" },
-  "Cors": { "AllowedOrigins": ["http://localhost:5173"] }
-}
-```
+2. Copy [`JobTrackerApi/appsettings.Development.example.json`](JobTrackerApi/appsettings.Development.example.json) to `JobTrackerApi/appsettings.Development.json` (gitignored) and fill in the placeholders
 3. Run migrations: `cd JobTrackerApi && dotnet ef database update`
 4. Start backend: `cd JobTrackerApi && dotnet run --launch-profile https`
 5. Start frontend: `cd job-tracker-ui && npm install && npm run dev`
-6. Run tests: `cd JobTrackerApi.Tests && dotnet test`
+6. Run tests: `dotnet test` (backend, from repo root or `JobTrackerApi.Tests/`), `npm run test` (frontend, from `job-tracker-ui/`)
 
 In development, documents are stored at the path set in `Storage:UploadsPath`. The folder is created automatically on startup.
+
+Need test accounts? `bash scripts/seed-dev.sh` creates three, one promoted to Admin - see [`docs/dev-accounts.md`](docs/dev-accounts.md).
 
 ---
 
@@ -104,4 +94,4 @@ See [`docs/deployment-setup.md`](docs/deployment-setup.md) for required AWS infr
 
 ## Claude Code
 
-Claude Code is used as a coding assistant on specific tasks, under developer direction. The Dev Container's `project-firewall.sh` restricts its outbound network to an allowlist of domains. `.claude/` holds custom skills (frontend design, OWASP scanning, dev research, learning mode) and `CLAUDE.md` loads codebase context into every session. Architecture decisions and plans are in `docs/`.
+Claude Code is used as a coding assistant on specific tasks, under developer direction. The Dev Container's `project-firewall.sh` restricts its outbound network to an allowlist of domains. `.claude/skills/` holds custom skills covering planning, implementation, review, security scanning, and release workflow, and `CLAUDE.md` loads codebase context into every session. Architecture decisions and plans are in `docs/`.

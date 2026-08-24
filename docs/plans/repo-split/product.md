@@ -112,17 +112,17 @@ user-facing software.
 ## constraints
 👤 human-ok
 
-- Nothing already public gets scrubbed, rewritten, or hidden — past commits,
-  docs, and issues in this repo stay exactly as they are. Explicit user
-  decision, not an oversight.
+- Git history is never rewritten or squashed — past commits stay reachable via
+  `git log`/GitHub history. The current file tree is fair game to curate
+  (e.g. `git rm` a doc via a normal commit) during the cleanup pass.
 - The private repo must retain full commit history from the fork point, not
   a squashed or fresh start.
 
 ## non-goals
 👤 human-ok
 
-- Not retroactively removing or rewriting anything already public (cost
-  estimates, infra docs, old plans) — explicitly out of scope.
+- Not rewriting or squashing git history in either repo — see constraints
+  above.
 - Not building a sync or merge mechanism between the two repos going
   forward — this is a one-time fork, not ongoing dual-maintenance.
 - Not a licensing scheme beyond a single top-level LICENSE per repo — no CLA,
@@ -131,25 +131,12 @@ user-facing software.
 ## open questions
 👤 human-ok
 
-- Exact new brand/repo name — depends on `docs/plans/app-rebrand`'s outcome.
-  ~~Fork timing relative to the other three plans~~ **Resolved 2026-08-24:**
-  fork now, under a temporary/placeholder name, rather than waiting for
-  `app-rebrand` to settle. The rename is cosmetic and cheap later (GitHub
-  redirects the old repo URL on rename); waiting would mean writing
-  subscription-tiers here first and porting it over, the exact duplicated
-  work this plan exists to avoid. Subscription-tiers development moves to the
-  new private repo from the start, still tested against the existing AWS
-  infra — the fork changes which repo triggers deploys, not the deploy
-  target itself.
-- **New:** `git push --mirror` copies commits and workflow files, not GitHub
-  Actions secrets — the ~11 secrets currently on this repo
-  (`docs/plans/hosting-migration/product.md`) need to be re-added to the new
-  private repo's settings before its CI/CD can deploy anything.
-- **New:** before forking, inventory local-only files this repo's `.gitignore`
-  keeps out of git (e.g. `appsettings.Development.json`, `.env`) that the new
-  repo's working copy will also need — a mirror push won't carry them since
-  they were never committed here either. Planned for next session, alongside
-  the actual fork.
-- Scope of the public repo's post-fork cleanup pass (README rewrite, tagging
-  the fork commit, archiving the repo vs. leaving it open to unrelated
-  portfolio commits) is undecided.
+- Exact new brand/repo name — still open, tracked in the private repo now
+  (`docs/plans/app-rebrand` was removed from this repo since that work no
+  longer happens here; see about section).
+- **Resolved:** fork executed — mirrored into the private repo, GitHub
+  Actions secrets re-added, gitignored local files copied over.
+- Scope of the public repo's post-fork cleanup pass: README updated to
+  reflect current features/stack; noobi-only plan docs (app-rebrand,
+  subscription-tiers, hosting-migration) removed from the tree. Tagging the
+  fork commit and archive-vs-active still open.
