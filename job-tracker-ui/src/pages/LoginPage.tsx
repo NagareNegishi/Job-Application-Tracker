@@ -1,4 +1,5 @@
 import AuthBrand from "@/components/AuthBrand"
+import { DesktopDownloadPrompt } from "@/components/DesktopDownloadPrompt"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -106,6 +107,8 @@ export default function LoginPage() {
           onClick={handleDemo} disabled={loading || demoLoading}>
           {demoLoading ? "Loading demo..." : "Try Demo"}
         </Button>
+
+        <DesktopDownloadPrompt />
 
         <p className="text-sm text-center">
           No account?{" "}
