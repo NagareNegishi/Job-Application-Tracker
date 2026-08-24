@@ -53,6 +53,13 @@ support or comping access; whoever builds the payment integration.
 Backend: `JobTrackerApi` (.NET). Frontend: `job-tracker-ui` (React). Payment
 provider not yet chosen — see open questions.
 
+Underlying AI cost per user is estimated in `docs/ai-cost-estimate.md`: ~$0.0025
+per parse call, ~$0.014 per full 5-part job analysis, and roughly $0.20-$1.03/
+month for a light-to-heavy AI-plan user. This is a modeled estimate (no cost/
+usage logging exists yet — itself a gap), but it establishes that raw Claude
+spend is small relative to plausible subscription pricing, which should inform
+where the AI plan's price point gets set.
+
 ## target device / platform
 🌱 idea
 
@@ -85,7 +92,10 @@ custom-built card handling.
 - Recurring subscription vs. one-time or credit-based AI access?
 - How does this interact with the existing `"parse"` rate limit (2/min per
   IP, in `Program.cs`) — do paying users get a higher limit, or is payment
-  purely a yes/no gate on top of the same shared limit?
+  purely a yes/no gate on top of the same shared limit? (`docs/ai-cost-
+  estimate.md` suggests raising per-user limits wouldn't be cost-prohibitive —
+  even a heavy user is ~$1/month in raw Claude spend — but real usage
+  volume is still unmeasured.)
 - What happens to users an admin already granted `AiUser` to before this
   ships — grandfathered in, or required to go through billing too?
 - Does the admin override stay permanently (support/comp cases), or does it
