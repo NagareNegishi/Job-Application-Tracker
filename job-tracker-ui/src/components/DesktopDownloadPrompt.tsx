@@ -28,7 +28,12 @@ export function DesktopDownloadPrompt() {
           const platform = data?.platforms.find((p) => p.platform === key)
           if (!isLoading && !isError && platform) {
             return (
-              <Button key={key} asChild variant="outline" className="flex-1 flex-col h-auto py-2 gap-1">
+              <Button
+                key={key}
+                asChild
+                variant="outline"
+                className="flex-1 flex-col h-auto py-2 gap-1 transition-transform hover:scale-105 hover:border-primary/50 active:scale-95"
+              >
                 <a href={platform.url} target="_blank" rel="noopener noreferrer">
                   <Icon className="h-5 w-5" />
                   {platform.label}
@@ -37,7 +42,12 @@ export function DesktopDownloadPrompt() {
             )
           }
           return (
-            <Button key={key} variant="outline" className="flex-1 flex-col h-auto py-2 gap-1" disabled>
+            <Button
+              key={key}
+              variant="outline"
+              className="flex-1 flex-col h-auto py-2 gap-1 opacity-40 disabled:opacity-40"
+              disabled
+            >
               <Icon className="h-5 w-5" />
               {label}
             </Button>
