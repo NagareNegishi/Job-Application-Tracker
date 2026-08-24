@@ -152,8 +152,14 @@ another free-tier cliff.
   (8.6MB). Worth re-checking `pg_database_size` after real user traffic
   begins — that's the number to watch, not the cache hit ratio, which will
   likely stay near 100% regardless of growth for a long while.
-- Is there a hard deadline — e.g. before the AWS free plan's 6-month window
-  or credit exhaustion — that this migration needs to land by?
+- ~~Is there a hard deadline...~~ **Resolved 2026-08-24:** $41.63 credit
+  remaining, free plan closes 2026-09-20 (28 days out) — migration to Render
+  needs to land inside that window.
+- **New finding 2026-08-24:** Cost Explorer review shows the AI feature and
+  file upload/download are not what's driving spend (matches
+  `docs/ai-cost-estimate.md` — ~$1/mo even for a heavy AI user) — the DB
+  itself is the actual cost driver. Doesn't resolve the NAT Gateway question
+  below on its own; that's still a separate, unconfirmed line item to check.
 - What happens to `renew-cert.yml`, `rds-maintenance-window.md`'s EventBridge
   scheduler, and the DST-timing logic in `MaintenanceError`/`api.ts` once
   Render is live — fully retired, or does the maintenance-page mechanism get
