@@ -72,6 +72,7 @@ API base URL is read from `VITE_API_BASE_URL` (`.env`).
 - `AuthController` — unauthenticated flows at `/api/auth/`: register, login, refresh, logout, demo login, demo reset, email confirmation, resend confirmation, forgot password, reset password, cleanup unverified accounts
 - `AccountController` — authenticated account management at `/api/account/`: change password, `GET/PUT /api/account/preferences`
 - `AdminController` — requires `Admin` role; `GET /api/admin/users` + `PATCH /api/admin/users/{userId}/ai-access`
+- `AnalysisController` — `AiEnabled`-gated AI job analysis at `/api/analyse/*`; demo user blocked (403)
 
 All controllers except `AuthController` require `[Authorize]`. New controllers must include it.
 
