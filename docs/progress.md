@@ -111,19 +111,19 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 
 ## Desktop App Download Status
 
-Product and impl plans settled; see `docs/plans/desktop-app-download/`.
-Backend tests moved up to run right after the endpoint they cover, ahead of
-the frontend steps, instead of last as originally numbered in impl.md.
+Plans settled; see `docs/plans/desktop-app-download/` for full detail.
+Backend tests run right after the endpoint they cover, ahead of the frontend
+steps (reordered from impl.md's original last-step numbering).
 
 | Order | Item | Status |
 |---|---|---|
-| 1 | Backend `GET /api/desktop-release` endpoint + `IDesktopReleaseService`/`DesktopReleaseService` (GitHub Releases API call, filename-pattern matching, `IMemoryCache`, 502 on upstream failure with empty cache) — impl.md Step 1 | Not started |
-| 2 | Backend tests: filename-matching per platform, Linux-absent case, cache/fallback on upstream failure — impl.md Step 7 | Not started |
-| 3 | Frontend `desktopReleaseService.ts` — impl.md Step 2 | Not started |
-| 4 | Frontend `desktopReleaseQuery.ts` hook — impl.md Step 3 | Not started |
-| 5 | `DesktopDownloadPrompt` component — impl.md Step 4 | Not started |
-| 6 | Wire into `LoginPage` — impl.md Step 5 | Not started |
-| 7 | Wire into `SettingsPage` — impl.md Step 6 | Not started |
+| 1 | Backend `/api/desktop-release` endpoint + `DesktopReleaseService` | Done |
+| 2 | Backend tests (filename matching, cache/fallback) | Done |
+| 3 | Frontend `desktopReleaseService.ts` | Done |
+| 4 | Frontend `desktopReleaseQuery.ts` hook | Done |
+| 5 | `DesktopDownloadPrompt` component | Not started |
+| 6 | Wire into `LoginPage` | Not started |
+| 7 | Wire into `SettingsPage` | Not started |
 
 ## Active / Upcoming Work
 
