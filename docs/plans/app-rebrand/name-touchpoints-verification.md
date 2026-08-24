@@ -216,6 +216,15 @@ migration (read old service name once, rewrite under new, delete old) or
 accept that existing installed users get silently logged out of stored
 credentials on next update and have to re-enter them once.
 
+**Severity correction (plan-verify pass):** read `keychain.rs` in full —
+`KEY_NAME: &str = "anthropic-api-key"` is the only entry ever stored under
+this service. It's the user's optional Anthropic API key for AI-assisted
+parsing, not an app-login credential — the desktop app is local-only with
+no account (per its AppStream metadata). So the actual worst case is a
+one-time re-paste of an optional key, not users getting "logged out" of
+anything. Lowers this item's urgency relative to how it read before; the
+migration-vs-accept decision itself is unchanged.
+
 ### D4 — Cargo package
 `name = "app"` in `Cargo.toml` was never tied to the product name. No action
 surface.

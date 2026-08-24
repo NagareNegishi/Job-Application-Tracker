@@ -95,7 +95,7 @@ touchpoint inventory (see `name-touchpoints-desktop.md`).
   than being swept in with the rest. Tracked under open questions below.
 
 ## open questions
-🤖 ai-audited(sonnet-5) — reorganized into resolved/still-open; three resolved this session, four added from round-2 findings
+🤖 ai-audited(sonnet-5) — reorganized into resolved/still-open; three resolved this session, four added from round-2 findings; D3's severity corrected during plan-verify (keychain stores only the optional Anthropic API key, not an account credential)
 
 ### Resolved this session
 - **JWT `Issuer`/`Audience` rename does not force re-login.**
@@ -129,8 +129,13 @@ touchpoint inventory (see `name-touchpoints-desktop.md`).
   have the app installed? Needs research into Tauri's specific behavior
   before deciding whether it changes at all.
 - OS keychain service name (hardcoded in the desktop app) — if it changes,
-  existing users' stored credentials become inaccessible under the new name.
-  Needs a decision: ship a migration, or accept a one-time re-auth.
+  a user's saved Anthropic API key (the only thing stored there — confirmed
+  via `keychain.rs`; it's the optional AI-parsing key, not an app-login
+  credential, since the desktop app is local-only with no account) becomes
+  invisible to the renamed app. Lower severity than "existing users get
+  logged out" implies: at most a one-time re-paste of an optional key, no
+  loss of account access or tracked data. Still needs a decision: ship a
+  migration, or accept the one-time re-paste.
 - Auto-update endpoint — GitHub's redirect behavior is confirmed for general
   web traffic but not verified for this specific release-asset-download URL
   pattern fetched by a non-browser HTTP client; also has a chicken/egg
