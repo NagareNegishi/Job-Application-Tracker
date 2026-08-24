@@ -1,38 +1,44 @@
 import { Button } from "@/components/ui/button"
+import { AppleIcon, LinuxIcon, WindowsIcon } from "@/components/icons/OsIcons"
 import { useDesktopRelease } from "@/hooks/desktopReleaseQuery"
-import { Download } from "lucide-react"
 
 const RELEASES_URL = "https://github.com/NagareNegishi/job-tracker-desktop-releases/releases/latest"
 
-// One button per platform from the backend; falls back to a single static
-// releases link if the fetch fails. No dismiss state.
+// Fixed slots so the section is always fully visible; loading/error/absent
+// states are expressed by disabling a slot, never by hiding it.
+const PLATFORM_SLOTS = [
+  { key: "windows", label: "Windows", Icon: WindowsIcon },
+  { key: "macos", label: "macOS", Icon: AppleIcon },
+  { key: "linux", label: "Linux", Icon: LinuxIcon },
+] as const
+
 export function DesktopDownloadPrompt() {
   const { data, isError, isLoading } = useDesktopRelease()
-
-  if (isLoading) return null
 
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground text-center">Get the desktop app</p>
-      {isError || !data ? (
-        <Button asChild variant="outline" className="w-full">
-          <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer">
-            <Download className="h-4 w-4" />
-            Download
-          </a>
-        </Button>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {data.platforms.map((platform) => (
-            <Button key={platform.platform} asChild variant="outline" className="w-full">
-              <a href={platform.url} target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4" />
-                {platform.label}
-              </a>
+      <div className="flex flex-row gap-2">
+        {PLATFORM_SLOTS.map(({ key, label, Icon }) => {
+          const platform = data?.platforms.find((p) => p.platform === key)
+          if (!isLoading && !isError && platform) {
+            return (
+              <Button key={key} asChild variant="outline" className="flex-1 flex-col h-auto py-2 gap-1">
+                <a href={platform.url} target="_blank" rel="noopener noreferrer">
+                  <Icon className="h-5 w-5" />
+                  {platform.label}
+                </a>
+              </Button>
+            )
+          }
+          return (
+            <Button key={key} variant="outline" className="flex-1 flex-col h-auto py-2 gap-1" disabled>
+              <Icon className="h-5 w-5" />
+              {label}
             </Button>
-          ))}
-        </div>
-      )}
+          )
+        })}
+      </div>
     </div>
   )
 }
