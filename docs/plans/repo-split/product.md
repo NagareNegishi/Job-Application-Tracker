@@ -132,10 +132,24 @@ user-facing software.
 👤 human-ok
 
 - Exact new brand/repo name — depends on `docs/plans/app-rebrand`'s outcome.
-- Fork timing relative to the other three plans: doing the fork first, before
-  any subscription-tiers code exists, avoids ever putting paid-tier logic in
-  this public repo at all — otherwise it would need to be ported over rather
-  than written once in the right place.
+  ~~Fork timing relative to the other three plans~~ **Resolved 2026-08-24:**
+  fork now, under a temporary/placeholder name, rather than waiting for
+  `app-rebrand` to settle. The rename is cosmetic and cheap later (GitHub
+  redirects the old repo URL on rename); waiting would mean writing
+  subscription-tiers here first and porting it over, the exact duplicated
+  work this plan exists to avoid. Subscription-tiers development moves to the
+  new private repo from the start, still tested against the existing AWS
+  infra — the fork changes which repo triggers deploys, not the deploy
+  target itself.
+- **New:** `git push --mirror` copies commits and workflow files, not GitHub
+  Actions secrets — the ~11 secrets currently on this repo
+  (`docs/plans/hosting-migration/product.md`) need to be re-added to the new
+  private repo's settings before its CI/CD can deploy anything.
+- **New:** before forking, inventory local-only files this repo's `.gitignore`
+  keeps out of git (e.g. `appsettings.Development.json`, `.env`) that the new
+  repo's working copy will also need — a mirror push won't carry them since
+  they were never committed here either. Planned for next session, alongside
+  the actual fork.
 - Scope of the public repo's post-fork cleanup pass (README rewrite, tagging
   the fork commit, archiving the repo vs. leaving it open to unrelated
   portfolio commits) is undecided.
