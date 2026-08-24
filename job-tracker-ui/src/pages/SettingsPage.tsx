@@ -80,7 +80,7 @@ export default function SettingsPage() {
         <div className="bg-card rounded-lg shadow-sm p-6">
           <h1 className="text-xl font-semibold mb-6">Settings</h1>
           <section>
-            <h2 className="text-sm font-medium text-muted-foreground mb-4">Change Password</h2>
+            <h2 className="text-sm font-medium text-muted-foreground border-l-2 border-primary pl-2 mb-4">Change Password</h2>
             <form onSubmit={handleSubmit} className="max-w-sm space-y-4">
               {error && <p className="text-sm text-red-600">{error}</p>}
               {success && <p className="text-sm text-green-600">Password changed successfully.</p>}
@@ -106,7 +106,7 @@ export default function SettingsPage() {
           </section>
 
           <section className="mt-6 pt-6 border-t">
-            <h2 className="text-sm font-medium text-muted-foreground mb-4">Appearance</h2>
+            <h2 className="text-sm font-medium text-muted-foreground border-l-2 border-primary pl-2 mb-4">Appearance</h2>
             {isLoadingPrefs ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : (
@@ -133,7 +133,7 @@ export default function SettingsPage() {
 
           {hasRole("AiUser") && (
             <section className="mt-6 pt-6 border-t">
-              <h2 className="text-sm font-medium text-muted-foreground mb-4">AI Features</h2>
+              <h2 className="text-sm font-medium text-muted-foreground border-l-2 border-primary pl-2 mb-4">AI Features</h2>
               {isLoadingPrefs ? (
                 <p className="text-sm text-muted-foreground">Loading...</p>
               ) : (
@@ -152,7 +152,7 @@ export default function SettingsPage() {
           )}
 
           <section className="mt-6 pt-6 border-t">
-            <h2 className="text-sm font-medium text-muted-foreground mb-4">Desktop App</h2>
+            <h2 className="text-sm font-medium text-muted-foreground border-l-2 border-primary pl-2 mb-4">Desktop App</h2>
             <div className="max-w-sm">
               <DesktopDownloadPrompt />
             </div>
