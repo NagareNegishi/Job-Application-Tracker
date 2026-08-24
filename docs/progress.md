@@ -55,37 +55,23 @@ C#/.NET job application tracker project. Full-stack ASP.NET Core 10 Web API + Re
 
 ## Production Build Status
 
-All planned production steps complete. See `docs/plans/production-build.md` for full detail.
+One item remains open — see `docs/plans/production-build.md` for full detail.
 
-| Step | Item | Status |
-|---|---|---|
-| 1 | Auth (JWT, ASP.NET Identity, httpOnly refresh cookie) | Done |
-| 2a | AWS infrastructure + DNS setup | Done |
-| 2b | S3 file storage refactor + Dockerfiles + compose.prod.yml | Done |
-| 3 | appsettings.Production.json + .env.example | Done |
-| 4 | Global exception handler + structured logging (Serilog) | Done |
-| 5 | Health check endpoint | Done |
-| 6 | Security headers | Done |
-| 7 | GitHub Actions CI/CD | Done |
-| 8a | DB migration automation in CI | Done |
-| 8b | First production deploy | Done |
-| 8b-1 | SSL via Certbot | Done |
-| 8c | Rate limiting | Done |
-| 9 | Monitoring/metrics | Backlog |
-
-## Demo + Auth Features Status
-
-All planned steps complete. See `docs/plans/demo-auth-features.md` for full detail.
-
-| Step | Item | Status |
-|---|---|---|
-| 1 | Demo user + "Try Demo" button | Done |
-| 2 | Periodic demo data reset + login re-seed | Done |
-| 3 | Change password | Done |
-| 4 | AWS SES setup | Done (superseded by Step 7) |
-| 5 | Email verification on register | Done |
-| 6 | Forgot password | Done |
-| 7 | Migrate email provider from SES to Resend | Done |
+| Item | Status |
+|---|---|
+| Auth (JWT, ASP.NET Identity, httpOnly refresh cookie) | Done |
+| AWS infrastructure + DNS setup | Done |
+| S3 file storage refactor + Dockerfiles + compose.prod.yml | Done |
+| appsettings.Production.json + .env.example | Done |
+| Global exception handler + structured logging (Serilog) | Done |
+| Health check endpoint | Done |
+| Security headers | Done |
+| GitHub Actions CI/CD | Done |
+| DB migration automation in CI | Done |
+| First production deploy | Done |
+| SSL via Certbot | Done |
+| Rate limiting | Done |
+| Monitoring/metrics | Backlog |
 
 ## Additional Completed Features
 
@@ -108,12 +94,13 @@ All planned steps complete. See `docs/plans/demo-auth-features.md` for full deta
 | Auto-fill rate-limit error message | `lib/api.ts` 429-specific fallback message; `ParseListingDialog` catch block surfaces `ApiError.message` |
 | Maintenance page | Redirect to `/maintenance` on in-window 503; health-poll auto-recovery; see `docs/plans/maintenance-page.md` |
 | Profile inline view/edit | Read-only sections with pencil → in-place edit; see `docs/plans/profile-inline-edit.md` — remaining items are optional polish |
+| Desktop app download prompt | `DesktopDownloadPrompt` in `LoginPage` + `SettingsPage`; backend `/api/desktop-release` + `DesktopReleaseService`; icons: Simple Icons (CC0) + Devicon (MIT, Windows); see `docs/plans/desktop-app-download/` |
+| Demo + auth features | "Try Demo" login w/ periodic data reset; change password; email verification; forgot/reset password; Resend is the active email provider; see `docs/plans/demo-auth-features.md` |
 
 ## Active / Upcoming Work
 
 | Plan | Item | Status |
 |---|---|---|
-| Desktop app download prompt | Link web app users to the desktop app releases at first-touch, failed login, and Settings; see `docs/plans/desktop-app-download/product.md` | Idea |
 | App rebrand | New app name (candidate "NooBi", unsettled) + logo/icon rollout checklist across repo, config, and UI; see `docs/plans/app-rebrand/product.md` | Idea |
 | Subscription tiers (Free / AI plan) | Self-serve plan signup with AI plan gated by payment, replacing the admin-only AI-access toggle; see `docs/plans/subscription-tiers/product.md` | Idea |
 | Hosting migration off AWS | Move off EC2/RDS to a stable, cost-effective platform and remove the cost-driven nightly maintenance window; see `docs/plans/hosting-migration/product.md` | Idea |

@@ -1,4 +1,5 @@
 import AuthBrand from "@/components/AuthBrand"
+import { DesktopDownloadPrompt } from "@/components/DesktopDownloadPrompt"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,7 +32,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex flex-col px-4">
+      <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-sm">
         <AuthBrand />
         <form onSubmit={async (e) => {
@@ -112,6 +114,11 @@ export default function LoginPage() {
           <Link to="/register" className="underline">Register</Link>
         </p>
         </form>
+      </div>
+      </div>
+
+      <div className="w-full max-w-sm mx-auto pb-10">
+        <DesktopDownloadPrompt />
       </div>
     </div>
   )

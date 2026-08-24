@@ -1,0 +1,64 @@
+import { Button } from "@/components/ui/button"
+import { AppleIcon, LinuxIcon, WindowsIcon } from "@/components/icons/OsIcons"
+import { useDesktopRelease } from "@/hooks/desktopReleaseQuery"
+
+const RELEASES_URL = "https://github.com/NagareNegishi/job-tracker-desktop-releases/releases/latest"
+
+// Fixed slots so the section is always fully visible; loading/error/absent
+// states are expressed by disabling a slot, never by hiding it.
+const PLATFORM_SLOTS = [
+  { key: "windows", label: "Windows", Icon: WindowsIcon },
+  { key: "macos", label: "macOS", Icon: AppleIcon },
+  { key: "linux", label: "Linux", Icon: LinuxIcon },
+] as const
+
+export function DesktopDownloadPrompt() {
+  const { data, isError, isLoading } = useDesktopRelease()
+
+  return (
+    <div className="space-y-2">
+      <div className="text-center">
+        <p className="text-sm font-medium">Want to work offline?</p>
+        <p className="text-xs text-muted-foreground">
+          The desktop app keeps everything stored locally, no network required.
+        </p>
+      </div>
+      <div className="flex flex-row gap-2">
+        {PLATFORM_SLOTS.map(({ key, label, Icon }) => {
+          const platform = data?.platforms.find((p) => p.platform === key)
+          if (!isLoading && !isError && platform) {
+            return (
+              <Button
+                key={key}
+                asChild
+                variant="outline"
+                className="flex-1 flex-col h-auto py-2 gap-1 transition-transform hover:scale-105 hover:border-primary/50 active:scale-95"
+              >
+                <a href={platform.url} target="_blank" rel="noopener noreferrer">
+                  <Icon className="h-5 w-5" />
+                  {platform.label}
+                </a>
+              </Button>
+            )
+          }
+          return (
+            <Button
+              key={key}
+              variant="outline"
+              className="flex-1 flex-col h-auto py-2 gap-1 opacity-40 disabled:opacity-40"
+              disabled
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </Button>
+          )
+        })}
+      </div>
+      <p className="text-xs text-center">
+        <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer" className="underline text-muted-foreground">
+          View all releases
+        </a>
+      </p>
+    </div>
+  )
+}
