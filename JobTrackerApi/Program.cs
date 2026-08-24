@@ -158,6 +158,10 @@ builder.Services.AddScoped<IParsingService, ClaudeParsingService>();
 // AI analysis: compares a job listing against the user's profile via Claude API
 builder.Services.AddScoped<IAnalysisService, ClaudeAnalysisService>();
 
+// Desktop release lookup: calls the GitHub Releases API, cached in-memory (see IDesktopReleaseService)
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient<IDesktopReleaseService, DesktopReleaseService>();
+
 // Registers Identity's core services
 builder.Services.AddIdentityCore<ApplicationUser>()
     .AddRoles<IdentityRole>()
@@ -384,6 +388,20 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     {
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(new { status = report.Status.ToString() });
+    }
+}).AllowAnonymous();
+
+// Desktop release info — anonymous (reachable pre-login, e.g. from the login screen).
+app.MapGet("/api/desktop-release", async (IDesktopReleaseService desktopReleaseService) =>
+{
+    try
+    {
+        var release = await desktopReleaseService.GetLatestReleaseAsync();
+        return Results.Ok(release);
+    }
+    catch (DesktopReleaseUnavailableException ex)
+    {
+        return Results.Json(new { error = ex.Message }, statusCode: 502);
     }
 }).AllowAnonymous();
 
