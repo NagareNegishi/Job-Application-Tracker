@@ -80,6 +80,8 @@ The project runs in a Dev Container (recommended). PostgreSQL runs as a separate
 
 In development, documents are stored at the path set in `Storage:UploadsPath`. The folder is created automatically on startup.
 
+Need test accounts? `bash scripts/seed-dev.sh` creates three, one promoted to Admin - see [`docs/dev-accounts.md`](docs/dev-accounts.md).
+
 ---
 
 ## Production Deployment

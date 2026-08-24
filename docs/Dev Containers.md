@@ -56,8 +56,6 @@ A **dev container** is a Docker container configured specifically for developmen
 - `target=/home/vscode/.claude` — depends on the user inside the container
 - `type=volume` — stays the same
 
-See `docs/Claude Code — WSL credential extraction.md` for how to inject credentials into this volume.
-
 **Note:** When moving an existing project into a dev container, artifacts need to be rebuilt — the filesystem is Linux, so artifacts built on Windows won't work.
 
 For .NET:

@@ -226,7 +226,7 @@ Demo users are already blocked from upload/delete entirely (Step 1), so this onl
 
 ## Step 7 — Migrate Email Provider from SES to Resend
 
-**Goal:** Replace AWS SES with Resend for sending transactional emails. SES production access was denied with no actionable feedback (see `docs/ses-rejection-notes.md`). The existing `IEmailService` abstraction allows swapping the provider without changes to controllers, auth flows, or frontend.
+**Goal:** Replace AWS SES with Resend for sending transactional emails. SES production access was denied with no actionable feedback. The existing `IEmailService` abstraction allows swapping the provider without changes to controllers, auth flows, or frontend.
 
 **Requires:** Steps 5 and 6 already built against `IEmailService` — no changes needed there.
 
