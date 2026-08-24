@@ -99,11 +99,11 @@ One item remains open — see `docs/plans/production-build.md` for full detail.
 
 ## Active / Upcoming Work
 
+Rebranding, subscription tiers, and hosting migration now happen in the new
+private repo, not here — see `docs/plans/repo-split/product.md`.
+
 | Plan | Item | Status |
 |---|---|---|
-| App rebrand | New app name (candidate "NooBi", unsettled) + logo/icon rollout checklist across repo, config, and UI; see `docs/plans/app-rebrand/product.md` | Idea |
-| Subscription tiers (Free / AI plan) | Self-serve plan signup with AI plan gated by payment, replacing the admin-only AI-access toggle; see `docs/plans/subscription-tiers/product.md` | Idea |
-| Hosting migration off AWS | Move off EC2/RDS to a stable, cost-effective platform and remove the cost-driven nightly maintenance window; see `docs/plans/hosting-migration/product.md` | Idea |
 | Interview reminder email | Scheduled job emails user day-before interviewAt via IEmailService | Early planning |
 | Company verification integration | Wire `GET /verify` into job create/edit UI; see `docs/company-verification-api-reference.md` | Pending |
 | Preferences PATCH refactor | `PUT /api/account/preferences` → `PATCH` with merge semantics | Postponed |

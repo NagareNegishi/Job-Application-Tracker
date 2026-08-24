@@ -2,7 +2,8 @@
 
 > **This is a modeled estimate, not measured production spend.** No cost/usage
 > logging exists yet for `ClaudeParsingService` or `ClaudeAnalysisService` — that's
-> a real gap, not just an oversight (see `docs/plans/subscription-tiers/product.md`).
+> a real gap, not just an oversight (tracked in the private repo's
+> subscription-tiers plan).
 > Token counts below use ~4 characters/token, a standard approximation for English
 > prose; job-listing and profile lengths are estimated ranges, not measured samples.
 > Pricing is current Anthropic first-party API pricing (cached 2026-06-24) — verify
