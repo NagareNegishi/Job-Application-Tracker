@@ -32,7 +32,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex flex-col px-4">
+      <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-sm">
         <AuthBrand />
         <form onSubmit={async (e) => {
@@ -108,13 +109,16 @@ export default function LoginPage() {
           {demoLoading ? "Loading demo..." : "Try Demo"}
         </Button>
 
-        <DesktopDownloadPrompt />
-
         <p className="text-sm text-center">
           No account?{" "}
           <Link to="/register" className="underline">Register</Link>
         </p>
         </form>
+      </div>
+      </div>
+
+      <div className="w-full max-w-sm mx-auto pb-10">
+        <DesktopDownloadPrompt />
       </div>
     </div>
   )
